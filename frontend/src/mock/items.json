@@ -1,0 +1,490 @@
+[
+  {
+    "id": "item_001",
+    "sellerId": "seller_004",
+    "title": "iPhone 15 Pro 256GB 自然钛色 99新",
+    "description": "## 出售 iPhone 15 Pro\n\n- 颜色：自然钛色\n- 存储：256GB\n- 电池循环：87 次\n- 配件：原装充电线 + 保护壳\n- 无磕碰无划痕\n\n## 交易说明\n\n- 仅限同城面交或顺丰到付\n- 支持先验机后付款",
+    "category": "physical",
+    "tags": ["99新", "iPhone", "未拆封"],
+    "price": { "amount": 6899, "currency": "CNY", "fiatEstimate": 950 },
+    "originalPrice": { "amount": 7999, "currency": "CNY" },
+    "condition": "like_new",
+    "shippingMethod": "delivery",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x800/1a1a2e/fff?text=iPhone+Front", "alt": "iPhone 正面" },
+      { "type": "image", "url": "https://placehold.co/600x800/16213e/fff?text=iPhone+Back", "alt": "iPhone 背面" },
+      { "type": "image", "url": "https://placehold.co/600x800/0f3460/fff?text=Screen+On", "alt": "亮屏" }
+    ],
+    "status": "active",
+    "viewCount": 1245,
+    "favoriteCount": 87,
+    "createdAt": "2026-07-25T10:00:00Z",
+    "updatedAt": "2026-07-25T10:00:00Z"
+  },
+  {
+    "id": "item_002",
+    "sellerId": "seller_004",
+    "title": "MacBook Air M2 13寸 16GB / 512GB 95新",
+    "description": "## MacBook Air M2\n\n- 13.3 英寸 Liquid Retina\n- Apple M2 芯片\n- 16GB 统一内存 / 512GB SSD\n- 电池循环 142 次\n- 95新，无磕碰\n\n## 配件\n\n原装充电线 + 65W 充电器",
+    "category": "physical",
+    "tags": ["95新", "MacBook", "M2"],
+    "price": { "amount": 7200, "currency": "CNY", "fiatEstimate": 990 },
+    "originalPrice": { "amount": 9999, "currency": "CNY" },
+    "condition": "good",
+    "shippingMethod": "delivery",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/1e293b/fff?text=MacBook+Open", "alt": "MacBook 开盖" },
+      { "type": "image", "url": "https://placehold.co/600x400/334155/fff?text=MacBook+Side", "alt": "侧面" }
+    ],
+    "status": "active",
+    "viewCount": 892,
+    "favoriteCount": 64,
+    "createdAt": "2026-07-22T08:00:00Z",
+    "updatedAt": "2026-07-22T08:00:00Z"
+  },
+  {
+    "id": "item_003",
+    "sellerId": "seller_004",
+    "title": "Sony WH-1000XM5 黑色无线降噪耳机 9成新",
+    "description": "## Sony 旗舰降噪\n\n- WH-1000XM5 黑色\n- 9 成新，电池健康度 95%\n- 配件：原装收纳盒 + 充电线\n- 仅家用，使用时长约 80 小时",
+    "category": "physical",
+    "tags": ["9成新", "Sony", "降噪耳机"],
+    "price": { "amount": 1899, "currency": "CNY", "fiatEstimate": 261 },
+    "originalPrice": { "amount": 2899, "currency": "CNY" },
+    "condition": "good",
+    "shippingMethod": "delivery",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/0f172a/fff?text=Sony+XM5", "alt": "Sony XM5" }
+    ],
+    "status": "active",
+    "viewCount": 543,
+    "favoriteCount": 41,
+    "createdAt": "2026-07-20T12:00:00Z",
+    "updatedAt": "2026-07-20T12:00:00Z"
+  },
+  {
+    "id": "item_004",
+    "sellerId": "seller_004",
+    "title": "iPad Pro 11寸 M4 256GB 99新",
+    "description": "## iPad Pro M4\n\n- 11 英寸 Ultra Retina XDR\n- Apple M4 芯片\n- 256GB / WiFi 版\n- 99新，带原包装",
+    "category": "physical",
+    "tags": ["99新", "iPad", "M4"],
+    "price": { "amount": 7899, "currency": "CNY", "fiatEstimate": 1087 },
+    "originalPrice": { "amount": 8999, "currency": "CNY" },
+    "condition": "like_new",
+    "shippingMethod": "delivery",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/1e1b4b/fff?text=iPad+Pro", "alt": "iPad Pro" }
+    ],
+    "status": "active",
+    "viewCount": 421,
+    "favoriteCount": 32,
+    "createdAt": "2026-07-18T15:00:00Z",
+    "updatedAt": "2026-07-18T15:00:00Z"
+  },
+  {
+    "id": "item_005",
+    "sellerId": "seller_004",
+    "title": "Nintendo Switch OLED 白色 95新",
+    "description": "## Switch OLED\n\n- 白色 OLED 款\n- 95新，无划痕\n- 配件：原装底座 + Joy-Con + 手柄\n- 续航良好",
+    "category": "physical",
+    "tags": ["95新", "Switch", "OLED"],
+    "price": { "amount": 1650, "currency": "CNY", "fiatEstimate": 227 },
+    "originalPrice": { "amount": 2399, "currency": "CNY" },
+    "condition": "good",
+    "shippingMethod": "delivery",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/dc2626/fff?text=Switch+OLED", "alt": "Switch OLED" }
+    ],
+    "status": "active",
+    "viewCount": 678,
+    "favoriteCount": 52,
+    "createdAt": "2026-07-15T09:00:00Z",
+    "updatedAt": "2026-07-15T09:00:00Z"
+  },
+  {
+    "id": "item_006",
+    "sellerId": "seller_003",
+    "title": "ENS 域名：crypto.eth (4字符 · 优质短域名)",
+    "description": "## ENS 域名出售\n\n- 域名：`crypto.eth`\n- 字符：4 字符\n- 注册时间：2022-03\n- 续费至：2028-03\n- 可议价 · 接受 USDT\n\n## 交易方式\n\n买家付款后通过站内信发送 Registrar 转移链接，5 分钟内完成转移",
+    "category": "digital",
+    "tags": ["ENS", "4字符", "优质短域名"],
+    "price": { "amount": 12.5, "currency": "ETH", "fiatEstimate": 42500 },
+    "originalPrice": { "amount": 15, "currency": "ETH" },
+    "deliveryType": "download_link",
+    "deliveryPreview": "买家付款后通过站内信发送 Registrar 转移链接",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/0e0e2c/fff?text=crypto.eth", "alt": "ENS 域名" }
+    ],
+    "status": "active",
+    "viewCount": 892,
+    "favoriteCount": 134,
+    "createdAt": "2026-07-20T08:00:00Z",
+    "updatedAt": "2026-07-20T08:00:00Z"
+  },
+  {
+    "id": "item_007",
+    "sellerId": "seller_003",
+    "title": "ENS 域名：web3.eth (4字符 · 议价)",
+    "description": "## ENS 域名\n\n- 域名：`web3.eth`\n- 字符：4 字符\n- 注册时间：2021-08\n- 续费至：2027-08\n- 接受 USDT / ETH",
+    "category": "digital",
+    "tags": ["ENS", "4字符", "Web3"],
+    "price": { "amount": 9.8, "currency": "ETH", "fiatEstimate": 33320 },
+    "deliveryType": "download_link",
+    "deliveryPreview": "通过站内信发送转移链接",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/312e81/fff?text=web3.eth", "alt": "ENS 域名" }
+    ],
+    "status": "active",
+    "viewCount": 654,
+    "favoriteCount": 89,
+    "createdAt": "2026-07-18T11:00:00Z",
+    "updatedAt": "2026-07-18T11:00:00Z"
+  },
+  {
+    "id": "item_008",
+    "sellerId": "seller_003",
+    "title": "POAP Pass · Devcon 2024 现场徽章",
+    "description": "## POAP Pass\n\n- Devcon 2024 东南亚现场活动 POAP\n- 限量发行\n- 接受 USDT",
+    "category": "digital",
+    "tags": ["POAP", "Devcon", "限量"],
+    "price": { "amount": 0.05, "currency": "ETH", "fiatEstimate": 170 },
+    "deliveryType": "download_link",
+    "deliveryPreview": "站内信发送 POAP 转移链接",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/7c3aed/fff?text=POAP+Devcon", "alt": "POAP" }
+    ],
+    "status": "active",
+    "viewCount": 234,
+    "favoriteCount": 18,
+    "createdAt": "2026-07-15T14:00:00Z",
+    "updatedAt": "2026-07-15T14:00:00Z"
+  },
+  {
+    "id": "item_009",
+    "sellerId": "seller_003",
+    "title": "NFT Pass · 某 DeFi 项目白名单 × 5 个",
+    "description": "## NFT 白名单\n\n- 5 个某 DeFi 项目白名单 slot\n- 节省 mint gas + 早期参与者权益\n- 接受 USDT",
+    "category": "digital",
+    "tags": ["NFT", "白名单", "DeFi"],
+    "price": { "amount": 0.5, "currency": "ETH", "fiatEstimate": 1700 },
+    "deliveryType": "license_key",
+    "deliveryPreview": "买家付款后发送 5 个 mint 链接",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/059669/fff?text=NFT+Whitelist", "alt": "NFT Pass" }
+    ],
+    "status": "active",
+    "viewCount": 312,
+    "favoriteCount": 27,
+    "createdAt": "2026-07-12T16:00:00Z",
+    "updatedAt": "2026-07-12T16:00:00Z"
+  },
+  {
+    "id": "item_010",
+    "sellerId": "seller_003",
+    "title": "Galxe OAT · 早期用户徽章 (10 个)",
+    "description": "## Galxe OAT\n\n- 10 个不同项目 OAT\n- 早期用户身份证明\n- 接受 USDT",
+    "category": "digital",
+    "tags": ["Galxe", "OAT", "徽章"],
+    "price": { "amount": 0.02, "currency": "ETH", "fiatEstimate": 68 },
+    "deliveryType": "license_key",
+    "deliveryPreview": "站内信发送 10 个 OAT 转移链接",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/be185d/fff?text=Galxe+OAT", "alt": "OAT" }
+    ],
+    "status": "active",
+    "viewCount": 189,
+    "favoriteCount": 12,
+    "createdAt": "2026-07-10T10:00:00Z",
+    "updatedAt": "2026-07-10T10:00:00Z"
+  },
+  {
+    "id": "item_011",
+    "sellerId": "seller_005",
+    "title": "Next.js 14 SaaS 模板 · 完整项目源码",
+    "description": "## Next.js SaaS 模板\n\n- Next.js 14 App Router + TypeScript\n- 集成：登录 / 支付 / 后台 / 数据库\n- 完整文档 + 视频教程\n- 商用授权",
+    "category": "digital",
+    "tags": ["Next.js", "SaaS", "源码"],
+    "price": { "amount": 0.3, "currency": "ETH", "fiatEstimate": 1020 },
+    "deliveryType": "download_link",
+    "deliveryPreview": "GitHub 私有仓库邀请链接",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/0f172a/fff?text=Next.js+Template", "alt": "Next.js" }
+    ],
+    "status": "active",
+    "viewCount": 1024,
+    "favoriteCount": 156,
+    "createdAt": "2026-07-25T13:00:00Z",
+    "updatedAt": "2026-07-25T13:00:00Z"
+  },
+  {
+    "id": "item_012",
+    "sellerId": "seller_005",
+    "title": "Python 通用爬虫脚本框架 · 含 5 个示例",
+    "description": "## 爬虫框架\n\n- Python 3.11+ / asyncio\n- 内置代理池 / 反爬绕过\n- 5 个真实示例站点\n- 商用授权",
+    "category": "digital",
+    "tags": ["Python", "爬虫", "框架"],
+    "price": { "amount": 0.08, "currency": "ETH", "fiatEstimate": 272 },
+    "deliveryType": "download_link",
+    "deliveryPreview": "网盘链接 + 文档",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/1e40af/fff?text=Python+Spider", "alt": "Python" }
+    ],
+    "status": "active",
+    "viewCount": 567,
+    "favoriteCount": 78,
+    "createdAt": "2026-07-23T09:00:00Z",
+    "updatedAt": "2026-07-23T09:00:00Z"
+  },
+  {
+    "id": "item_013",
+    "sellerId": "seller_005",
+    "title": "VSCode 主题包 · 5 套精选主题",
+    "description": "## VSCode 主题\n\n- 5 套原创主题（暗色 + 亮色）\n- 适配 React / Python / Go\n- 个人 / 商用授权",
+    "category": "digital",
+    "tags": ["VSCode", "主题"],
+    "price": { "amount": 0.02, "currency": "ETH", "fiatEstimate": 68 },
+    "deliveryType": "download_link",
+    "deliveryPreview": "主题 JSON 文件 + 安装说明",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/0ea5e9/fff?text=VSCode+Themes", "alt": "VSCode" }
+    ],
+    "status": "active",
+    "viewCount": 234,
+    "favoriteCount": 28,
+    "createdAt": "2026-07-21T15:00:00Z",
+    "updatedAt": "2026-07-21T15:00:00Z"
+  },
+  {
+    "id": "item_014",
+    "sellerId": "seller_005",
+    "title": "React 组件库 · 50+ 组件 · TypeScript",
+    "description": "## React 组件库\n\n- 50+ 组件（Form / Table / Modal / Chart）\n- TypeScript 完整类型\n- Storybook 文档\n- 商用授权",
+    "category": "digital",
+    "tags": ["React", "组件库", "TypeScript"],
+    "price": { "amount": 0.15, "currency": "ETH", "fiatEstimate": 510 },
+    "deliveryType": "download_link",
+    "deliveryPreview": "GitHub 仓库邀请",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/0891b2/fff?text=React+Components", "alt": "React" }
+    ],
+    "status": "active",
+    "viewCount": 432,
+    "favoriteCount": 54,
+    "createdAt": "2026-07-19T12:00:00Z",
+    "updatedAt": "2026-07-19T12:00:00Z"
+  },
+  {
+    "id": "item_015",
+    "sellerId": "seller_005",
+    "title": "Tailwind UI Kit · 商用授权 · 100+ 模板",
+    "description": "## Tailwind UI Kit\n\n- 100+ 现成页面模板\n- Dashboard / Landing / SaaS / E-commerce\n- 商用授权",
+    "category": "digital",
+    "tags": ["Tailwind", "UI Kit", "模板"],
+    "price": { "amount": 0.05, "currency": "ETH", "fiatEstimate": 170 },
+    "deliveryType": "download_link",
+    "deliveryPreview": "Figma 文件 + HTML 模板",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/14b8a6/fff?text=Tailwind+UI", "alt": "Tailwind" }
+    ],
+    "status": "active",
+    "viewCount": 678,
+    "favoriteCount": 92,
+    "createdAt": "2026-07-17T14:00:00Z",
+    "updatedAt": "2026-07-17T14:00:00Z"
+  },
+  {
+    "id": "item_016",
+    "sellerId": "seller_006",
+    "title": "Steam 账号 · 300+ 游戏 · CS2 高库存",
+    "description": "## Steam 账号\n\n- 300+ 游戏库\n- CS2 库存价值 ~$800\n- 邮箱可改\n- 议价",
+    "category": "digital",
+    "tags": ["Steam", "游戏账号"],
+    "price": { "amount": 0, "currency": "CNY", "fiatEstimate": 0 },
+    "deliveryType": "account_credentials",
+    "deliveryPreview": "站内信发送账号信息（不显示在公开页）",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/1b2838/fff?text=Steam", "alt": "Steam" }
+    ],
+    "status": "active",
+    "viewCount": 1842,
+    "favoriteCount": 234,
+    "createdAt": "2026-07-28T10:00:00Z",
+    "updatedAt": "2026-07-28T10:00:00Z"
+  },
+  {
+    "id": "item_017",
+    "sellerId": "seller_006",
+    "title": "CS2 皮肤 · AK-47 红线 (StatTrak)",
+    "description": "## CS2 皮肤\n\n- AK-47 | Redline (StatTrak)\n- 崭新出厂\n- 接受 USDT / 微信",
+    "category": "digital",
+    "tags": ["CS2", "AK-47", "皮肤"],
+    "price": { "amount": 0.85, "currency": "ETH", "fiatEstimate": 2890 },
+    "originalPrice": { "amount": 1.2, "currency": "ETH" },
+    "deliveryType": "account_credentials",
+    "deliveryPreview": "Steam 交易链接",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/7f1d1d/fff?text=AK-47+Redline", "alt": "AK-47" }
+    ],
+    "status": "active",
+    "viewCount": 567,
+    "favoriteCount": 89,
+    "createdAt": "2026-07-26T16:00:00Z",
+    "updatedAt": "2026-07-26T16:00:00Z"
+  },
+  {
+    "id": "item_018",
+    "sellerId": "seller_006",
+    "title": "原神账号 · 冒险等阶 60 · 5+ 5星角色",
+    "description": "## 原神账号\n\n- 冒险等阶 60\n- 5 星角色：雷电将军 / 钟离 / 魈 / 甘雨 / 万叶\n- 5 星武器若干\n- 邮箱可改",
+    "category": "digital",
+    "tags": ["原神", "账号", "5星"],
+    "price": { "amount": 0, "currency": "CNY", "fiatEstimate": 0 },
+    "deliveryType": "account_credentials",
+    "deliveryPreview": "账号 + 邮箱验证",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/4f46e5/fff?text=Genshin", "alt": "原神" }
+    ],
+    "status": "active",
+    "viewCount": 1234,
+    "favoriteCount": 167,
+    "createdAt": "2026-07-24T11:00:00Z",
+    "updatedAt": "2026-07-24T11:00:00Z"
+  },
+  {
+    "id": "item_019",
+    "sellerId": "seller_006",
+    "title": "Minecraft Java 账号 · 十年老号 · 正版",
+    "description": "## MC 账号\n\n- Java 正版\n- 注册时间：2014 年\n- 可改邮箱",
+    "category": "digital",
+    "tags": ["Minecraft", "正版", "老号"],
+    "price": { "amount": 0.05, "currency": "ETH", "fiatEstimate": 170 },
+    "deliveryType": "account_credentials",
+    "deliveryPreview": "Mojang 账号信息",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/16a34a/fff?text=Minecraft", "alt": "MC" }
+    ],
+    "status": "active",
+    "viewCount": 345,
+    "favoriteCount": 28,
+    "createdAt": "2026-07-22T13:00:00Z",
+    "updatedAt": "2026-07-22T13:00:00Z"
+  },
+  {
+    "id": "item_020",
+    "sellerId": "seller_006",
+    "title": "Steam 充值卡 · 100 USD · 数字卡密",
+    "description": "## Steam 卡\n\n- 面值：100 USD\n- 数字卡密，发货即时\n- 接受 USDT",
+    "category": "digital",
+    "tags": ["Steam", "充值卡"],
+    "price": { "amount": 0.03, "currency": "ETH", "fiatEstimate": 102 },
+    "deliveryType": "license_key",
+    "deliveryPreview": "数字卡密（站内信）",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/171717/fff?text=Steam+Card", "alt": "Steam Card" }
+    ],
+    "status": "active",
+    "viewCount": 892,
+    "favoriteCount": 67,
+    "createdAt": "2026-07-20T18:00:00Z",
+    "updatedAt": "2026-07-20T18:00:00Z"
+  },
+  {
+    "id": "item_021",
+    "sellerId": "seller_002",
+    "title": "Supreme Box Logo Hoodie FW22 95新",
+    "description": "## Supreme\n\n- Box Logo Hoodie FW22\n- 黑色 M 码\n- 95新，无瑕疵\n- 配件：原装吊牌",
+    "category": "physical",
+    "tags": ["Supreme", "Box Logo", "95新"],
+    "price": { "amount": 4200, "currency": "CNY", "fiatEstimate": 578 },
+    "originalPrice": { "amount": 5800, "currency": "CNY" },
+    "condition": "good",
+    "shippingMethod": "delivery",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x800/dc2626/fff?text=Supreme+Box", "alt": "Supreme" }
+    ],
+    "status": "active",
+    "viewCount": 456,
+    "favoriteCount": 38,
+    "createdAt": "2026-07-26T14:00:00Z",
+    "updatedAt": "2026-07-26T14:00:00Z"
+  },
+  {
+    "id": "item_022",
+    "sellerId": "seller_002",
+    "title": "Air Jordan 1 \"Chicago\" 9成新",
+    "description": "## AJ1 Chicago\n\n- 配色：Chicago\n- US 9 / 42.5 码\n- 9成新，鞋底轻微磨损\n- 原盒配件齐全",
+    "category": "physical",
+    "tags": ["AJ1", "Chicago", "9成新"],
+    "price": { "amount": 3899, "currency": "CNY", "fiatEstimate": 537 },
+    "originalPrice": { "amount": 4999, "currency": "CNY" },
+    "condition": "good",
+    "shippingMethod": "delivery",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/dc2626/fff?text=AJ1+Chicago", "alt": "AJ1" }
+    ],
+    "status": "active",
+    "viewCount": 678,
+    "favoriteCount": 54,
+    "createdAt": "2026-07-23T10:00:00Z",
+    "updatedAt": "2026-07-23T10:00:00Z"
+  },
+  {
+    "id": "item_023",
+    "sellerId": "seller_002",
+    "title": "Vintage 古着外套 · 80s Levi's Type III 牛仔夹克",
+    "description": "## Vintage Levi's\n\n- 80 年代 Levi's Type III 牛仔夹克\n- Made in USA\n- L 码，正常穿着",
+    "category": "physical",
+    "tags": ["Vintage", "Levi's", "古着"],
+    "price": { "amount": 680, "currency": "CNY", "fiatEstimate": 93 },
+    "shippingMethod": "delivery",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x800/1e40af/fff?text=Levis+Type+III", "alt": "Levi's" }
+    ],
+    "status": "active",
+    "viewCount": 234,
+    "favoriteCount": 19,
+    "createdAt": "2026-07-21T16:00:00Z",
+    "updatedAt": "2026-07-21T16:00:00Z"
+  },
+  {
+    "id": "item_024",
+    "sellerId": "seller_002",
+    "title": "Yeezy Boost 350 V2 \"Zebra\" 95新",
+    "description": "## Yeezy 350 V2\n\n- 配色：Zebra\n- US 9 / 42.5 码\n- 95新，鞋底干净",
+    "category": "physical",
+    "tags": ["Yeezy", "350 V2", "95新"],
+    "price": { "amount": 1899, "currency": "CNY", "fiatEstimate": 261 },
+    "originalPrice": { "amount": 2599, "currency": "CNY" },
+    "condition": "good",
+    "shippingMethod": "delivery",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x400/e5e5e5/000?text=Yeezy+Zebra", "alt": "Yeezy" }
+    ],
+    "status": "active",
+    "viewCount": 389,
+    "favoriteCount": 31,
+    "createdAt": "2026-07-19T11:00:00Z",
+    "updatedAt": "2026-07-19T11:00:00Z"
+  },
+  {
+    "id": "item_025",
+    "sellerId": "seller_002",
+    "title": "北面 Nuptse 700 蓬羽绒服 · 黑色 · 99新",
+    "description": "## TNF Nuptse\n\n- 北面 Nuptse 700 蓬羽绒服\n- 黑色 L 码\n- 99新，仅试穿过",
+    "category": "physical",
+    "tags": ["TNF", "Nuptse", "99新"],
+    "price": { "amount": 1580, "currency": "CNY", "fiatEstimate": 217 },
+    "originalPrice": { "amount": 2399, "currency": "CNY" },
+    "condition": "like_new",
+    "shippingMethod": "delivery",
+    "media": [
+      { "type": "image", "url": "https://placehold.co/600x800/000000/fff?text=TNF+Nuptse", "alt": "TNF" }
+    ],
+    "status": "active",
+    "viewCount": 298,
+    "favoriteCount": 24,
+    "createdAt": "2026-07-17T13:00:00Z",
+    "updatedAt": "2026-07-17T13:00:00Z"
+  }
+]

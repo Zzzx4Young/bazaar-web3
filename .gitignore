@@ -1,0 +1,46 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local env overrides (NOT the actual .env)
+.env
+.env.local
+.env.*.local
+
+# Node / Next.js build artifacts (frontend/.gitignore covers in-tree, this is fallback)
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Logs (in-tree)
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# OS temp / editor swap
+.tmp/
+.cache/
+
+# Coverage / test outputs
+coverage/
+.nyc_output/
+
+# Auth / secrets caches (Hermes runs locally, shouldn't be in repo)
+*.pem
+*.key

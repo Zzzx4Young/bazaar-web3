@@ -1,0 +1,42 @@
+[
+  {
+    "id": "banner_001",
+    "title": "🎉 平台上线测试中 · 限时 0 手续费",
+    "subtitle": "所有交易免 escrow 手续费 · 仅限 Sepolia 测试网",
+    "image": "https://placehold.co/1200x400/4338ca/fff?text=Launch+Banner",
+    "link": "/explore?category=electronics",
+    "active": true
+  },
+  {
+    "id": "banner_002",
+    "title": "ENS 域名专场 · 优质 4 字符",
+    "subtitle": "crypto.eth / web3.eth / nft.eth 限时开放",
+    "image": "https://placehold.co/1200x400/0e7490/fff?text=ENS+Special",
+    "link": "/explore?category=digital_assets",
+    "active": true
+  },
+  {
+    "id": "banner_003",
+    "title": "二手 99 新数码专场",
+    "subtitle": "iPhone / MacBook / iPad · 平台担保交易",
+    "image": "https://placehold.co/1200x400/be185d/fff?text=Electronics",
+    "link": "/explore?category=electronics",
+    "active": true
+  },
+  {
+    "id": "banner_004",
+    "title": "源码市场 · 商用授权",
+    "subtitle": "Next.js / React / Tailwind 模板与组件库",
+    "image": "https://placehold.co/1200x400/047857/fff?text=Source+Code",
+    "link": "/explore?category=software_source",
+    "active": true
+  },
+  {
+    "id": "banner_005",
+    "title": "潮牌二手 · 鉴定后发货",
+    "subtitle": "Supreme / AJ / Yeezy · 全程平台 escrow",
+    "image": "https://placehold.co/1200x400/7c2d12/fff?text=Fashion",
+    "link": "/explore?category=secondhand_fashion",
+    "active": true
+  }
+]

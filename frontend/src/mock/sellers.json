@@ -1,0 +1,62 @@
+[
+  {
+    "id": "seller_001",
+    "displayName": "crypto_dev_alice",
+    "avatarSeed": "alice",
+    "joinedAt": "2024-08-12T00:00:00Z",
+    "completedOrders": 142,
+    "rating": 4.9,
+    "ratingCount": 138,
+    "activeItemIds": []
+  },
+  {
+    "id": "seller_002",
+    "displayName": "bob_sneakers",
+    "avatarSeed": "bob",
+    "joinedAt": "2025-01-03T00:00:00Z",
+    "completedOrders": 87,
+    "rating": 4.7,
+    "ratingCount": 85,
+    "activeItemIds": ["item_021", "item_022", "item_023", "item_024", "item_025"]
+  },
+  {
+    "id": "seller_003",
+    "displayName": "ens_trader",
+    "avatarSeed": "ens",
+    "joinedAt": "2023-11-20T00:00:00Z",
+    "completedOrders": 56,
+    "rating": 5.0,
+    "ratingCount": 54,
+    "activeItemIds": ["item_006", "item_007", "item_008", "item_009", "item_010"]
+  },
+  {
+    "id": "seller_004",
+    "displayName": "mobile_zone",
+    "avatarSeed": "mobile",
+    "joinedAt": "2024-05-18T00:00:00Z",
+    "completedOrders": 234,
+    "rating": 4.6,
+    "ratingCount": 228,
+    "activeItemIds": ["item_001", "item_002", "item_003", "item_004", "item_005"]
+  },
+  {
+    "id": "seller_005",
+    "displayName": "code_market",
+    "avatarSeed": "code",
+    "joinedAt": "2024-02-14T00:00:00Z",
+    "completedOrders": 178,
+    "rating": 4.8,
+    "ratingCount": 175,
+    "activeItemIds": ["item_011", "item_012", "item_013", "item_014", "item_015"]
+  },
+  {
+    "id": "seller_006",
+    "displayName": "gamer_swap",
+    "avatarSeed": "gamer",
+    "joinedAt": "2025-03-08T00:00:00Z",
+    "completedOrders": 92,
+    "rating": 4.5,
+    "ratingCount": 90,
+    "activeItemIds": ["item_016", "item_017", "item_018", "item_019", "item_020"]
+  }
+]

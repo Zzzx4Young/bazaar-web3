@@ -1,0 +1,42 @@
+[
+  {
+    "id": "electronics",
+    "label": "电子数码",
+    "itemCategory": "physical",
+    "icon": "Smartphone",
+    "subcategories": ["手机", "笔记本", "平板", "耳机", "游戏机"],
+    "itemIds": ["item_001", "item_002", "item_003", "item_004", "item_005"]
+  },
+  {
+    "id": "digital_assets",
+    "label": "数字资产",
+    "itemCategory": "digital",
+    "icon": "Coins",
+    "subcategories": ["ENS 域名", "NFT", "POAP", "OAT"],
+    "itemIds": ["item_006", "item_007", "item_008", "item_009", "item_010"]
+  },
+  {
+    "id": "software_source",
+    "label": "软件源码",
+    "itemCategory": "digital",
+    "icon": "Code2",
+    "subcategories": ["前端模板", "爬虫脚本", "组件库", "主题"],
+    "itemIds": ["item_011", "item_012", "item_013", "item_014", "item_015"]
+  },
+  {
+    "id": "game_items",
+    "label": "游戏道具",
+    "itemCategory": "digital",
+    "icon": "Gamepad2",
+    "subcategories": ["Steam", "CS2", "原神", "Minecraft"],
+    "itemIds": ["item_016", "item_017", "item_018", "item_019", "item_020"]
+  },
+  {
+    "id": "secondhand_fashion",
+    "label": "二手服饰",
+    "itemCategory": "physical",
+    "icon": "Shirt",
+    "subcategories": ["潮牌", "球鞋", "古着", "外套"],
+    "itemIds": ["item_021", "item_022", "item_023", "item_024", "item_025"]
+  }
+]
