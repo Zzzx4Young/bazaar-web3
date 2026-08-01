@@ -32,7 +32,7 @@
   {
     "id": "order_004",
     "itemId": "item_006",
-    "buyerId": "seller_001",
+    "buyerId": "user_001",
     "sellerId": "seller_003",
     "amount": { "amount": 12.5, "currency": "ETH" },
     "status": "completed",
@@ -42,7 +42,7 @@
   {
     "id": "order_005",
     "itemId": "item_012",
-    "buyerId": "seller_001",
+    "buyerId": "user_001",
     "sellerId": "seller_005",
     "amount": { "amount": 0.08, "currency": "ETH" },
     "status": "completed",
@@ -52,7 +52,7 @@
   {
     "id": "order_006",
     "itemId": "item_021",
-    "buyerId": "seller_001",
+    "buyerId": "user_001",
     "sellerId": "seller_002",
     "amount": { "amount": 4200, "currency": "CNY" },
     "status": "pending_payment",
@@ -62,7 +62,7 @@
   {
     "id": "order_007",
     "itemId": "item_017",
-    "buyerId": "seller_001",
+    "buyerId": "user_001",
     "sellerId": "seller_006",
     "amount": { "amount": 0.85, "currency": "ETH" },
     "status": "cancelled",

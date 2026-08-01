@@ -27,7 +27,7 @@ export default function ListingDetailPage({ params }: Props) {
   if (!item) notFound()
 
   const seller = findSeller(item.sellerId)
-  const { isFavorite, toggle } = useFavoriteStore()
+  const { toggle, isFavorite } = useFavoriteStore()
   const favorited = isFavorite(item.id)
 
   const [buyOpen, setBuyOpen] = useState(false)

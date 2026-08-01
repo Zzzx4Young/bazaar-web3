@@ -36,7 +36,6 @@ export function HeroBanner({ banners }: HeroBannerProps) {
           sizes="(max-width: 768px) 100vw, 1200px"
           className="object-cover"
           priority
-          unoptimized
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">

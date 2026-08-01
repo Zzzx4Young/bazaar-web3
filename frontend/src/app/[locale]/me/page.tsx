@@ -13,7 +13,12 @@ export default function MePage() {
   const [tab, setTab] = useState<'buyer' | 'seller'>('buyer')
 
   const buyerOrders = useMemo(() => selectByBuyer(user.id)(orderState), [orderState, user.id])
-  const sellerOrders = useMemo(() => selectBySeller(user.id)(orderState), [orderState, user.id])
+  // Match orders against the user's linkedSellerId (mock) so that a registered
+  // merchant sees both their personal buys and their merchant-side sales.
+  const sellerOrders = useMemo(
+    () => selectBySeller(user.linkedSellerId ?? user.id)(orderState),
+    [orderState, user.id, user.linkedSellerId]
+  )
 
   return (
     <div className="space-y-6">

@@ -4,6 +4,8 @@ import { Link, usePathname } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/layout/mode-toggle'
+import { FavoritesLink } from '@/components/layout/favorites-link'
+import { BrandLogo } from '@/components/layout/brand-logo'
 
 export function TopNav() {
   const t = useTranslations('nav')
@@ -13,18 +15,16 @@ export function TopNav() {
     { href: '/', label: t('home') },
     { href: '/explore', label: t('explore') },
     { href: '/publish', label: t('publish') },
-    { href: '/favorites', label: t('favorites') },
+    { href: '/notifications', label: '通知' },
     { href: '/me', label: t('me') }
   ] as const
 
   return (
     <header className="border-b">
       <div className="container flex h-14 items-center justify-between gap-4">
-        <Link href="/" className="font-semibold">
-          Bazaar Web3
-        </Link>
-        <nav className="flex gap-4 text-sm">
-          {links.map(link => {
+        <BrandLogo />
+        <nav className="flex items-center gap-4 text-sm">
+          {links.slice(0, 4).map(link => {
             const active = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))
             return (
               <Link
@@ -36,6 +36,7 @@ export function TopNav() {
               </Link>
             )
           })}
+          <FavoritesLink />
         </nav>
         <div className="flex items-center gap-2">
           <ModeToggle />

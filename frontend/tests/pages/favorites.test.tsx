@@ -4,8 +4,8 @@ import FavoritesPage from '@/app/[locale]/favorites/page'
 
 // Mock the next-intl Link to render plain anchors so the test can read hrefs
 vi.mock('@/i18n/routing', () => ({
-  Link: ({ href, children }: { href: string; children: React.ReactNode }) => (
-    <a href={href}>{children}</a>
+  Link: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
+    <a href={href} className={className}>{children}</a>
   )
 }))
 

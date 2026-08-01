@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { TopNav } from '@/components/layout/top-nav'
 import { LanguageSwitcher } from '@/components/layout/language-switcher'
 import { ThemeProvider } from '@/components/layout/theme-provider'
+import { ThemeFaviconSync } from '@/components/layout/theme-favicon-sync'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
 import './globals.css'
@@ -43,6 +44,7 @@ export default async function LocaleLayout({
       <body className="min-h-screen bg-background font-sans antialiased">
         <NextIntlClientProvider>
           <ThemeProvider>
+            <ThemeFaviconSync />
             <TopNav />
             <main className="container py-6">{children}</main>
             <footer className="mt-12 border-t py-6">

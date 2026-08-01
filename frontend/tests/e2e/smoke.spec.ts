@@ -40,9 +40,9 @@ test.describe('language switch', () => {
     await switcher.click()
     await page.waitForURL(/\/en/)
 
-    await expect(page.getByRole('link', { name: 'Home' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Explore' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Publish' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Home', exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Explore', exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Publish', exact: true })).toBeVisible()
   })
 })
 
