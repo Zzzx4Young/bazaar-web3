@@ -56,7 +56,7 @@ export function applyFilters(items: Item[], filter: FilterState): Item[] {
 
   // 物品成色（仅实物）
   if (filter.condition) {
-    result = result.filter(i => i.condition === filter.condition)
+    result = result.filter(i => i.category === 'digital' || i.condition === filter.condition)
   }
 
   // 排序

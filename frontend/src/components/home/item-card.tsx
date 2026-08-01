@@ -32,7 +32,7 @@ export function ItemCard({ item, seller }: ItemCardProps) {
               数字
             </Badge>
           )}
-          {item.originalPrice && (
+          {item.originalPrice && item.originalPrice.amount > item.price.amount && (
             <Badge className="absolute left-2 top-2" variant="destructive">
               降价
             </Badge>

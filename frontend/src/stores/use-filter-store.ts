@@ -19,7 +19,14 @@ interface FilterStore extends FilterState {
 const defaultState: FilterState = {
   sortBy: 'newest',
   page: 1,
-  pageSize: 12
+  pageSize: 12,
+  category: undefined,
+  itemCategory: undefined,
+  keyword: undefined,
+  priceMin: undefined,
+  priceMax: undefined,
+  currency: undefined,
+  condition: undefined
 }
 
 export const useFilterStore = create<FilterStore>(set => ({
@@ -32,5 +39,5 @@ export const useFilterStore = create<FilterStore>(set => ({
   setSortBy: sortBy => set(state => ({ ...state, sortBy, page: 1 })),
   setKeyword: keyword => set(state => ({ ...state, keyword, page: 1 })),
   setPage: page => set(state => ({ ...state, page })),
-  reset: () => set({ ...defaultState })
+  reset: () => set(state => ({ ...state, ...defaultState })),
 }))

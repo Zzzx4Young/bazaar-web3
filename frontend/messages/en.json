@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "title": "Bazaar Web3 — Crypto-Powered C2C Marketplace",
+    "description": "Frontend prototype of a C2C marketplace for crypto-native communities. Mock USDT/ETH escrow on Sepolia testnet.",
+    "siteName": "Bazaar Web3"
+  },
+  "nav": {
+    "home": "Home",
+    "explore": "Explore",
+    "publish": "Publish",
+    "me": "Profile",
+    "login": "Sign in",
+    "myItems": "My Listings",
+    "favorites": "Favorites"
+  },
+  "home": {
+    "featured": "🔥 Featured",
+    "digital": "💎 Digital Assets",
+    "physical": "📦 Physical Goods",
+    "viewAll": "View all →",
+    "nextSteps": "Next milestones",
+    "nextStepsItems": {
+      "mockData": "Wire up 25 mock items + 6 sellers + 12 orders (mock-data-spec.md)",
+      "realPages": "Implement real UI for /explore, /publish, /me",
+      "shadcn": "Add shadcn/ui components (Button / Card / Dialog / Sheet)",
+      "stores": "Zustand stores + localStorage publish flow"
+    }
+  },
+  "footer": {
+    "tagline": "Prototype demo · Sepolia testnet · zero real funds"
+  },
+  "common": {
+    "buy": "Buy now",
+    "contact": "Contact seller",
+    "favorite": "Favorite",
+    "favorited": "Favorited",
+    "share": "Share",
+    "publish": "Publish now",
+    "cancel": "Cancel",
+    "loadMore": "Load more",
+    "noItems": "No items",
+    "viewDetail": "View details",
+    "languageLabel": "Language"
+  }
+}

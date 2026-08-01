@@ -40,6 +40,9 @@ pnpm-debug.log*
 # Coverage / test outputs
 coverage/
 .nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
 
 # Auth / secrets caches (Hermes runs locally, shouldn't be in repo)
 *.pem

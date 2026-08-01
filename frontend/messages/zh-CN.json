@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "title": "Bazaar Web3 — 加密货币 C2C 二手交易平台",
+    "description": "面向海外加密社区的 C2C 二手交易平台原型，支持 USDT / ETH 链上 escrow mock",
+    "siteName": "Bazaar Web3"
+  },
+  "nav": {
+    "home": "首页",
+    "explore": "探索",
+    "publish": "发布",
+    "me": "我的",
+    "login": "登录",
+    "myItems": "我的商品",
+    "favorites": "收藏"
+  },
+  "home": {
+    "featured": "🔥 精选推荐",
+    "digital": "💎 数字资产",
+    "physical": "📦 实物二手",
+    "viewAll": "查看全部 →",
+    "nextSteps": "下一阶段",
+    "nextStepsItems": {
+      "mockData": "落地 25 条 mock 商品 + 6 个卖家 + 12 条订单（mock-data-spec.md）",
+      "realPages": "实现 /explore /publish /me 三个页面的真实 UI",
+      "shadcn": "接入 shadcn/ui 组件库（Button / Card / Dialog / Sheet 等）",
+      "stores": "Zustand stores + localStorage 发布流程闭环"
+    }
+  },
+  "footer": {
+    "tagline": "原型 demo · Sepolia 测试网 · 0 真实资金"
+  },
+  "common": {
+    "buy": "立即购买",
+    "contact": "联系卖家",
+    "favorite": "收藏",
+    "favorited": "已收藏",
+    "share": "分享",
+    "publish": "立即发布",
+    "cancel": "取消",
+    "loadMore": "加载更多",
+    "noItems": "暂无商品",
+    "viewDetail": "查看详情",
+    "languageLabel": "语言"
+  }
+}

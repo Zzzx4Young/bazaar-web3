@@ -4,16 +4,16 @@ import { useState, useMemo } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ProfileHeader } from '@/components/me/profile-header'
 import { OrderTable } from '@/components/me/order-table'
-import { useOrderStore } from '@/stores/use-order-store'
+import { useOrderStore, selectByBuyer, selectBySeller } from '@/stores/use-order-store'
 import { useUserStore } from '@/stores/use-user-store'
 
 export default function MePage() {
   const user = useUserStore(s => s.user)
-  const { byBuyer, bySeller } = useOrderStore()
+  const orderState = useOrderStore()
   const [tab, setTab] = useState<'buyer' | 'seller'>('buyer')
 
-  const buyerOrders = useMemo(() => byBuyer(user.id), [byBuyer, user.id])
-  const sellerOrders = useMemo(() => bySeller(user.id), [bySeller, user.id])
+  const buyerOrders = useMemo(() => selectByBuyer(user.id)(orderState), [orderState, user.id])
+  const sellerOrders = useMemo(() => selectBySeller(user.id)(orderState), [orderState, user.id])
 
   return (
     <div className="space-y-6">

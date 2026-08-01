@@ -2,53 +2,52 @@
 'use client'
 
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import { orders as staticOrders } from '@/lib/mock-data'
-import { useLocalStorage } from '@/hooks/use-local-storage'
 import type { Order, OrderStatus } from '@/types'
 
 interface OrderState {
-  staticOrders: Order[]
   userOrders: Order[]
-  all: () => Order[]
   create: (order: Omit<Order, 'id' | 'createdAt'>) => Order
   updateStatus: (orderId: string, status: OrderStatus) => void
-  byBuyer: (buyerId: string) => Order[]
-  bySeller: (sellerId: string) => Order[]
+  reset: () => void
 }
 
-export function useOrderStore() {
-  const [userOrders, setUserOrders] = useLocalStorage<Order[]>('c2c:orders', [])
-
-  const create = (input: Omit<Order, 'id' | 'createdAt'>): Order => {
-    const order: Order = {
-      ...input,
-      id: `order_user_${Date.now()}`,
-      createdAt: new Date().toISOString()
+export const useOrderStore = create<OrderState>()(
+  persist(
+    set => ({
+      userOrders: [],
+      create: (input: Omit<Order, 'id' | 'createdAt'>): Order => {
+        const order: Order = {
+          ...input,
+          id: `order_user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          createdAt: new Date().toISOString()
+        }
+        set(state => ({ userOrders: [order, ...state.userOrders] }))
+        return order
+      },
+      updateStatus: (orderId, status) => {
+        set(state => ({
+          userOrders: state.userOrders.map(o => (o.id === orderId ? { ...o, status } : o))
+        }))
+      },
+      reset: () => set({ userOrders: [] })
+    }),
+    {
+      name: 'c2c:orders',
+      storage: createJSONStorage(() => (typeof window !== 'undefined' ? window.localStorage : ({} as Storage)))
     }
-    setUserOrders([order, ...userOrders])
-    return order
-  }
+  )
+)
 
-  const updateStatus = (orderId: string, status: OrderStatus) => {
-    setUserOrders(
-      userOrders.map(o => (o.id === orderId ? { ...o, status } : o))
-    )
-  }
+// Pure selectors — derived from current state + static orders
+export const selectAllOrders = (s: OrderState): Order[] => [
+  ...s.userOrders,
+  ...staticOrders
+]
 
-  const all = (): Order[] => [...userOrders, ...staticOrders]
+export const selectByBuyer = (buyerId: string) => (s: OrderState): Order[] =>
+  selectAllOrders(s).filter(o => o.buyerId === buyerId)
 
-  const byBuyer = (buyerId: string) => all().filter(o => o.buyerId === buyerId)
-  const bySeller = (sellerId: string) => all().filter(o => o.sellerId === sellerId)
-
-  return {
-    staticOrders,
-    userOrders,
-    all,
-    create,
-    updateStatus,
-    byBuyer,
-    bySeller
-  }
-}
-
-export { create }
+export const selectBySeller = (sellerId: string) => (s: OrderState): Order[] =>
+  selectAllOrders(s).filter(o => o.sellerId === sellerId)
