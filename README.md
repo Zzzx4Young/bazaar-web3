@@ -1,125 +1,196 @@
-# CryptoC2C — Crypto-Powered C2C Marketplace (Frontend Prototype)
+# Bazaar Web3 — Crypto-Powered C2C Marketplace (Frontend Prototype)
 
-> **项目代号**: CryptoC2C
-> **当前阶段**: 纯前端原型 demo（Next.js + Mock 数据）
-> **目标**: 服务海外加密社区的 C2C 二手交易平台，以 USDT / ETH 等加密货币为支付手段
-> **状态**: 前端 prototype 已完成（7 个路由 build 通过 + dev server 实测）
+> A peer-to-peer marketplace prototype for crypto-native communities. Buy and sell
+> physical goods and digital assets with USDT / ETH on a Sepolia testnet escrow mock.
+> This commit ships the **frontend prototype only** — no backend, no contracts, no
+> real wallet integration.
 
 ---
 
-## 🚀 Quick Start
+## ⚡ Quick Start
 
 ```bash
-cd frontend
+# 1. Clone
+git clone https://github.com/Zzzx4Young/bazaar-web3.git
+cd bazaar-web3/frontend
+
+# 2. Install (≈ 1 minute, 422 MB)
 npm install
-npm run dev          # → http://localhost:3000
+
+# 3. Run dev server
+npm run dev
+# → http://localhost:3000
 ```
 
-其他命令：
+That's it. All mock data, sample images (placehold.co / picsum.photos), and wallet
+flows are pre-wired. No `.env` required.
 
-```bash
-npm run build        # 生产构建
-npm run typecheck    # TypeScript 检查
-npm run lint         # ESLint
-```
-
-## ✨ 已实现的页面（7 个路由）
-
-| 路由 | 内容 | 状态 |
-|---|---|---|
-| `/` | 首页（轮播 banner + 分类 tabs + 商品瀑布流） | ✓ |
-| `/explore` | 列表 + 多维度筛选（关键词 / 分类 / 类型 / 币种 / 成色 / 排序） | ✓ |
-| `/listing/[id]` | 详情页（媒体轮播 + Markdown + 卖家卡片 + BuyModal + ChatDrawer） | ✓ |
-| `/publish` | 发布表单（实物 / 数字切换 + Zod 校验 + localStorage 持久化） | ✓ |
-| `/me` | 个人中心（ProfileHeader + 订单 Tab + 收藏） | ✓ |
-| `/seller/[id]` | 公开卖家页（头像 / 评价 / 在售商品） | ✓ |
-
-**所有交互在 Sepolia 测试网模拟，0 真实资金**。
-
-## 🛠️ 技术栈
-
-- **框架**: Next.js 14 (App Router) + TypeScript 5
-- **UI**: Tailwind CSS + shadcn/ui (Radix UI + lucide-react)
-- **状态管理**: Zustand（带 localStorage 持久化）
-- **表单**: React Hook Form + Zod
-- **Markdown**: react-markdown + remark-gfm
-- **媒体轮播**: embla-carousel-react
-- **数据**: 25 条商品 / 6 个卖家 / 12 条订单 / 5 个 banner（mock JSON）
-
-完整依赖见 `frontend/package.json`（25 项 runtime + 12 项 dev）。
-
-## ⚠️ 这是原型，不是产品
-
-- 0 后端（API Routes 没启用）
-- 0 智能合约（mvp-spec.md 描述的链上 escrow **未实现**）
-- 0 真钱包连接（WalletConnect **未集成**）
-- 0 真实 KYC / 合规 / 审计
-- 发布 / 购买 / 收藏 / 订单只写到 localStorage
-
-**仅用于 UI 设计验证 / 投资人演示 / 内部 review**。
-
-## 📚 文档结构
-
-所有详细文档在 `docs/` 子目录。
-
-### 🚀 当前活跃
-
-| 文件 | 用途 | 状态 |
-|---|---|---|
-| [mvp-spec.md](./docs/mvp-spec.md) | 缩减版 A spec — 链上 escrow 真后端路线（**当前未实施，仅作存档**） | 存档 |
-| [mvp-tickets.md](./docs/mvp-tickets.md) | 20 张 ticket（链上 escrow 路线，已被前端原型覆盖） | 存档 |
-| [frontend-prototype-roadmap.md](./docs/frontend-prototype-roadmap.md) | 纯前端原型路线规划 | ✓ 已落地 |
-| [frontend-stack-recommendation.md](./docs/frontend-stack-recommendation.md) | Next.js + shadcn/ui 技术选型 | ✓ 已落地 |
-| [mock-data-spec.md](./docs/mock-data-spec.md) | 25 条商品 + 6 个卖家 + 12 条订单 mock 规格 | ✓ 已落地 |
-| [problem.md](./docs/problem.md) | review findings — spec 待决策 10 条 | 部分待决 |
-| [hook-issues.md](./docs/hook-issues.md) | Hermes verification hook 修复记录 | ✓ 已修复 |
-| [CHANGELOG.md](./docs/CHANGELOG.md) | 变更日志 | ✓ |
-
-### 🗄️ 已冻结（决策存档）
-
-[01-product-overview.md](./docs/01-product-overview.md) · [02-market-analysis.md](./docs/02-market-analysis.md) · [03-compliance.md](./docs/03-compliance.md) · [04-architecture.md](./docs/04-architecture.md) · [05-payment-flow.md](./docs/05-payment-flow.md) · [06-tech-stack.md](./docs/06-tech-stack.md) · [07-mvp-roadmap.md](./docs/07-mvp-roadmap.md) · [08-revenue-model.md](./docs/08-revenue-model.md) · [09-risks.md](./docs/09-risks.md) · [10-references.md](./docs/10-references.md)
+**Requirements**: Node.js ≥ 18.17.0 (the project ships `packageManager: npm@10.9.8`).
 
 ---
 
-## 🎯 项目背景（保留 spec 核心陈述）
+## 🗺️ What's in this prototype
 
-**问题**: 全球加密货币持有者约 5 亿，但**使用加密货币购买实物商品**的渠道极为有限 —— 大多数电商不支持加密支付，而专门面向加密社区的二手交易平台几乎空白。
+| Route | Description |
+|---|---|
+| `/` | Hero banner carousel + category tabs + featured / digital / physical grids |
+| `/explore` | Filter sidebar (keyword / category / type / currency / condition / sort) + infinite scroll-ready grid |
+| `/listing/[id]` | Media carousel + Markdown description + seller card + **BuyModal** (3-step escrow sim) + **ChatDrawer** (local message log) |
+| `/publish` | Physical / digital toggle, Zod cross-field validation, image upload, draft persisted to localStorage |
+| `/me` | Profile header + buyer/seller order tabs + favorites |
+| `/seller/[id]` | Public seller page with rating and active listings |
 
-**本路线（纯前端原型）的目的**：在投入链上 escrow + 真后端 + 合规成本前，先用 UI 原型验证产品形态、设计语言、用户旅程是否合理。
+**Mock dataset**: 25 items · 6 sellers · 12 orders · 5 banners · 5 categories.
 
-**完整产品终局路线**：见 [mvp-spec.md](./docs/mvp-spec.md) 与 [00-project-flow.md](./docs/00-project-flow.md) — 链上 escrow + Gnosis Safe 多签 + 邮箱验证 + Sepolia 测试网，不接中国大陆用户。
+---
 
-## 📂 项目结构
+## 🧰 Tech stack
+
+- **Framework**: Next.js 14 (App Router) + TypeScript 5
+- **UI**: Tailwind CSS + shadcn/ui (Radix primitives + lucide-react)
+- **State**: Zustand with `localStorage` persistence
+- **Forms**: React Hook Form + Zod
+- **Markdown**: react-markdown + remark-gfm
+- **Media**: embla-carousel-react
+- **Data**: static JSON imports under `src/mock/`
+
+Full dependency list in [`frontend/package.json`](./frontend/package.json) — 25 runtime deps, 12 dev deps.
+
+---
+
+## 📜 Available scripts
+
+Run from `frontend/`:
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start dev server on http://localhost:3000 |
+| `npm run build` | Production build (Next.js) |
+| `npm run start` | Serve the production build |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint with `next/core-web-vitals` |
+| `npm run format` | Prettier across `src/` |
+
+---
+
+## ⚠️ What's NOT in this prototype
+
+This is a UI prototype, not a product. Specifically:
+
+- ❌ **No backend** — there is no API server, no Postgres, no S3
+- ❌ **No smart contracts** — the on-chain escrow flow described in
+  [`docs/mvp-spec.md`](./docs/mvp-spec.md) is **not implemented** here, only mocked
+- ❌ **No real wallet** — no WalletConnect, no wagmi, no viem. Buttons simulate the flow
+- ❌ **No real KYC / compliance** — see [`docs/03-compliance.md`](./docs/03-compliance.md)
+  for what the eventual product must do
+- ❌ **No audit** — never deploy the smart contracts described in `mvp-spec.md` without
+  a third-party audit
+
+Publish / buy / favorite / order actions only write to `localStorage`. Reload the tab
+and they're gone (intentional — keeps the demo stateless).
+
+---
+
+## 🏗️ Project structure
 
 ```
-crypto-c2c/
-├── README.md                     ← 你正在读
-├── frontend/                     ← Next.js 14 + shadcn/ui 项目
+bazaar-web3/
+├── README.md                     ← you are here
+├── LICENSE
+├── .gitignore
+├── frontend/                     ← Next.js 14 app (this is what you run)
 │   ├── src/
-│   │   ├── app/                  ← 路由 (7 个页面)
-│   │   ├── components/           ← UI 组件 (home/listing/publish/me/explore + shadcn/ui)
-│   │   ├── stores/               ← Zustand stores (5 个)
-│   │   ├── lib/                  ← 工具函数 + mock data
-│   │   ├── hooks/                ← custom hooks
-│   │   ├── types/                ← TS 类型定义
-│   │   └── mock/                 ← 25+6+12+5 mock JSON
+│   │   ├── app/                  ← routes: 7 pages + globals.css + layout
+│   │   ├── components/
+│   │   │   ├── ui/               ← shadcn/ui primitives (button, card, dialog, ...)
+│   │   │   ├── home/             ← hero, category tabs, item card, grid
+│   │   │   ├── listing/          ← carousel, markdown, seller card, buy modal, chat drawer
+│   │   │   ├── explore/          ← filter sidebar, sort dropdown
+│   │   │   ├── publish/          ← publish form
+│   │   │   └── me/               ← profile header, order table
+│   │   ├── stores/               ← Zustand stores (items / filters / orders / user / favorites)
+│   │   ├── lib/                  ← cn() / format / filter utils + mock-data loader
+│   │   ├── hooks/                ← useLocalStorage
+│   │   ├── types/                ← TS schemas (Item, Seller, Order, ...)
+│   │   └── mock/                 ← 25 items + 6 sellers + 12 orders + 5 banners + 5 categories
+│   ├── public/
 │   ├── package.json
 │   └── ...
-└── docs/                         ← 完整文档
-    ├── frontend-prototype-roadmap.md
-    ├── mvp-spec.md
-    ├── mvp-tickets.md
-    ├── mock-data-spec.md
-    ├── problem.md
-    ├── hook-issues.md
-    ├── CHANGELOG.md
-    └── 01-10*.md (frozen)
+└── docs/                         ← project documentation
+    ├── frontend-prototype-roadmap.md    ← plan of record for this prototype
+    ├── frontend-stack-recommendation.md ← tech choices with rationale
+    ├── mock-data-spec.md                ← mock dataset schema and contents
+    ├── mvp-spec.md                      ← product-endgame reference (chain escrow)
+    ├── mvp-tickets.md                   ← vertical tickets for the endgame (decision archive)
+    ├── problem.md                       ← review findings on the endgame spec
+    ├── hook-issues.md                   ← Hermes verification-loop fix log
+    ├── CHANGELOG.md                     ← day-by-day build log of this prototype
+    └── 01-10*.md (frozen)               ← feasibility archive from the original spec pass
 ```
 
-## 📞 联系方式（占位）
+---
 
-待补充。
+## 📚 Documentation index
 
-## 📝 许可证
+### Active (this prototype)
+- [`docs/frontend-prototype-roadmap.md`](./docs/frontend-prototype-roadmap.md) —
+  what we built and why, by phase
+- [`docs/frontend-stack-recommendation.md`](./docs/frontend-stack-recommendation.md) —
+  dependency versions and rationale
+- [`docs/mock-data-spec.md`](./docs/mock-data-spec.md) — 25-item mock dataset schema
+- [`docs/hook-issues.md`](./docs/hook-issues.md) — local Hermes config tweaks
+- [`docs/CHANGELOG.md`](./docs/CHANGELOG.md) — per-commit history of the prototype
 
-待定。
+### Reference / decision archive
+- [`docs/mvp-spec.md`](./docs/mvp-spec.md) and
+  [`docs/mvp-tickets.md`](./docs/mvp-tickets.md) — the **endgame** product spec
+  (chain-escrow + Sepolia + Gnosis Safe + email-only KYC). **Not implemented in this
+  commit.** Kept for traceability when the project graduates from prototype to product.
+- [`docs/problem.md`](./docs/problem.md) — 10 review findings from walking through
+  `mvp-spec.md` (3 blockers, 7 yellows). Most are N/A against the prototype path;
+  see file for current status.
+- [`docs/01-product-overview.md`](./docs/01-product-overview.md) through
+  [`docs/10-references.md`](./docs/10-references.md) — the original feasibility pass
+  (TAM/SAM/SOM, compliance, payment flow, risks, references). Frozen.
+
+---
+
+## 🎯 Project context
+
+**Problem.** Roughly 500M people hold crypto, but very few places accept it for
+real-world goods. Stripe, eBay, and Amazon have evaluated crypto payments for years
+and shipped nothing for the C2C user.
+
+**Where this prototype fits.** Before sinking budget into smart contracts, audits,
+KYC vendors, and a payment-flow backend, we want to validate the *shape* of the
+product: does the UI make sense, do the flows feel right, do mock transactions
+behave the way a real user would expect?
+
+**Endgame (see `mvp-spec.md`).** Real on-chain escrow on Sepolia (with optional
+Gnosis Safe 2-of-3 multisig for admin operations), email-only KYC, 1% platform
+fee, no Mainnet deployment without an audit.
+
+**Geography.** The endgame product explicitly excludes mainland China users. This
+prototype ships no region restrictions at all — it's a UI demo.
+
+---
+
+## 🤝 Contributing
+
+This is a single-author prototype right now. If you want to extend it:
+
+1. **Add a page**: route under `frontend/src/app/<segment>/page.tsx`, then wire it
+   into the top nav in `frontend/src/app/layout.tsx`
+2. **Add a mock item**: edit `frontend/src/mock/items.json` (see
+   `docs/mock-data-spec.md` §4.1 for the schema)
+3. **Add a shadcn component**: `cd frontend && npx shadcn@2.3.0 add <name>`
+
+---
+
+## 📞 Contact
+
+TBD.
+
+## 📄 License
+
+See [`LICENSE`](./LICENSE).
