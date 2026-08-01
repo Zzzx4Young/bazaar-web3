@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { NextIntlClientProvider } from 'next-intl'
 import { TopNav } from '@/components/layout/top-nav'
 import { LanguageSwitcher } from '@/components/layout/language-switcher'
+import { ThemeProvider } from '@/components/layout/theme-provider'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
 import './globals.css'
@@ -41,17 +42,19 @@ export default async function LocaleLayout({
     <html lang={locale}>
       <body className="min-h-screen bg-background font-sans antialiased">
         <NextIntlClientProvider>
-          <TopNav />
-          <main className="container py-6">{children}</main>
-          <footer className="mt-12 border-t py-6">
-            <div className="container flex flex-col items-center justify-between gap-3 text-xs text-muted-foreground sm:flex-row">
-              <span>
-                Bazaar Web3 ·{' '}
-                <FooterTagline />
-              </span>
-              <LanguageSwitcher />
-            </div>
-          </footer>
+          <ThemeProvider>
+            <TopNav />
+            <main className="container py-6">{children}</main>
+            <footer className="mt-12 border-t py-6">
+              <div className="container flex flex-col items-center justify-between gap-3 text-xs text-muted-foreground sm:flex-row">
+                <span>
+                  Bazaar Web3 ·{' '}
+                  <FooterTagline />
+                </span>
+                <LanguageSwitcher />
+              </div>
+            </footer>
+          </ThemeProvider>
         </NextIntlClientProvider>
       </body>
     </html>

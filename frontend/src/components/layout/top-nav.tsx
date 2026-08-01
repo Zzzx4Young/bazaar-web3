@@ -3,6 +3,7 @@
 import { Link, usePathname } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
+import { ModeToggle } from '@/components/layout/mode-toggle'
 
 export function TopNav() {
   const t = useTranslations('nav')
@@ -12,6 +13,7 @@ export function TopNav() {
     { href: '/', label: t('home') },
     { href: '/explore', label: t('explore') },
     { href: '/publish', label: t('publish') },
+    { href: '/favorites', label: t('favorites') },
     { href: '/me', label: t('me') }
   ] as const
 
@@ -35,9 +37,12 @@ export function TopNav() {
             )
           })}
         </nav>
-        <Button variant="outline" size="sm" disabled title="Auth coming soon">
-          {t('login')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <ModeToggle />
+          <Button variant="outline" size="sm" disabled title="Auth coming soon">
+            {t('login')}
+          </Button>
+        </div>
       </div>
     </header>
   )
