@@ -1,3 +1,5 @@
+'use client'
+
 import { ItemGrid } from '@/components/home/item-grid'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
