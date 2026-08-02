@@ -14,8 +14,8 @@ interface ItemCardProps {
 export function ItemCard({ item, seller }: ItemCardProps) {
   const cover = item.media[0]
   return (
-    <Link href={`/listing/${item.id}`} className="block transition hover:opacity-90">
-      <Card className="overflow-hidden">
+    <Link href={`/listing/${item.id}`} className="block h-full transition hover:opacity-90">
+      <Card className="flex h-full flex-col overflow-hidden">
         <div className="relative aspect-square w-full bg-muted">
           {cover && (
             <Image
@@ -37,7 +37,7 @@ export function ItemCard({ item, seller }: ItemCardProps) {
             </Badge>
           )}
         </div>
-        <CardContent className="p-3">
+        <CardContent className="flex flex-1 flex-col p-3">
           <div className="line-clamp-2 text-sm font-medium" title={item.title}>
             {item.title}
           </div>

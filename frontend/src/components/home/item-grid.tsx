@@ -20,7 +20,7 @@ export function ItemGrid({ items, sellers, title }: ItemGridProps) {
   return (
     <section className="space-y-3">
       {title && <h2 className="text-lg font-semibold">{title}</h2>}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {items.map(item => (
           <ItemCard
             key={item.id}
