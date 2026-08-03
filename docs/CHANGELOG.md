@@ -1,6 +1,108 @@
 # Changelog
 
-记录 crypto-c2c/ 的结构性变更。文档内容的实质修改请直接进对应 .md 看 git diff / 顶部日期。
+记录 bazaar-web3/ 的结构性变更。文档内容的实质修改请直接进对应 .md 看 git diff / 顶部日期。
+
+## 2026-08-03 — Bug fixes pass（卡片等高 / 优化器 / 根 URL / favorites client）
+
+**触发**：8 月 1–2 日大功能 commit 之后 4 个发现的小问题。
+
+**修复**（4 个 commit，`git log HEAD~4..HEAD`）：
+
+1. **`5ba4e7a` — equalize featured card heights** — `item-card.tsx` + `item-grid.tsx` 共 4 行；首页 featured 网格卡片高度不齐（不同标题行数导致）。
+2. **`6ad3d5e` — disable Next.js image optimizer in dev mode** — `next.config.mjs` +5 行；dev 下 placehold.co 走优化器 504，砍掉优化器减少冷启动噪音。
+3. **`77475ed` — redirect root URL to default locale** — 旧 `frontend/middleware.ts`(10 行) 删掉，新 `src/middleware.ts`(24 行) 接管；`/` → `/zh-CN` 默认 locale 跳转从"运气好"变"必然"。
+4. **`861784c` — add 'use client' to /favorites page** — `favorites/page.tsx` +2 行；store 客户端 hook 在 SSG 阶段炸，加 directive 修。
+
+**Verification**：
+
+- `git log --oneline HEAD~4..HEAD` 4 条干净返回
+- working tree clean
+- 没有改 spec / 没有改 mock 数据 / 没有改测试
+
+**Verdict**：全部都是表层修复，不动功能边界。
+
+---
+
+## 2026-08-02 — Dark mode polish + notifications page + favorites badge + 15 tests
+
+**触发**：用户授权"暗色模式 + 通知页 + 收藏徽章"三件套，外加测试覆盖。
+
+**Commit**：`60e177b feat: dark-mode polish + notifications + favorites badge + 15 tests`（22 文件 / +560 / -22）
+
+**新增**：
+
+- **通知页** —— `src/app/[locale]/notifications/page.tsx` (92 行) + `src/mock/notifications.ts` (58 行 mock) + `tests/pages/notifications.test.tsx` (100 行)
+- **收藏徽章** —— `src/components/layout/favorites-link.tsx` (40 行) + `tests/components/favorites-link.test.tsx` (85 行)，top-nav 现显示收藏数
+- **暗色模式打磨** —— `src/components/layout/brand-logo.tsx` (30 行，logo 跟主题切) + `theme-favicon-sync.tsx` (31 行，favicon 跟主题切) + `src/app/[locale]/icon-dark.svg` 暗色专用图标
+- **用户类型扩展** —— `src/types/user.ts` +20 行（加 `emailNotifications` / `theme` 字段）
+- **3 个测试** —— 上面 3 个组件 / 页面各 1 个
+
+**微调**：`me/page.tsx` 7 行 / `top-nav.tsx` 13 行 / `layout.tsx` 2 行 / `mock/orders.json` 8 行（mock 数据时间戳刷新）。
+
+**测试统计**：本次新增 3 个 `.test.tsx`（约 251 行），与下一次买 modal/mode-toggle 改动不重叠。
+
+**做这个的时候 e2e smoke 文件被更新一行** —— `tests/e2e/smoke.spec.ts` 6 行变化（视口 / 暗色脚本稳定化）。
+
+**未做**：❌ 没动后端 / 没动合约 / 没动 mock data schema / 没改 ADR。
+
+---
+
+## 2026-08-02 — Dark mode + favorites page + Vitest 基础落地
+
+**触发**：用户授权"暗色模式 + 收藏页 + 测试基础设施"。这是 8 月 1 日 i18n 之后的第一个功能日。
+
+**Commit**：`ae195ec feat: dark mode + favorites page + 15 tests`（7 文件 / +383 / -14）
+
+**新增**：
+
+- **Dark mode** —— `src/components/layout/theme-provider.tsx` (82 行) + `mode-toggle.tsx` (24 行，top-nav 切换按钮) + `app/[locale]/layout.tsx` 接 provider
+- **Favorites page** —— `src/app/[locale]/favorites/page.tsx` (40 行) + `tests/pages/favorites.test.tsx` (71 行)
+- **Theme 测试** —— `tests/components/theme.test.tsx` (144 行)
+
+**i18n 配合**：`top-nav.tsx` 11 行变化（新增主题切换 + 收藏链接的 i18n key）。
+
+**未做**：❌ 没有通知页（下次加）❌ 没有徽章计数（下次加）❌ 没改 mock data。
+
+**决定节奏**：本次刻意保持"小步提交"——暗色 + 收藏页作为一个原子功能，避免大爆炸。
+
+---
+
+## 2026-08-01 — i18n (zh-CN/en) + 138 tests + 5 bug fixes + ADR-0001
+
+**触发**：8 月 1 日 standing goal 转成"前端原型 demo"路线；用户要求 zh-CN 默认 + 英文学术。
+
+**Commit**：
+
+1. `c6c6ab0 docs: rewrite README for bazaar-web3 GitHub repo onboarding`（README 重写为 GitHub 入口文档）
+2. `c4b18d5 feat: i18n (zh-CN/en) + 138 tests + 5 bug fixes`（43 文件 / +4282 / -205）
+
+**主要变更**：
+
+- **i18n 全面接入** —— next-intl 落地，所有路由从 `src/app/{explore,page,publish,me,layout,...}` 重构到 `src/app/[locale]/...`；`messages/zh-CN.json` + `messages/en.json` 各 45 行；`src/i18n/{request,routing}.ts` 12 行；`language-switcher.tsx` 30 行
+- **测试基础设施** —— `vitest.config.mjs` 26 行 + `tests/setup.ts` 32 行 + `playwright.config.ts` 30 行 + `tests/e2e/smoke.spec.ts` 164 行
+- **Stores** —— `use-order-store.ts` 73 行（zustand + persist 中间件）、`use-filter-store.ts` 11 行
+- **ADR 落地** —— `docs/adr/0001-frontend-prototype-first.md` 148 行（"前端先行"决策，含触发重审条件 = 2026-11-01）
+
+**关于 commit message 里"+ 138 tests"的实情**：
+
+- commit message 里的 "138" 是当时 `npx vitest run` 实际跑过的 test cases 数（10 个 `.test.*` 文件 × 平均 13-14 cases）
+- 但本次 commit **新增的是 10 个测试文件**（1112 行），不是 138 个文件，因此未来 grep 阶段会以"测试文件数"为准
+- 不要在 CHANGELOG / 文档里说"新增 138 个测试文件"，那是错的
+
+**5 bug fixes**（具体哪 5 条没在 commit message 列出，但代码 diff 显示主要是 store persist 中间件 hydration、filter URL 同步、order-status 状态机边界 case）—— 已被后续代码吃掉，不在 main 留痕。
+
+**严格未做**：
+
+- ❌ 没动后端 / 合约 / 真实钱包
+- ❌ 没改 `mvp-spec.md` / `mvp-tickets.md` / `problem.md`（按 ADR-0001 = 决策档案）
+- ❌ 旧 `crypto-c2c` 名字保留在 `docs/CHANGELOG.md` 顶部直至今日（2026-08-03 修）
+
+**Verification**：
+
+- `git diff c4b18d5~1 c4b18d5 --stat` = 43 文件 / +4282 / -205
+- `git ls-tree --name-only -r c4b18d5 | grep '\.test\.' | wc -l` = 10 ✓
+
+---
 
 ## 2026-07-31 — Frontend 最小可启动项目落地（5 路由 + build 通过）
 
