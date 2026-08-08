@@ -152,6 +152,7 @@ bazaar-web3/
 - [`docs/01-product-overview.md`](./docs/01-product-overview.md) through
   [`docs/10-references.md`](./docs/10-references.md) — the original feasibility pass
   (TAM/SAM/SOM, compliance, payment flow, risks, references). Frozen.
+- **Note on `04-06`**: Beyond being the original feasibility archive, `docs/04-architecture.md` + `05-payment-flow.md` + `06-tech-stack.md` also serve as the **industry-standard reference for a web3 C2C 二手 + 数字商品 trading platform**. They are not the current implementation target — that lives in `mvp-spec.md` / `mvp-tickets.md` — but they define what "complete" looks like if the project graduates from prototype to product.
 
 ---
 
