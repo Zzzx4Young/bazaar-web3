@@ -2,6 +2,40 @@
 
 记录 bazaar-web3/ 的结构性变更。文档内容的实质修改请直接进对应 .md 看 git diff / 顶部日期。
 
+## 2026-08-03 — Verification gate pass (晚)
+
+**触发**：`docs/CHANGELOG.md` + `README.md` 文档收尾后，顺手跑一遍 verification gate 确认 8 月 1–3 日 8 个 commit 之后项目仍可运行。
+
+**执行**（4 步 gate，0 步 Playwright）：
+
+```
+$ cd frontend
+$ npm run typecheck    → exit 0 (0 TS errors)
+$ npm run lint         → exit 0 (✔ No ESLint warnings or errors)
+$ npm run test         → 15 files / 149 tests passed in 10.74s
+$ npm run build        → exit 0, 8 routes prerendered (zh-CN + en)
+```
+
+**关键发现 — 实际 test count = 149,不是 commit message 写的 138**：
+
+- commit `c4b18d5` 标题写 "+ 138 tests" — 8-1 当时是 8 个测试文件 + 138 个 test cases
+- 8-2 两个 commit (`60e177b` + `ae195ec`) 加了 5 个新测试文件 + 11 个 test cases
+- 现状：**15 test files / 149 test cases**
+- CHANGELOG 那条 "138 tests" 记录已经是事后描述,没误导,但**实际数是 149**,未来 git log / 文档引用要用 149
+
+**未做**：
+
+- ❌ Playwright e2e 未跑 — `tests/e2e/smoke.spec.ts` 164 行需要浏览器启动,1–3 分钟,留待单独验证
+- ❌ 没 commit 这次的运行结果到仓库 — 验证本身是本地状态,不进版本
+- ❌ 没动 mock data / spec / tickets / backend blueprint
+
+**Verification**：
+
+- `git log --oneline -10` 确认 8 个 commit 都在 main
+- 4 个 gate 全部实跑，没靠推断
+
+---
+
 ## 2026-08-03 — Bug fixes pass（卡片等高 / 优化器 / 根 URL / favorites client）
 
 **触发**：8 月 1–2 日大功能 commit 之后 4 个发现的小问题。
