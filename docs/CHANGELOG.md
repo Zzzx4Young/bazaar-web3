@@ -2,7 +2,57 @@
 
 记录 bazaar-web3/ 的结构性变更。文档内容的实质修改请直接进对应 .md 看 git diff / 顶部日期。
 
-## 2026-08-03 — Verification gate pass (晚)
+## 2026-08-29 — P1 收工（sort i18n + favorites persistence + grid empty + mobile check）
+
+**触发**：8-3 verification gate 后第 1 次集中收日常工作，5 个 commit 落地（P1 路线的全程 4 件 + 1 件 P1 触发未动）。
+
+**5 commits**（`git log` 验证都在 main）：
+
+1. `a6ed062 chore: add deploy + CI + contributing scaffold` — `.github/workflows/ci.yml` + `CONTRIBUTING.md` + `vercel.json` + `package.json` (`screenshot` script)
+2. `4621298 feat(frontend): screenshot script with baseline + daily snapshots` — `frontend/scripts/screenshot.mjs` + `docs/screenshots/v0.1/*` + `docs/screenshots/20260829/*`（baseline vs 改造双存档）
+3. `3d85b4b feat(frontend): empty-state UX + home trust/trending sections` — 共用 `EmptyState` 组件 + `TrustStrip` + `TrendingCategories` 接入首页 + 4 个空状态迁移 + i18n 双语 key + 11 个新测试
+4. `df4fd64 feat(frontend): visual polish (hero gradient + placeholder art + empty halo)` — hero 三层 blob + noise + 5 类目渐变占位卡 + EmptyState halo + Tailwind safelist
+5. `7d92af3 test(frontend): sort dropdown i18n + favorites persistence + grid empty` — SortDropdown 改 i18n (zh/en `explore.sort.{newest,price_asc,price_desc,popular}`) + 4 个 favorites persistence 测试 (替代 3 个 cross-renderer fail) + 5 个 ItemGrid 空状态测试 + 3 个 SortDropdown 结构测试
+
+**文件统计**（`git diff --stat 54949a6..HEAD | tail -1`）：42 files / +1221 / -94。
+
+**Verification（commit 7d92af3 后实跑）**：
+
+```
+$ npm run typecheck    → exit 0
+$ npm run lint         → ✔ No ESLint warnings or errors
+$ npm run test         → 22 files / 180 tests passed in 10.99s
+$ npm run build        → exit 0, 15 routes prerendered
+```
+
+**重要细节 — test count 实跳到 180**：
+
+- 8-3 末态：15 文件 / 149 cases
+- 8-29 末态：**22 文件 / 180 cases**
+- 本次 P1 净 +12（SortDropdown 3 / ItemGrid 5 / favorites persistence 4,扣 3 个 cross-renderer fail 改为 4 个 rehydrate pass）
+
+**关键回头修正 — favorites store 不是 singleton**：
+
+我原本设计 P1-B 时误以为 `useFavoriteStore` 是单例可跨组件即时同步。实跑发现它是 `useState + useLocalStorage`，每次 `mount` 都是独立 React state。改方案：把 4 个 persistence 测试 (`writes to localStorage` / `rehydrates on mount` / `survives remount` / `toggles reflect in same component`) 落进 `cross-render-consistency` describe 块。**真要跨 renderer 即时一致需要 refactor store 为 zustand**（参照 `use-order-store.ts` 的做法），已和用户确认**这次不做**，留待后续。
+
+**Mobile spot-check（已实跑，未 commit）**：
+
+- 用 `screenshots/mobile-check.mjs`（后续删除）在 390×844 viewport 起 Playwright
+- trust strip 自动 2 列（173×173）× 2 行 — **OK**
+- trending categories 在 390 下变 2+2+1（grid-cols-2 — 太密）— **微丑但能用**，等 P2 跟进 horizontal scroll-snap 改造
+- 留作未来 P2 / P3 改进项，**不**计进 5 commit
+
+**未做 / 已 agreed 推迟**：
+
+- ❌ Push(用户做)
+- ❌ Refactor `useFavoriteStore` → zustand（用户拍"暂不动"）
+- ❌ Mobile trending 2+2+1 改 horizontal scroll-snap（丑但能用）
+- ❌ Lighthouse / a11y score 复查（原 P3 计划）
+- ❌ Playwright e2e `smoke.spec.ts` 实际跑过（手册里跑过一次 gate 没 commit）
+
+---
+
+## 2026-08-29 — Verification gate pass (晚)
 
 **触发**：`docs/CHANGELOG.md` + `README.md` 文档收尾后，顺手跑一遍 verification gate 确认 8 月 1–3 日 8 个 commit 之后项目仍可运行。
 
