@@ -60,6 +60,14 @@
       "description": "Put your unused items, accounts, code, or domains up for sale."
     }
   },
+  "explore": {
+    "sort": {
+      "newest": "Newest",
+      "price_asc": "Price: low to high",
+      "price_desc": "Price: high to low",
+      "popular": "Most popular"
+    }
+  },
   "footer": {
     "tagline": "Prototype demo · Sepolia testnet · zero real funds"
   },

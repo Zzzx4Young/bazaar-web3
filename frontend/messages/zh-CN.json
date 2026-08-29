@@ -60,6 +60,14 @@
       "description": "把你的闲置物品、账号、源码、域名挂上来卖。"
     }
   },
+  "explore": {
+    "sort": {
+      "newest": "最新发布",
+      "price_asc": "价格从低到高",
+      "price_desc": "价格从高到低",
+      "popular": "热度最高"
+    }
+  },
   "footer": {
     "tagline": "原型 demo · Sepolia 测试网 · 0 真实资金"
   },
