@@ -30,10 +30,10 @@ export default function MePage() {
           <TabsTrigger value="seller">我卖出的 ({sellerOrders.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="buyer" className="mt-4">
-          <OrderTable orders={buyerOrders} emptyText="还没有买过东西，去逛逛吧" />
+          <OrderTable orders={buyerOrders} emptyVariant="buyer" />
         </TabsContent>
         <TabsContent value="seller" className="mt-4">
-          <OrderTable orders={sellerOrders} emptyText="还没有卖出东西，发布商品试试" />
+          <OrderTable orders={sellerOrders} emptyVariant="seller" />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,8 +1,13 @@
 // 订单表格
 import Link from 'next/link'
 import Image from 'next/image'
+import { PackageOpen } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Link as I18nLink } from '@/i18n/routing'
 import { formatPrice, formatDate } from '@/lib/format'
 import { orderStatusLabel, orderStatusVariant } from '@/lib/order-status'
 import { findItem } from '@/lib/mock-data'
@@ -10,15 +15,36 @@ import type { Order } from '@/types'
 
 interface OrderTableProps {
   orders: Order[]
-  emptyText?: string
+  /**
+   * i18n key suffix under `emptyState`.buyer | seller | published. Falls
+   * back to "buyer" if unknown.
+   */
+  emptyVariant?: 'buyer' | 'seller' | 'published'
 }
 
-export function OrderTable({ orders, emptyText = '暂无订单' }: OrderTableProps) {
+export function OrderTable({ orders, emptyVariant = 'buyer' }: OrderTableProps) {
+  const t = useTranslations('emptyState')
+  const tCommon = useTranslations('common')
+
   if (orders.length === 0) {
+    const cta =
+      emptyVariant === 'seller' || emptyVariant === 'published' ? (
+        <Button asChild>
+          <I18nLink href="/publish">{tCommon('publishNow')}</I18nLink>
+        </Button>
+      ) : (
+        <Button asChild variant="outline">
+          <I18nLink href="/explore">{tCommon('explore')}</I18nLink>
+        </Button>
+      )
+
     return (
-      <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-        {emptyText}
-      </div>
+      <EmptyState
+        icon={PackageOpen}
+        title={t(`${emptyVariant === 'published' ? 'noPublished' : 'noOrders'}.title`)}
+        description={t(`${emptyVariant === 'published' ? 'noPublished' : 'noOrders'}.description`)}
+        action={cta}
+      />
     )
   }
 

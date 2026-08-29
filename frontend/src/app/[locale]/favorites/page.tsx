@@ -1,10 +1,12 @@
 'use client'
 
+import { Heart } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { ItemGrid } from '@/components/home/item-grid'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Link } from '@/i18n/routing'
-import { findItem, items, sellers } from '@/lib/mock-data'
+import { findItem, sellers } from '@/lib/mock-data'
 import { useFavoriteStore } from '@/stores/use-favorite-store'
 
 // Force dynamic rendering — favorites are stored in localStorage and only
@@ -13,6 +15,8 @@ import { useFavoriteStore } from '@/stores/use-favorite-store'
 export const dynamic = 'force-dynamic'
 
 export default function FavoritesPage() {
+  const t = useTranslations('emptyState.favorites')
+  const tCommon = useTranslations('common')
   const { favorites } = useFavoriteStore()
   const favoritedItems = favorites
     .map(id => findItem(id))
@@ -24,16 +28,16 @@ export default function FavoritesPage() {
       <h1 className="text-2xl font-bold">我的收藏 ({favoritedItems.length})</h1>
 
       {favoritedItems.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              还没有收藏任何商品
-            </p>
-            <Button asChild className="mt-4">
-              <Link href="/explore">去探索</Link>
+        <EmptyState
+          icon={Heart}
+          title={t('title')}
+          description={t('description')}
+          action={
+            <Button asChild>
+              <Link href="/explore">{tCommon('explore')}</Link>
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
         <ItemGrid items={favoritedItems} sellers={sellerMap} />
       )}

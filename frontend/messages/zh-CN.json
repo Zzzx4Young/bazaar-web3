@@ -18,12 +18,46 @@
     "digital": "💎 数字资产",
     "physical": "📦 实物二手",
     "viewAll": "查看全部 →",
-    "nextSteps": "下一阶段",
-    "nextStepsItems": {
-      "mockData": "落地 25 条 mock 商品 + 6 个卖家 + 12 条订单（mock-data-spec.md）",
-      "realPages": "实现 /explore /publish /me 三个页面的真实 UI",
-      "shadcn": "接入 shadcn/ui 组件库（Button / Card / Dialog / Sheet 等）",
-      "stores": "Zustand stores + localStorage 发布流程闭环"
+    "trust": {
+      "title": "为什么选择 Bazaar Web3",
+      "escrow": {
+        "title": "链上托管",
+        "body": "USDT / ETH escrow 模拟完整 0 资金风险"
+      },
+      "fee": {
+        "title": "0 平台手续费",
+        "body": "测试期免 escrow 手续费，发布与成交均免费"
+      },
+      "testnet": {
+        "title": "Sepolia 测试网",
+        "body": "全流程在 Sepolia 上跑，零真实资金风险"
+      },
+      "wallet": {
+        "title": "钱包即可登录",
+        "body": "无需邮箱注册，连接钱包即可下单"
+      }
+    },
+    "trending": {
+      "title": "热门类目",
+      "viewAll": "查看全部 →"
+    }
+  },
+  "emptyState": {
+    "favorites": {
+      "title": "还没有收藏任何商品",
+      "description": "去探索页把感兴趣的商品点个 ♡，这里会按收藏时间倒序展示。"
+    },
+    "noResults": {
+      "title": "没有匹配的商品",
+      "description": "试试调整关键词、切换类目，或清空筛选条件。"
+    },
+    "noOrders": {
+      "title": "还没有订单",
+      "description": "去探索页挑几个心仪的商品，下单后会自动出现在这里。"
+    },
+    "noPublished": {
+      "title": "还没有发布过商品",
+      "description": "把你的闲置物品、账号、源码、域名挂上来卖。"
     }
   },
   "footer": {
@@ -36,6 +70,9 @@
     "favorited": "已收藏",
     "share": "分享",
     "publish": "立即发布",
+    "publishNow": "去发布",
+    "explore": "去探索",
+    "resetFilters": "重置筛选",
     "cancel": "取消",
     "loadMore": "加载更多",
     "noItems": "暂无商品",

@@ -18,12 +18,46 @@
     "digital": "💎 Digital Assets",
     "physical": "📦 Physical Goods",
     "viewAll": "View all →",
-    "nextSteps": "Next milestones",
-    "nextStepsItems": {
-      "mockData": "Wire up 25 mock items + 6 sellers + 12 orders (mock-data-spec.md)",
-      "realPages": "Implement real UI for /explore, /publish, /me",
-      "shadcn": "Add shadcn/ui components (Button / Card / Dialog / Sheet)",
-      "stores": "Zustand stores + localStorage publish flow"
+    "trust": {
+      "title": "Why Bazaar Web3",
+      "escrow": {
+        "title": "On-chain escrow",
+        "body": "USDT / ETH escrow simulates the full flow with zero real funds at risk."
+      },
+      "fee": {
+        "title": "0% platform fee",
+        "body": "Free during the testnet phase. Listing and trading both cost nothing."
+      },
+      "testnet": {
+        "title": "Sepolia testnet",
+        "body": "Every transaction runs on Sepolia. Practice with zero downside."
+      },
+      "wallet": {
+        "title": "Wallet-first",
+        "body": "No email signup. Connect a wallet to browse, list, and buy."
+      }
+    },
+    "trending": {
+      "title": "Trending categories",
+      "viewAll": "View all →"
+    }
+  },
+  "emptyState": {
+    "favorites": {
+      "title": "No favorites yet",
+      "description": "Tap the heart on any listing and it'll show up here, newest first."
+    },
+    "noResults": {
+      "title": "No matches",
+      "description": "Try a different keyword, switch category, or clear the filters."
+    },
+    "noOrders": {
+      "title": "No orders yet",
+      "description": "Browse the listings, pick a few, and your buys will land here."
+    },
+    "noPublished": {
+      "title": "You haven't listed anything",
+      "description": "Put your unused items, accounts, code, or domains up for sale."
     }
   },
   "footer": {
@@ -36,6 +70,9 @@
     "favorited": "Favorited",
     "share": "Share",
     "publish": "Publish now",
+    "publishNow": "Publish",
+    "explore": "Browse",
+    "resetFilters": "Reset filters",
     "cancel": "Cancel",
     "loadMore": "Load more",
     "noItems": "No items",

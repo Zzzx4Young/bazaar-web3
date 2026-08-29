@@ -2,6 +2,8 @@ import { setRequestLocale } from 'next-intl/server'
 import { HeroBanner } from '@/components/home/hero-banner'
 import { CategoryTabs } from '@/components/home/category-tabs'
 import { ItemGrid } from '@/components/home/item-grid'
+import { TrustStrip } from '@/components/home/trust-strip'
+import { TrendingCategories } from '@/components/home/trending-categories'
 import { Button } from '@/components/ui/button'
 import { Link } from '@/i18n/routing'
 import { getTranslations } from 'next-intl/server'
@@ -18,10 +20,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const physical = items.filter(i => i.category === 'physical').slice(0, 5)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <HeroBanner banners={banners} />
 
       <CategoryTabs categories={categories} />
+
+      <TrustStrip />
+
+      <TrendingCategories />
 
       <ItemGrid items={featured} sellers={sellerMap} title={t('featured')} />
 
@@ -33,16 +39,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <Button asChild variant="outline" size="lg">
           <Link href="/explore">{t('viewAll')}</Link>
         </Button>
-      </div>
-
-      <div className="rounded-lg border bg-card p-6 text-sm">
-        <div className="font-semibold">{t('nextSteps')}</div>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
-          <li>{t('nextStepsItems.mockData')}</li>
-          <li>{t('nextStepsItems.realPages')}</li>
-          <li>{t('nextStepsItems.shadcn')}</li>
-          <li>{t('nextStepsItems.stores')}</li>
-        </ul>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import FavoritesPage from '@/app/[locale]/favorites/page'
 
@@ -19,15 +19,18 @@ beforeEach(() => {
   window.localStorage.clear()
 })
 
+// next-intl is mocked globally in setup.ts — useTranslations returns the leaf
+// key segment (e.g. "title", "description", "explore"), so we assert on
+// structural markers (data-testid, role, href) instead of translated text.
 describe('FavoritesPage — empty state', () => {
-  it('shows empty state when no favorites', () => {
+  it('renders the shared empty-state component when no favorites', () => {
     render(<FavoritesPage />)
-    expect(screen.getByText(/还没有收藏任何商品/)).toBeInTheDocument()
+    expect(screen.getByTestId('empty-state')).toBeInTheDocument()
   })
 
-  it('renders a link to explore when empty', () => {
+  it('renders a link to /explore when empty', () => {
     render(<FavoritesPage />)
-    const link = screen.getByRole('link', { name: /去探索/ })
+    const link = screen.getByRole('link', { name: /explore/i })
     expect(link.getAttribute('href')).toBe('/explore')
   })
 })
@@ -65,7 +68,7 @@ describe('FavoritesPage — handles stale favorite ids', () => {
   it('silently ignores favorited item ids that no longer exist', () => {
     seedFavoritesDirect(['item_does_not_exist'])
     render(<FavoritesPage />)
-    // Should not crash, should show empty state
-    expect(screen.getByText(/还没有收藏任何商品/)).toBeInTheDocument()
+    // Should not crash, should show empty state (data-testid present)
+    expect(screen.getByTestId('empty-state')).toBeInTheDocument()
   })
 })
