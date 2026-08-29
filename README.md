@@ -176,15 +176,49 @@ prototype ships no region restrictions at all — it's a UI demo.
 
 ---
 
+## 🚀 Deployment
+
+This is a Next.js 14 App Router app; the only deploy shape it supports today is
+**Vercel**. The repo root includes a checked-in [`vercel.json`](./vercel.json) that
+pins `rootDirectory: frontend` so a one-click import from GitHub just works.
+
+```bash
+# Either: import the GitHub repo in the Vercel UI (recommended)
+#     https://github.com/Zzzx4Young/bazaar-web3 → Vercel "New Project"
+# Or, manually:
+npm i -g vercel
+cd frontend && vercel        # preview deployment
+cd frontend && vercel --prod # production
+```
+
+There is no backend yet, so no env vars, no secrets, no database URL. Public S3 /
+R2 / Postgres only enter the picture when we graduate from prototype to product
+(see [`docs/mvp-spec.md`](./docs/mvp-spec.md) and [`docs/03-compliance.md`](./docs/03-compliance.md)).
+
+Continuous integration: see [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) —
+a push to `main` runs the same 4-step gate locally (`typecheck → lint → test → build`).
+
+## 📸 Screenshots
+
+Refreshed locally with `npm run screenshot` (script: [`frontend/scripts/screenshot.mjs`](./frontend/scripts/screenshot.mjs),
+uses the Playwright already in dev deps). Output lands in
+[`docs/screenshots/`](./docs/screenshots/).
+
+```bash
+cd frontend
+npm run screenshot     # writes 5 PNGs into ../docs/screenshots/
+```
+
+The script auto-starts the dev server on `:3737` if nothing is up, and tears it
+down at the end. It is **not** wired into CI — screenshots are a manual artifact
+and would go stale if auto-regenerated.
+
+---
+
 ## 🤝 Contributing
 
-This is a single-author prototype right now. If you want to extend it:
-
-1. **Add a page**: route under `frontend/src/app/<segment>/page.tsx`, then wire it
-   into the top nav in `frontend/src/app/layout.tsx`
-2. **Add a mock item**: edit `frontend/src/mock/items.json` (see
-   `docs/mock-data-spec.md` §4.1 for the schema)
-3. **Add a shadcn component**: `cd frontend && npx shadcn@2.3.0 add <name>`
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for setup, the gate commands, and the
+short list of things that are out of scope for this prototype.
 
 ---
 

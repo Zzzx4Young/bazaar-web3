@@ -3,6 +3,17 @@ import type { Config } from 'tailwindcss'
 const config: Config = {
   darkMode: ['class'],
   content: ['./src/**/*.{ts,tsx}'],
+  // Dynamic template-string classes (e.g. `placeholder-${category}`) don't
+  // survive PurgeCSS unless we safelist them. Keep all 5 category gradients
+  // + the default fallback even if no source file references them by name.
+  safelist: [
+    'placeholder-electronics',
+    'placeholder-digital_assets',
+    'placeholder-software_source',
+    'placeholder-game_items',
+    'placeholder-secondhand_fashion',
+    'placeholder-default'
+  ],
   theme: {
   	container: {
   		center: true,
