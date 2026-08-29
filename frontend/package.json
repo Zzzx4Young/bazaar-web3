@@ -15,6 +15,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "screenshot": "node scripts/screenshot.mjs",
     "format": "prettier --write \"src/**/*.{ts,tsx,md}\""
   },
   "packageManager": "npm@10.9.8",
