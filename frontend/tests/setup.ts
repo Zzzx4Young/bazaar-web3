@@ -30,3 +30,12 @@ vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
   useLocale: () => 'zh-CN'
 }))
+
+vi.mock('@/i18n/routing', () => ({
+  Link: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => {
+    const React = require('react')
+    return React.createElement('a', { href, ...props }, children)
+  },
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => '/'
+}))

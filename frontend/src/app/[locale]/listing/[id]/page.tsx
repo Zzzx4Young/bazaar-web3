@@ -2,7 +2,8 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/routing'
 import { Heart, Share2, MessageCircle } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -14,8 +15,9 @@ import { MarkdownRenderer } from '@/components/listing/markdown-renderer'
 import { SellerCard } from '@/components/listing/seller-card'
 import { BuyModal } from '@/components/listing/buy-modal'
 import { ChatDrawer } from '@/components/listing/chat-drawer'
-import { findItem, findSeller, items } from '@/lib/mock-data'
+import { findSeller } from '@/lib/mock-data'
 import { formatPrice, formatDate } from '@/lib/format'
+import { useItemStore } from '@/stores/use-item-store'
 import { useFavoriteStore } from '@/stores/use-favorite-store'
 
 interface Props {
@@ -23,15 +25,18 @@ interface Props {
 }
 
 export default function ListingDetailPage({ params }: Props) {
-  const item = findItem(params.id)
-  if (!item) notFound()
-
-  const seller = findSeller(item.sellerId)
-  const { toggle, isFavorite } = useFavoriteStore()
-  const favorited = isFavorite(item.id)
-
+  const t = useTranslations('common')
+  const { items, hydrated } = useItemStore()
+  const { toggle, isFavorite, error } = useFavoriteStore()
   const [buyOpen, setBuyOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
+  const item = items.find(candidate => candidate.id === params.id)
+  if (!item && !hydrated && params.id.startsWith('item_user_')) {
+    return <p role="status">加载本地商品中...</p>
+  }
+  if (!item) notFound()
+  const seller = findSeller(item.sellerId)
+  const favorited = isFavorite(item.id)
 
   // 相关推荐（同分类，排除自己）
   const related = items
@@ -40,6 +45,7 @@ export default function ListingDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
+      {error && <p role="alert" className="text-destructive">{error}</p>}
       {/* 面包屑 */}
       <nav className="text-sm text-muted-foreground">
         <Link href="/" className="hover:underline">
@@ -123,9 +129,9 @@ export default function ListingDetailPage({ params }: Props) {
                   />
                   {favorited ? '已收藏' : '收藏'}
                 </Button>
-                <Button variant="outline" className="w-full" size="lg">
+                <Button variant="outline" className="w-full" size="lg" disabled>
                   <Share2 className="mr-1 h-4 w-4" />
-                  分享
+                  {t('shareUnavailable')}
                 </Button>
               </div>
             </CardContent>
@@ -172,8 +178,8 @@ export default function ListingDetailPage({ params }: Props) {
                           ? '网盘链接'
                           : '账号凭证'}
                   </div>
-                  <div className="text-muted-foreground">自动释放</div>
-                  <div>付款后 7 天（卖家未交付自动退款）</div>
+                  <div className="text-muted-foreground">交易说明</div>
+                  <div>演示版不执行交付、放款或退款</div>
                 </div>
               </CardContent>
             </Card>

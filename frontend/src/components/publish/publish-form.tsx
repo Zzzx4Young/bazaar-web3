@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/routing'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { categories } from '@/lib/mock-data'
 import { useItemStore } from '@/stores/use-item-store'
 import { useUserStore } from '@/stores/use-user-store'
 import type { ItemCategory, Currency, DigitalDeliveryType, ItemCondition, ShippingMethod } from '@/types'
@@ -28,6 +29,7 @@ const schema = z
     title: z.string().min(3, '标题至少 3 个字符').max(80, '标题最长 80 字符'),
     description: z.string().min(10, '描述至少 10 个字符').max(2000, '描述最长 2000 字符'),
     category: z.enum(['physical', 'digital']),
+    primaryCategory: z.enum(['electronics', 'digital_assets', 'software_source', 'game_items', 'secondhand_fashion']),
     priceAmount: z.coerce.number().positive('价格必须大于 0'),
     priceCurrency: z.enum(['CNY', 'USDT', 'ETH', 'SOL']),
     // 实物字段
@@ -39,20 +41,27 @@ const schema = z
       .optional(),
     deliveryContent: z.string().optional()
   })
-  .refine(
-    d =>
-      d.category === 'physical'
-        ? !!d.condition && !!d.shippingMethod
-        : !!d.deliveryType && !!d.deliveryContent && d.deliveryContent.length >= 3,
-    { message: '请填写完整字段', path: ['category'] }
-  )
+  .superRefine((data, ctx) => {
+    const issue = (path: string, message: string) => ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message })
+    if (categories.find(category => category.id === data.primaryCategory)?.itemCategory !== data.category) {
+      issue('primaryCategory', '请选择与商品类型匹配的分类')
+    }
+    if (data.category === 'physical') {
+      if (!data.condition) issue('condition', '请选择物品成色')
+      if (!data.shippingMethod) issue('shippingMethod', '请选择交易方式')
+    } else {
+      if (!data.deliveryType) issue('deliveryType', '请选择交付方式')
+      if (!data.deliveryContent || data.deliveryContent.trim().length < 3) issue('deliveryContent', '请填写交付示例（至少 3 个字符）')
+    }
+  })
 
 type FormValues = z.infer<typeof schema>
 
 export function PublishForm() {
   const router = useRouter()
   const user = useUserStore(s => s.user)
-  const addItem = useItemStore().add
+  const { add: addItem, hydrated } = useItemStore()
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const {
@@ -65,6 +74,7 @@ export function PublishForm() {
     resolver: zodResolver(schema),
     defaultValues: {
       category: 'physical',
+      primaryCategory: 'electronics',
       priceCurrency: 'CNY',
       shippingMethod: 'delivery'
     }
@@ -74,14 +84,16 @@ export function PublishForm() {
 
   const onSubmit = async (data: FormValues) => {
     setSubmitting(true)
+    setSaveError(null)
     const id = `item_user_${Date.now()}`
     const now = new Date().toISOString()
     const item = {
       id,
-      sellerId: user.id,
+      sellerId: user.linkedSellerId ?? user.id,
       title: data.title,
       description: data.description,
       category: data.category as ItemCategory,
+      primaryCategory: data.primaryCategory,
       tags: [],
       price: {
         amount: data.priceAmount,
@@ -109,8 +121,13 @@ export function PublishForm() {
             deliveryPreview: data.deliveryContent
           })
     }
-    addItem(item)
-    router.push(`/listing/${id}`)
+    try {
+      addItem(item)
+      router.push(`/listing/${id}`)
+    } catch {
+      setSaveError('无法保存商品，请检查浏览器存储空间或权限后重试。')
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -121,7 +138,10 @@ export function PublishForm() {
           <Label className="mb-2 block">商品类型</Label>
           <Tabs
             value={category}
-            onValueChange={v => setValue('category', v as ItemCategory)}
+            onValueChange={v => {
+              setValue('category', v as ItemCategory)
+              setValue('primaryCategory', v === 'physical' ? 'electronics' : 'digital_assets')
+            }}
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="physical">实物二手</TabsTrigger>
@@ -130,6 +150,14 @@ export function PublishForm() {
           </Tabs>
         </CardContent>
       </Card>
+
+      <div className="space-y-2">
+        <Label htmlFor="primaryCategory">商品分类</Label>
+        <select id="primaryCategory" className="flex h-10 w-full rounded-md border bg-background px-3 text-sm" {...register('primaryCategory')}>
+          {categories.filter(c => c.itemCategory === category).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+        </select>
+        {errors.primaryCategory && <p role="alert" className="text-sm text-destructive">{errors.primaryCategory.message}</p>}
+      </div>
 
       {/* 基本信息 */}
       <Card>
@@ -258,16 +286,16 @@ export function PublishForm() {
               )}
             </div>
             <div>
-              <Label htmlFor="deliveryContent">交付内容（仅卖家可见）</Label>
+              <Label htmlFor="deliveryContent">交付示例（演示用）</Label>
               <Textarea
                 id="deliveryContent"
                 rows={3}
-                placeholder="买家付款后自动释放的内容（链接、卡密、账号等）"
+                placeholder="填写虚构链接或示例文本，不要填写真实账号或密钥"
                 {...register('deliveryContent')}
               />
               {errors.deliveryContent && (
                 <p className="mt-1 text-xs text-destructive">
-                  请填写交付内容（至少 3 个字符）
+                  请填写交付示例（至少 3 个字符）
                 </p>
               )}
             </div>
@@ -275,12 +303,13 @@ export function PublishForm() {
         </Card>
       )}
 
+      {saveError && <p role="alert" className="text-destructive">{saveError}</p>}
       {/* 提交 */}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={() => router.back()}>
           取消
         </Button>
-        <Button type="submit" disabled={submitting}>
+        <Button type="submit" disabled={submitting || !hydrated}>
           {submitting ? '发布中...' : '立即发布'}
         </Button>
       </div>

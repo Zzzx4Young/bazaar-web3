@@ -1,7 +1,7 @@
 // 分类导航 tabs
 'use client'
 
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { Category } from '@/types'
 

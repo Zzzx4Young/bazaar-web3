@@ -201,3 +201,13 @@ describe('applyFilters — combined', () => {
     expect(result.map(i => i.id)).toEqual(['a']) // c is digital, b is iPad (no keyword match)
   })
 })
+it('keeps electronics separate from fashion and digital categories distinct', () => {
+  const items = [
+    makeItem({ id: 'phone', primaryCategory: 'electronics' }),
+    makeItem({ id: 'shirt', primaryCategory: 'secondhand_fashion' }),
+    makeItem({ id: 'code', category: 'digital', primaryCategory: 'software_source' }),
+    makeItem({ id: 'game', category: 'digital', primaryCategory: 'game_items' })
+  ]
+  expect(applyFilters(items, { ...baseFilter, category: 'electronics' }).map(i => i.id)).toEqual(['phone'])
+  expect(applyFilters(items, { ...baseFilter, category: 'software_source' }).map(i => i.id)).toEqual(['code'])
+})

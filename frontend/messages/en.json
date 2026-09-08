@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "Bazaar Web3 — Crypto-Powered C2C Marketplace",
-    "description": "Frontend prototype of a C2C marketplace for crypto-native communities. Mock USDT/ETH escrow on Sepolia testnet.",
+    "description": "Frontend C2C marketplace demo with sample listings and local simulated orders. No wallet, blockchain, or payment connection.",
     "siteName": "Bazaar Web3"
   },
   "nav": {
@@ -11,7 +11,8 @@
     "me": "Profile",
     "login": "Sign in",
     "myItems": "My Listings",
-    "favorites": "Favorites"
+    "favorites": "Favorites",
+    "notifications": "Notifications"
   },
   "home": {
     "featured": "🔥 Featured",
@@ -21,20 +22,20 @@
     "trust": {
       "title": "Why Bazaar Web3",
       "escrow": {
-        "title": "On-chain escrow",
-        "body": "USDT / ETH escrow simulates the full flow with zero real funds at risk."
+        "title": "Simulated orders",
+        "body": "Explore the purchase flow without transferring funds or using a contract."
       },
       "fee": {
-        "title": "0% platform fee",
-        "body": "Free during the testnet phase. Listing and trading both cost nothing."
+        "title": "No actual charges",
+        "body": "Prices and fees are illustrative; no payments are collected."
       },
       "testnet": {
-        "title": "Sepolia testnet",
-        "body": "Every transaction runs on Sepolia. Practice with zero downside."
+        "title": "Frontend demo",
+        "body": "No backend or blockchain connection. All transactions are simulated."
       },
       "wallet": {
-        "title": "Wallet-first",
-        "body": "No email signup. Connect a wallet to browse, list, and buy."
+        "title": "Try it locally",
+        "body": "Use a demo profile; listings and favorites stay in this browser."
       }
     },
     "trending": {
@@ -69,7 +70,7 @@
     }
   },
   "footer": {
-    "tagline": "Prototype demo · Sepolia testnet · zero real funds"
+    "tagline": "Frontend demo · simulated transactions · no real funds"
   },
   "common": {
     "buy": "Buy now",
@@ -77,6 +78,7 @@
     "favorite": "Favorite",
     "favorited": "Favorited",
     "share": "Share",
+    "shareUnavailable": "Share (coming soon)",
     "publish": "Publish now",
     "publishNow": "Publish",
     "explore": "Browse",
@@ -86,5 +88,9 @@
     "noItems": "No items",
     "viewDetail": "View details",
     "languageLabel": "Language"
+  },
+  "demo": {
+    "notice": "Frontend demo · Sample data only; no wallet connection or real transactions",
+    "publishNotice": "Published listings appear in this browser only. Orders are simulated; no wallet, blockchain, or payment connection."
   }
 }

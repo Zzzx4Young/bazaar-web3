@@ -38,6 +38,7 @@ export default async function LocaleLayout({
   const { locale } = await params
   if (!routing.locales.includes(locale as 'zh-CN' | 'en')) notFound()
   setRequestLocale(locale)
+  const tDemo = await getTranslations('demo')
 
   return (
     <html lang={locale}>
@@ -46,6 +47,7 @@ export default async function LocaleLayout({
           <ThemeProvider>
             <ThemeFaviconSync />
             <TopNav />
+            <div className="border-b bg-muted px-4 py-2 text-center text-xs text-muted-foreground">{tDemo('notice')}</div>
             <main className="container py-6">{children}</main>
             <footer className="mt-12 border-t py-6">
               <div className="container flex flex-col items-center justify-between gap-3 text-xs text-muted-foreground sm:flex-row">

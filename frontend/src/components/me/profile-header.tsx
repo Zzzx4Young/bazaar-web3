@@ -1,42 +1,44 @@
 // 个人主页：公开信息 + 在售商品
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Star } from 'lucide-react'
 import { ItemGrid } from '@/components/home/item-grid'
-import { findSeller, items } from '@/lib/mock-data'
+import { findSeller } from '@/lib/mock-data'
+import { useItemStore } from '@/stores/use-item-store'
 import { useUserStore } from '@/stores/use-user-store'
 import type { Seller } from '@/types'
 
 export function ProfileHeader() {
   const user = useUserStore(s => s.user)
-  const seller = findSeller(user.id)
+  const sellerId = user.linkedSellerId ?? user.id
+  const seller = findSeller(sellerId)
+  const { items } = useItemStore()
 
-  // 用户作为卖家发布的商品（mock 暂时为空）
-  const myItems = items.slice(20, 25)
+  const myItems = items.filter(item => item.sellerId === sellerId && item.status === 'active')
   const sellerMap = new Map<string, Seller>()
-  if (seller) sellerMap.set(user.id, seller)
+  if (seller) sellerMap.set(seller.id, seller)
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardContent className="flex items-start gap-4 p-6">
-          <Avatar className="h-16 w-16">
+        <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row">
+          <Avatar className="h-16 w-16 shrink-0">
             <AvatarImage
               src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.avatarSeed}`}
               alt={user.displayName}
             />
             <AvatarFallback>{user.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <div className="flex-1 space-y-2">
+          <div className="min-w-0 w-full flex-1 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-bold">{user.displayName}</h1>
               <Badge variant="outline">普通用户</Badge>
             </div>
             {user.walletAddress && (
               <div className="text-xs text-muted-foreground">
-                钱包地址：<code className="rounded bg-muted px-1 py-0.5">{user.walletAddress}</code>
+                钱包地址：<code className="break-all rounded bg-muted px-1 py-0.5">{user.walletAddress}</code>
               </div>
             )}
             {seller && (
@@ -53,14 +55,14 @@ export function ProfileHeader() {
           </div>
           <Link
             href="/publish"
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            className="shrink-0 whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             发布商品
           </Link>
         </CardContent>
       </Card>
 
-      <ItemGrid items={myItems} sellers={sellerMap} title="📦 在售商品" />
+      <ItemGrid items={myItems} sellers={sellerMap} title="📦 在售商品" emptyVariant="noPublished" />
     </div>
   )
 }

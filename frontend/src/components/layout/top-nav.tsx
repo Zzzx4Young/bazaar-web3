@@ -15,16 +15,16 @@ export function TopNav() {
     { href: '/', label: t('home') },
     { href: '/explore', label: t('explore') },
     { href: '/publish', label: t('publish') },
-    { href: '/notifications', label: '通知' },
+    { href: '/notifications', label: t('notifications') },
     { href: '/me', label: t('me') }
   ] as const
 
   return (
     <header className="border-b">
-      <div className="container flex h-14 items-center justify-between gap-4">
+      <div className="container flex min-h-14 flex-wrap items-center justify-between gap-3 py-3">
         <BrandLogo />
-        <nav className="flex items-center gap-4 text-sm">
-          {links.slice(0, 4).map(link => {
+        <nav className="flex flex-wrap items-center gap-3 text-sm">
+          {links.map(link => {
             const active = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))
             return (
               <Link

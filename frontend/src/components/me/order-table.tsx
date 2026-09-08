@@ -1,5 +1,5 @@
 // 订单表格
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import Image from 'next/image'
 import { PackageOpen } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Link as I18nLink } from '@/i18n/routing'
 import { formatPrice, formatDate } from '@/lib/format'
 import { orderStatusLabel, orderStatusVariant } from '@/lib/order-status'
-import { findItem } from '@/lib/mock-data'
+import { useItemStore } from '@/stores/use-item-store'
 import type { Order } from '@/types'
 
 interface OrderTableProps {
@@ -23,6 +23,7 @@ interface OrderTableProps {
 }
 
 export function OrderTable({ orders, emptyVariant = 'buyer' }: OrderTableProps) {
+  const { items } = useItemStore()
   const t = useTranslations('emptyState')
   const tCommon = useTranslations('common')
 
@@ -51,7 +52,7 @@ export function OrderTable({ orders, emptyVariant = 'buyer' }: OrderTableProps) 
   return (
     <div className="space-y-3">
       {orders.map(order => {
-        const item = findItem(order.itemId)
+        const item = items.find(item => item.id === order.itemId)
         return (
           <Card key={order.id}>
             <CardContent className="flex items-center gap-4 p-4">

@@ -1,9 +1,11 @@
+> 历史归档（2026-09-08）：仅供追溯，不是当前实施规范。当前入口：[文档索引](../README.md)。原文中的当前状态、待办、估时和建议均为历史记录。
+
 # MVP Ticket Breakdown — 缩减版 A
 
-> **状态**：v0.1 工单清单，可逐张领取开始实施。
+> **状态**：历史测试网 MVP 工单，暂缓实施，不可直接领取。2026-09-06 复核：规则、接口和估时需重新制定。见 [文档入口](../README.md) 与 [复核记录](../review-corrections.md)。
 > **生成日期**：2026-07-28
 > **生成方式**：`/to-tickets` 从 `mvp-spec.md` Section 3 + 4 派生
-> **来源依赖**：`./mvp-spec.md` §0 假设（A1–A10）已全部确认。
+> **来源依赖**：历史生成时引用 `mvp-spec.md` §0；“A1–A10 已全部确认”的旧声明不适用于当前阶段。未决项以 [复核记录](../review-corrections.md) 为准。
 > **执行纪律**：每张 ticket 在 fresh context 窗口下完成；完成后 `/code-review` review 再 commit。
 
 ---
@@ -14,13 +16,13 @@
 
 **状态图**：
 ```
-[ ] = ready-for-agent（前置已完成，可领取）
+[ ] = 历史未实施（当前不可领取）
 [~] = in-progress（被领取）
 [x] = done（被 review + commit）
 [!] = blocked（须人工介入）
 ```
 
-每张 ticket 完成后**就地**把状态改掉（这张 md 是 source of truth），并 append 一行完成的 commit SHA 到文末 changelog。
+每张 ticket 完成后**就地**把状态改掉（仅在测试网路线重新批准后作为工单记录），并 append 一行完成的 commit SHA 到文末 changelog。
 
 ---
 
@@ -38,7 +40,7 @@
 | 字段 | 内容 |
 |---|---|
 | 标题 | 仓库脚手架 + tsconfig + foundry config + CI 占位 |
-| Blocked by | None — can start immediately |
+| Blocked by | None（仅历史依赖，不代表可开工） |
 | 状态 | `[ ]` |
 | 时间预算 | 0.5 人天 |
 | 交付 | monorepo：`packages/contracts/`（Foundry）、`packages/web/`（Next.js）、`packages/api/`（Fastify）、`packages/shared/`（TS 类型）。`.github/workflows/ci.yml`：跑合约 test + 后端 lint + 前端 typecheck；部署先留 stub |
@@ -96,8 +98,8 @@
 | Blocked by | T-120 |
 | 状态 | `[ ]` |
 | 时间 | 1 人天 |
-| 交付 | `markDelivered(orderId)`：仅 seller 调用，把 state 推到 DELIVERED，记录 deliveredAt；自动 watcher：任何人调 `autoRelease(orderId)`，若 order.isDigital && state == FUNDED && now > fundedAt + 7d → 自动释放给 seller（**注意**：这意味着 FUNDED 状态若超 7d 卖家未交付，资金仍自动回到卖家，spec §3 中"数字 7d 自动取消"应理解为"FUNDED 超 7d 未交付 → auto release 给 seller"；与"实物未确认 14d auto-cancel"是两个动作，写在 T-150） |
-| 验收 | 测试：digital + 7d 过期 → release；非 digital 调 autoRelease revert；seller 未交付 + 未超时 revert |
+| 交付 | `markDelivered(orderId)` 仅 seller 调用，进入 DELIVERED 并记录 deliveredAt。原“FUNDED 超 7 天未交付仍给卖家放款”规则已撤回；建议未交付超时退款、已交付且无争议超时放款，但时间起点、期限和 D1 下载授权须统一决策后实施。 |
+| 验收 | 待规则批准后覆盖 FUNDED、DELIVERED、DISPUTED 和所有终态；包括临界时间、重复调用和非法操作者。 |
 | 不做 | 实物确认收货流程（下一张票） |
 
 ### T-140：Escrow — 实物 confirmReceived + 14d 超时退款
@@ -187,8 +189,8 @@
 | Blocked by | T-220 |
 | 状态 | `[ ]` |
 | 时间 | 0.7 人天 |
-| 交付 | `files/`：POST `/files/upload-url` 返回 presigned PUT URL（key = `digital/<orderId>`，限定 content-type / 大小）；GET `/files/:orderId/download` 仅当 order.state == RELEASED 时返回短时 presigned GET URL；本地 dev 用 MinIO（S3 兼容） |
-| 验收 | 测试：上传 + 下载 happy path；非 RELEASED 状态下 GET download → 403 |
+| 交付 | `files/`：POST `/files/upload-url` 返回 presigned PUT URL（key = `digital/<listingId>/<fileId>`，订单关联固定文件版本，限定 content-type / 大小）；GET `/files/:orderId/download` 必须验证订单买家身份；授权状态待 D1 决定后返回短时 presigned GET URL；本地 dev 用 MinIO（S3 兼容） |
+| 验收 | 测试：上传 + 下载 happy path；非授权用户或不满足 D1 授权状态时 GET download → 403 |
 | 不做 | 多文件 / 视频转码 / 病毒扫描 |
 
 ### T-240：订单 + 链上事件监听
@@ -254,7 +256,7 @@
 | Blocked by | T-240, T-310 |
 | 状态 | `[ ]` |
 | 时间 | 1.5 人天 |
-| 交付 | 订单详情：状态机可视化（badge + 时间线）/ 数字商品自动下载链接（RELEASED 后启用）/ 实物买家"确认收货"按钮（call `confirmReceived`）/ 卖家"标记已交付"按钮（实物发货后 / 数字上传完成后 call `markDelivered`）/ 发起资金 call `fund`（使用 Wagmi `useWriteContract` + `useWaitForTransactionReceipt`）/ 显示 explorer 链接 |
+| 交付 | 订单详情：状态机可视化（badge + 时间线）/ 数字商品下载链接（按 D1 定义的授权状态启用）/ 实物买家"确认收货"按钮（call `confirmReceived`）/ 卖家"标记已交付"按钮（实物发货后 / 数字上传完成后 call `markDelivered`）/ 发起资金 call `fund`（使用 Wagmi `useWriteContract` + `useWaitForTransactionReceipt`）/ 显示 explorer 链接 |
 | 验收 | E2E：买家下单 → 钱包弹窗 → 链上 confirm → 链上事件监听更新前端状态 |
 | 不做 | dispute 前端（仅 T-400 admin） |
 
@@ -304,74 +306,33 @@
 
 ═══════════════════════════════════════════════
 
-## 7. 工单依赖图（关键路径）
+## 7. 历史依赖（修正）
 
-```
-T-000（脚手架）
-  ├── T-100（合约 mock + 测试基础）★ A=并行起点
-  │     └── T-110 → T-120 → T-130 → T-140 → T-150 → T-160（合约完整）
-  │                                                              ↓
-  └── T-200（后端骨架）★ A=并行起点
-        → T-210（auth）→ T-220（CRUD + Profile）→ T-230（文件）→ T-240（订单+链上）
-                                                                              ↓
-                                                            T-300（前端骨架）→ T-310（公开页）→ T-320（我的+上架）
-                                                                                                            ↓
-                                                                                                          T-330（订单页）
-                                                                                                            ↓
-                                                T-400（admin）→ T-500（部署）→ T-501（smoke）
-```
+以各票 `Blocked by` 为依据，不能再把全部 20 张票画成一条关键路径：
 
-**关键路径长度**：**20 张 ticket**，**6.5–7.5 人月**（spec §7.3 修订后），2 个真人 × 8–10 周完工（**理想**） / **12–15 周（现实串行）**。
+- T-000 后，合约 T-100→…→T-160 与后端 T-200→T-210→T-220 可以并行。
+- T-300 依赖 T-000、T-210，不依赖完整合约链或 T-240。
+- T-310 与 T-320 均依赖 T-220、T-300，彼此不互相阻塞。
+- T-230 依赖 T-220；T-240 依赖 T-160、T-220。
+- T-330 依赖 T-240、T-310；上架文件联动还需复核 T-320 与 T-230 的接口依赖。
+- T-400→T-500→T-501 为当前历史收尾顺序；部署准备与测试编写是否提前应在新计划中明确。
 
-### 7.1 并行规则（M5 实装）
+不存在“只有 T-100 与 T-200 能并行”的结构性限制。新工期须按重新估算后的依赖图计算。
 
-工程结构的硬约束（这条规则**不能违反**，否则 ticket 时间估算失效）：
+## 8. 历史工作量复核
 
-| 阶段 | 哪几张可并行 | 哪几张必须串行 |
-|---|---|---|
-| **P1：脚手架后** | T-100（合约） ↔ T-200（后端） | T-000 先做完才能进这阶段 |
-| **P2：合约 vs 后端** | T-110…T-160 内仅合约内部串行；T-210…T-230 内仅后端内部串行 | 跨 P1 → P2 = 必须先做完合约 7 张 + 后端 3 张（T-200/T-210/T-220）才能进 P3 |
-| **P3：前端开始** | —— | T-300 等 T-210；T-310 等 T-300 + T-220；T-320 等 T-300 + T-220 |
-| **P4：Admin + 收尾** | T-500 部署准备 ↔ T-501 E2E | 必须等 T-400 |
-
-**实际可并行的只有 P1 一段**（T-100 ↔ T-200）。其他阶段基本是一人干一人等。这是 2 人 MVP 的结构性约束，不是 ticket 错。
-
-**真实完工估时**：
-- 理想全并行 = ~11 周
-- 现实全串行 = ~17 周
-- 中位数 ≈ **14 周**（spec §7.3）
-
----
-
-## 8. 工作量与可达性自检
-
-| 模块 | 票数 | 我的估时（合计人天） |
+| 模块 | 票数 | 按逐票时间相加（人天） |
 |---|---:|---:|
 | 脚手架 | 1 | 0.5 |
-| 合约（含 Safe 集成） | 7 | 5.4（+0.4 Safe） |
-| 后端（含 profile） | 5 | 5.4（+0.3 profile） |
-| 前端 | 4 | 5.5 |
-| Admin（Safe 多签交互） | 1 | 1.1（+0.1 Safe） |
-| 部署 / 收尾 | 2 | 1.2 |
-| **合计** | **20** | **~19.1 人天 ≈ 6.5 人月** |
+| 合约 | 7 | 5.0 |
+| 后端 | 5 | 5.3 |
+| 前端 | 4 | 4.5 |
+| Admin | 1 | 1.0 |
+| 部署/收尾 | 2 | 1.2 |
+| 合计 | 20 | **17.5** |
 
-注意：
-- **不含**真实部署成本（域名、VPS、Sentry 这些约 $50/月）
-- **不含**任何审计（Sepolia 测试网，0）
-- **不含**法律咨询（你不要 MVP 上线解决）
-- **不含**调研 / 用户访谈（你要的是先做出来）
+按每人月 20 工作日，这约为 0.875 人月。原汇总“19.1 人天 ≈ 6.5 人月”在加总和单位换算上均错误。逐票估时也未经实施验证，不能视为可行承诺；与 Spec 模块估算不一致，恢复项目时必须重估。
 
-——任何一张 ticket 完成，**追加状态 + commit SHA** 到文末 changelog。
+## 9. 后续处理
 
----
-
-## 9. 下一步（不开工，只是开方向）
-
-按 `/implement` 纪律：
-
-1. **挑一张 ticket 开工**——典型从 T-000 开始；或按"可独立验证"原则先做 T-100 + T-200 并行（脚手架完成后两边分人）
-2. **开一个 fresh context**——避免被过去讨论污染
-3. **保持 Phase 2 冻结**——docs §03 / §07 Phase 2 内容不被任何 ticket 触发
-4. **准备好 SPEC 的"假设失效"信号**——任一条 §0 假设（特别是 A3 Sepolia 上链 / **A5 Safe 多签（不是单签）** / A4 邮箱 KYC）发现不对，立即停、回 grill、改 spec、重写相关 ticket
-
-——**不在今晚开任何 ticket**——按上面 `0. Tracker` 原则，它们还是 `[ ]`。准备好时告诉我"开 T-NNN"，我陪你做。
+历史工单保留用于追溯，状态仍为未实施。当前只推进前端演示版；测试网阶段需先解决 [problem.md](problem.md) 与 [复核记录](../review-corrections.md) 中的问题，再生成新的可执行工单。

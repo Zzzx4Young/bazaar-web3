@@ -1,16 +1,20 @@
+> 历史 ADR：前端先行的原因保留；当前服务端阶段由 [ADR-0002](0002-server-alpha.md) 取代。以下估时、触发条件和待办仅为当时记录，不是当前实施指令。
+
 # ADR-0001 — Ship the frontend prototype before any backend / contracts work
 
 - **Status**: Accepted
 - **Date**: 2026-08-01
 - **Deciders**: Project lead
 - **Supersedes**: None
-- **Superseded by**: None (yet)
+- **Superseded by**: [ADR-0002](0002-server-alpha.md) partially, on 2026-09-08: the next stage is server Alpha with simulated settlement; the original frontend-first decision remains historical context.
 
 ## Context
 
+> **2026-09-07 clarification:** This ADR preserves the original frontend-first decision and its historical reasoning. The 14-week estimate below has been withdrawn by `mvp-spec.md` §7.3; email verification is not KYC. Historical pilot metrics do not prove demand and simulated orders are not real transactions. The user has now authorized blueprint correction and step-by-step planning; the next implementation stage remains undecided. Record new choices in a new stage decision, following [the review queue](../review-corrections.md). The original text below is not an instruction to restart the archived tickets or a current delivery promise.
+
 The project started with a full product spec
-([`mvp-spec.md`](../mvp-spec.md)) and 20 vertical tickets
-([`mvp-tickets.md`](../mvp-tickets.md)) targeting a chain-escrow MVP on
+([`mvp-spec.md`](../archive/mvp-spec.md)) and 20 vertical tickets
+([`mvp-tickets.md`](../archive/mvp-tickets.md)) targeting a chain-escrow MVP on
 Sepolia, with Gnosis Safe multisig, email-only KYC, 1% platform fee, and
 a 14-week delivery estimate for two engineers.
 
@@ -18,7 +22,7 @@ Before committing to that path, two facts on the ground demanded a smaller
 first step:
 
 1. **No funding.** The MVP budget of $50–120K for Phase 0 + $256–552K for
-   Phase 1 (per [`07-mvp-roadmap.md`](../07-mvp-roadmap.md), now frozen)
+   Phase 1 (per [`07-mvp-roadmap.md`](../archive/07-mvp-roadmap.md), now frozen)
    is unfunded. Self-funded solo / duo work cannot sustain a parallel
    contract audit + legal counsel + KYC vendor pipeline.
 2. **No validated demand signal.** The 5-person · 4-month plan was
@@ -27,7 +31,7 @@ first step:
    and no UI feedback loop.
 
 Reviewing the spec surfaced 3 blockers and 7 yellows
-([`problem.md`](../problem.md)) — most notably the on-chain escrow timing
+([`problem.md`](../archive/problem.md)) — most notably the on-chain escrow timing
 rules (P2) and Safe multisig signer composition (P1) — that needed answers
 before any contracts work began.
 
@@ -110,7 +114,7 @@ get without a UI.
 
 ### Alternative B — Telegram Bot prototype first
 
-[`00-project-flow.md`](../00-project-flow.md) suggested this for the
+[`00-project-flow.md`](../archive/00-project-flow.md) suggested this for the
 "< 500K RMB MVP budget" branch. Rejected because Telegram Bot does
 not demonstrate the marketplace UX we need to validate — the surface
 area is too small to communicate the escrow + media + seller-profile
@@ -135,14 +139,14 @@ prototype work and re-evaluate.
 
 ## References
 
-- [`mvp-spec.md`](../mvp-spec.md) — full endgame spec, archived
-- [`mvp-tickets.md`](../mvp-tickets.md) — 20 tickets, not started
+- [`mvp-spec.md`](../archive/mvp-spec.md) — full endgame spec, archived
+- [`mvp-tickets.md`](../archive/mvp-tickets.md) — 20 tickets, not started
 - [`frontend-prototype-roadmap.md`](../frontend-prototype-roadmap.md) —
   what we actually built
 - [`frontend-stack-recommendation.md`](../frontend-stack-recommendation.md) —
   why these choices
-- [`problem.md`](../problem.md) — 10 review findings on the endgame
+- [`problem.md`](../archive/problem.md) — 10 review findings on the endgame
   spec
-- [`hook-issues.md`](../hook-issues.md) — local Hermes config fix
+- [`hook-issues.md`](../archive/hook-issues.md) — local Hermes config fix
   unrelated to this decision
-- [`CHANGELOG.md`](../CHANGELOG.md) — per-session build history
+- [`CHANGELOG.md`](../archive/changelog-before-cleanup.md) — per-session build history

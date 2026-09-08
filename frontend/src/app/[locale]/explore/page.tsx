@@ -1,18 +1,31 @@
 'use client'
 
-import { useMemo } from 'react'
+import { Suspense, useEffect, useMemo } from 'react'
 import { FilterSidebar } from '@/components/explore/filter-sidebar'
 import { SortDropdown } from '@/components/explore/sort-dropdown'
 import { ItemGrid } from '@/components/home/item-grid'
-import { categories, items, sellers } from '@/lib/mock-data'
+import { categories, sellers } from '@/lib/mock-data'
 import { applyFilters } from '@/lib/filter'
 import { useFilterStore } from '@/stores/use-filter-store'
+import { useItemStore } from '@/stores/use-item-store'
+import { useSearchParams } from 'next/navigation'
 import type { SortBy } from '@/types'
 
 export default function ExplorePage() {
+  return <Suspense fallback={<p>加载商品中...</p>}><ExploreContent /></Suspense>
+}
+
+function ExploreContent() {
+  const { items } = useItemStore()
+  const searchParams = useSearchParams()
+  const categoryParam = searchParams.get('category')
   const filter = useFilterStore()
+  const setCategory = filter.setCategory
+  useEffect(() => {
+    setCategory(categories.find(category => category.id === categoryParam)?.id)
+  }, [categoryParam, setCategory])
   const sellerMap = useMemo(() => new Map(sellers.map(s => [s.id, s])), [])
-  const filtered = useMemo(() => applyFilters(items, filter), [filter])
+  const filtered = useMemo(() => applyFilters(items, filter), [items, filter])
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row">

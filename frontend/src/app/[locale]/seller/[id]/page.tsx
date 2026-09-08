@@ -1,3 +1,5 @@
+'use client'
+
 // 公开卖家页
 import { notFound } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -5,7 +7,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Star } from 'lucide-react'
 import { ItemGrid } from '@/components/home/item-grid'
-import { findSeller, items, sellers } from '@/lib/mock-data'
+import { findSeller, sellers } from '@/lib/mock-data'
+import { useItemStore } from '@/stores/use-item-store'
 import { formatDate } from '@/lib/format'
 
 interface Props {
@@ -13,6 +16,7 @@ interface Props {
 }
 
 export default function SellerPage({ params }: Props) {
+  const { items } = useItemStore()
   const seller = findSeller(params.id)
   if (!seller) notFound()
 
@@ -54,7 +58,7 @@ export default function SellerPage({ params }: Props) {
               <span>· 加入于 {formatDate(seller.joinedAt)}</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              本卖家共发布 {sellerItems.length} 件商品，全部支持平台担保交易。
+              本卖家共发布 {sellerItems.length} 件商品，仅用于模拟交易展示。
             </p>
           </div>
           <button

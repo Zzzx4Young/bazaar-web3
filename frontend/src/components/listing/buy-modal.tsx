@@ -1,7 +1,7 @@
 // 模拟购买 modal（无后端，仅 UI 演示）
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatPrice } from '@/lib/format'
+import { useRouter } from '@/i18n/routing'
 import { useOrderStore } from '@/stores/use-order-store'
 import { useUserStore } from '@/stores/use-user-store'
 import type { Item } from '@/types'
@@ -26,9 +27,16 @@ interface BuyModalProps {
 const STEPS = ['confirm', 'fund', 'done'] as const
 
 export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
+  const router = useRouter()
+  const timer = useRef<ReturnType<typeof setTimeout>>()
   const user = useUserStore(s => s.user)
   const { create } = useOrderStore()
   const [step, setStep] = useState<(typeof STEPS)[number]>('confirm')
+
+  useEffect(() => {
+    setStep('confirm')
+    return () => { clearTimeout(timer.current); timer.current = undefined }
+  }, [open, item?.id])
 
   if (!item) return null
 
@@ -37,24 +45,28 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
   }
 
   const handleConfirm = () => {
+    if (step !== 'confirm' || timer.current) return
     setStep('fund')
     // 模拟 1.5 秒链上确认
-    setTimeout(() => {
+    timer.current = setTimeout(() => {
       create({
         itemId: item.id,
         buyerId: user.id,
         sellerId: item.sellerId,
         amount: item.price,
-        status: item.category === 'digital' ? 'pending_fulfillment' : 'pending_confirm',
+        status: 'pending_fulfillment',
         role: 'buyer'
       })
+      timer.current = undefined
       setStep('done')
     }, 1500)
   }
 
   const handleClose = () => {
     onOpenChange(false)
-    setTimeout(reset, 300) // 等关闭动画
+    clearTimeout(timer.current)
+    timer.current = undefined
+    reset()
   }
 
   return (
@@ -65,7 +77,7 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
             <DialogHeader>
               <DialogTitle>确认购买</DialogTitle>
               <DialogDescription>
-                资金将通过 Sepolia 测试网 escrow 合约托管。请确认商品信息无误。
+                确认后仅创建本地演示订单，不连接钱包，也不转移资金。
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 py-4">
@@ -82,7 +94,7 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
                 </span>
               </div>
               <div className="flex items-baseline justify-between text-sm">
-                <span className="text-muted-foreground">平台手续费 (1%)</span>
+                <span className="text-muted-foreground">模拟手续费 (1%，不实际收取)</span>
                 <span>
                   {formatPrice(
                     Number((item.price.amount * 0.01).toFixed(4)),
@@ -91,7 +103,7 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
                 </span>
               </div>
               <Badge variant="outline" className="text-xs">
-                🔒 Sepolia 测试网 · 0 真实资金
+                前端模拟 · 无真实资金
               </Badge>
             </div>
             <DialogFooter className="gap-2">
@@ -106,15 +118,15 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
         {step === 'fund' && (
           <>
             <DialogHeader>
-              <DialogTitle>链上确认中...</DialogTitle>
+              <DialogTitle>模拟下单中...</DialogTitle>
               <DialogDescription>
-                请在钱包中确认交易。资金将自动锁入 escrow 合约。
+                正在生成演示订单，无需操作钱包。
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col items-center gap-3 py-8">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
               <div className="text-sm text-muted-foreground">
-                等待链上确认（约 15 秒）
+                等待模拟完成（约 1.5 秒）
               </div>
             </div>
           </>
@@ -125,7 +137,7 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
             <DialogHeader>
               <DialogTitle>下单成功 ✓</DialogTitle>
               <DialogDescription>
-                资金已锁入 escrow。卖家发货后你可确认收货完成交易。
+                演示订单已保存到当前浏览器，可在「我的」页面查看。
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 py-4">
@@ -139,15 +151,15 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
               </div>
               <div className="text-xs text-muted-foreground">
                 {item.category === 'digital'
-                  ? '数字商品将在卖家确认交付后自动释放'
-                  : '实物商品将在你确认收货后自动释放给卖家'}
+                  ? '数字商品交付与资金释放尚未实现。'
+                  : '实物发货、确认收货与资金释放尚未实现。'}
               </div>
             </div>
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={handleClose}>
                 关闭
               </Button>
-              <Button onClick={handleClose}>查看订单</Button>
+              <Button onClick={() => { handleClose(); router.push('/me') }}>查看订单</Button>
             </DialogFooter>
           </>
         )}

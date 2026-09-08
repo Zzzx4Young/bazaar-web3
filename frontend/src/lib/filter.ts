@@ -22,23 +22,7 @@ export function applyFilters(items: Item[], filter: FilterState): Item[] {
 
   // 一级分类
   if (filter.category) {
-    result = result.filter(i => {
-      // 通过 tags 模糊匹配（mock 数据用 category 字段直接过滤）
-      // 真实场景应通过 seller 关联，但这里直接按 category 字段
-      return true
-    })
-    // 简化：通过 primaryCategory → itemCategory 过滤
-    const categoryMap: Record<string, 'physical' | 'digital'> = {
-      electronics: 'physical',
-      digital_assets: 'digital',
-      software_source: 'digital',
-      game_items: 'digital',
-      secondhand_fashion: 'physical'
-    }
-    const targetCat = categoryMap[filter.category]
-    if (targetCat) {
-      result = result.filter(i => i.category === targetCat)
-    }
+    result = result.filter(i => i.primaryCategory === filter.category)
   }
 
   // 价格区间

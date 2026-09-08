@@ -54,7 +54,7 @@ flows are pre-wired. No `.env` required.
 - **Media**: embla-carousel-react
 - **Data**: static JSON imports under `src/mock/`
 
-Full dependency list in [`frontend/package.json`](./frontend/package.json) — 25 runtime deps, 12 dev deps.
+Full dependency list in [`frontend/package.json`](frontend/package.json) — 25 runtime deps, 12 dev deps.
 
 ---
 
@@ -79,9 +79,9 @@ This is a UI prototype, not a product. Specifically:
 
 - ❌ **No backend** — there is no API server, no Postgres, no S3
 - ❌ **No smart contracts** — the on-chain escrow flow described in
-  [`docs/mvp-spec.md`](./docs/mvp-spec.md) is **not implemented** here, only mocked
+  [`docs/mvp-spec.md`](docs/archive/mvp-spec.md) is **not implemented** here, only mocked
 - ❌ **No real wallet** — no WalletConnect, no wagmi, no viem. Buttons simulate the flow
-- ❌ **No real KYC / compliance** — see [`docs/03-compliance.md`](./docs/03-compliance.md)
+- ❌ **No real KYC / compliance** — see [`docs/03-compliance.md`](docs/archive/03-compliance.md)
   for what the eventual product must do
 - ❌ **No audit** — never deploy the smart contracts described in `mvp-spec.md` without
   a third-party audit
@@ -116,43 +116,29 @@ bazaar-web3/
 │   ├── public/
 │   ├── package.json
 │   └── ...
-└── docs/                         ← project documentation
-    ├── frontend-prototype-roadmap.md    ← plan of record for this prototype
-    ├── frontend-stack-recommendation.md ← tech choices with rationale
-    ├── mock-data-spec.md                ← mock dataset schema and contents
-    ├── mvp-spec.md                      ← product-endgame reference (chain escrow)
-    ├── mvp-tickets.md                   ← vertical tickets for the endgame (decision archive)
-    ├── problem.md                       ← review findings on the endgame spec
-    ├── hook-issues.md                   ← Hermes verification-loop fix log
-    ├── CHANGELOG.md                     ← day-by-day build log of this prototype
-    └── 01-10*.md (frozen)               ← feasibility archive from the original spec pass
+└── docs/                         ← current index: docs/README.md
+    ├── server-alpha-spec.md      ← confirmed Alpha business baseline
+    ├── execution-plan.md         ← dependencies, deliverables and hardening
+    ├── frontend-prototype-roadmap.md
+    ├── frontend-stack-recommendation.md
+    ├── mock-data-spec.md
+    ├── adr/                     ← decision records
+    ├── review-corrections.md     ← review disposition
+    ├── CHANGELOG.md              ← concise change history
+    └── archive/                 ← historical research and frozen testnet drafts
 ```
 
 ---
 
 ## 📚 Documentation index
 
-### Active (this prototype)
-- [`docs/frontend-prototype-roadmap.md`](./docs/frontend-prototype-roadmap.md) —
-  what we built and why, by phase
-- [`docs/frontend-stack-recommendation.md`](./docs/frontend-stack-recommendation.md) —
-  dependency versions and rationale
-- [`docs/mock-data-spec.md`](./docs/mock-data-spec.md) — 25-item mock dataset schema
-- [`docs/hook-issues.md`](./docs/hook-issues.md) — local Hermes config tweaks
-- [`docs/CHANGELOG.md`](./docs/CHANGELOG.md) — per-commit history of the prototype
+Start with [the current docs index](docs/README.md).
 
-### Reference / decision archive
-- [`docs/mvp-spec.md`](./docs/mvp-spec.md) and
-  [`docs/mvp-tickets.md`](./docs/mvp-tickets.md) — the **endgame** product spec
-  (chain-escrow + Sepolia + Gnosis Safe + email-only KYC). **Not implemented in this
-  commit.** Kept for traceability when the project graduates from prototype to product.
-- [`docs/problem.md`](./docs/problem.md) — 10 review findings from walking through
-  `mvp-spec.md` (3 blockers, 7 yellows). Most are N/A against the prototype path;
-  see file for current status.
-- [`docs/01-product-overview.md`](./docs/01-product-overview.md) through
-  [`docs/10-references.md`](./docs/10-references.md) — the original feasibility pass
-  (TAM/SAM/SOM, compliance, payment flow, risks, references). Frozen.
-- **Note on `04-06`**: Beyond being the original feasibility archive, `docs/04-architecture.md` + `05-payment-flow.md` + `06-tech-stack.md` also serve as the **industry-standard reference for a web3 C2C 二手 + 数字商品 trading platform**. They are not the current implementation target — that lives in `mvp-spec.md` / `mvp-tickets.md` — but they define what "complete" looks like if the project graduates from prototype to product.
+- [Alpha business specification](docs/server-alpha-spec.md): confirmed internal-test scope; server-side features are not implemented yet.
+- [Execution plan](docs/execution-plan.md): next deliverables, dependencies and Demo hardening.
+- [Frontend baseline](docs/frontend-prototype-roadmap.md), [startup guide](docs/frontend-stack-recommendation.md) and [mock data contract](docs/mock-data-spec.md): current implementation.
+- [Decisions](docs/adr/0002-server-alpha.md), [review disposition](docs/review-corrections.md) and [changelog](docs/CHANGELOG.md): rationale and traceability.
+- [Historical archive](docs/archive/README.md): unverified research and frozen testnet drafts, not current specifications or executable tickets.
 
 ---
 
@@ -179,7 +165,7 @@ prototype ships no region restrictions at all — it's a UI demo.
 ## 🚀 Deployment
 
 This is a Next.js 14 App Router app; the only deploy shape it supports today is
-**Vercel**. The repo root includes a checked-in [`vercel.json`](./vercel.json) that
+**Vercel**. The repo root includes a checked-in [`vercel.json`](vercel.json) that
 pins `rootDirectory: frontend` so a one-click import from GitHub just works.
 
 ```bash
@@ -193,16 +179,16 @@ cd frontend && vercel --prod # production
 
 There is no backend yet, so no env vars, no secrets, no database URL. Public S3 /
 R2 / Postgres only enter the picture when we graduate from prototype to product
-(see [`docs/mvp-spec.md`](./docs/mvp-spec.md) and [`docs/03-compliance.md`](./docs/03-compliance.md)).
+(see [`docs/mvp-spec.md`](docs/archive/mvp-spec.md) and [`docs/03-compliance.md`](docs/archive/03-compliance.md)).
 
-Continuous integration: see [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) —
+Continuous integration: see [`.github/workflows/ci.yml`](.github/workflows/ci.yml) —
 a push to `main` runs the same 4-step gate locally (`typecheck → lint → test → build`).
 
 ## 📸 Screenshots
 
-Refreshed locally with `npm run screenshot` (script: [`frontend/scripts/screenshot.mjs`](./frontend/scripts/screenshot.mjs),
+Refreshed locally with `npm run screenshot` (script: [`frontend/scripts/screenshot.mjs`](frontend/scripts/screenshot.mjs),
 uses the Playwright already in dev deps). Output lands in
-[`docs/screenshots/`](./docs/screenshots/).
+[`docs/screenshots/`](docs/screenshots).
 
 ```bash
 cd frontend
@@ -217,7 +203,7 @@ and would go stale if auto-regenerated.
 
 ## 🤝 Contributing
 
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for setup, the gate commands, and the
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, the gate commands, and the
 short list of things that are out of scope for this prototype.
 
 ---
@@ -228,4 +214,4 @@ TBD.
 
 ## 📄 License
 
-See [`LICENSE`](./LICENSE).
+See [`LICENSE`](LICENSE).

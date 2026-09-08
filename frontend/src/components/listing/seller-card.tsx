@@ -1,5 +1,5 @@
 // 卖家卡片
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Star } from 'lucide-react'

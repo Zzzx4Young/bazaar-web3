@@ -16,7 +16,10 @@ import type {
   PrimaryCategory
 } from '@/types'
 
-export const items: Item[] = itemsJson as Item[]
+export const items: Item[] = (itemsJson as Item[]).map(item => ({
+  ...item,
+  primaryCategory: categoriesJson.find(category => category.itemIds.includes(item.id))?.id as PrimaryCategory | undefined
+}))
 export const sellers: Seller[] = sellersJson as Seller[]
 export const orders: Order[] = ordersJson as Order[]
 export const banners: Banner[] = bannersJson as Banner[]

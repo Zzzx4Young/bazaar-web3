@@ -105,3 +105,27 @@ describe('useFavoriteStore — localStorage persistence', () => {
     expect(result.current.isFavorite('item_same_component')).toBe(true)
   })
 })
+it('synchronizes mounted consumers and preserves rapid updates', () => {
+  const first = renderHook(() => useFavoriteStore())
+  const second = renderHook(() => useFavoriteStore())
+  act(() => {
+    first.result.current.toggle('item_a')
+    second.result.current.toggle('item_b')
+  })
+  expect(first.result.current.favorites).toEqual(['item_a', 'item_b'])
+  expect(second.result.current.favorites).toEqual(['item_a', 'item_b'])
+})
+
+it('reacts to changes and clearing from another tab', () => {
+  const { result } = renderHook(() => useFavoriteStore())
+  act(() => {
+    localStorage.setItem('c2c:user:favorites', JSON.stringify(['other_tab']))
+    window.dispatchEvent(new StorageEvent('storage', { key: 'c2c:user:favorites' }))
+  })
+  expect(result.current.favorites).toEqual(['other_tab'])
+  act(() => {
+    localStorage.clear()
+    window.dispatchEvent(new StorageEvent('storage', { key: null }))
+  })
+  expect(result.current.favorites).toEqual([])
+})

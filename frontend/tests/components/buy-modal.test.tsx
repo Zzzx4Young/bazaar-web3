@@ -70,17 +70,17 @@ describe('BuyModal — confirm → fund transition', () => {
     await user.click(screen.getByRole('button', { name: '确认下单' }))
 
     await waitFor(() => {
-      expect(screen.getByText('链上确认中...')).toBeInTheDocument()
+      expect(screen.getByText('模拟下单中...')).toBeInTheDocument()
     })
   })
 
-  it('shows "等待链上确认" during fund step', async () => {
+  it('shows "等待模拟完成" during fund step', async () => {
     const user = userEvent.setup()
     render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: '确认下单' }))
 
-    expect(screen.getByText(/等待链上确认/)).toBeInTheDocument()
+    expect(screen.getByText(/等待模拟完成/)).toBeInTheDocument()
   })
 })
 
@@ -148,7 +148,7 @@ describe('BuyModal — done step for digital vs physical', () => {
     await user.click(screen.getByRole('button', { name: '确认下单' }))
 
     await waitFor(() => screen.getByText('下单成功 ✓'), { timeout: 3000 })
-    expect(screen.getByText(/数字商品将在卖家确认交付后自动释放/)).toBeInTheDocument()
+    expect(screen.getByText(/数字商品交付与资金释放尚未实现/)).toBeInTheDocument()
   })
 
   it('physical items mention "确认收货" in done step', async () => {
@@ -158,6 +158,6 @@ describe('BuyModal — done step for digital vs physical', () => {
     await user.click(screen.getByRole('button', { name: '确认下单' }))
 
     await waitFor(() => screen.getByText('下单成功 ✓'), { timeout: 3000 })
-    expect(screen.getByText(/实物商品将在你确认收货后自动释放/)).toBeInTheDocument()
+    expect(screen.getByText(/实物发货、确认收货与资金释放尚未实现/)).toBeInTheDocument()
   })
 })

@@ -6,7 +6,8 @@ import { ItemGrid } from '@/components/home/item-grid'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Link } from '@/i18n/routing'
-import { findItem, sellers } from '@/lib/mock-data'
+import { sellers } from '@/lib/mock-data'
+import { useItemStore } from '@/stores/use-item-store'
 import { useFavoriteStore } from '@/stores/use-favorite-store'
 
 // Force dynamic rendering — favorites are stored in localStorage and only
@@ -18,8 +19,9 @@ export default function FavoritesPage() {
   const t = useTranslations('emptyState.favorites')
   const tCommon = useTranslations('common')
   const { favorites } = useFavoriteStore()
+  const { items } = useItemStore()
   const favoritedItems = favorites
-    .map(id => findItem(id))
+    .map(id => items.find(item => item.id === id))
     .filter((item): item is NonNullable<typeof item> => item !== undefined)
   const sellerMap = new Map(sellers.map(s => [s.id, s]))
 

@@ -30,6 +30,7 @@ export interface MediaItem {
 }
 
 export interface Item {
+  primaryCategory?: import('./category').PrimaryCategory // 一级分类；旧本地商品可缺省
   id: string
   sellerId: string
   title: string

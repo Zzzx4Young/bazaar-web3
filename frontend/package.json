@@ -2,7 +2,7 @@
   "name": "crypto-c2c-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Pure-frontend prototype for CryptoC2C marketplace. No backend, no contracts — UI + mock data only.",
+  "description": "Pure-frontend prototype for CryptoC2C marketplace. No backend, no contracts \u2014 UI + mock data only.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -70,6 +70,6 @@
     "vitest": "^4.1.10"
   },
   "engines": {
-    "node": ">=18.17.0"
+    "node": ">=22.12.0"
   }
 }

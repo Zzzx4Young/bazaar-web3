@@ -20,7 +20,7 @@ test.describe('home page', () => {
 
   test('shows item grid with cards', async ({ page }) => {
     await page.goto('/zh-CN')
-    const itemCards = page.locator('a[href^="/listing/"]')
+    const itemCards = page.locator('a[href^="/zh-CN/listing/"]')
     await expect(itemCards.first()).toBeVisible()
   })
 })
@@ -49,7 +49,7 @@ test.describe('language switch', () => {
 test.describe('explore page', () => {
   test('loads /explore with item grid', async ({ page }) => {
     await page.goto('/zh-CN/explore')
-    const itemCards = page.locator('a[href^="/listing/"]')
+    const itemCards = page.locator('a[href^="/zh-CN/listing/"]')
     await expect(itemCards.first()).toBeVisible()
   })
 
@@ -123,7 +123,7 @@ test.describe('seller page', () => {
 
   test('shows seller items', async ({ page }) => {
     await page.goto('/zh-CN/seller/seller_004')
-    const items = page.locator('a[href^="/listing/"]')
+    const items = page.locator('a[href^="/zh-CN/listing/"]')
     await expect(items.first()).toBeVisible()
   })
 })

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "Bazaar Web3 — 加密货币 C2C 二手交易平台",
-    "description": "面向海外加密社区的 C2C 二手交易平台原型，支持 USDT / ETH 链上 escrow mock",
+    "description": "C2C 商品市场前端演示版，使用样例商品和本地模拟订单，不连接钱包、区块链或支付服务。",
     "siteName": "Bazaar Web3"
   },
   "nav": {
@@ -11,7 +11,8 @@
     "me": "我的",
     "login": "登录",
     "myItems": "我的商品",
-    "favorites": "收藏"
+    "favorites": "收藏",
+    "notifications": "通知"
   },
   "home": {
     "featured": "🔥 精选推荐",
@@ -21,20 +22,20 @@
     "trust": {
       "title": "为什么选择 Bazaar Web3",
       "escrow": {
-        "title": "链上托管",
-        "body": "USDT / ETH escrow 模拟完整 0 资金风险"
+        "title": "模拟订单",
+        "body": "体验购买流程，不转移资金或调用合约"
       },
       "fee": {
-        "title": "0 平台手续费",
-        "body": "测试期免 escrow 手续费，发布与成交均免费"
+        "title": "不实际收费",
+        "body": "价格与手续费仅用于演示，不收取任何款项"
       },
       "testnet": {
-        "title": "Sepolia 测试网",
-        "body": "全流程在 Sepolia 上跑，零真实资金风险"
+        "title": "纯前端演示",
+        "body": "未接入后端或区块链，所有交易均为模拟"
       },
       "wallet": {
-        "title": "钱包即可登录",
-        "body": "无需邮箱注册，连接钱包即可下单"
+        "title": "本地体验",
+        "body": "使用演示身份，商品与收藏保存在当前浏览器"
       }
     },
     "trending": {
@@ -69,7 +70,7 @@
     }
   },
   "footer": {
-    "tagline": "原型 demo · Sepolia 测试网 · 0 真实资金"
+    "tagline": "前端演示版 · 模拟交易 · 无真实资金"
   },
   "common": {
     "buy": "立即购买",
@@ -77,6 +78,7 @@
     "favorite": "收藏",
     "favorited": "已收藏",
     "share": "分享",
+    "shareUnavailable": "分享（暂未开放）",
     "publish": "立即发布",
     "publishNow": "去发布",
     "explore": "去探索",
@@ -86,5 +88,9 @@
     "noItems": "暂无商品",
     "viewDetail": "查看详情",
     "languageLabel": "语言"
+  },
+  "demo": {
+    "notice": "前端演示版 · 使用虚构数据，不连接钱包或执行真实交易",
+    "publishNotice": "发布内容仅保存在当前浏览器。订单均为模拟，不连接钱包、区块链或支付服务。"
   }
 }

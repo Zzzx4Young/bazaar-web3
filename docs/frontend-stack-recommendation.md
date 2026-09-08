@@ -1,286 +1,65 @@
-# Frontend 技术选型表 — Next.js + shadcn/ui（推荐）
+# 前端技术栈与启动
 
-> **状态**：v0.1 推荐稿，等用户拍板 Q3（Next.js 已默认）+ Q4（shadcn/ui 推荐）
-> **生成日期**：2026-07-31
-> **关联**：[frontend-prototype-roadmap.md §3](./frontend-prototype-roadmap.md) / [mock-data-spec.md](./mock-data-spec.md)
+状态：当前有效，记录实际实现。更新：2026-09-06。范围：[前端演示版](frontend-prototype-roadmap.md)。
 
----
+## 技术栈
 
-## 0. 选型摘要
-
-| 维度 | 选型 | 版本 | 备注 |
-|---|---|---|---|
-| **框架** | Next.js | `^14.2.0` | App Router（默认） |
-| **UI 库** | React | `^18.3.0` | Next.js 14 兼容上限 |
-| **样式** | Tailwind CSS | `^3.4.0` | shadcn/ui 强制依赖 |
-| **UI 组件** | shadcn/ui | latest（手动 copy） | 按需复制源码 |
-| **图标** | lucide-react | `^0.400.0` | shadcn/ui 默认 |
-| **状态管理** | Zustand | `^4.5.0` | 轻量 + TS 友好 |
-| **表单** | React Hook Form | `^7.51.0` | shadcn/ui 标配 |
-| **表单校验** | Zod | `^3.23.0` | 与 RHF 配合 |
-| **HTTP mock** | MSW (Mock Service Worker) | `^2.3.0` | API Routes 拦截 |
-| **Markdown 渲染** | react-markdown + remark-gfm | `^9.0.0` + `^4.0.0` | 详情页描述 |
-| **轮播** | embla-carousel-react | `^8.0.0` | 详情页图集 |
-| **日期** | dayjs | `^1.11.0` | 体积小，3KB |
-| **类名合并** | clsx + tailwind-merge | `^2.1.0` + `^2.2.0` | shadcn 标配 |
-| **TS** | TypeScript | `^5.4.0` | 严格模式 |
-
-**故意不引入**：
-
-- ❌ **Wagmi / Viem / WalletConnect** —— 真钱包不在本路线。响应式兼容即可。
-- ❌ **TanStack Query** —— 全 mock 数据，Zustand 够用
-- ❌ **next-intl** —— i18n 推迟到 Phase 2
-- ❌ **next-auth** —— 无后端认证
-- ❌ **framer-motion** —— 简单 transition 用 Tailwind 过渡即可
-
----
-
-## 1. 目录结构草案
-
-```
-crypto-c2c/frontend/
-├── package.json
-├── tsconfig.json
-├── next.config.mjs
-├── tailwind.config.ts
-├── postcss.config.mjs
-├── components.json              # shadcn/ui 配置
-├── .eslintrc.json
-├── .prettierrc
-├── .gitignore
-├── README.md
-├── public/
-│   └── (空)
-└── src/
-    ├── app/
-    │   ├── layout.tsx           # 根布局 + 顶部 nav
-    │   ├── page.tsx             # 首页 /
-    │   ├── explore/
-    │   │   └── page.tsx         # /explore
-    │   ├── listing/
-    │   │   └── [id]/
-    │   │       └── page.tsx     # /listing/[id]
-    │   ├── publish/
-    │   │   └── page.tsx         # /publish
-    │   ├── me/
-    │   │   ├── page.tsx         # /me
-    │   │   └── orders/
-    │   │       └── page.tsx     # /me/orders
-    │   ├── api/                 # API Routes（mock 走这里）
-    │   │   ├── items/
-    │   │   │   └── route.ts
-    │   │   ├── orders/
-    │   │   │   └── route.ts
-    │   │   └── favorites/
-    │   │       └── route.ts
-    │   └── globals.css          # Tailwind 入口 + shadcn 变量
-    ├── components/
-    │   ├── ui/                  # shadcn/ui 复制的组件源码
-    │   │   ├── button.tsx
-    │   │   ├── card.tsx
-    │   │   ├── dialog.tsx
-    │   │   ├── sheet.tsx
-    │   │   ├── tabs.tsx
-    │   │   ├── form.tsx
-    │   │   ├── input.tsx
-    │   │   ├── select.tsx
-    │   │   ├── slider.tsx
-    │   │   ├── badge.tsx
-    │   │   ├── avatar.tsx
-    │   │   ├── skeleton.tsx
-    │   │   └── sonner.tsx       # toast
-    │   ├── layout/
-    │   │   ├── TopNav.tsx
-    │   │   ├── BottomTabBar.tsx # 移动端
-    │   │   └── Footer.tsx
-    │   ├── home/
-    │   │   ├── HeroBanner.tsx   # 轮播
-    │   │   ├── CategoryTabs.tsx
-    │   │   └── ItemGrid.tsx
-    │   ├── listing/
-    │   │   ├── ItemCard.tsx
-    │   │   ├── FilterSidebar.tsx
-    │   │   ├── MediaCarousel.tsx
-    │   │   ├── SellerCard.tsx
-    │   │   ├── MarkdownRenderer.tsx
-    │   │   ├── BuyModal.tsx     # 模拟
-    │   │   └── ChatDrawer.tsx   # 模拟
-    │   ├── publish/
-    │   │   ├── PublishForm.tsx
-    │   │   ├── UploadDropzone.tsx
-    │   │   └── DigitalDeliveryForm.tsx
-    │   └── me/
-    │       ├── ProfileHeader.tsx
-    │       └── OrderTable.tsx
-    ├── lib/
-    │   ├── utils.ts             # shadcn cn() helper
-    │   ├── format.ts            # 价格 / 日期格式化
-    │   └── filter.ts            # 列表筛选纯函数
-    ├── stores/
-    │   ├── useItemStore.ts      # 商品（mock + user-published）
-    │   ├── useFilterStore.ts    # 筛选状态
-    │   ├── useOrderStore.ts     # 订单（localStorage）
-    │   ├── useUserStore.ts      # 当前用户（写死 alice）
-    │   └── useFavoriteStore.ts  # 收藏
-    ├── types/
-    │   ├── item.ts              # Item / ItemCategory / ItemStatus
-    │   ├── seller.ts
-    │   ├── order.ts
-    │   ├── category.ts
-    │   └── user.ts
-    ├── mock/
-    │   ├── items.json           # 25 条
-    │   ├── sellers.json         # 6 个
-    │   ├── orders.json          # 12 条
-    │   ├── banners.json         # 5 个
-    │   └── categories.json      # 5 个一级 + 子类
-    └── hooks/
-        ├── useLocalStorage.ts
-        └── useMediaQuery.ts     # 响应式断点
-```
-
----
-
-## 2. Next.js 配置要点
-
-### `next.config.mjs`
-
-```js
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'placehold.co' },
-      { protocol: 'https', hostname: 'picsum.photos' },
-      { protocol: 'https', hostname: 'api.dicebear.com' }
-    ]
-  },
-  reactStrictMode: true
-}
-export default nextConfig
-```
-
-### `tsconfig.json`
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./src/*"] }
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
-}
-```
-
-### `tailwind.config.ts`
-
-```ts
-import type { Config } from 'tailwindcss'
-
-const config: Config = {
-  darkMode: ['class'],
-  content: ['./src/**/*.{ts,tsx}'],
-  theme: {
-    container: { center: true, padding: '1rem', screens: { '2xl': '1400px' } },
-    extend: {
-      colors: {
-        border: 'hsl(var(--border))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        primary: { DEFAULT: 'hsl(var(--primary))', foreground: 'hsl(var(--primary-foreground))' },
-        // ... shadcn 默认
-      },
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif']
-      }
-    }
-  },
-  plugins: [require('tailwindcss-animate')]
-}
-export default config
-```
-
----
-
-## 3. 响应式断点（Tailwind 默认）
-
-| 断点 | 宽度 | 用途 |
-|---|---|---|
-| (默认) | < 640px | Web3 钱包内置浏览器 / 移动 H5 |
-| `sm:` | ≥ 640px | 大屏手机 / 小平板 |
-| `md:` | ≥ 768px | 平板 |
-| `lg:` | ≥ 1024px | 小桌面 |
-| `xl:` | ≥ 1280px | 桌面 |
-| `2xl:` | ≥ 1536px | 大桌面 |
-
-**布局策略**：
-- `< sm`：单列 + 底部 TabBar
-- `sm ~ md`：双列网格
-- `≥ md`：三列网格 + 顶部 nav
-
----
-
-## 4. SEO 基础
-
-每个页面 `generateMetadata`：
-
-```ts
-// app/listing/[id]/page.tsx
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const item = await getItem(params.id)
-  return {
-    title: `${item.title} · CryptoC2C`,
-    description: item.description.slice(0, 160),
-    openGraph: {
-      title: item.title,
-      description: item.description.slice(0, 160),
-      images: item.media[0]?.url
-    }
-  }
-}
-```
-
-`app/layout.tsx` 设置 `metadataBase` + 默认 OG image。
-
----
-
-## 5. 待决策 / 风险
-
-| 风险 | 缓解 |
+| 层面 | 实际选择 |
 |---|---|
-| shadcn/ui 复制源码版本与官方不同步 | 锁定 commit hash 在 README |
-| Next.js 14 SSR + `localStorage` 不兼容 | 所有 localStorage 读取放 `useEffect` 内 |
-| MSW + Next.js App Router 集成复杂 | 改用纯 Zustand + JSON import（更简单） |
-| placehold.co 偶尔 503 | 备选 picsum.photos；CI 检查连通性 |
+| 应用 | Next.js 14 App Router、React 18、TypeScript 5 严格模式 |
+| 样式/UI | Tailwind CSS 3、Radix 基础组件、shadcn/ui 风格本地源码、Lucide |
+| 表单 | React Hook Form + Zod |
+| 国际化 | next-intl 4；`zh-CN` / `en`，始终使用语言前缀 |
+| 状态 | 用户/筛选/订单使用 Zustand；商品/收藏通过共享事件的 localStorage Hook |
+| 数据 | JSON 静态导入与本地新增数据，无 API Routes、MSW 或请求层 |
+| 内容 | react-markdown + remark-gfm、Embla 轮播 |
+| 验证 | Vitest + Testing Library + happy-dom；Playwright Chromium |
+| 工程 | npm、ESLint、Prettier、GitHub Actions；Vercel 部署配置 |
 
----
+依赖范围以 `frontend/package.json` 为准，锁定版本以 `frontend/package-lock.json` 为准。不使用 Wagmi、Viem、WalletConnect、认证服务或数据库。
 
-## 6. 与 Q1 / Q3 / Q4 关系
+## 目录
 
-- **Q3**：本选型表假设 Next.js（用户已默认 Next.js / React）
-- **Q4**：本选型表假设 shadcn/ui（推荐稿，待用户确认）
-- **Q1**：本选型表**不依赖** Q1 答案 —— 无论 A/B/C，目录结构与依赖列表都成立
+```text
+frontend/
+  src/app/[locale]/  页面及根布局
+  src/components/    layout / home / explore / listing / publish / me / ui
+  src/stores/        商品、收藏、订单、筛选、用户
+  src/hooks/         本地存储恢复与同步
+  src/lib/           数据入口、筛选、格式化
+  src/types/         TS 数据契约
+  src/mock/          静态数据
+  src/i18n/          请求配置、导航、路由
+  messages/          中英文翻译
+  tests/             单元、组件、浏览器测试
+```
 
----
+## 启动与检查
 
-## 7. 下一步
+工程统一使用 npm（`npm@10.9.8`）。Node 要求 `>=22.12.0`，与锁定的开发工具兼容；CI 使用 Node 22。
 
-按 [frontend-prototype-roadmap.md §7](./frontend-prototype-roadmap.md)：
+```bash
+cd frontend
+npm ci
+npm run dev
+# http://localhost:3000/zh-CN 或 /en
+```
 
-1. 等用户确认 **Q4**（shadcn/ui / Ant Design）+ **Q1**（spec 处置）
-2. 拍板后**生成 `frontend/` 目录 + `package.json` + 配置文件**（不安装依赖）
-3. 二次确认后**执行 `pnpm install` + 跑 `pnpm dev` 验证脚手架可启动**
+不需要 `.env`。商品卡默认本地占位图；部分详情媒体、头像依赖外部图片服务。可选 `NEXT_PUBLIC_USE_PLACEHOLDER=0` 开启商品卡图片请求。
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npm run start
+# 浏览器测试首次使用时需要安装 Chromium
+npx playwright install chromium
+npm run test:e2e
+```
+
+Playwright 自动启动或复用 `3737` 端口开发服务。CI 执行类型、Lint、单元测试和构建，暂不执行 E2E。Vercel 应用根目录设置为 `frontend`；标准 Node 环境也可通过 build/start 运行，不能宣称只支持 Vercel。
+
+## 实现限制
+
+浏览器持久化在挂载后恢复，服务端无法读取本地发布和收藏。没有共享账户或跨设备数据。界面主题与导航支持双语，但业务页面翻译、逐页 metadata、完整筛选 URL 同步和上传仍待完善。详见路线文档。

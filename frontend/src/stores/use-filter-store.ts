@@ -32,7 +32,10 @@ const defaultState: FilterState = {
 export const useFilterStore = create<FilterStore>(set => ({
   ...defaultState,
   setCategory: category => set(state => ({ ...state, category, page: 1 })),
-  setItemCategory: itemCategory => set(state => ({ ...state, itemCategory, page: 1 })),
+  setItemCategory: itemCategory => set(state => ({
+    ...state, itemCategory, page: 1,
+    condition: itemCategory === 'physical' ? state.condition : undefined
+  })),
   setPriceRange: (priceMin, priceMax) => set(state => ({ ...state, priceMin, priceMax, page: 1 })),
   setCurrency: currency => set(state => ({ ...state, currency, page: 1 })),
   setCondition: condition => set(state => ({ ...state, condition, page: 1 })),

@@ -37,7 +37,7 @@ data schema.
 - Tailwind utility classes; shadcn/ui primitives only — no other UI kit
 - All copy is i18n via `next-intl`; never hardcode zh-CN / en strings in JSX
 - New page → also add the route to top-nav in `src/app/[locale]/layout.tsx`
-- New mock item → schema in `docs/mock-data-spec.md` §4.1
+- New mock item → schema in `docs/mock-data-spec.md` (商品与分类)
 
 ## Out of scope
 This is a frontend prototype. Do not PR:
