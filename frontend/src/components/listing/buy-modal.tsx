@@ -29,13 +29,18 @@ const STEPS = ['confirm', 'fund', 'done'] as const
 export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
   const router = useRouter()
   const timer = useRef<ReturnType<typeof setTimeout>>()
-  const user = useUserStore(s => s.user)
+  const user = useUserStore((s) => s.user)
   const { create } = useOrderStore()
   const [step, setStep] = useState<(typeof STEPS)[number]>('confirm')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     setStep('confirm')
-    return () => { clearTimeout(timer.current); timer.current = undefined }
+    setError(null)
+    return () => {
+      clearTimeout(timer.current)
+      timer.current = undefined
+    }
   }, [open, item?.id])
 
   if (!item) return null
@@ -46,19 +51,26 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
 
   const handleConfirm = () => {
     if (step !== 'confirm' || timer.current) return
+    setError(null)
     setStep('fund')
-    // 模拟 1.5 秒链上确认
+    // 本地模拟订单，不涉及链上确认。
     timer.current = setTimeout(() => {
-      create({
-        itemId: item.id,
-        buyerId: user.id,
-        sellerId: item.sellerId,
-        amount: item.price,
-        status: 'pending_fulfillment',
-        role: 'buyer'
-      })
-      timer.current = undefined
-      setStep('done')
+      try {
+        create({
+          itemId: item.id,
+          buyerId: user.id,
+          sellerId: item.sellerId,
+          amount: item.price,
+          status: 'pending_fulfillment',
+          role: 'buyer'
+        })
+        setStep('done')
+      } catch {
+        setError('订单未保存，请检查浏览器存储空间或权限后重试。')
+        setStep('confirm')
+      } finally {
+        timer.current = undefined
+      }
     }, 1500)
   }
 
@@ -96,10 +108,7 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
               <div className="flex items-baseline justify-between text-sm">
                 <span className="text-muted-foreground">模拟手续费 (1%，不实际收取)</span>
                 <span>
-                  {formatPrice(
-                    Number((item.price.amount * 0.01).toFixed(4)),
-                    item.price.currency
-                  )}
+                  {formatPrice(Number((item.price.amount * 0.01).toFixed(4)), item.price.currency)}
                 </span>
               </div>
               <Badge variant="outline" className="text-xs">
@@ -107,6 +116,11 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
               </Badge>
             </div>
             <DialogFooter className="gap-2">
+              {error && (
+                <p role="alert" className="text-sm text-destructive">
+                  {error}
+                </p>
+              )}
               <Button variant="outline" onClick={handleClose}>
                 取消
               </Button>
@@ -119,15 +133,11 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
           <>
             <DialogHeader>
               <DialogTitle>模拟下单中...</DialogTitle>
-              <DialogDescription>
-                正在生成演示订单，无需操作钱包。
-              </DialogDescription>
+              <DialogDescription>正在生成演示订单，无需操作钱包。</DialogDescription>
             </DialogHeader>
             <div className="flex flex-col items-center gap-3 py-8">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <div className="text-sm text-muted-foreground">
-                等待模拟完成（约 1.5 秒）
-              </div>
+              <div className="text-sm text-muted-foreground">等待模拟完成（约 1.5 秒）</div>
             </div>
           </>
         )}
@@ -142,9 +152,7 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
             </DialogHeader>
             <div className="space-y-3 py-4">
               <div className="rounded-lg border bg-green-50 p-4 text-sm dark:bg-green-950">
-                <div className="font-medium text-green-900 dark:text-green-100">
-                  订单已创建
-                </div>
+                <div className="font-medium text-green-900 dark:text-green-100">订单已创建</div>
                 <div className="mt-1 text-xs text-green-700 dark:text-green-300">
                   可在「我的 → 我买到的」查看订单状态
                 </div>
@@ -159,7 +167,14 @@ export function BuyModal({ item, open, onOpenChange }: BuyModalProps) {
               <Button variant="outline" onClick={handleClose}>
                 关闭
               </Button>
-              <Button onClick={() => { handleClose(); router.push('/me') }}>查看订单</Button>
+              <Button
+                onClick={() => {
+                  handleClose()
+                  router.push('/me')
+                }}
+              >
+                查看订单
+              </Button>
             </DialogFooter>
           </>
         )}

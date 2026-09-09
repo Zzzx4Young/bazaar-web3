@@ -13,9 +13,15 @@ interface OrderState {
   reset: () => void
 }
 
-export const useOrderStore = create<OrderState>()(
-  persist(
-    set => ({
+export const useOrderStore = create<OrderState>()((set, get, api) => {
+  // Persist middleware hydrates the existing envelope. Actions commit to storage
+  // before using the original Zustand setter (which does not write a second time).
+  const commit = (userOrders: Order[]) => {
+    window.localStorage.setItem('c2c:orders', JSON.stringify({ state: { userOrders }, version: 0 }))
+    set({ userOrders })
+  }
+  return persist<OrderState>(
+    () => ({
       userOrders: [],
       create: (input: Omit<Order, 'id' | 'createdAt'>): Order => {
         const order: Order = {
@@ -23,31 +29,32 @@ export const useOrderStore = create<OrderState>()(
           id: `order_user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
           createdAt: new Date().toISOString()
         }
-        set(state => ({ userOrders: [order, ...state.userOrders] }))
+        commit([order, ...get().userOrders])
         return order
       },
-      updateStatus: (orderId, status) => {
-        set(state => ({
-          userOrders: state.userOrders.map(o => (o.id === orderId ? { ...o, status } : o))
-        }))
+      updateStatus: (orderId: string, status: OrderStatus) => {
+        commit(get().userOrders.map((o) => (o.id === orderId ? { ...o, status } : o)))
       },
-      reset: () => set({ userOrders: [] })
+      reset: () => commit([])
     }),
     {
       name: 'c2c:orders',
-      storage: createJSONStorage(() => (typeof window !== 'undefined' ? window.localStorage : ({} as Storage)))
+      storage: createJSONStorage(() =>
+        typeof window !== 'undefined' ? window.localStorage : ({} as Storage)
+      )
     }
-  )
-)
+  )(set, get, api)
+})
 
 // Pure selectors — derived from current state + static orders
-export const selectAllOrders = (s: OrderState): Order[] => [
-  ...s.userOrders,
-  ...staticOrders
-]
+export const selectAllOrders = (s: OrderState): Order[] => [...s.userOrders, ...staticOrders]
 
-export const selectByBuyer = (buyerId: string) => (s: OrderState): Order[] =>
-  selectAllOrders(s).filter(o => o.buyerId === buyerId)
+export const selectByBuyer =
+  (buyerId: string) =>
+  (s: OrderState): Order[] =>
+    selectAllOrders(s).filter((o) => o.buyerId === buyerId)
 
-export const selectBySeller = (sellerId: string) => (s: OrderState): Order[] =>
-  selectAllOrders(s).filter(o => o.sellerId === sellerId)
+export const selectBySeller =
+  (sellerId: string) =>
+  (s: OrderState): Order[] =>
+    selectAllOrders(s).filter((o) => o.sellerId === sellerId)

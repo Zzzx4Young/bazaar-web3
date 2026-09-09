@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BuyModal } from '@/components/listing/buy-modal'
@@ -25,6 +25,27 @@ beforeEach(() => {
   window.localStorage.clear()
   // reset zustand persist
   useOrderStore.getState().reset()
+})
+
+afterEach(() => vi.restoreAllMocks())
+
+it('returns to confirmation on save failure and retries without duplicate orders', async () => {
+  const user = userEvent.setup()
+  render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
+  const write = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+    throw new DOMException('full', 'QuotaExceededError')
+  })
+  await user.click(screen.getByRole('button', { name: '确认下单' }))
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('订单未保存'), {
+    timeout: 3000
+  })
+  expect(screen.queryByText('下单成功 ✓')).not.toBeInTheDocument()
+  expect(useOrderStore.getState().userOrders).toHaveLength(0)
+  write.mockRestore()
+  await user.click(screen.getByRole('button', { name: '确认下单' }))
+  await waitFor(() => expect(screen.getByText('下单成功 ✓')).toBeInTheDocument(), { timeout: 3000 })
+  expect(useOrderStore.getState().userOrders).toHaveLength(1)
+  expect(JSON.parse(localStorage.getItem('c2c:orders')!).state.userOrders).toHaveLength(1)
 })
 
 describe('BuyModal — confirm step', () => {

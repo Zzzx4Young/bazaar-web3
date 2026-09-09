@@ -5,8 +5,14 @@ import { useCallback, useEffect, useRef, useState, type SetStateAction } from 'r
 const CHANGE_EVENT = 'c2c:local-storage-change'
 
 // Hydrate after mounting; synchronize this tab via an event and other tabs via storage.
-export function useLocalStorage<T>(key: string, initial: T): [T, (v: SetStateAction<T>) => void, boolean] {
+export function useLocalStorage<T>(
+  key: string,
+  initial: T,
+  decode?: (value: unknown) => T
+): [T, (v: SetStateAction<T>) => void, boolean] {
   const initialRef = useRef(initial)
+  const decodeRef = useRef(decode)
+  decodeRef.current = decode
   const valueRef = useRef(initial)
   const [value, setValue] = useState(initial)
   const [hydrated, setHydrated] = useState(false)
@@ -16,6 +22,7 @@ export function useLocalStorage<T>(key: string, initial: T): [T, (v: SetStateAct
       const raw = window.localStorage.getItem(key)
       if (raw === null) return initialRef.current
       const parsed = JSON.parse(raw)
+      if (decodeRef.current) return decodeRef.current(parsed)
       if (Array.isArray(initialRef.current) && !Array.isArray(parsed)) return initialRef.current
       return parsed as T
     } catch {
@@ -33,7 +40,7 @@ export function useLocalStorage<T>(key: string, initial: T): [T, (v: SetStateAct
     }
     const onChange = (event: Event) => {
       const detail = (event as CustomEvent<{ key: string; value: T }>).detail
-      if (detail.key === key) update(detail.value)
+      if (detail?.key === key) update(read())
     }
     window.addEventListener('storage', onStorage)
     window.addEventListener(CHANGE_EVENT, onChange)
@@ -45,15 +52,18 @@ export function useLocalStorage<T>(key: string, initial: T): [T, (v: SetStateAct
     }
   }, [key, read])
 
-  const set = useCallback((action: SetStateAction<T>) => {
-    const previous = valueRef.current
-    const next = typeof action === 'function' ? (action as (v: T) => T)(previous) : action
-    // Callers can show an error when the browser cannot persist the change.
-    window.localStorage.setItem(key, JSON.stringify(next))
-    valueRef.current = next
-    setValue(next)
-    window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { key, value: next } }))
-  }, [key])
+  const set = useCallback(
+    (action: SetStateAction<T>) => {
+      const previous = valueRef.current
+      const next = typeof action === 'function' ? (action as (v: T) => T)(previous) : action
+      // Callers can show an error when the browser cannot persist the change.
+      window.localStorage.setItem(key, JSON.stringify(next))
+      valueRef.current = next
+      setValue(next)
+      window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { key, value: next } }))
+    },
+    [key]
+  )
 
   return [value, set, hydrated]
 }

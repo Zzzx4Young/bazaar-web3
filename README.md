@@ -1,217 +1,115 @@
-# Bazaar Web3 — Crypto-Powered C2C Marketplace (Frontend Prototype)
+# Bazaar Web3 — Frontend Demo
 
-> A peer-to-peer marketplace prototype for crypto-native communities. Buy and sell
-> physical goods and digital assets with USDT / ETH on a Sepolia testnet escrow mock.
-> This commit ships the **frontend prototype only** — no backend, no contracts, no
-> real wallet integration.
+A C2C marketplace demo for physical secondhand goods and digital content.
+The current implementation is frontend-only: no backend, authentication,
+wallet, blockchain, real payment, delivery or refund service.
 
----
+The next phase is an internal server Alpha with simulated settlement.
+Its business scope is confirmed, but server-side features are not implemented.
 
-## ⚡ Quick Start
+## Quick start
+
+Requirements: Node.js **>=22.12.0**, npm **10.9.8**.
+Dependency versions are defined by [package.json](frontend/package.json) and its lockfile.
 
 ```bash
-# 1. Clone
 git clone https://github.com/Zzzx4Young/bazaar-web3.git
 cd bazaar-web3/frontend
-
-# 2. Install (≈ 1 minute, 422 MB)
-npm install
-
-# 3. Run dev server
+npm ci
 npm run dev
-# → http://localhost:3000
 ```
 
-That's it. All mock data, sample images (placehold.co / picsum.photos), and wallet
-flows are pre-wired. No `.env` required.
+Open http://localhost:3000/zh-CN or http://localhost:3000/en.
+The root URL redirects to /zh-CN. No environment file is required for the Demo.
+Cards use local placeholders by default; some detail images and avatars require
+external image services. Optional NEXT_PUBLIC_USE_PLACEHOLDER=0 enables card image requests.
 
-**Requirements**: Node.js ≥ 18.17.0 (the project ships `packageManager: npm@10.9.8`).
+## Current pages
 
----
+All routes below have a /zh-CN or /en prefix. Some business text is not yet translated.
 
-## 🗺️ What's in this prototype
-
-| Route | Description |
+| Route suffix | Implemented capability |
 |---|---|
-| `/` | Hero banner carousel + category tabs + featured / digital / physical grids |
-| `/explore` | Filter sidebar (keyword / category / type / currency / condition / sort) + infinite scroll-ready grid |
-| `/listing/[id]` | Media carousel + Markdown description + seller card + **BuyModal** (3-step escrow sim) + **ChatDrawer** (local message log) |
-| `/publish` | Physical / digital toggle, Zod cross-field validation, image upload, draft persisted to localStorage |
-| `/me` | Profile header + buyer/seller order tabs + favorites |
-| `/seller/[id]` | Public seller page with rating and active listings |
+| / | Banners, categories and product grids, including local publications |
+| /explore | Keyword, category, type, currency, condition and sorting controls |
+| /listing/[id] | Media, Markdown, seller information, favorites, local chat and simulated purchase |
+| /publish | Validated publication with placeholder media; no image upload or draft saving |
+| /me | Fixed demo profile and buyer/seller order lists |
+| /seller/[id] | Demo seller profile and matching static/local products |
+| /favorites | Locally saved favorites |
+| /notifications | Static sample notifications |
 
-**Mock dataset**: 25 items · 6 sellers · 12 orders · 5 banners · 5 categories.
+Mock data: 25 products, 6 sellers, 12 orders, 5 banners and 5 categories.
+Demo samples do not establish which assets are authorized for future trading.
+Displayed currencies and fees do not represent connected payment channels.
 
----
+## Storage and limitations
 
-## 🧰 Tech stack
+Published products, favorites and simulated orders persist in localStorage across
+refreshes on the same browser and origin. They do not synchronize across devices.
+Clearing site data removes local additions; static samples remain. Local product
+links cannot be used by another browser that does not have that data.
 
-- **Framework**: Next.js 14 (App Router) + TypeScript 5
-- **UI**: Tailwind CSS + shadcn/ui (Radix primitives + lucide-react)
-- **State**: Zustand with `localStorage` persistence
-- **Forms**: React Hook Form + Zod
-- **Markdown**: react-markdown + remark-gfm
-- **Media**: embla-carousel-react
-- **Data**: static JSON imports under `src/mock/`
+Order actions save before updating in-memory state. A failed purchase returns to
+confirmation with an error and allows retry. Invalid cached products are excluded
+from the in-memory list while valid entries remain usable. Reading a corrupt cache
+does not overwrite it; a later successful publication saves the recovered valid
+list plus the new product.
 
-Full dependency list in [`frontend/package.json`](frontend/package.json) — 25 runtime deps, 12 dev deps.
+Chat messages only live in component memory. Product inventory, shared accounts,
+server permissions, shipment, download authorization and refunds are not implemented.
+See the [Demo data contract](docs/mock-data-spec.md) for exact storage formats.
 
----
+## Development and verification
 
-## 📜 Available scripts
-
-Run from `frontend/`:
-
-| Command | What it does |
-|---|---|
-| `npm run dev` | Start dev server on http://localhost:3000 |
-| `npm run build` | Production build (Next.js) |
-| `npm run start` | Serve the production build |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run lint` | ESLint with `next/core-web-vitals` |
-| `npm run format` | Prettier across `src/` |
-
----
-
-## ⚠️ What's NOT in this prototype
-
-This is a UI prototype, not a product. Specifically:
-
-- ❌ **No backend** — there is no API server, no Postgres, no S3
-- ❌ **No smart contracts** — the on-chain escrow flow described in
-  [`docs/mvp-spec.md`](docs/archive/mvp-spec.md) is **not implemented** here, only mocked
-- ❌ **No real wallet** — no WalletConnect, no wagmi, no viem. Buttons simulate the flow
-- ❌ **No real KYC / compliance** — see [`docs/03-compliance.md`](docs/archive/03-compliance.md)
-  for what the eventual product must do
-- ❌ **No audit** — never deploy the smart contracts described in `mvp-spec.md` without
-  a third-party audit
-
-Publish / buy / favorite / order actions only write to `localStorage`. Reload the tab
-and they're gone (intentional — keeps the demo stateless).
-
----
-
-## 🏗️ Project structure
-
-```
-bazaar-web3/
-├── README.md                     ← you are here
-├── LICENSE
-├── .gitignore
-├── frontend/                     ← Next.js 14 app (this is what you run)
-│   ├── src/
-│   │   ├── app/                  ← routes: 7 pages + globals.css + layout
-│   │   ├── components/
-│   │   │   ├── ui/               ← shadcn/ui primitives (button, card, dialog, ...)
-│   │   │   ├── home/             ← hero, category tabs, item card, grid
-│   │   │   ├── listing/          ← carousel, markdown, seller card, buy modal, chat drawer
-│   │   │   ├── explore/          ← filter sidebar, sort dropdown
-│   │   │   ├── publish/          ← publish form
-│   │   │   └── me/               ← profile header, order table
-│   │   ├── stores/               ← Zustand stores (items / filters / orders / user / favorites)
-│   │   ├── lib/                  ← cn() / format / filter utils + mock-data loader
-│   │   ├── hooks/                ← useLocalStorage
-│   │   ├── types/                ← TS schemas (Item, Seller, Order, ...)
-│   │   └── mock/                 ← 25 items + 6 sellers + 12 orders + 5 banners + 5 categories
-│   ├── public/
-│   ├── package.json
-│   └── ...
-└── docs/                         ← current index: docs/README.md
-    ├── server-alpha-spec.md      ← confirmed Alpha business baseline
-    ├── execution-plan.md         ← dependencies, deliverables and hardening
-    ├── frontend-prototype-roadmap.md
-    ├── frontend-stack-recommendation.md
-    ├── mock-data-spec.md
-    ├── adr/                     ← decision records
-    ├── review-corrections.md     ← review disposition
-    ├── CHANGELOG.md              ← concise change history
-    └── archive/                 ← historical research and frozen testnet drafts
-```
-
----
-
-## 📚 Documentation index
-
-Start with [the current docs index](docs/README.md).
-
-- [Alpha business specification](docs/server-alpha-spec.md): confirmed internal-test scope; server-side features are not implemented yet.
-- [Execution plan](docs/execution-plan.md): next deliverables, dependencies and Demo hardening.
-- [Frontend baseline](docs/frontend-prototype-roadmap.md), [startup guide](docs/frontend-stack-recommendation.md) and [mock data contract](docs/mock-data-spec.md): current implementation.
-- [Decisions](docs/adr/0002-server-alpha.md), [review disposition](docs/review-corrections.md) and [changelog](docs/CHANGELOG.md): rationale and traceability.
-- [Historical archive](docs/archive/README.md): unverified research and frozen testnet drafts, not current specifications or executable tickets.
-
----
-
-## 🎯 Project context
-
-**Problem.** Roughly 500M people hold crypto, but very few places accept it for
-real-world goods. Stripe, eBay, and Amazon have evaluated crypto payments for years
-and shipped nothing for the C2C user.
-
-**Where this prototype fits.** Before sinking budget into smart contracts, audits,
-KYC vendors, and a payment-flow backend, we want to validate the *shape* of the
-product: does the UI make sense, do the flows feel right, do mock transactions
-behave the way a real user would expect?
-
-**Endgame (see `mvp-spec.md`).** Real on-chain escrow on Sepolia (with optional
-Gnosis Safe 2-of-3 multisig for admin operations), email-only KYC, 1% platform
-fee, no Mainnet deployment without an audit.
-
-**Geography.** The endgame product explicitly excludes mainland China users. This
-prototype ships no region restrictions at all — it's a UI demo.
-
----
-
-## 🚀 Deployment
-
-This is a Next.js 14 App Router app; the only deploy shape it supports today is
-**Vercel**. The repo root includes a checked-in [`vercel.json`](vercel.json) that
-pins `rootDirectory: frontend` so a one-click import from GitHub just works.
+Run in frontend/:
 
 ```bash
-# Either: import the GitHub repo in the Vercel UI (recommended)
-#     https://github.com/Zzzx4Young/bazaar-web3 → Vercel "New Project"
-# Or, manually:
-npm i -g vercel
-cd frontend && vercel        # preview deployment
-cd frontend && vercel --prod # production
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npm run start
 ```
 
-There is no backend yet, so no env vars, no secrets, no database URL. Public S3 /
-R2 / Postgres only enter the picture when we graduate from prototype to product
-(see [`docs/mvp-spec.md`](docs/archive/mvp-spec.md) and [`docs/03-compliance.md`](docs/archive/03-compliance.md)).
+Stop the development server before building: dev and build share .next output.
+Restart development after a build to avoid stale assets.
 
-Continuous integration: see [`.github/workflows/ci.yml`](.github/workflows/ci.yml) —
-a push to `main` runs the same 4-step gate locally (`typecheck → lint → test → build`).
-
-## 📸 Screenshots
-
-Refreshed locally with `npm run screenshot` (script: [`frontend/scripts/screenshot.mjs`](frontend/scripts/screenshot.mjs),
-uses the Playwright already in dev deps). Output lands in
-[`docs/screenshots/`](docs/screenshots).
+Browser tests:
 
 ```bash
-cd frontend
-npm run screenshot     # writes 5 PNGs into ../docs/screenshots/
+npx playwright install chromium
+npm run test:e2e
 ```
 
-The script auto-starts the dev server on `:3737` if nothing is up, and tears it
-down at the end. It is **not** wired into CI — screenshots are a manual artifact
-and would go stale if auto-regenerated.
+Playwright starts or reuses the development server on port 3737.
+Current [CI](.github/workflows/ci.yml) runs typecheck, lint, unit tests and build;
+E2E is not yet included. A local passing test does not establish remote CI status.
 
----
+Other scripts: npm run format formats source; npm run screenshot creates manual
+screenshots under docs/screenshots and may start a server on port 3737.
 
-## 🤝 Contributing
+## Architecture and deployment status
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, the gate commands, and the
-short list of things that are out of scope for this prototype.
+Current stack: Next.js 14 App Router, React 18, TypeScript, Tailwind CSS,
+Radix components, next-intl, React Hook Form and Zod.
+User/filter/order stores use Zustand; products/favorites use a shared localStorage hook.
+This describes the checked-in implementation, not a recommendation to retain its
+framework version for the planned authenticated Alpha.
 
----
+A standard Node runtime can serve a production build with npm run start.
+Public deployment is outside the approved internal Alpha scope. The repository
+Vercel configuration still needs review; do not assume a one-click deployment works.
+No deployment or configuration change is included in this storage-hardening work.
 
-## 📞 Contact
+## Documentation
 
-TBD.
-
-## 📄 License
-
-See [`LICENSE`](LICENSE).
+- [Current documentation index](docs/README.md)
+- [Alpha business specification](docs/server-alpha-spec.md)
+- [Execution plan and remaining hardening](docs/execution-plan.md)
+- [Frontend capabilities](docs/frontend-prototype-roadmap.md)
+- [Frontend stack and startup](docs/frontend-stack-recommendation.md)
+- [Change history](docs/CHANGELOG.md)
+- [Historical archive](docs/archive/README.md) — unverified research and frozen testnet drafts, not current specifications
+- [Contributing](CONTRIBUTING.md)
+- [License](LICENSE)
