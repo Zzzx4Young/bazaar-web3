@@ -46,7 +46,7 @@
 
 ## 订单快照与最小数据模型
 
-建议实体：Account、Listing、Order、DeliveryRecord、IssueRecord、OrderEvent、Session。具体数据库和字段类型未选定。
+建议实体：Account、Listing、Order、DeliveryRecord、IssueRecord、OrderEvent、Session。数据库方向已确认为 PostgreSQL，ORM、具体字段及 schema 待设计，见 [后端架构](backend-architecture.md)。
 
 - 创建订单时固定商品 ID、买卖双方 ID、商品类型、标题、描述、价格与币种；数字内容同时固定卖家提供的授权说明和版本标识。金额使用精确表示，不使用浮点运算或跨币种直接比较。
 - 私有收件信息与公开商品字段分离；交付链接、提取码仅保存到相应订单的交付记录。敏感值不进入普通日志。
