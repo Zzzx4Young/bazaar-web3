@@ -24,7 +24,7 @@ StatefulSet 提供稳定身份与存储关联，默认删除工作负载不删�
 
 ## Docker Compose 启动
 
-前置：Docker Engine 或 Docker Desktop，以及支持 up --wait 的 Compose v2；Linux 主机需可访问 Docker daemon。所有以下命令在仓库根目录运行。
+前置：Docker Engine 或 Docker Desktop，以及支持 up --wait 的 Docker Compose 插件；Linux 主机需可访问 Docker daemon。所有以下命令在仓库根目录运行。
 
 ```bash
 bash infra/scripts/init-secrets.sh
@@ -106,7 +106,7 @@ kubectl -n bazaar-dev scale statefulset/postgres --replicas=0
 
 ## 版本、密码变更与数据保护
 
-本次根据官方镜像标签列表选择 postgres:17.11-bookworm，两种编排一致；尚未拉取镜像验证。补丁标签仍可被重新构建，部署验收后记录并固定实际 digest。17 系列挂载 /var/lib/postgresql/data；升级主版本需要单独迁移方案，不可直接修改镜像标签后复用旧数据目录。[PostgreSQL 官方镜像说明](https://hub.docker.com/_/postgres)
+本次根据官方镜像标签列表选择 postgres:17.11-bookworm，两种编排一致；2026-09-10 已拉取并完成测试库启动与认证查询。补丁标签仍可被重新构建，部署验收后记录并固定实际 digest。17 系列挂载 /var/lib/postgresql/data；升级主版本需要单独迁移方案，不可直接修改镜像标签后复用旧数据目录。[PostgreSQL 官方镜像说明](https://hub.docker.com/_/postgres)
 
 POSTGRES_USER、POSTGRES_DB 与密码文件只在空数据目录初始化时生效。修改密码文件或 K8s Secret 不会更新已有数据库密码；轮换必须同步执行数据库角色密码变更和应用凭据更新。
 
@@ -121,6 +121,36 @@ mkdir -p infra/backups
 
 ## 本轮验证记录
 
-2026-09-10：YAML 解析、Compose 服务与 Secret/卷引用、K8s selector/挂载引用静态检查、Bash 语法、密码初始化与重复运行保留验证、文档链接及 git diff --check 通过。当前环境没有 docker 或 kubectl，因此未执行 Compose config、拉取启动、Kubernetes API schema 校验、PVC 绑定或数据恢复；上面的命令是待运行的操作步骤。
+2026-09-10：YAML 解析、Compose 服务与 Secret/卷引用、K8s selector/挂载引用静态检查、Bash 语法、密码初始化与重复运行保留验证、文档链接及 git diff --check 通过。这是编排文件初建时的验证记录；当时未安装 Docker/kubectl。后续容器验证结果如下。
 
 后续按[数据库验证计划](../docs/backend-validation-plan.md)执行事务实验。K8s 内测库不作为破坏性集成测试目标。
+
+## 2026-09-11 会话交接：本机环境与已验证结果
+
+以下为本会话 2026-09-10 安装和验证的结果，非持续健康监控；下次启动会话先重新检查服务。
+
+- 系统：Ubuntu 22.04.5 LTS / amd64 / WSL2，宿主 PID 1 为 systemd。沙箱内进程视图可能不同。
+- 已安装官方 Jammy stable 包：Docker Engine/CLI 29.8.0、Compose 插件 5.5.1、containerd 2.3.5、Buildx 0.37.0。Docker 与 containerd 已启用自动启动，验证时均 active。使用 sudo docker；没有安装独立 docker-compose 或 Kubernetes 工具。
+- Compose config 检查通过；postgres:17.11-bookworm 拉取成功，返回 digest 为 sha256:051f7b7b3abdd564d5d1bd1e8c4b9c1b6e77087d1dd22020ede611c096a272e0。编排仍使用版本标签，尚未改为 digest 固定。
+- postgres-test 已启动并通过健康检查；容器内 TCP 密码认证与 SELECT current_database(), current_user, version() 成功，返回 bazaar_test / bazaar_test_admin / PostgreSQL 17.11。地址为 127.0.0.1:55432。
+- 未运行开发持久库、重启恢复、备份恢复、DB-01—DB-11 业务事务实验或 K8s 部署。测试库仍是 tmpfs，停止容器后数据丢失；WSL 关闭后下次需重新启动。
+
+本机配置（不在仓库内，新机器不会随 git clone 获得）：
+
+- /etc/local-proxy.env：统一大小写 HTTP/HTTPS/ALL_PROXY 与 NO_PROXY；代理为 http://127.0.0.1:10809，依赖 Windows 本机代理可用。
+- ~/.bashrc 与 ~/.profile 加载上述文件；Docker 的 /etc/systemd/system/docker.service.d/http-proxy.conf 通过 EnvironmentFile 加载同一文件。旧终端可执行 source ~/.profile。
+- /etc/docker/daemon.json 配置 registry-mirrors 为 https://docker.m.daocloud.io；该服务由 DaoCloud 维护，支持的配置见[官方项目](https://github.com/DaoCloud/public-image-mirror)。已验证端点可达，配置后镜像拉取成功。
+- Docker apt 源位于 /etc/apt/sources.list.d/docker.sources。曾遇 IPv6 TLS 失败，安装使用临时 Acquire::ForceIPv4=true；未全局禁用 IPv6。
+- 本机 curl 7.81 不支持 NO_PROXY 的 CIDR 匹配；localhost 等精确地址可用。Docker Hub 端点验证返回预期 401，Docker 下载站曾间歇 TLS 超时，不代表网络始终稳定。
+- 原 shell 配置备份位于 ~/.config/proxy-backups/20260910T142616Z/。密码留在 infra/.secrets/，不能将密码原文或带密码 URL 写入交接记录。
+
+下次继续（仓库根目录）：
+
+```bash
+sudo docker info
+sudo docker compose -f infra/compose.yaml --profile test ps
+sudo docker compose -f infra/compose.yaml --profile test up -d --wait postgres-test
+sudo docker compose -f infra/compose.yaml --profile test exec postgres-test psql -U bazaar_test_admin -d bazaar_test
+```
+
+进入 psql 后用 \q 退出。业务实施顺序见[执行计划](../docs/execution-plan.md)，不要将数据库能连接视为后端已实现。

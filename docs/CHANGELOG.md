@@ -2,6 +2,13 @@
 
 只记录变化摘要，不复制完整决策或任务列表。[整理前完整日志](archive/changelog-before-cleanup.md) 保留原始记录。
 
+## 2026-09-11 — 环境验收与会话交接补录
+
+- 补录 2026-09-10 的 Docker/Compose 安装、统一代理与 DaoCloud 镜像源配置、PostgreSQL 17.11 镜像拉取和 postgres-test 健康/密码认证查询成功结果，详情见 infra/README.md。
+- 更新执行计划与数据库验证计划中过期的环境缺失描述，列明后端依赖、骨架、事务实验和持久化恢复尚未完成。
+- 记录本机配置不随 Git 同步，AGENTS.md 保留本地；敏感文件继续忽略。此次只更新文档，不重新运行数据库或前端测试。
+- 验证：改动文档本地链接和 git diff --check 通过。
+
 ## 2026-09-10 — 容器化基础设施
 
 - 新增 infra/compose.yaml，提供 PostgreSQL 持久开发库和独立 tmpfs 测试库；新增随机密码文件初始化脚本与 Git 忽略规则。
