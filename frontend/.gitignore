@@ -1,42 +1,11 @@
-# dependencies
-/node_modules
+# Shared dependency, build, environment, and editor rules live in ../.gitignore.
+
+# Yarn Plug'n'Play metadata
 /.pnp
 .pnp.js
 
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# local env files
-.env*.local
-.env
-
-# vercel
+# Local Vercel configuration
 .vercel
 
-# typescript
-*.tsbuildinfo
+# Generated Next.js types
 next-env.d.ts
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-Thumbs.db

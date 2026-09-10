@@ -2,6 +2,30 @@
 
 只记录变化摘要，不复制完整决策或任务列表。[整理前完整日志](archive/changelog-before-cleanup.md) 保留原始记录。
 
+## 2026-09-10 — 容器化基础设施
+
+- 新增 infra/compose.yaml，提供 PostgreSQL 持久开发库和独立 tmpfs 测试库；新增随机密码文件初始化脚本与 Git 忽略规则。
+- 新增 Kubernetes Namespace、Service、StatefulSet/PVC 与 Kustomize 入口，提供单实例内测部署。
+- 新增可行性、启动、停止、版本、备份和后续组件接入说明；同步文档入口与执行计划。
+- YAML/引用静态检查、Bash 语法与密码脚本幂等检查、改动文档链接及 diff 格式通过。无 docker/kubectl，未验证实际启动、集群资源或数据库事务。
+
+## 2026-09-09 — 版本初核与数据库实验计划
+
+- 新增 backend-validation-plan.md，记录官方版本依据、候选与尚未核实项，建立 DB-01—DB-11 并发、幂等、回滚、迁移和持久化验收。
+- 细化幂等冲突的事务内处理，同步执行计划、ORM 记录与文档入口。
+- 本机 Node 22.23.1 / npm 10.9.8；PATH 中无 psql、postgres 或 docker。未安装后端依赖或运行数据库实验。
+- 验证：文档本地链接与 git diff --check 通过；本轮仅修改文档，未运行前端回归。
+
+## 2026-09-09 — ORM 确认 Prisma
+
+用户明确选择 Prisma。同步 ADR-0003、ORM 评估、架构、业务规格、入口与执行计划；TypeORM 仅保留为比较依据。版本兼容性、schema、关键事务与迁移验证仍待完成，本次未安装依赖、建表或编写后端。
+
+## 2026-09-09 — 逻辑数据与事务设计推进
+
+- 新增 backend-data-design.md，整理字段、关系、公开/私有边界、发布与库存分离、订单快照、幂等、并发取消/付款/退款及恢复可售的事务协议。
+- 新增 orm-evaluation.md，以官方版本化文档比较 Prisma / TypeORM，列明推荐与未执行的验证门槛；候选尚待用户确认。
+- 同步入口、架构和执行计划。仅更新文档，未安装依赖、执行数据库实验、编写后端或变更已确认业务范围。
+
 ## 2026-09-09 — 后端架构决策落档
 
 - 新增 ADR-0003，记录已确认的前后端分离、独立模块化单体和 TypeScript＋NestJS/Fastify＋PostgreSQL；Prisma / TypeORM 待定。

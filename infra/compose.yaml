@@ -1,0 +1,66 @@
+name: bazaar-infra
+
+x-postgres: &postgres
+  image: postgres:17.11-bookworm
+  shm_size: 128mb
+  stop_grace_period: 60s
+  healthcheck:
+    test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+    interval: 5s
+    timeout: 3s
+    retries: 12
+    start_period: 30s
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '3'
+
+services:
+  postgres:
+    <<: *postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bazaar_admin
+      POSTGRES_DB: bazaar_dev
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    secrets:
+      - postgres_password
+    networks: [development]
+
+  postgres-test:
+    <<: *postgres
+    profiles: [test]
+    restart: 'no'
+    environment:
+      POSTGRES_USER: bazaar_test_admin
+      POSTGRES_DB: bazaar_test
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_test_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '127.0.0.1:${POSTGRES_TEST_PORT:-55432}:5432'
+    tmpfs:
+      - /var/lib/postgresql/data:size=1g
+    secrets:
+      - postgres_test_password
+    networks: [testing]
+
+volumes:
+  postgres-data:
+
+networks:
+  development:
+  testing:
+
+secrets:
+  postgres_password:
+    file: ./.secrets/postgres_password
+  postgres_test_password:
+    file: ./.secrets/postgres_test_password
