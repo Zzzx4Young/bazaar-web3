@@ -2,11 +2,11 @@
 
 A C2C marketplace demo for physical secondhand goods and digital content.
 The frontend remains a browser-local demo. An independent NestJS/Fastify + Prisma
-backend skeleton now lives in [backend/](backend/README.md); authentication, business
+backend with validated transaction experiments lives in [backend/](backend/README.md); authentication, business
 APIs, wallet, blockchain and real settlement are not implemented.
 
 The next phase is an internal server Alpha with simulated settlement.
-Its business scope is confirmed; backend work starts with runtime and database validation.
+Its business scope is confirmed; V1 runtime and V2 database validation are complete.
 
 ## Quick start
 

@@ -1,6 +1,6 @@
 # 容器化基础设施
 
-更新：2026-09-10。供本地开发、数据库实验和已有 Kubernetes 集群内测使用。独立后端 V1 骨架见 [backend/README.md](../backend/README.md)，前端仍按 frontend/package.json 启动；本目录只编排 PostgreSQL，尚无 API 镜像或业务迁移。
+更新：2026-09-10。供本地开发、数据库实验和已有 Kubernetes 集群内测使用。独立后端 V1 骨架见 [backend/README.md](../backend/README.md)，前端仍按 frontend/package.json 启动；本目录只编排 PostgreSQL，尚无 API 镜像；实验迁移与启动见 backend 文档。
 
 ## 可行性与选择
 
@@ -154,3 +154,16 @@ sudo docker compose -f infra/compose.yaml --profile test exec postgres-test psql
 ```
 
 进入 psql 后用 \q 退出。业务实施顺序见[执行计划](../docs/execution-plan.md)，不要将数据库能连接视为后端已实现。
+
+## 2026-09-11 V2 专用持久测试库
+
+新增 [compose.validation.yaml](compose.validation.yaml)，独立项目 bazaar-validation、服务 postgres-validation、数据库 bazaar_persistence、用户 bazaar_validation_admin、宿主回环端口 55433 和命名卷 validation-data。复用本机已忽略的测试密码文件，与开发库隔离；实验管理角色不作为正式 API 运行角色。
+
+```bash
+sudo docker compose -f infra/compose.validation.yaml up -d --wait postgres-validation
+# 在 backend/ 完成构建后运行，此入口会重启上述专用容器：
+cd backend
+node scripts/with-persistence-db.mjs
+```
+
+DB-10 已验证空库迁移、历史数据升级、容器/API 进程重启及手写约束保留，见 [V2 报告](../docs/backend-v2-report.md)。每轮随机实验 schema 已清理，容器和命名卷保留；可用 `sudo docker compose -f infra/compose.validation.yaml stop postgres-validation` 停止服务。未执行备份恢复、HA 或 Kubernetes 验证。

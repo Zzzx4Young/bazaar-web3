@@ -1,6 +1,6 @@
 # Bazaar Web3 文档索引
 
-更新：2026-09-11。前端仍为 Demo；已开始独立后端 V1 骨架与运行验证，业务表、认证和业务 API 尚未实现。验证结果见后端报告。
+更新：2026-09-11。前端仍为 Demo；已完成独立后端 V1 骨架及 V2 实验表/事务/迁移验证；正式模型、认证和业务 API 待 C1—C3。
 
 ## 当前文档与职责
 
@@ -8,11 +8,12 @@
 |---|---|
 | [业务规格](server-alpha-spec.md) | Alpha 范围、状态、权限、数据约定与验收 |
 | [后端架构设计](backend-architecture.md) | 模块职责、事务、存储、API/Worker 与 Web3 扩展边界；实现细节待评审 |
-| [逻辑数据与事务](backend-data-design.md) | 字段、关系、约束、库存与退款事务草案；未建表 |
+| [逻辑数据与事务](backend-data-design.md) | 正式模型的逻辑草案；实验实现与验收见 V2 报告 |
 | [ORM 比较](orm-evaluation.md) | 已选 Prisma；保留与 TypeORM 的取舍及验证门槛 |
 | [版本与数据库验证计划](backend-validation-plan.md) | 版本候选、环境缺口、事务与迁移实验步骤及验收门槛 |
 | [容器化基础设施](../infra/README.md) | Compose / Kubernetes 可行性、编排文件、启动与数据保护 |
-| [后端运行与验证报告](backend-validation-report.md) | 实际锁定版本、V1 验证证据与尚未验收的边界 |
+| [后端运行与验证报告](backend-validation-report.md) | 实际锁定版本与 V1 验证证据 |
+| [V2 数据库验证报告](backend-v2-report.md) | 实验 schema、迁移、DB-01—DB-11 与持久化结果、C1—C3 边界 |
 | [执行计划](execution-plan.md) | 依赖顺序、待交付物、工程加固和完成条件 |
 | [前端功能基线](frontend-prototype-roadmap.md) | 已实现页面能力与演示限制 |
 | [前端技术与启动](frontend-stack-recommendation.md) | 实际技术栈、启动及检查方式 |

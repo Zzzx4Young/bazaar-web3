@@ -1,6 +1,6 @@
 # 服务端 Alpha 执行计划
 
-更新：2026-09-09。状态：业务基线、独立模块化单体与 TypeScript＋NestJS/Fastify＋PostgreSQL 已确认，ORM 已选 Prisma，版本与数据库验证待完成；[架构设计](backend-architecture.md) 已建立，接口和详细工单待编制。依据：[业务规格](server-alpha-spec.md)、[ADR-0003](adr/0003-backend-architecture.md)。本文件不重复业务规则，不承诺工期。
+更新：2026-09-11。状态：业务基线、独立模块化单体与 TypeScript＋NestJS/Fastify＋PostgreSQL 已确认，ORM 已选 Prisma，版本与 V1/V2 数据库验证已完成；[架构设计](backend-architecture.md) 已建立，接口和详细工单待编制。依据：[业务规格](server-alpha-spec.md)、[ADR-0003](adr/0003-backend-architecture.md)。本文件不重复业务规则，不承诺工期。
 
 ## 实施顺序
 
@@ -8,7 +8,7 @@
 |---|---|---|---|
 | 1 | 蓝图与业务范围 | Q1—Q4-10 确认，建立业务基线 | 已完成 |
 | 2 | 文档归一 | 规格、计划、现状、ADR 分层，历史归档 | 已完成 |
-| 3 | 技术与接口契约 | 评审模块与事务，选择 ORM/认证组件及版本，再编制 schema 和接口；覆盖权限、幂等、分页、错误和币种策略 | 逻辑数据与事务草案、ORM 文档比较已完成；Prisma 已选，版本资料初核与数据库验证计划已完成；实验及正式接口待完成 |
+| 3 | 技术与接口契约 | 评审模块与事务，选择 ORM/认证组件及版本，再编制 schema 和接口；覆盖权限、幂等、分页、错误和币种策略 | 逻辑数据与事务草案、ORM 文档比较已完成；Prisma 已选，V1/V2 运行与数据库实验已验收；正式 schema、认证与接口待 C1—C3 |
 | 4 | 详细工单 | 按依赖拆分任务，列验收、失败处理与测试，重新估算 | 待步骤 3 |
 | 5 | Demo 加固 | 下表问题复现、修复、回归 | 三项已修复，其余待处理 |
 | 6 | 账户与商品 | 独立浏览器分别登录，共享商品可见，非所属卖家不可修改，重启后数据保留 | 待前置工作 |
@@ -17,7 +17,7 @@
 
 ## Demo 加固（R12）
 
-步骤 3 的当前产物：[逻辑数据与事务](backend-data-design.md)、[ORM 比较](orm-evaluation.md)。用户已选择 Prisma；已新增[版本核对与数据库验证计划](backend-validation-plan.md)，完成官方资料初核及 DB-01—DB-11 验收设计；下一项搭建独立验证环境、核实包元数据并执行真实数据库实验，再推进 schema、认证细节、账户/商品接口，最后订单/交付接口与工单。不把文档完成视为实现或压测通过。
+步骤 3 的当前产物：[逻辑数据与事务](backend-data-design.md)、[ORM 比较](orm-evaluation.md)。用户已选择 Prisma，V1/V2 版本、运行和 DB-01—DB-11 实验已完成，见 [V2 报告](backend-v2-report.md)。下一项 C1 整理正式 schema/事务/迁移契约，之后推进 C2 认证及账户/商品接口、C3 订单/交付接口与工单。实验通过不作为容量压测结论。
 
 以下为此前 review 发现。2026-09-09 已修复前三项，其余三项不在本轮授权范围；验证结果见变更记录。
 
@@ -40,15 +40,19 @@
 
 已提供[Compose 与 Kubernetes 编排](../infra/README.md)：开发库使用持久卷，事务测试库独立且临时；K8s 为单实例 StatefulSet 内测模板。静态检查及 Compose 测试库启动、密码认证已完成；Docker 安装与本机配置见基础设施文档的会话交接。持久化恢复与 K8s 验证未执行；后端依赖与骨架尚未建立，V1 仍未全部验收。
 
-## 当前会话入口（2026-09-11，V1 完成后）
+## 当前会话入口（2026-09-11，V2 完成后）
 
 1. 按 [infra 交接记录](../infra/README.md)检查 Docker 与 postgres-test；tmpfs 数据库重启后为空是预期行为。
 2. V1 已完成：独立 backend 包、lockfile、健康检查与运行验证见[验证报告](backend-validation-report.md)。按 backend/README.md 可复现构建与检查。
-3. 建立实验 schema 与迁移，执行[验证计划](backend-validation-plan.md)的 DB-01—DB-11。重启持久化用例使用另建的专用持久测试库，不能依赖 tmpfs。
-4. 实验通过后定稿 schema、认证、账户/商品接口，再推进订单/交付接口和实现工单。币种与价格排序在接口定稿前确定，图片上传和部署预算仍待对应阶段确认。
+3. V2 已完成：实验 schema、两次迁移、DB-01—DB-11 和独立持久库/API 进程重启验证见 [V2 报告](backend-v2-report.md)。下一项为 C1 正式 schema、事务接口、错误/重试和迁移审查规则。
+4. C1 之后推进 C2 认证与账户/商品接口，再推进 C3 订单/交付接口和实现工单。币种与价格排序在接口定稿前确定，图片上传和部署预算仍待对应阶段确认。
 
 AGENTS.md 为本地贡献指南，按用户要求不入库，根 .gitignore 已忽略。下次会话以仓库内业务规格、ADR 和本计划追踪进度；本机代理、Docker 配置与 Codex 设置不随仓库同步。
 
 ## 2026-09-11 后端 V1 交付
 
-已建立独立 NestJS 12.0.1 / Fastify 5.12.1 / Prisma 7.10.0 后端，生成、构建、类型、Lint、配置与校验测试、真实 PostgreSQL 连接及进程关闭验证通过。依赖审计问题通过限定 overrides 修复，lockfile 重装通过。实现与限制见[报告](backend-validation-report.md)。步骤 3 仍未整体完成：下一项为 V2 实验 schema、迁移 SQL 与 DB-01—DB-11，之后进入 C1—C3。
+已建立独立 NestJS 12.0.1 / Fastify 5.12.1 / Prisma 7.10.0 后端，生成、构建、类型、Lint、配置与校验测试、真实 PostgreSQL 连接及进程关闭验证通过。依赖审计问题通过限定 overrides 修复，lockfile 重装通过。实现与限制见[报告](backend-validation-report.md)。V1 交付时步骤 3 仍待 V2—C3；随后 V2 的完成情况见下一节。
+
+## 2026-09-11 后端 V2 交付
+
+V1 已提交 `1ecc043`。随后 V2 建立 13 个实验模型、两次事务化迁移和 11 项数据库验收；临时库集成 17/17 通过，DB-10 独立命名卷数据库和编译 API 进程重启通过，构建/类型/Lint/配置校验通过。实现范围和修正见 [V2 报告](backend-v2-report.md)。步骤 3 仍待 C1—C3，实验方法尚未暴露为业务 API。

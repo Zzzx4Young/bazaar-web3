@@ -1,9 +1,210 @@
+// C1 order core. Authentication and currency-specific contracts are finalized in C2.
 generator client {
-  provider = "prisma-client"
-  output = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
   moduleFormat = "esm"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Account {
+  id                   String              @id @default(uuid()) @db.Uuid
+  loginName            String              @unique @db.VarChar(100)
+  displayName          String
+  status               String              @default("active")
+  createdAt            DateTime            @default(now()) @db.Timestamptz(6)
+  listingSellerRows    Listing[]           @relation("listingSeller")
+  orderBuyerRows       Order[]             @relation("orderBuyer")
+  eventActorRows       OrderEvent[]        @relation("eventActor")
+  idempotencyActorRows IdempotencyRecord[] @relation("idempotencyActor")
+}
+
+model Listing {
+  id                   String              @id @default(uuid()) @db.Uuid
+  sellerId             String              @db.Uuid
+  type                 String
+  title                String
+  description          String
+  category             String
+  priceAmount          Decimal             @db.Decimal(38, 18)
+  currency             String              @db.VarChar(12)
+  publicationStatus    String              @default("published")
+  version              Int                 @default(1)
+  licenseDescription   String?
+  contentVersion       String?
+  createdAt            DateTime            @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime            @updatedAt @db.Timestamptz(6)
+  listingSeller        Account             @relation("listingSeller", fields: [sellerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  orderListingRows     Order[]             @relation("orderListing")
+  inventoryListingRows PhysicalInventory[] @relation("inventoryListing")
+
+  @@unique([id, sellerId])
+  @@unique([id, type])
+  @@index([publicationStatus, createdAt, id])
+  @@index([sellerId, createdAt, id])
+}
+
+model Order {
+  id                   String                 @id @default(uuid()) @db.Uuid
+  listingId            String                 @db.Uuid
+  buyerId              String                 @db.Uuid
+  sellerId             String                 @db.Uuid
+  status               String                 @default("pending_payment")
+  version              Int                    @default(1)
+  createdAt            DateTime               @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime               @updatedAt @db.Timestamptz(6)
+  orderListing         Listing                @relation("orderListing", fields: [listingId, sellerId], references: [id, sellerId], onDelete: Restrict, onUpdate: Restrict)
+  orderBuyer           Account                @relation("orderBuyer", fields: [buyerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  snapshot             OrderSnapshot?         @relation("snapshotOrder")
+  shipping             OrderShipping?         @relation("shippingOrder")
+  inventoryOrderRows   PhysicalInventory[]    @relation("inventoryOrder")
+  reservationOrderRows InventoryReservation[] @relation("reservationOrder")
+  deliveryOrderRows    DeliveryRecord[]       @relation("deliveryOrder")
+  issueOrderRows       IssueRecord[]          @relation("issueOrder")
+  eventOrderRows       OrderEvent[]           @relation("eventOrder")
+  idempotencyOrderRows IdempotencyRecord[]    @relation("idempotencyOrder")
+
+  refundBuyerRows  RefundRequest[] @relation("refundBuyer")
+  refundSellerRows RefundRequest[] @relation("refundSeller")
+
+  @@unique([id, buyerId])
+  @@unique([id, sellerId])
+  @@unique([id, listingId])
+  @@index([buyerId, createdAt, id])
+  @@index([sellerId, createdAt, id])
+}
+
+model OrderSnapshot {
+  orderId                String             @id @db.Uuid
+  listingVersion         Int
+  title                  String
+  description            String
+  type                   String
+  category               String
+  priceAmount            Decimal            @db.Decimal(38, 18)
+  currency               String             @db.VarChar(12)
+  licenseDescription     String?
+  contentVersion         String?
+  snapshotOrder          Order              @relation("snapshotOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  settlementSnapshotRows SettlementRecord[] @relation("settlementSnapshot")
+
+  @@unique([orderId, priceAmount, currency])
+}
+
+model OrderShipping {
+  orderId       String @id @db.Uuid
+  recipient     String
+  contact       String
+  address       String
+  shippingOrder Order  @relation("shippingOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+}
+
+model PhysicalInventory {
+  listingId                String                 @id @db.Uuid
+  listingType              String                 @default("physical")
+  availability             String                 @default("available")
+  activeOrderId            String?                @db.Uuid
+  version                  Int                    @default(1)
+  inventoryListing         Listing                @relation("inventoryListing", fields: [listingId, listingType], references: [id, type], onDelete: Restrict, onUpdate: Restrict)
+  inventoryOrder           Order?                 @relation("inventoryOrder", fields: [activeOrderId, listingId], references: [id, listingId], onDelete: Restrict, onUpdate: Restrict)
+  reservationInventoryRows InventoryReservation[] @relation("reservationInventory")
+}
+
+model InventoryReservation {
+  id                   String            @id @default(uuid()) @db.Uuid
+  listingId            String            @db.Uuid
+  orderId              String            @unique @db.Uuid
+  state                String            @default("active")
+  createdAt            DateTime          @default(now()) @db.Timestamptz(6)
+  closedAt             DateTime?         @db.Timestamptz(6)
+  reservationInventory PhysicalInventory @relation("reservationInventory", fields: [listingId], references: [listingId], onDelete: Restrict, onUpdate: Restrict)
+  reservationOrder     Order             @relation("reservationOrder", fields: [orderId, listingId], references: [id, listingId], onDelete: Restrict, onUpdate: Restrict)
+}
+
+model DeliveryRecord {
+  id            String   @id @default(uuid()) @db.Uuid
+  orderId       String   @db.Uuid
+  sellerId      String   @db.Uuid
+  sequence      Int
+  kind          String
+  reference     String
+  createdAt     DateTime @default(now()) @db.Timestamptz(6)
+  deliveryOrder Order    @relation("deliveryOrder", fields: [orderId, sellerId], references: [id, sellerId], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([orderId, sequence])
+}
+
+model IssueRecord {
+  id              String          @id @default(uuid()) @db.Uuid
+  orderId         String          @db.Uuid
+  buyerId         String          @db.Uuid
+  sourceStatus    String
+  description     String
+  status          String          @default("open")
+  createdAt       DateTime        @default(now()) @db.Timestamptz(6)
+  resolvedAt      DateTime?       @db.Timestamptz(6)
+  issueOrder      Order           @relation("issueOrder", fields: [orderId, buyerId], references: [id, buyerId], onDelete: Restrict, onUpdate: Restrict)
+  refundIssueRows RefundRequest[] @relation("refundIssue")
+
+  @@unique([id, orderId])
+}
+
+model RefundRequest {
+  id            String      @id @default(uuid()) @db.Uuid
+  orderId       String      @db.Uuid
+  issueId       String      @unique @db.Uuid
+  requestedBy   String      @db.Uuid
+  status        String      @default("pending")
+  approvedBy    String?     @db.Uuid
+  returnOutcome String?
+  createdAt     DateTime    @default(now()) @db.Timestamptz(6)
+  approvedAt    DateTime?   @db.Timestamptz(6)
+  refundIssue   IssueRecord @relation("refundIssue", fields: [issueId, orderId], references: [id, orderId], onDelete: Restrict, onUpdate: Restrict)
+  refundBuyer   Order       @relation("refundBuyer", fields: [orderId, requestedBy], references: [id, buyerId], onDelete: Restrict, onUpdate: Restrict)
+  refundSeller  Order?      @relation("refundSeller", fields: [orderId, approvedBy], references: [id, sellerId], onDelete: Restrict, onUpdate: Restrict)
+}
+
+model SettlementRecord {
+  id                 String        @id @default(uuid()) @db.Uuid
+  orderId            String        @db.Uuid
+  mode               String        @default("simulated")
+  operation          String
+  amount             Decimal       @db.Decimal(38, 18)
+  currency           String        @db.VarChar(12)
+  createdAt          DateTime      @default(now()) @db.Timestamptz(6)
+  settlementSnapshot OrderSnapshot @relation("settlementSnapshot", fields: [orderId, amount, currency], references: [orderId, priceAmount, currency], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([orderId, operation])
+}
+
+model OrderEvent {
+  note       String?
+  id         String   @id @default(uuid()) @db.Uuid
+  orderId    String   @db.Uuid
+  actorId    String   @db.Uuid
+  operation  String
+  fromState  String?
+  toState    String
+  requestId  String
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  eventOrder Order    @relation("eventOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  eventActor Account  @relation("eventActor", fields: [actorId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([orderId, createdAt, id])
+}
+
+model IdempotencyRecord {
+  actorId          String   @db.Uuid
+  operation        String
+  key              String   @db.VarChar(100)
+  requestHash      String   @db.Char(64)
+  resourceId       String?  @db.Uuid
+  resultCode       String?
+  createdAt        DateTime @default(now()) @db.Timestamptz(6)
+  idempotencyActor Account  @relation("idempotencyActor", fields: [actorId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  idempotencyOrder Order?   @relation("idempotencyOrder", fields: [resourceId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([actorId, operation, key])
 }
