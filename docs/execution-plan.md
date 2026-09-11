@@ -40,11 +40,15 @@
 
 已提供[Compose 与 Kubernetes 编排](../infra/README.md)：开发库使用持久卷，事务测试库独立且临时；K8s 为单实例 StatefulSet 内测模板。静态检查及 Compose 测试库启动、密码认证已完成；Docker 安装与本机配置见基础设施文档的会话交接。持久化恢复与 K8s 验证未执行；后端依赖与骨架尚未建立，V1 仍未全部验收。
 
-## 下次会话入口（2026-09-11）
+## 当前会话入口（2026-09-11，V1 完成后）
 
 1. 按 [infra 交接记录](../infra/README.md)检查 Docker 与 postgres-test；tmpfs 数据库重启后为空是预期行为。
-2. 核实 NestJS/Fastify、Prisma v7、TypeScript 的实际包元数据与兼容性，建立独立 backend 包、lockfile 和最小启动验证；不要把文档候选当作已验收版本。
+2. V1 已完成：独立 backend 包、lockfile、健康检查与运行验证见[验证报告](backend-validation-report.md)。按 backend/README.md 可复现构建与检查。
 3. 建立实验 schema 与迁移，执行[验证计划](backend-validation-plan.md)的 DB-01—DB-11。重启持久化用例使用另建的专用持久测试库，不能依赖 tmpfs。
 4. 实验通过后定稿 schema、认证、账户/商品接口，再推进订单/交付接口和实现工单。币种与价格排序在接口定稿前确定，图片上传和部署预算仍待对应阶段确认。
 
 AGENTS.md 为本地贡献指南，按用户要求不入库，根 .gitignore 已忽略。下次会话以仓库内业务规格、ADR 和本计划追踪进度；本机代理、Docker 配置与 Codex 设置不随仓库同步。
+
+## 2026-09-11 后端 V1 交付
+
+已建立独立 NestJS 12.0.1 / Fastify 5.12.1 / Prisma 7.10.0 后端，生成、构建、类型、Lint、配置与校验测试、真实 PostgreSQL 连接及进程关闭验证通过。依赖审计问题通过限定 overrides 修复，lockfile 重装通过。实现与限制见[报告](backend-validation-report.md)。步骤 3 仍未整体完成：下一项为 V2 实验 schema、迁移 SQL 与 DB-01—DB-11，之后进入 C1—C3。

@@ -1,6 +1,6 @@
 # ORM 选择评估
 
-更新：2026-09-09。状态：用户已选择 Prisma，保留比较依据；未安装依赖、未运行基准或数据库实验。依据：[数据与事务设计](backend-data-design.md)。
+更新：2026-09-11。状态：用户已选择 Prisma；V1 已安装并验证 Prisma 7.10.0 生成与真实连接，见[报告](backend-validation-report.md)。业务事务实验与基准未执行，以下保留比较依据。依据：[数据与事务设计](backend-data-design.md)。
 
 ## 需求与候选
 

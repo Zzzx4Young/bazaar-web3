@@ -1,11 +1,12 @@
-# Bazaar Web3 — Frontend Demo
+# Bazaar Web3 — Internal Alpha Development
 
 A C2C marketplace demo for physical secondhand goods and digital content.
-The current implementation is frontend-only: no backend, authentication,
-wallet, blockchain, real payment, delivery or refund service.
+The frontend remains a browser-local demo. An independent NestJS/Fastify + Prisma
+backend skeleton now lives in [backend/](backend/README.md); authentication, business
+APIs, wallet, blockchain and real settlement are not implemented.
 
 The next phase is an internal server Alpha with simulated settlement.
-Its business scope is confirmed, but server-side features are not implemented.
+Its business scope is confirmed; backend work starts with runtime and database validation.
 
 ## Quick start
 

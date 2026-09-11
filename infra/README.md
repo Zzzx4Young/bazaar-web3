@@ -1,6 +1,6 @@
 # 容器化基础设施
 
-更新：2026-09-10。供本地开发、数据库实验和已有 Kubernetes 集群内测使用。当前后端尚未实现，前端仍按 frontend/package.json 启动；本目录只编排 PostgreSQL，不提供虚构的 API 镜像或迁移命令。
+更新：2026-09-10。供本地开发、数据库实验和已有 Kubernetes 集群内测使用。独立后端 V1 骨架见 [backend/README.md](../backend/README.md)，前端仍按 frontend/package.json 启动；本目录只编排 PostgreSQL，尚无 API 镜像或业务迁移。
 
 ## 可行性与选择
 

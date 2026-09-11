@@ -1,5 +1,11 @@
 # 文档与交付变更
 
+## 2026-09-11 — 后端 V1 骨架
+
+- 新增独立 backend 包、精确依赖与 lockfile、Prisma ESM 生成、连接服务、健康检查和关闭钩子。
+- 构建、类型、Lint、2 项配置/校验测试、2 项真实数据库/进程测试通过；lockfile 重装通过，依赖审计修复后为 0。
+- 更新[验证报告](backend-validation-report.md)和实施入口；业务 schema、迁移及 DB-01—DB-11 属于下一工作包，尚未验收。
+
 只记录变化摘要，不复制完整决策或任务列表。[整理前完整日志](archive/changelog-before-cleanup.md) 保留原始记录。
 
 ## 2026-09-11 — 环境验收与会话交接补录

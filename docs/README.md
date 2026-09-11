@@ -1,6 +1,6 @@
 # Bazaar Web3 文档索引
 
-更新：2026-09-09。当前实现为前端 Demo；Alpha 业务基线和独立模块化后端技术主路线已确认，后端、数据库与认证尚未实现。
+更新：2026-09-11。前端仍为 Demo；已开始独立后端 V1 骨架与运行验证，业务表、认证和业务 API 尚未实现。验证结果见后端报告。
 
 ## 当前文档与职责
 
@@ -12,6 +12,7 @@
 | [ORM 比较](orm-evaluation.md) | 已选 Prisma；保留与 TypeORM 的取舍及验证门槛 |
 | [版本与数据库验证计划](backend-validation-plan.md) | 版本候选、环境缺口、事务与迁移实验步骤及验收门槛 |
 | [容器化基础设施](../infra/README.md) | Compose / Kubernetes 可行性、编排文件、启动与数据保护 |
+| [后端运行与验证报告](backend-validation-report.md) | 实际锁定版本、V1 验证证据与尚未验收的边界 |
 | [执行计划](execution-plan.md) | 依赖顺序、待交付物、工程加固和完成条件 |
 | [前端功能基线](frontend-prototype-roadmap.md) | 已实现页面能力与演示限制 |
 | [前端技术与启动](frontend-stack-recommendation.md) | 实际技术栈、启动及检查方式 |
