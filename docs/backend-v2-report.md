@@ -83,6 +83,6 @@ node scripts/with-persistence-db.mjs
 
 V2 证明本实验模型和事务实现可满足上述数据库用例，不等于完整 Alpha 已实现，也不构成容量、备份恢复、生产安全或高可用验收。专用持久库目前保留容器和命名卷，实验 schema 已清理；停止容器不会丢失该卷，但它不是备份。
 
-下一项是完成 C1 的评审收口：把实验迁移命名为正式迁移，补齐模块测试契约和迁移角色/最小权限运行角色。随后 C2 确定认证/会话/CSRF、币种精度和价格排序、账户/商品 OpenAPI；C3 再定订单/交付接口与纵向实现工单。当前没有会话、HTTP 资源越权、前后端联调、上传、钱包或真实结算。
+2026-09-12 C1 已收口，见[核心契约](backend-core-contract.md)和[阶段验收](backend-stage-report.md)：保留三次既有迁移的历史名称和 checksum，追加迁移演进；角色隔离与最终三次迁移持久化已重新验证。下一步补齐后端 CI，再由 C2 确定认证/会话/CSRF、币种精度和价格排序、账户/商品 OpenAPI；C3 定订单/交付接口与纵向实现工单。当前没有会话、HTTP 资源越权、前后端联调、上传、钱包或真实结算。
 
 设计依据：[PostgreSQL 锁监控](https://www.postgresql.org/docs/17/view-pg-locks.html)、[事务级锁超时](https://www.postgresql.org/docs/17/runtime-config-client.html)、[Prisma migrate diff 的功能边界](https://docs.prisma.io/docs/cli/v7/migrate/diff)。Prisma 的空差异不能单独证明触发器/CHECK 正确，因此 DB-10 另外检查系统目录并执行非法写入断言。

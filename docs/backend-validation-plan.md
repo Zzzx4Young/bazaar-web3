@@ -61,4 +61,4 @@ PostgreSQL 官方对主版本提供五年支持；选择 17 是工程候选，�
 - C2：认证细节、账户/商品 OpenAPI；确定币种和价格排序口径。
 - C3：订单/交付 OpenAPI 与分阶段实现工单，再开始账户与商品纵向联调。
 
-2026-09-11：V1 已验收，包含锁定依赖、Client 生成、构建、配置/校验、真实数据库连接、HTTP 冒烟与进程关闭。V2 已完成实验模型、两次迁移、DB-01—DB-11 与持久测试容器/API 进程重启验证，见 [V2 报告](backend-v2-report.md)。C1—C3 尚未验收；V1 结果见[验证报告](backend-validation-report.md)。上方版本候选保留为初核依据，以报告的实际版本为准。
+2026-09-12：V1/V2/C1 已验收；三次迁移、核心/角色契约与最终持久化复验见[阶段记录](backend-stage-report.md)。补齐后端 CI 后推进 C2/C3。V1/V2 历史结果见[验证报告](backend-validation-report.md)和 [V2 报告](backend-v2-report.md)。上方版本候选保留为初核依据，以报告的实际版本为准。

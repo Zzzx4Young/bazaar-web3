@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict'
-import { randomUUID } from 'node:crypto'
+import { randomUUID, randomBytes } from 'node:crypto'
 import { mkdtemp, mkdir, cp, writeFile, rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { spawn } from 'node:child_process'
 import { sandbox, testUrl, cli, fixture } from '../tests/helpers/database.mjs'
 import { runAppProcess } from '../tests/helpers/app-process.mjs'
+import { hashPassword } from '../dist/auth/password.js'
 
 // Explicit opt-in to restarting ONLY the dedicated Compose persistence service.
 const base = testUrl(process.env.PERSISTENCE_TEST_DATABASE_URL, 'bazaar_persistence')
@@ -125,6 +126,19 @@ try {
     db.url
   )
   assert.match(unchanged, /No difference|empty migration/i)
+  const credential = await db.client.accountCredential.create({
+    data: {
+      accountId: f.buyer,
+      passwordHash: await hashPassword('Virtual-persistence-password')
+    }
+  })
+  const session = await db.client.session.create({
+    data: {
+      tokenHash: randomBytes(32).toString('hex'),
+      accountId: f.buyer,
+      expiresAt: new Date(Date.now() + 3600000)
+    }
+  })
   await runAppProcess(db.url)
   await db.database.onModuleDestroy()
   await restart()
@@ -142,6 +156,14 @@ try {
   await runAppProcess(db.url)
   await db.read(async (client) => {
     assert.deepEqual(
+      await client.accountCredential.findUniqueOrThrow({ where: { accountId: f.buyer } }),
+      credential
+    )
+    assert.deepEqual(
+      await client.session.findUniqueOrThrow({ where: { tokenHash: session.tokenHash } }),
+      session
+    )
+    assert.deepEqual(
       await client.orderSnapshot.findUniqueOrThrow({ where: { orderId: order.id } }),
       before.snapshot
     )
@@ -155,7 +177,7 @@ try {
     assert.equal(indexes.length, 2)
     const constraints =
       await client.$queryRaw`SELECT conname FROM pg_constraint WHERE connamespace = ${db.schema}::regnamespace AND contype = 'c'`
-    assert.equal(constraints.length, 14)
+    assert.equal(constraints.length, 17)
     assert.equal(await client.order.count(), 1)
     await assert.rejects(
       client.orderSnapshot.update({ where: { orderId: order.id }, data: { title: 'tampered' } })

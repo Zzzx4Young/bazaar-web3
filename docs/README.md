@@ -1,6 +1,6 @@
 # Bazaar Web3 文档索引
 
-更新：2026-09-11。前端仍为 Demo；已完成独立后端 V1 骨架及 V2 实验表/事务/迁移验证；正式模型、认证和业务 API 待 C1—C3。
+更新：2026-09-12。前端仍为 Demo；后端 V1、V2、C1 核心/迁移契约已验收；认证和业务 API 待 C2/C3 与纵向实现。
 
 ## 当前文档与职责
 
@@ -14,6 +14,8 @@
 | [容器化基础设施](../infra/README.md) | Compose / Kubernetes 可行性、编排文件、启动与数据保护 |
 | [后端运行与验证报告](backend-validation-report.md) | 实际锁定版本与 V1 验证证据 |
 | [V2 数据库验证报告](backend-v2-report.md) | 实验 schema、迁移、DB-01—DB-11 与持久化结果、C1—C3 边界 |
+| [C1 核心契约](backend-core-contract.md) | schema 基线、事务、幂等、错误边界、数据库角色与迁移流程 |
+| [后端阶段记录](backend-stage-report.md) | 当前阶段的实际变更、命令、验收与未验证边界 |
 | [执行计划](execution-plan.md) | 依赖顺序、待交付物、工程加固和完成条件 |
 | [前端功能基线](frontend-prototype-roadmap.md) | 已实现页面能力与演示限制 |
 | [前端技术与启动](frontend-stack-recommendation.md) | 实际技术栈、启动及检查方式 |

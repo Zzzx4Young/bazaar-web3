@@ -13,6 +13,15 @@ export interface ErrorResult {
 // Only allowlisted domain codes cross the API boundary; never expose driver messages or SQL.
 export function mapApplicationError(error: unknown): ErrorResult {
   if (error instanceof DomainError) {
+    if (error.code === 'FX_UNAVAILABLE') return { status: 503, code: error.code, retryable: true }
+    if (error.code === 'FX_SNAPSHOT_EXPIRED')
+      return { status: 409, code: error.code, retryable: false }
+    if (['UNAUTHENTICATED', 'INVALID_CREDENTIALS'].includes(error.code))
+      return { status: 401, code: error.code, retryable: false }
+    if (['CSRF_REJECTED', 'ORIGIN_REJECTED'].includes(error.code))
+      return { status: 403, code: error.code, retryable: false }
+    if (error.code === 'RATE_LIMITED') return { status: 429, code: error.code, retryable: true }
+    if (error.code === 'JSON_REQUIRED') return { status: 415, code: error.code, retryable: false }
     if (error.code === 'RETRY_EXHAUSTED') return { status: 503, code: error.code, retryable: true }
     if (error.code === 'FORBIDDEN') return { status: 403, code: error.code, retryable: false }
     if (error.code === 'NOT_FOUND') return { status: 404, code: error.code, retryable: false }
