@@ -560,6 +560,44 @@
     },
     "/orders": {
       "post": {
+        "operationId": "createOrder",
+        "summary": "Create an order",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created or idempotent replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/search": {
+      "post": {
         "operationId": "listOrders",
         "summary": "Current participant orders only",
         "security": [
@@ -2798,6 +2836,17 @@
     }
   },
   "components": {
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,100}$"
+        }
+      }
+    },
     "securitySchemes": {
       "session": {
         "type": "apiKey",

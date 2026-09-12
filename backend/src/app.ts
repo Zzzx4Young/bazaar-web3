@@ -12,6 +12,7 @@ import { ApiErrorFilter } from './common/api-error.filter.js'
 import { ListingController } from './listings/listing.controller.js'
 import { ListingService } from './listings/listing.service.js'
 import { RatesService, type RateLoader } from './pricing/rates.service.js'
+import { OrderController } from './orders/order.controller.js'
 
 @Module({})
 class AppModule {}
@@ -28,7 +29,7 @@ export async function createApp(
   const app = await NestFactory.create<NestFastifyApplication>(
     {
       module: AppModule,
-      controllers: [HealthController, AuthController, ListingController],
+      controllers: [HealthController, AuthController, ListingController, OrderController],
       providers: [
         { provide: DatabaseService, useValue: database },
         { provide: AuthService, useValue: auth },

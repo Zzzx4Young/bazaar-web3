@@ -22,7 +22,7 @@ export interface ActionInput {
 // C1 application layer. actorId must be supplied by a trusted authentication boundary.
 // No business HTTP routes are exposed before C2/C3 authentication and contracts are ready.
 export class OrderCommands {
-  constructor(private readonly client: PrismaClient) {}
+  constructor(readonly client: PrismaClient) {}
 
   async create(
     actorId: string,
