@@ -84,8 +84,9 @@ npm run test:e2e
 ```
 
 Playwright starts or reuses the development server on port 3737.
-Current [CI](.github/workflows/ci.yml) runs typecheck, lint, unit tests and build;
-E2E is not yet included. A local passing test does not establish remote CI status.
+Current [CI](.github/workflows/ci.yml) runs frontend/backend checks, PostgreSQL
+integration tests, and the real Alpha Chromium acceptance flow. A local passing
+test does not establish remote CI status until the workflow run is green.
 
 Other scripts: npm run format formats source; npm run screenshot creates manual
 screenshots under docs/screenshots and may start a server on port 3737.

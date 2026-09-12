@@ -62,7 +62,9 @@ try {
     if (startupError || server.exitCode !== null) throw new Error('Frontend process failed')
     try {
       if ((await fetch(`${origin}/zh-CN`, { signal: AbortSignal.timeout(2000) })).ok) break
-    } catch {}
+    } catch {
+      // The frontend may still be compiling.
+    }
     if (Date.now() > deadline) throw new Error('Frontend startup timeout')
     await new Promise((resolve) => setTimeout(resolve, 250))
   }

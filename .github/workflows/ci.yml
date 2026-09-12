@@ -70,6 +70,15 @@ jobs:
           docker compose -f infra/compose.yaml --profile test up -d --wait --wait-timeout 120 postgres-test
       - name: Database integration tests
         run: node scripts/with-test-db.mjs
+      - name: Install frontend browser dependencies
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Alpha browser acceptance
+        run: node scripts/check-i5-browser.mjs
+        env:
+          I5_BROWSER_PORT: '3939'
       - name: Database service status on failure
         if: failure()
         working-directory: .

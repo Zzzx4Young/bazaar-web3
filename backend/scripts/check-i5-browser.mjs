@@ -35,7 +35,7 @@ try {
     assert.equal(response.statusCode, 200, response.body)
     return { cookie: response.headers['set-cookie'].split(';')[0], csrf: response.json().csrfToken }
   }
-  const seller = await login('i5-seller'); const buyer = await login('i5-buyer'); const outsider = await login('i5-outsider')
+  const seller = await login('i5-seller'); await login('i5-buyer'); const outsider = await login('i5-outsider')
   const create = async (auth, payload) => {
     const response = await app.inject({ method: 'POST', url: '/api/listings', headers: { origin, cookie: auth.cookie, 'x-csrf-token': auth.csrf }, payload })
     assert.equal(response.statusCode, 201, response.body); return response.json()
@@ -48,7 +48,7 @@ try {
   const backendPort = app.getHttpServer().address().port
   frontend = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'dev', '--hostname', '127.0.0.1', '--port', String(port)], { cwd: new URL('../../frontend/', import.meta.url), env: { ...process.env, BACKEND_ORIGIN: `http://127.0.0.1:${backendPort}` }, stdio: 'ignore', detached: true })
   const deadline = Date.now() + 60000
-  while (Date.now() < deadline) { try { if ((await fetch(`${origin}/zh-CN`, { signal: AbortSignal.timeout(1500) })).ok) break } catch {} await new Promise(resolve => setTimeout(resolve, 250)) }
+  while (Date.now() < deadline) { try { if ((await fetch(`${origin}/zh-CN`, { signal: AbortSignal.timeout(1500) })).ok) break } catch { /* The frontend may still be compiling. */ } await new Promise(resolve => setTimeout(resolve, 250)) }
   browser = await chromium.launch({ headless: true })
   const context = await browser.newContext(); const page = await context.newPage()
   stage = 'login'
@@ -70,7 +70,7 @@ try {
 } catch (error) {
   console.error(`I5 browser acceptance failed at ${stage}`); console.error(String(error).slice(0, 1200)); process.exitCode = 1
 } finally {
-  await browser?.close(); if (frontend?.pid && frontend.exitCode === null) { try { process.kill(-frontend.pid, 'SIGTERM') } catch {} }
+  await browser?.close(); if (frontend?.pid && frontend.exitCode === null) { try { process.kill(-frontend.pid, 'SIGTERM') } catch { /* Process may have already exited. */ } }
   await app?.close(); await db.close(); if (roleCreated) await admin.client.$executeRawUnsafe(`DROP ROLE "${role}"`); await admin.onModuleDestroy()
 }
 

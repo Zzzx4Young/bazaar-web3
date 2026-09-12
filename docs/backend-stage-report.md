@@ -100,3 +100,13 @@ I5 已完成验收。后端专用测试库 `node scripts/with-test-db.mjs`：30/
 - 浏览器运行使用随机账户和隔离 schema，前后端、浏览器、role、schema 均自动关闭或删除。
 
 前端最终检查：typecheck、Lint、188 项单元测试、生产 build 通过。结果未知重试保留原 payload/幂等键；后端 30 项回归覆盖动作竞争和异常退款/恢复。旧 Demo E2E 中依赖本地订单持久化的场景已不作为 I5 证据，待 I6 清理或明确标注 Demo 范围。远端 CI 本轮未运行，I5 通过后进入 I6。
+
+## I6 集成与内测交接（2026-09-12）
+
+I6 已开始。CI 现在在 backend job 的专用 `postgres-test` 上安装前端 Chromium 依赖并运行 `node scripts/check-i5-browser.mjs`；脚本通过 `BACKEND_ORIGIN` 接入真实编译后端，创建随机 schema、runtime role 和账户，结束自动清理。该步骤同时覆盖实物/数字下单、付款、卖家交付、买家验收和第三账户私有边界。
+
+本机 I6 前置检查：后端 typecheck、lint、3 项单元测试通过；前端 typecheck、lint、188 项单元测试、生产 build 通过；后端专用数据库回归 30/30；持久化数据库 DB-10 通过，验证容器重启后历史数据、编译 API 进程重启和约束保持。真实 Chromium I5 验收脚本通过。CI 远端工作流尚未在本轮执行，不能提前标记 I6 完成。
+
+内测启动顺序：先按 [基础设施说明](../infra/README.md) 初始化忽略的本地密码并启动 `postgres`；按 [backend README](../backend/README.md) 部署迁移并授权运行账号；设置前端 `BACKEND_ORIGIN` 与后端 `APP_ORIGIN`；前端执行 typecheck、lint、test、build。交接账户必须通过显式 provision 脚本创建，密码只经环境或临时忽略文件传递，不写入前端构建参数或仓库。停止 `postgres-validation` 时保留其持久卷，`postgres-test` 仅用于临时 schema 测试。
+
+已知限制：CI 尚未实际回报通过；真实钱包/链上结算、注册、图片托管、通知不在 Alpha；旧 Demo 本地订单和 mock 商品 E2E 不证明后端业务；浏览器验收脚本只使用虚拟收货信息和 example.com HTTPS 链接，不执行外部交付访问。

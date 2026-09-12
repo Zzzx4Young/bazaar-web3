@@ -1,6 +1,6 @@
-# Bazaar Web3 前端演示版
+# Bazaar Web3 前端 Alpha
 
-Next.js 14 + React 18 + TypeScript。仅 UI、Mock 数据和浏览器本地持久化，没有后端、真实钱包或合约。
+Next.js 14 + React 18 + TypeScript。Alpha 通过同源 `/api` 代理连接 NestJS 后端；真实账户、商品、订单和交付数据由后端提供。未登录页面仍保留明确标注的 Demo 展示组件。
 
 要求 Node >=22.12.0、npm 10.9.8。在此目录执行：
 
@@ -10,7 +10,7 @@ npm run dev
 # http://localhost:3000/zh-CN 或 /en
 ```
 
-无需 `.env`。生产运行使用 `npm run build` 后 `npm run start`。
+开发时后端默认位于 `http://127.0.0.1:3001`；可用 `BACKEND_ORIGIN` 覆盖。生产运行使用 `npm run build` 后 `npm run start`，部署时需让后端 `APP_ORIGIN` 等于浏览器访问的完整前端 origin。
 
 检查：`npm run typecheck`、`npm run lint`、`npm test`、`npm run build`。浏览器验证：`npx playwright install chromium`，随后 `npm run test:e2e`。
 
@@ -19,4 +19,4 @@ npm run dev
 - [技术栈和架构](../docs/frontend-stack-recommendation.md)
 - [数据与持久化契约](../docs/mock-data-spec.md)
 
-发布、收藏及模拟订单刷新后保留；清除浏览器站点数据后丢失。商品上传、草稿、真实交付、订单结算和完整业务双语仍未实现。
+Alpha 订单动作使用幂等键；结果未知时只能复用原请求重试。真实钱包、链上结算、注册、图片托管和通知系统仍不在范围内。旧本地订单 E2E 属于 Demo 范围，不作为后端 Alpha 验收证据。
