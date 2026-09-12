@@ -191,7 +191,7 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
       (await app.inject({ method: 'POST', url: '/api/me/listings', payload: {}, headers: bob })).json().items.length,
       0
     )
-    assert.equal((await app.inject({ method: 'POST', url: '/api/me/listings', payload: {} })).statusCode, 401)
+    assert.equal((await app.inject({ method: 'POST', url: '/api/me/listings', headers: { origin }, payload: {} })).statusCode, 401)
   } finally {
     await app?.close()
     await db.close()

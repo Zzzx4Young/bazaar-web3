@@ -525,6 +525,16 @@
               }
             }
           },
+          "409": {
+            "description": "FX_SNAPSHOT_EXPIRED; restart pagination with a fresh quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "500": {
             "description": "HTTP 500; see error code contract",
             "content": {
@@ -544,16 +554,6 @@
                 }
               }
             }
-          },
-          "409": {
-            "description": "FX_SNAPSHOT_EXPIRED; restart pagination with a fresh quote",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
           }
         }
       }
@@ -564,12 +564,21 @@
         "summary": "Create an order",
         "security": [
           {
-            "session": []
+            "session": [],
+            "csrf": []
           }
         ],
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -584,11 +593,91 @@
         },
         "responses": {
           "200": {
-            "description": "Created or idempotent replay",
+            "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "HTTP 400; code/retryable only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "HTTP 401; code/retryable only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "HTTP 403; code/retryable only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "HTTP 404; code/retryable only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "HTTP 409; code/retryable only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "HTTP 415; code/retryable only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "HTTP 500; code/retryable only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "HTTP 503; code/retryable only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -602,7 +691,8 @@
         "summary": "Current participant orders only",
         "security": [
           {
-            "session": []
+            "session": [],
+            "csrf": []
           }
         ],
         "parameters": [
@@ -642,6 +732,14 @@
             "in": "query",
             "schema": {
               "$ref": "#/components/schemas/OrderStatus"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -706,6 +804,17 @@
               }
             }
           }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       }
     },
@@ -726,10 +835,20 @@
         "summary": "Participant only; outsiders and nonexistent IDs both 404",
         "security": [
           {
-            "session": []
+            "session": [],
+            "csrf": []
           }
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -791,6 +910,17 @@
               }
             }
           }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       }
     },
@@ -811,7 +941,8 @@
         "summary": "Participant-only history; newest first, stable ID tie break",
         "security": [
           {
-            "session": []
+            "session": [],
+            "csrf": []
           }
         ],
         "parameters": [
@@ -833,6 +964,14 @@
               "minimum": 1,
               "maximum": 50,
               "default": 20
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -897,6 +1036,17 @@
               }
             }
           }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       }
     },
@@ -917,7 +1067,8 @@
         "summary": "Participant-only history; newest first, stable ID tie break",
         "security": [
           {
-            "session": []
+            "session": [],
+            "csrf": []
           }
         ],
         "parameters": [
@@ -939,6 +1090,14 @@
               "minimum": 1,
               "maximum": 50,
               "default": 20
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -1003,6 +1162,17 @@
               }
             }
           }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       }
     },
@@ -1023,7 +1193,8 @@
         "summary": "Participant-only history; newest first, stable ID tie break",
         "security": [
           {
-            "session": []
+            "session": [],
+            "csrf": []
           }
         ],
         "parameters": [
@@ -1045,6 +1216,14 @@
               "minimum": 1,
               "maximum": 50,
               "default": 20
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -1109,6 +1288,17 @@
               }
             }
           }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       }
     },
@@ -1129,7 +1319,8 @@
         "summary": "Participant-only history; newest first, stable ID tie break",
         "security": [
           {
-            "session": []
+            "session": [],
+            "csrf": []
           }
         ],
         "parameters": [
@@ -1151,6 +1342,14 @@
               "minimum": 1,
               "maximum": 50,
               "default": 20
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -1215,6 +1414,17 @@
               }
             }
           }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       }
     },
@@ -1235,7 +1445,8 @@
         "summary": "Participant-only history; newest first, stable ID tie break",
         "security": [
           {
-            "session": []
+            "session": [],
+            "csrf": []
           }
         ],
         "parameters": [
@@ -1257,6 +1468,14 @@
               "minimum": 1,
               "maximum": 50,
               "default": 20
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -1318,6 +1537,17 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
               }
             }
           }
@@ -2616,6 +2846,16 @@
               }
             }
           },
+          "409": {
+            "description": "FX_SNAPSHOT_EXPIRED; restart pagination with a fresh quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "500": {
             "description": "HTTP 500; see error code contract",
             "content": {
@@ -2628,16 +2868,6 @@
           },
           "503": {
             "description": "HTTP 503; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "FX_SNAPSHOT_EXPIRED; restart pagination with a fresh quote",
             "content": {
               "application/json": {
                 "schema": {

@@ -79,6 +79,9 @@ try {
     data: { orderId: order.id, listingId: f.listing.id }
   })
   const eventId = randomUUID()
+  const legacyDeliveryId = randomUUID()
+  await db.client
+    .$executeRaw`INSERT INTO "DeliveryRecord" ("id", "orderId", "sellerId", "sequence", "kind", "reference") VALUES (${legacyDeliveryId}::uuid, ${order.id}::uuid, ${f.seller}::uuid, 1, 'physical', 'legacy-tracking')`
   await db.client
     .$executeRaw`INSERT INTO "OrderEvent" ("id", "orderId", "actorId", "operation", "toState", "requestId") VALUES (${eventId}::uuid, ${order.id}::uuid, ${f.buyer}::uuid, 'create', 'pending_payment', 'historical-fixture')`
   const before = await db.read(async (client) => ({
@@ -126,6 +129,22 @@ try {
     db.url
   )
   assert.match(unchanged, /No difference|empty migration/i)
+  const legacy = await db.client.deliveryRecord.findUniqueOrThrow({
+    where: { id: legacyDeliveryId }
+  })
+  assert.equal(legacy.carrier, null)
+  assert.equal(legacy.accessCode, null)
+  assert.equal(legacy.reference, 'legacy-tracking')
+  const structured = await db.client.deliveryRecord.create({
+    data: {
+      orderId: order.id,
+      sellerId: f.seller,
+      sequence: 2,
+      kind: 'physical',
+      reference: 'new-tracking',
+      carrier: 'Fixture carrier'
+    }
+  })
   const credential = await db.client.accountCredential.create({
     data: {
       accountId: f.buyer,
@@ -155,6 +174,14 @@ try {
   assert.equal(ready, true, 'Persistent database did not recover')
   await runAppProcess(db.url)
   await db.read(async (client) => {
+    assert.deepEqual(
+      await client.deliveryRecord.findUniqueOrThrow({ where: { id: legacy.id } }),
+      legacy
+    )
+    assert.deepEqual(
+      await client.deliveryRecord.findUniqueOrThrow({ where: { id: structured.id } }),
+      structured
+    )
     assert.deepEqual(
       await client.accountCredential.findUniqueOrThrow({ where: { accountId: f.buyer } }),
       credential

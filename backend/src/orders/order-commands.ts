@@ -13,6 +13,8 @@ export interface CreateOrderInput {
 export type OrderAction =
   'cancel' | 'pay' | 'deliver' | 'issue' | 'request_refund' | 'accept' | 'refund' | 'restore'
 export interface ActionInput {
+  carrier?: string
+  accessCode?: string
   reference?: string
   description?: string
   returnOutcome?: string
@@ -22,7 +24,7 @@ export interface ActionInput {
 // C1 application layer. actorId must be supplied by a trusted authentication boundary.
 // No business HTTP routes are exposed before C2/C3 authentication and contracts are ready.
 export class OrderCommands {
-  constructor(readonly client: PrismaClient) {}
+  constructor(private readonly client: PrismaClient) {}
 
   async create(
     actorId: string,
@@ -48,6 +50,7 @@ export class OrderCommands {
           },
           async () => {
             const listing = await lockListing(tx, input.listingId)
+            if (listing.type === 'digital' && input.shipping) throw new DomainError('INVALID_INPUT')
             await options.checkpoint?.('locked', tx, attempt)
             if (listing.sellerId === actorId) throw new DomainError('FORBIDDEN')
             if (listing.publicationStatus !== 'published' || listing.version !== input.version)
@@ -160,6 +163,8 @@ export class OrderCommands {
           {
             orderId,
             reference: input.reference ?? null,
+            ...(input.carrier !== undefined ? { carrier: input.carrier } : {}),
+            ...(input.accessCode !== undefined ? { accessCode: input.accessCode } : {}),
             description: input.description ?? null,
             returnOutcome: input.returnOutcome ?? null,
             inHandAndResellable: input.inHandAndResellable ?? false
@@ -236,7 +241,9 @@ export class OrderCommands {
                     sellerId: actorId,
                     sequence,
                     kind: snapshot.type,
-                    reference: input.reference
+                    reference: input.reference,
+                    carrier: input.carrier,
+                    accessCode: input.accessCode
                   }
                 })
                 next = order.status === 'issue' ? 'issue' : 'pending_acceptance'

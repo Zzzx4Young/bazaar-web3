@@ -1,25 +1,42 @@
-import { Body, Controller, Headers, HttpCode, Inject, Param, Post, Query, Req } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  Inject,
+  Param,
+  Post,
+  Query,
+  Req
+} from '@nestjs/common'
 import { type AuthRequest } from '../auth/auth.guard.js'
 import { DomainError } from '../common/domain-error.js'
 import { idInput, objectInput, positiveInteger, textInput } from '../common/input.js'
 import { DatabaseService } from '../database/database.service.js'
 import { OrderCommands, type ActionInput, type OrderAction } from './order-commands.js'
 
-const actionNames = new Set<OrderAction>([
-  'cancel',
-  'pay',
-  'deliver',
-  'issue',
-  'request_refund',
-  'accept',
-  'refund',
-  'restore'
+const actions = new Map<string, OrderAction>([
+  ['cancel', 'cancel'],
+  ['pay', 'pay'],
+  ['deliver', 'deliver'],
+  ['issue', 'issue'],
+  ['request-refund', 'request_refund'],
+  ['accept', 'accept'],
+  ['refund', 'refund'],
+  ['restore', 'restore']
 ])
 
 function idempotencyKey(value: string | string[] | undefined) {
   if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(value))
     throw new DomainError('INVALID_INPUT')
   return value
+}
+
+function queryInteger(value: unknown, fallback: number, max: number) {
+  if (value === undefined) return fallback
+  if (typeof value !== 'string' || !/^[1-9][0-9]*$/.test(value))
+    throw new DomainError('INVALID_INPUT')
+  return positiveInteger(Number(value), max)
 }
 
 @Controller()
@@ -44,12 +61,13 @@ export class OrderController {
   private page(query: Record<string, unknown>) {
     const input = objectInput(query, ['page', 'limit'], [])
     return {
-      page: input.page === undefined ? 1 : positiveInteger(input.page, 1000),
-      limit: input.limit === undefined ? 20 : positiveInteger(input.limit, 50)
+      page: queryInteger(input.page, 1, 1000),
+      limit: queryInteger(input.limit, 20, 50)
     }
   }
 
   @Post('orders')
+  @HttpCode(200)
   async create(
     @Req() request: AuthRequest,
     @Headers('idempotency-key') header: string | string[] | undefined,
@@ -57,11 +75,14 @@ export class OrderController {
   ) {
     const key = idempotencyKey(header)
     const input = objectInput(body, ['listingId', 'version', 'shipping'], ['listingId', 'version'])
-    const shipping = input.shipping === undefined ? undefined : objectInput(
-      input.shipping,
-      ['recipient', 'contact', 'address'],
-      ['recipient', 'contact', 'address']
-    )
+    const shipping =
+      input.shipping === undefined
+        ? undefined
+        : objectInput(
+            input.shipping,
+            ['recipient', 'contact', 'address'],
+            ['recipient', 'contact', 'address']
+          )
     return {
       orderId: await this.commands.create(request.auth.account.id, key, {
         listingId: idInput(input.listingId),
@@ -81,20 +102,34 @@ export class OrderController {
   @HttpCode(200)
   async list(@Req() request: AuthRequest, @Query() query: Record<string, unknown>) {
     const input = objectInput(query, ['role', 'status', 'page', 'limit'], [])
-    const page = input.page === undefined ? 1 : positiveInteger(input.page, 1000)
-    const limit = input.limit === undefined ? 20 : positiveInteger(input.limit, 50)
+    const page = queryInteger(input.page, 1, 1000)
+    const limit = queryInteger(input.limit, 20, 50)
     if (input.role !== undefined && input.role !== 'buyer' && input.role !== 'seller')
       throw new DomainError('INVALID_INPUT')
-    if (input.status !== undefined && typeof input.status !== 'string')
+    if (
+      input.status !== undefined &&
+      (typeof input.status !== 'string' ||
+        ![
+          'pending_payment',
+          'pending_delivery',
+          'pending_acceptance',
+          'issue',
+          'completed',
+          'cancelled',
+          'refunded'
+        ].includes(input.status))
+    )
       throw new DomainError('INVALID_INPUT')
     const accountId = request.auth.account.id
     const where = {
       ...(input.role === 'seller' || input.role === undefined ? {} : { buyerId: accountId }),
       ...(input.role === 'seller' ? { sellerId: accountId } : {}),
-      ...(input.role === undefined ? { OR: [{ buyerId: accountId }, { sellerId: accountId }] } : {}),
+      ...(input.role === undefined
+        ? { OR: [{ buyerId: accountId }, { sellerId: accountId }] }
+        : {}),
       ...(input.status === undefined ? {} : { status: input.status })
     }
-    const rows = await this.commands.client.order.findMany({
+    const rows = await this.client.order.findMany({
       where,
       include: { snapshot: true },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -109,11 +144,9 @@ export class OrderController {
         sellerId: order.sellerId,
         status: order.status,
         version: order.version,
-        snapshot: order.snapshot && {
-          title: order.snapshot.title,
-          description: order.snapshot.description,
-          type: order.snapshot.type,
-          category: order.snapshot.category,
+        title: order.snapshot?.title,
+        type: order.snapshot?.type,
+        price: order.snapshot && {
           amount: order.snapshot.priceAmount.toFixed(),
           currency: order.snapshot.currency
         },
@@ -149,8 +182,7 @@ export class OrderController {
         description: order.snapshot.description,
         type: order.snapshot.type,
         category: order.snapshot.category,
-        amount: order.snapshot.priceAmount.toFixed(),
-        currency: order.snapshot.currency,
+        price: { amount: order.snapshot.priceAmount.toFixed(), currency: order.snapshot.currency },
         licenseDescription: order.snapshot.licenseDescription,
         contentVersion: order.snapshot.contentVersion
       },
@@ -166,7 +198,11 @@ export class OrderController {
 
   @Post('orders/:id/deliveries')
   @HttpCode(200)
-  async deliveries(@Req() request: AuthRequest, @Param('id') id: string, @Query() query: Record<string, unknown>) {
+  async deliveries(
+    @Req() request: AuthRequest,
+    @Param('id') id: string,
+    @Query() query: Record<string, unknown>
+  ) {
     const order = await this.participantOrder(idInput(id), request.auth.account.id)
     const { page, limit } = this.page(query)
     const rows = await this.client.deliveryRecord.findMany({
@@ -179,6 +215,10 @@ export class OrderController {
       items: rows.slice(0, limit).map((row) => ({
         id: row.id,
         sequence: row.sequence,
+        orderId: row.orderId,
+        sellerId: row.sellerId,
+        carrier: row.carrier,
+        accessCode: row.accessCode,
         kind: row.kind,
         reference: row.reference,
         createdAt: row.createdAt
@@ -191,7 +231,11 @@ export class OrderController {
 
   @Post('orders/:id/issues')
   @HttpCode(200)
-  async issues(@Req() request: AuthRequest, @Param('id') id: string, @Query() query: Record<string, unknown>) {
+  async issues(
+    @Req() request: AuthRequest,
+    @Param('id') id: string,
+    @Query() query: Record<string, unknown>
+  ) {
     const order = await this.participantOrder(idInput(id), request.auth.account.id)
     const { page, limit } = this.page(query)
     const rows = await this.client.issueRecord.findMany({
@@ -204,6 +248,8 @@ export class OrderController {
       items: rows.slice(0, limit).map((row) => ({
         id: row.id,
         sourceStatus: row.sourceStatus,
+        orderId: row.orderId,
+        buyerId: row.buyerId,
         description: row.description,
         status: row.status,
         createdAt: row.createdAt,
@@ -217,7 +263,11 @@ export class OrderController {
 
   @Post('orders/:id/refunds')
   @HttpCode(200)
-  async refunds(@Req() request: AuthRequest, @Param('id') id: string, @Query() query: Record<string, unknown>) {
+  async refunds(
+    @Req() request: AuthRequest,
+    @Param('id') id: string,
+    @Query() query: Record<string, unknown>
+  ) {
     const order = await this.participantOrder(idInput(id), request.auth.account.id)
     const { page, limit } = this.page(query)
     const rows = await this.client.refundRequest.findMany({
@@ -230,6 +280,8 @@ export class OrderController {
       items: rows.slice(0, limit).map((row) => ({
         id: row.id,
         issueId: row.issueId,
+        orderId: row.orderId,
+        approvedBy: row.approvedBy,
         requestedBy: row.requestedBy,
         status: row.status,
         returnOutcome: row.returnOutcome,
@@ -244,7 +296,11 @@ export class OrderController {
 
   @Post('orders/:id/settlements')
   @HttpCode(200)
-  async settlements(@Req() request: AuthRequest, @Param('id') id: string, @Query() query: Record<string, unknown>) {
+  async settlements(
+    @Req() request: AuthRequest,
+    @Param('id') id: string,
+    @Query() query: Record<string, unknown>
+  ) {
     const order = await this.participantOrder(idInput(id), request.auth.account.id)
     const { page, limit } = this.page(query)
     const rows = await this.client.settlementRecord.findMany({
@@ -257,9 +313,9 @@ export class OrderController {
       items: rows.slice(0, limit).map((row) => ({
         id: row.id,
         mode: row.mode,
+        orderId: row.orderId,
         operation: row.operation,
-        amount: row.amount.toFixed(),
-        currency: row.currency,
+        price: { amount: row.amount.toFixed(), currency: row.currency },
         createdAt: row.createdAt
       })),
       page,
@@ -270,7 +326,11 @@ export class OrderController {
 
   @Post('orders/:id/events')
   @HttpCode(200)
-  async events(@Req() request: AuthRequest, @Param('id') id: string, @Query() query: Record<string, unknown>) {
+  async events(
+    @Req() request: AuthRequest,
+    @Param('id') id: string,
+    @Query() query: Record<string, unknown>
+  ) {
     const order = await this.participantOrder(idInput(id), request.auth.account.id)
     const { page, limit } = this.page(query)
     const rows = await this.client.orderEvent.findMany({
@@ -283,6 +343,7 @@ export class OrderController {
       items: rows.slice(0, limit).map((row) => ({
         id: row.id,
         actorId: row.actorId,
+        orderId: row.orderId,
         operation: row.operation,
         fromState: row.fromState,
         toState: row.toState,
@@ -304,26 +365,69 @@ export class OrderController {
     @Body() body: unknown
   ) {
     const key = idempotencyKey(header)
-    if (!actionNames.has(action as OrderAction)) throw new DomainError('INVALID_INPUT')
-    const input = objectInput(
-      body,
-      ['reference', 'description', 'returnOutcome', 'inHandAndResellable'],
-      []
-    ) as Record<string, unknown>
+    const order = await this.participantOrder(idInput(id), request.auth.account.id)
+    const operation = actions.get(action)
+    if (!operation) throw new DomainError('INVALID_INPUT')
+    const sellerAction = ['deliver', 'refund', 'restore'].includes(operation)
+    if (request.auth.account.id !== (sellerAction ? order.sellerId : order.buyerId))
+      throw new DomainError('FORBIDDEN')
+    const physical = order.snapshot?.type === 'physical'
     const actionInput: ActionInput = {}
-    if (input.reference !== undefined) actionInput.reference = textInput(input.reference, 2048)
-    if (input.description !== undefined) actionInput.description = textInput(input.description, 2000)
-    if (input.returnOutcome !== undefined) actionInput.returnOutcome = textInput(input.returnOutcome, 32)
-    if (input.inHandAndResellable !== undefined) {
-      if (typeof input.inHandAndResellable !== 'boolean') throw new DomainError('INVALID_INPUT')
-      actionInput.inHandAndResellable = input.inHandAndResellable
+    switch (operation) {
+      case 'deliver': {
+        if (physical) {
+          const input = objectInput(body, ['carrier', 'trackingNumber'])
+          actionInput.carrier = textInput(input.carrier, 100)
+          actionInput.reference = textInput(input.trackingNumber, 200)
+        } else {
+          const input = objectInput(body, ['url', 'accessCode'], ['url'])
+          const reference = textInput(input.url, 2048)
+          let url: URL
+          try {
+            url = new URL(reference)
+          } catch {
+            throw new DomainError('INVALID_INPUT')
+          }
+          if (url.protocol !== 'https:' || url.username || url.password)
+            throw new DomainError('INVALID_INPUT')
+          actionInput.reference = reference
+          if (input.accessCode !== undefined)
+            actionInput.accessCode = textInput(input.accessCode, 100)
+        }
+        break
+      }
+      case 'issue':
+        actionInput.description = textInput(objectInput(body, ['description']).description, 2000)
+        break
+      case 'accept':
+        if (objectInput(body, ['confirmed']).confirmed !== true)
+          throw new DomainError('INVALID_INPUT')
+        break
+      case 'restore':
+        if (objectInput(body, ['inHandAndResellable']).inHandAndResellable !== true)
+          throw new DomainError('INVALID_INPUT')
+        actionInput.inHandAndResellable = true
+        break
+      case 'refund':
+        if (physical) {
+          const value = objectInput(body, ['returnOutcome']).returnOutcome
+          if (
+            typeof value !== 'string' ||
+            !['not_sent', 'returned', 'not_required'].includes(value)
+          )
+            throw new DomainError('INVALID_INPUT')
+          actionInput.returnOutcome = value
+        } else objectInput(body, [], [])
+        break
+      default:
+        objectInput(body, [], [])
     }
     return {
       orderId: await this.commands.act(
         request.auth.account.id,
         key,
         idInput(id),
-        action as OrderAction,
+        operation,
         actionInput
       )
     }

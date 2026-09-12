@@ -1,6 +1,6 @@
 # C3 订单与交付契约
 
-更新：2026-09-12。状态：接口与实现工单已编制，业务 HTTP 尚未实现。沿用 [业务规格](server-alpha-spec.md)、[C1 核心契约](backend-core-contract.md) 和 [C2 认证契约](backend-auth-listing-contract.md)。机器契约见 [OpenAPI](openapi/alpha.json)，实施验收见[工单](backend-implementation-tasks.md)。
+更新：2026-09-12。I4 后端已实现并完成专用数据库 HTTP/权限/持久化验收；前端订单联调属于 I5。机器契约见 [OpenAPI](openapi/alpha.json)，证据见[阶段记录](backend-stage-report.md)。
 
 ## 读取、权限与隐私
 

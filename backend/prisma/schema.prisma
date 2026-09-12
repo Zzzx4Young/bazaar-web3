@@ -161,6 +161,8 @@ model DeliveryRecord {
   sequence      Int
   kind          String
   reference     String
+  carrier       String?
+  accessCode    String?
   createdAt     DateTime @default(now()) @db.Timestamptz(6)
   deliveryOrder Order    @relation("deliveryOrder", fields: [orderId, sellerId], references: [id, sellerId], onDelete: Restrict, onUpdate: Restrict)
 

@@ -139,14 +139,14 @@ test('I1: invalid inputs, enumeration resistance, expiration, disabled accounts 
       data: { createdAt: new Date(Date.now() - 10000), expiresAt: new Date(Date.now() - 1000) }
     })
     assert.equal(
-      (await app.inject({ method: 'POST', url: '/api/auth/session', headers: { origin, 'content-type': 'application/json', cookie }, payload: {} })).statusCode,
+      (await app.inject({ method: 'POST', url: '/api/auth/session', headers: { ...headers, 'content-type': 'application/json', cookie }, payload: {} })).statusCode,
       401
     )
     const active = await login()
     assert.equal(active.statusCode, 200)
     await db.client.account.update({ where: { loginName: 'alice' }, data: { status: 'disabled' } })
     assert.equal(
-      (await app.inject({ method: 'POST', url: '/api/auth/session', headers: { origin, 'content-type': 'application/json', cookie: cookieOf(active) }, payload: {} }))
+      (await app.inject({ method: 'POST', url: '/api/auth/session', headers: { ...headers, 'content-type': 'application/json', cookie: cookieOf(active) }, payload: {} }))
         .statusCode,
       401
     )
