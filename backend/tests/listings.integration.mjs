@@ -64,7 +64,7 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     const alice = await login(app, 'alice'),
       bob = await login(app, 'bob')
     const create = (payload) =>
-      app.inject({ method: 'POST', url: '/api/listings/search', headers: alice, payload })
+      app.inject({ method: 'POST', url: '/api/listings', headers: alice, payload })
     assert.equal((await app.inject({ method: 'POST', url: '/api/currencies', headers: { origin, 'content-type': 'application/json' }, payload: {} })).json().length, 19)
     const created = []
     for (const payload of [
@@ -83,7 +83,7 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
       created.push(response.json())
     }
     assert.equal(await db.client.physicalInventory.count(), 3)
-    const list = await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: {}, headers: bob })
+    const list = await app.inject({ method: 'POST', url: '/api/listings/search', headers: bob, payload: {} })
     assert.equal(list.json().items.length, 4)
     assert.equal(list.body.includes('loginName'), false)
     assert.equal(list.body.includes('passwordHash'), false)
