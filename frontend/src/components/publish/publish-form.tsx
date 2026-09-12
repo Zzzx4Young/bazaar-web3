@@ -20,8 +20,8 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { categories } from '@/lib/mock-data'
-import { useItemStore } from '@/stores/use-item-store'
-import { useUserStore } from '@/stores/use-user-store'
+import { useAuthStore } from '@/stores/use-auth-store'
+import { createListing } from '@/lib/backend-api'
 import type { ItemCategory, Currency, DigitalDeliveryType, ItemCondition, ShippingMethod } from '@/types'
 
 const schema = z
@@ -59,8 +59,7 @@ type FormValues = z.infer<typeof schema>
 
 export function PublishForm() {
   const router = useRouter()
-  const user = useUserStore(s => s.user)
-  const { add: addItem, hydrated } = useItemStore()
+  const auth = useAuthStore()
   const [saveError, setSaveError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -85,47 +84,25 @@ export function PublishForm() {
   const onSubmit = async (data: FormValues) => {
     setSubmitting(true)
     setSaveError(null)
-    const id = `item_user_${Date.now()}`
-    const now = new Date().toISOString()
-    const item = {
-      id,
-      sellerId: user.linkedSellerId ?? user.id,
-      title: data.title,
-      description: data.description,
-      category: data.category as ItemCategory,
-      primaryCategory: data.primaryCategory,
-      tags: [],
-      price: {
-        amount: data.priceAmount,
-        currency: data.priceCurrency as Currency
-      },
-      media: [
-        {
-          type: 'image' as const,
-          url: `https://placehold.co/600x400/222/fff?text=${encodeURIComponent(data.title.slice(0, 10))}`,
-          alt: data.title
-        }
-      ],
-      status: 'active' as const,
-      viewCount: 0,
-      favoriteCount: 0,
-      createdAt: now,
-      updatedAt: now,
-      ...(data.category === 'physical'
-        ? {
-            condition: data.condition as ItemCondition,
-            shippingMethod: data.shippingMethod as ShippingMethod
-          }
-        : {
-            deliveryType: data.deliveryType as DigitalDeliveryType,
-            deliveryPreview: data.deliveryContent
-          })
-    }
     try {
-      addItem(item)
-      router.push(`/listing/${id}`)
-    } catch {
-      setSaveError('无法保存商品，请检查浏览器存储空间或权限后重试。')
+      if (auth.status !== 'authenticated' || !auth.view) {
+        setSaveError('请先登录后再发布商品。')
+        return
+      }
+      const listing = await createListing(auth.view.csrfToken, {
+        type: data.category,
+        title: data.title,
+        description: data.description,
+        category: data.primaryCategory,
+        price: { amount: data.priceAmount.toString(), currency: data.priceCurrency },
+        ...(data.category === 'digital'
+          ? { licenseDescription: data.deliveryContent, contentVersion: data.deliveryType }
+          : {})
+      })
+      router.push(`/listing/${listing.id}`)
+    } catch (error) {
+      setSaveError(error instanceof Error ? `发布失败：${error.message}` : '发布失败，请稍后重试。')
+    } finally {
       setSubmitting(false)
     }
   }
@@ -312,7 +289,7 @@ export function PublishForm() {
         <Button type="button" variant="outline" onClick={() => router.back()}>
           取消
         </Button>
-        <Button type="submit" disabled={submitting || !hydrated}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? '发布中...' : '立即发布'}
         </Button>
       </div>

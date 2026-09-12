@@ -25,6 +25,7 @@
 | [前端先行决策](adr/0001-frontend-prototype-first.md) | 历史原因，阶段限制已被 ADR-0002 取代 |
 | [复核登记](review-corrections.md) | 历史问题处置与剩余风险，非业务规格或工单 |
 | [变更记录](CHANGELOG.md) | 已发生变化和验收摘要 |
+| [GitHub MCP 配置与验证](github-mcp-setup.md) | WSL 环境变量、MCP 配置及验证边界 |
 
 ## 维护规则
 

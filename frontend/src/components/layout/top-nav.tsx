@@ -1,15 +1,25 @@
 'use client'
 
+import { useState } from 'react'
 import { Link, usePathname } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/layout/mode-toggle'
 import { FavoritesLink } from '@/components/layout/favorites-link'
 import { BrandLogo } from '@/components/layout/brand-logo'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useAuthStore } from '@/stores/use-auth-store'
 
 export function TopNav() {
   const t = useTranslations('nav')
   const pathname = usePathname()
+  const [open, setOpen] = useState(false)
+  const [loginName, setLoginName] = useState('')
+  const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const auth = useAuthStore()
 
   const links = [
     { href: '/', label: t('home') },
@@ -40,11 +50,49 @@ export function TopNav() {
         </nav>
         <div className="flex items-center gap-2">
           <ModeToggle />
-          <Button variant="outline" size="sm" disabled title="Auth coming soon">
-            {t('login')}
-          </Button>
+          {auth.status === 'authenticated' ? (
+            <Button variant="outline" size="sm" onClick={() => void auth.signOut()}>
+              {auth.view?.account.displayName}
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+              {t('login')}
+            </Button>
+          )}
         </div>
       </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('login')}</DialogTitle>
+            <DialogDescription>使用 Alpha 预置账户登录。</DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={async event => {
+              event.preventDefault()
+              setSubmitting(true)
+              const ok = await auth.signIn(loginName, password)
+              setSubmitting(false)
+              if (ok) {
+                setPassword('')
+                setOpen(false)
+              }
+            }}
+          >
+            <div className="space-y-2">
+              <Label htmlFor="login-name">登录名</Label>
+              <Input id="login-name" value={loginName} onChange={event => setLoginName(event.target.value)} autoComplete="username" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="login-password">密码</Label>
+              <Input id="login-password" type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required />
+            </div>
+            {auth.error && <p role="alert" className="text-sm text-destructive">登录失败：{auth.error}</p>}
+            <Button type="submit" disabled={submitting}>{submitting ? '登录中…' : t('login')}</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </header>
   )
 }

@@ -4,6 +4,7 @@ import { TopNav } from '@/components/layout/top-nav'
 import { LanguageSwitcher } from '@/components/layout/language-switcher'
 import { ThemeProvider } from '@/components/layout/theme-provider'
 import { ThemeFaviconSync } from '@/components/layout/theme-favicon-sync'
+import { AuthSession } from '@/components/auth/auth-session'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
 import './globals.css'
@@ -45,6 +46,7 @@ export default async function LocaleLayout({
       <body className="min-h-screen bg-background font-sans antialiased">
         <NextIntlClientProvider>
           <ThemeProvider>
+            <AuthSession />
             <ThemeFaviconSync />
             <TopNav />
             <div className="border-b bg-muted px-4 py-2 text-center text-xs text-muted-foreground">{tDemo('notice')}</div>
