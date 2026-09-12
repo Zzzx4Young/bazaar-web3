@@ -36,7 +36,7 @@ export class AuthGuard implements CanActivate {
     reply.header('Cache-Control', 'no-store')
     request.auth = await this.auth.authenticate(request.headers.cookie)
     const noCsrf = this.reflector.getAllAndOverride<boolean>('noCsrf', [context.getHandler(), context.getClass()])
-    if (write && !noCsrf && !request.url.endsWith('/auth/session'))
+    if (write && !noCsrf && !request.url.includes('/auth/session'))
       this.auth.checkCsrf(request.auth, request.headers['x-csrf-token'])
     return true
   }
