@@ -39,6 +39,12 @@ export async function createApp(
     { logger, abortOnError: false }
   )
   app.setGlobalPrefix('api')
+  app.enableCors({
+    origin: config.appOrigin,
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Accept', 'Content-Type', 'Origin', 'Cookie', 'X-CSRF-Token', 'Idempotency-Key']
+  })
   app.useGlobalGuards(new AuthGuard(auth, new Reflector()))
   app.useGlobalFilters(new ApiErrorFilter())
   app.useGlobalPipes(
