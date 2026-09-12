@@ -40,6 +40,7 @@ export class ListingController {
   }
 
   @Post('listings/:id/edit')
+  @HttpCode(200)
   edit(@Req() request: AuthRequest, @Param('id') id: string, @Body() body: unknown) {
     return this.listings.edit(request.auth.account.id, id, body)
   }
