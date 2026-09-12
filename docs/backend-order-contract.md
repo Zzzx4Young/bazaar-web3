@@ -4,9 +4,9 @@
 
 ## 读取、权限与隐私
 
-所有订单接口必须登录。GET /orders 只返回当前账户参与的订单，可筛选 role=buyer/seller、status，按 createdAt DESC/id DESC，page 1—1000、limit 1—50，默认 20。订单摘要包含 id/listingId/buyerId/sellerId/status/version、标题/类型/精确金额快照与时间，不包含地址、链接或提取码。
+所有订单接口必须登录。POST /orders 只返回当前账户参与的订单，可筛选 role=buyer/seller、status，按 createdAt DESC/id DESC，page 1—1000、limit 1—50，默认 20。订单摘要包含 id/listingId/buyerId/sellerId/status/version、标题/类型/精确金额快照与时间，不包含地址、链接或提取码。
 
-GET /orders/{id} 返回参与方可见的订单详情及不可变商品/收件快照。交付、问题、退款、结算和事件分别通过 /orders/{id}/deliveries、/issues、/refunds、/settlements、/events 分页读取；都先检查订单参与方，不通过任意 orderId 查询子表后再过滤。非参与方和不存在的订单统一 404。所有私有响应 no-store；输出显式 DTO，不序列化整个 Prisma include。
+POST /orders/{id}/detail 返回参与方可见的订单详情及不可变商品/收件快照。交付、问题、退款、结算和事件分别通过 /orders/{id}/deliveries、/issues、/refunds、/settlements、/events 分页读取；都先检查订单参与方，不通过任意 orderId 查询子表后再过滤。非参与方和不存在的订单统一 404。所有私有响应 no-store；输出显式 DTO，不序列化整个 Prisma include。
 
 交付链接仅作为文本存储/展示，不由后端抓取、预览或探测；数字交付仅接受 HTTPS URL，拒绝 URL 用户名/密码，最长 2048；前端新窗口打开时使用 noopener/noreferrer。提取码单独存储、最长 100；实物物流公司 1—100、单号 1—200。订单买卖双方均可读；公开商品/列表/日志不得包含这些值。
 

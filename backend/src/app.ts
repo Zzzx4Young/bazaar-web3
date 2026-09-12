@@ -42,7 +42,7 @@ export async function createApp(
   app.enableCors({
     origin: config.appOrigin,
     credentials: true,
-    methods: ['GET', 'HEAD', 'POST', 'PATCH', 'OPTIONS'],
+    methods: ['POST', 'OPTIONS'],
     allowedHeaders: ['Accept', 'Content-Type', 'Origin', 'Cookie', 'X-CSRF-Token', 'Idempotency-Key']
   })
   app.useGlobalGuards(new AuthGuard(auth, new Reflector()))

@@ -10,6 +10,7 @@ import { useFilterStore } from '@/stores/use-filter-store'
 import { useItemStore } from '@/stores/use-item-store'
 import { useSearchParams } from 'next/navigation'
 import type { SortBy } from '@/types'
+import { useBackendListings } from '@/hooks/use-backend-listings'
 
 export default function ExplorePage() {
   return <Suspense fallback={<p>加载商品中...</p>}><ExploreContent /></Suspense>
@@ -17,6 +18,7 @@ export default function ExplorePage() {
 
 function ExploreContent() {
   const { items } = useItemStore()
+  const backend = useBackendListings(new URLSearchParams({ sort: 'newest', limit: '50' }))
   const searchParams = useSearchParams()
   const categoryParam = searchParams.get('category')
   const filter = useFilterStore()
@@ -25,7 +27,7 @@ function ExploreContent() {
     setCategory(categories.find(category => category.id === categoryParam)?.id)
   }, [categoryParam, setCategory])
   const sellerMap = useMemo(() => new Map(sellers.map(s => [s.id, s])), [])
-  const filtered = useMemo(() => applyFilters(items, filter), [items, filter])
+  const filtered = useMemo(() => applyFilters(backend.error ? items : backend.items, filter), [backend.error, backend.items, items, filter])
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row">

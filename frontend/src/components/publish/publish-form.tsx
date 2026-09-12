@@ -31,7 +31,7 @@ const schema = z
     category: z.enum(['physical', 'digital']),
     primaryCategory: z.enum(['electronics', 'digital_assets', 'software_source', 'game_items', 'secondhand_fashion']),
     priceAmount: z.coerce.number().positive('价格必须大于 0'),
-    priceCurrency: z.enum(['CNY', 'USDT', 'ETH', 'SOL']),
+    priceCurrency: z.enum(['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'CAD', 'AUD', 'CHF', 'HKD', 'SGD', 'KRW', 'INR', 'AED', 'BRL', 'BTC', 'ETH', 'USDT', 'USDC', 'SOL']),
     // 实物字段
     condition: z.enum(['new', 'like_new', 'good', 'fair', 'poor']).optional(),
     shippingMethod: z.enum(['delivery', 'face_to_face']).optional(),
@@ -204,8 +204,11 @@ export function PublishForm() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="USD">USD</SelectItem>
                 <SelectItem value="CNY">CNY</SelectItem>
                 <SelectItem value="USDT">USDT</SelectItem>
+                <SelectItem value="USDC">USDC</SelectItem>
+                <SelectItem value="BTC">BTC</SelectItem>
                 <SelectItem value="ETH">ETH</SelectItem>
                 <SelectItem value="SOL">SOL</SelectItem>
               </SelectContent>

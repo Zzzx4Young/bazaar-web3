@@ -29,8 +29,8 @@
 
 ## API 与降级
 
-- GET /currencies 返回可用代码及 scale，前端选择器由此驱动，不另外硬编码一份精度。
-- GET /listings?sort=price_asc 或 price_desc 允许跨币种；currency 为可选过滤条件。返回每项 priceUsd（十进制字符串）及 envelope 的 quote{id,base=USD,provider,fetchedAt,expiresAt,sourceAsOf=null}。
+- POST /currencies (body `{}`) 返回可用代码及 scale，前端选择器由此驱动，不另外硬编码一份精度。
+- POST /listings/search（body 携带 sort=price_asc 或 price_desc） 允许跨币种；currency 为可选过滤条件。返回每项 priceUsd（十进制字符串）及 envelope 的 quote{id,base=USD,provider,fetchedAt,expiresAt,sourceAsOf=null}。
 - 第一页不传 quoteId 时选择当前有效快照；后续页面必须回传同一 quoteId。同一快照用固定转换因子排序，以 id 作相同参考价的稳定次级顺序。商品编辑/新增仍可能改变偏移分页结果，不承诺商品集合快照。
 - 请求指定的 quoteId 不存在/过期返回 409 FX_SNAPSHOT_EXPIRED，前端提示刷新并回到第一页。后续页漏传 quoteId 返回 400 INVALID_INPUT。
 - 汇率拉取失败且无有效快照，价格排序返回 503 FX_UNAVAILABLE；前端展示“参考汇率暂不可用”，可由用户改选最新发布。不得静默使用过期汇率、混排裸金额或删掉某种币的商品。

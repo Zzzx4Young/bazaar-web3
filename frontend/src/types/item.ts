@@ -15,7 +15,7 @@ export type DigitalDeliveryType =
 
 export type ShippingMethod = 'delivery' | 'face_to_face'
 
-export type Currency = 'CNY' | 'ETH' | 'USDT' | 'SOL'
+export type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY' | 'CNY' | 'CAD' | 'AUD' | 'CHF' | 'HKD' | 'SGD' | 'KRW' | 'INR' | 'AED' | 'BRL' | 'BTC' | 'ETH' | 'USDT' | 'USDC' | 'SOL'
 
 export interface Price {
   amount: number

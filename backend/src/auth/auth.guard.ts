@@ -5,6 +5,7 @@ import { DomainError } from '../common/domain-error.js'
 import { AuthService, type Authenticated } from './auth.service.js'
 
 export const Public = () => SetMetadata('publicRoute', true)
+export const NoCsrf = () => SetMetadata('noCsrf', true)
 export interface AuthRequest extends FastifyRequest {
   auth: Authenticated
 }
@@ -34,7 +35,8 @@ export class AuthGuard implements CanActivate {
     if (publicRoute) return true
     reply.header('Cache-Control', 'no-store')
     request.auth = await this.auth.authenticate(request.headers.cookie)
-    if (write) this.auth.checkCsrf(request.auth, request.headers['x-csrf-token'])
+    const noCsrf = this.reflector.getAllAndOverride<boolean>('noCsrf', [context.getHandler(), context.getClass()])
+    if (write && !noCsrf) this.auth.checkCsrf(request.auth, request.headers['x-csrf-token'])
     return true
   }
 }

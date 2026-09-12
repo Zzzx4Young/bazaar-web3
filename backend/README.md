@@ -14,7 +14,7 @@ cp .env.example .env
 npm start
 ```
 
-默认监听 `127.0.0.1:3001`。`GET /api/health/live` 表示进程可响应；`GET /api/health/ready` 执行真实数据库查询，失败返回 503 且不返回驱动错误详情。启动要求数据库可连接；SIGINT/SIGTERM 触发 Nest 关闭钩子，释放 Prisma 连接池。每进程连接池上限 5，连接与语句超时均为 3 秒。
+默认监听 `127.0.0.1:3001`。`POST /api/health/live` 表示进程可响应；`POST /api/health/ready` 执行真实数据库查询，失败返回 503 且不返回驱动错误详情。启动要求数据库可连接；SIGINT/SIGTERM 触发 Nest 关闭钩子，释放 Prisma 连接池。每进程连接池上限 5，连接与语句超时均为 3 秒。
 
 启动不会迁移、seed 或清理数据库。首次使用先按 [C1 角色与迁移说明](../docs/backend-core-contract.md#数据库角色)创建迁移/运行账号，以迁移账号部署三次迁移并授权，再以运行账号启动。日常开发只需一个持久化 postgres 容器；另外两个测试容器按需启动。不能把健康检查作为业务数据正确性的证明。
 
@@ -72,4 +72,4 @@ node scripts/with-persistence-db.mjs
 
 密码重置输入为 `{"loginName":"...","password":"..."}`，执行同脚本加 `--reset-password`，会同时撤销该账户现有会话。脚本要求显式 DATABASE_URL 和私有文件，密码不放命令行或日志。
 
-认证路由为 POST /api/auth/login、GET /api/auth/session、POST /api/auth/logout。前端 Origin 必须等于 APP_ORIGIN（默认 http://localhost:3000）；登录后写请求另外携带 session Cookie 与 X-CSRF-Token；退出 body 为 `{}`。HTTPS origin 自动启用 Secure Cookie，HTTP 只允许 loopback。本阶段不开放注册。完整请求/响应见 [OpenAPI](../docs/openapi/alpha.json)。
+认证路由为 POST /api/auth/login、POST /api/auth/session、POST /api/auth/logout。前端 Origin 必须等于 APP_ORIGIN（默认 http://localhost:3000）；登录后写请求另外携带 session Cookie 与 X-CSRF-Token；退出 body 为 `{}`。HTTPS origin 自动启用 Secure Cookie，HTTP 只允许 loopback。本阶段不开放注册。完整请求/响应见 [OpenAPI](../docs/openapi/alpha.json)。

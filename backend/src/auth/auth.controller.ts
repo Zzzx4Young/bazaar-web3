@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Header, HttpCode, Inject, Post, Req, Res } from '@nestjs/common'
+import { Body, Controller, Header, HttpCode, Inject, Post, Req, Res } from '@nestjs/common'
 import { IsString, Length } from 'class-validator'
 import { type FastifyReply } from 'fastify'
 import { AuthService } from './auth.service.js'
-import { Public, type AuthRequest } from './auth.guard.js'
+import { NoCsrf, Public, type AuthRequest } from './auth.guard.js'
 import { DomainError } from '../common/domain-error.js'
 
 class LoginInput {
@@ -33,7 +33,9 @@ export class AuthController {
     return this.auth.view(auth)
   }
 
-  @Get('session')
+  @HttpCode(200)
+  @Post('session')
+  @NoCsrf()
   session(@Req() request: AuthRequest) {
     return this.auth.view(request.auth)
   }

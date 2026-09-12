@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, ServiceUnavailableException } from '@nestjs/common'
+import { Controller, Post, Inject, HttpCode, ServiceUnavailableException } from '@nestjs/common'
 import { DatabaseService } from '../database/database.service.js'
 import { Public } from '../auth/auth.guard.js'
 
@@ -7,12 +7,14 @@ import { Public } from '../auth/auth.guard.js'
 export class HealthController {
   constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
 
-  @Get('live')
+  @HttpCode(200)
+  @Post('live')
   live() {
     return { status: 'ok' }
   }
 
-  @Get('ready')
+  @HttpCode(200)
+  @Post('ready')
   async ready() {
     try {
       await this.database.ping()

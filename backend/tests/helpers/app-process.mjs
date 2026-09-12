@@ -32,7 +32,7 @@ export async function runAppProcess(databaseUrl) {
     while (Date.now() < deadline && child.exitCode === null) {
       try {
         const response = await fetch(`http://127.0.0.1:${port}/api/health/ready`, {
-          signal: AbortSignal.timeout(300)
+          method: 'POST', headers: { origin: process.env.APP_ORIGIN ?? 'http://localhost:3000', 'content-type': 'application/json' }, body: '{}', signal: AbortSignal.timeout(300)
         })
         if (response.status === 200) {
           ready = true

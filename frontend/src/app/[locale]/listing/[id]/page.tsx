@@ -19,6 +19,7 @@ import { findSeller } from '@/lib/mock-data'
 import { formatPrice, formatDate } from '@/lib/format'
 import { useItemStore } from '@/stores/use-item-store'
 import { useFavoriteStore } from '@/stores/use-favorite-store'
+import { useBackendListing } from '@/hooks/use-backend-listing'
 
 interface Props {
   params: { id: string }
@@ -27,11 +28,12 @@ interface Props {
 export default function ListingDetailPage({ params }: Props) {
   const t = useTranslations('common')
   const { items, hydrated } = useItemStore()
+  const backend = useBackendListing(params.id)
   const { toggle, isFavorite, error } = useFavoriteStore()
   const [buyOpen, setBuyOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
-  const item = items.find(candidate => candidate.id === params.id)
-  if (!item && !hydrated && params.id.startsWith('item_user_')) {
+  const item = backend.item ?? items.find(candidate => candidate.id === params.id)
+  if (!item && backend.loading) {
     return <p role="status">加载本地商品中...</p>
   }
   if (!item) notFound()

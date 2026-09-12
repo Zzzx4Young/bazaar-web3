@@ -64,8 +64,8 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     const alice = await login(app, 'alice'),
       bob = await login(app, 'bob')
     const create = (payload) =>
-      app.inject({ method: 'POST', url: '/api/listings', headers: alice, payload })
-    assert.equal((await app.inject({ url: '/api/currencies' })).json().length, 19)
+      app.inject({ method: 'POST', url: '/api/listings/search', headers: alice, payload })
+    assert.equal((await app.inject({ method: 'POST', url: '/api/currencies', headers: { origin, 'content-type': 'application/json' }, payload: {} })).json().length, 19)
     const created = []
     for (const payload of [
       listing('USD', '2'),
@@ -83,7 +83,7 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
       created.push(response.json())
     }
     assert.equal(await db.client.physicalInventory.count(), 3)
-    const list = await app.inject({ url: '/api/listings', headers: bob })
+    const list = await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: {}, headers: bob })
     assert.equal(list.json().items.length, 4)
     assert.equal(list.body.includes('loginName'), false)
     assert.equal(list.body.includes('passwordHash'), false)
@@ -107,8 +107,8 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     assert.equal(
       (
         await app.inject({
-          method: 'PATCH',
-          url: `/api/listings/${first.id}`,
+          method: 'POST',
+          url: `/api/listings/${first.id}/edit`,
           headers: bob,
           payload: { version: 1, title: 'forged' }
         })
@@ -118,15 +118,15 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     const edits = await Promise.all(
       ['one', 'two'].map((title) =>
         app.inject({
-          method: 'PATCH',
-          url: `/api/listings/${first.id}`,
+          method: 'POST',
+          url: `/api/listings/${first.id}/edit`,
           headers: alice,
           payload: { version: 1, title }
         })
       )
     )
     assert.deepEqual(edits.map((response) => response.statusCode).sort(), [200, 409])
-    const sorted = await app.inject({ url: '/api/listings?sort=price_asc&limit=2' })
+    const sorted = await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: { sort: 'price_asc', limit: '2' } })
     assert.equal(sorted.statusCode, 200, sorted.body)
     assert.deepEqual(
       sorted.json().items.map((item) => item.id),
@@ -147,16 +147,16 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
       }
     })
     const second = await app.inject({
-      url: `/api/listings?sort=price_asc&limit=2&page=2&quoteId=${quote.id}`
+      method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: { sort: 'price_asc', limit: '2', page: '2', quoteId: quote.id }
     })
     assert.equal(second.statusCode, 200, second.body)
     assert.deepEqual(
       second.json().items.map((item) => item.id),
       [created[1].id, created[2].id]
     )
-    assert.equal((await app.inject({ url: '/api/listings?sort=price_asc&page=2' })).statusCode, 400)
+    assert.equal((await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: { sort: 'price_asc', page: '2' } })).statusCode, 400)
     assert.equal(
-      (await app.inject({ url: `/api/listings?sort=price_asc&quoteId=${randomUUID()}` }))
+      (await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: { sort: 'price_asc', quoteId: randomUUID() } }))
         .statusCode,
       409
     )
@@ -169,29 +169,29 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
       }
     })
     assert.equal(
-      (await app.inject({ url: `/api/listings?sort=price_asc&quoteId=${stale.id}` })).statusCode,
+      (await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: { sort: 'price_asc', quoteId: stale.id } })).statusCode,
       409
     )
     const down = await app.inject({
-      method: 'PATCH',
-      url: `/api/listings/${first.id}`,
+      method: 'POST',
+      url: `/api/listings/${first.id}/edit`,
       headers: alice,
       payload: { version: 2, publicationStatus: 'withdrawn' }
     })
     assert.equal(down.statusCode, 200)
-    assert.equal((await app.inject({ url: `/api/listings/${first.id}` })).statusCode, 404)
-    assert.equal((await app.inject({ url: '/api/listings' })).json().items.length, 3)
+    assert.equal((await app.inject({ url: `/api/listings/${first.id}/edit` })).statusCode, 404)
+    assert.equal((await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: {} })).json().items.length, 3)
     assert.equal(
       (
-        await app.inject({ url: '/api/me/listings?publicationStatus=withdrawn', headers: alice })
+        await app.inject({ method: 'POST', url: '/api/me/listings', payload: { publicationStatus: 'withdrawn' }, headers: alice })
       ).json().items.length,
       1
     )
     assert.equal(
-      (await app.inject({ url: '/api/me/listings', headers: bob })).json().items.length,
+      (await app.inject({ method: 'POST', url: '/api/me/listings', payload: {}, headers: bob })).json().items.length,
       0
     )
-    assert.equal((await app.inject({ url: '/api/me/listings' })).statusCode, 401)
+    assert.equal((await app.inject({ method: 'POST', url: '/api/me/listings', payload: {} })).statusCode, 401)
   } finally {
     await app?.close()
     await db.close()
@@ -238,10 +238,10 @@ test('I2: invalid rates fail closed; provider failure does not block newest list
         throw new Error('private-provider-failure')
       }
     })
-    const response = await app.inject({ url: '/api/listings?sort=price_asc' })
+    const response = await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: { sort: 'price_asc' } })
     assert.equal(response.statusCode, 503)
     assert.deepEqual(response.json(), { code: 'FX_UNAVAILABLE', retryable: true })
-    assert.equal((await app.inject({ url: '/api/listings' })).statusCode, 200)
+    assert.equal((await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: {} })).statusCode, 200)
   } finally {
     await app?.close()
     await db.close()

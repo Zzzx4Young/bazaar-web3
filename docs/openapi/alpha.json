@@ -123,7 +123,7 @@
       }
     },
     "/auth/session": {
-      "get": {
+      "post": {
         "operationId": "session",
         "summary": "Read current account and CSRF token",
         "security": [
@@ -277,131 +277,6 @@
       }
     },
     "/listings": {
-      "get": {
-        "operationId": "listListings",
-        "summary": "List published public listings",
-        "security": [],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 1000,
-              "default": 1
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 50,
-              "default": 20
-            }
-          },
-          {
-            "name": "type",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/ListingType"
-            }
-          },
-          {
-            "name": "category",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 50
-            }
-          },
-          {
-            "name": "currency",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/Currency"
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Price sorts compare USD reference amounts across currencies. Later pages require same quoteId. Rates unavailable: 503 FX_UNAVAILABLE.",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "newest",
-                "price_asc",
-                "price_desc"
-              ],
-              "default": "newest"
-            }
-          },
-          {
-            "name": "quoteId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Required on later price-sorted pages; missing/expired snapshot: 409 FX_SNAPSHOT_EXPIRED. TTL 5 minutes."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListingPage"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "HTTP 400; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "HTTP 500; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "HTTP 503; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "FX_SNAPSHOT_EXPIRED; restart pagination with a fresh quote",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
       "post": {
         "operationId": "createListing",
         "summary": "Create listing and physical inventory atomically",
@@ -529,191 +404,10 @@
             "format": "uuid"
           }
         }
-      ],
-      "get": {
-        "operationId": "getListing",
-        "summary": "Public published listing; withdrawn returns 404",
-        "security": [],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Listing"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "HTTP 400; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "HTTP 404; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "HTTP 500; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "HTTP 503; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "operationId": "editListing",
-        "summary": "Owner edits with expected version",
-        "security": [
-          {
-            "session": [],
-            "csrf": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "Origin",
-            "in": "header",
-            "required": true,
-            "description": "Must exactly match configured APP_ORIGIN. Missing/null origin rejected.",
-            "schema": {
-              "type": "string",
-              "format": "uri"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ListingPatch"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Listing"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "HTTP 400; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "HTTP 401; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "HTTP 403; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "HTTP 404; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "HTTP 409; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "HTTP 415; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "HTTP 500; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "HTTP 503; see error code contract",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
+      ]
     },
     "/me/listings": {
-      "get": {
+      "post": {
         "operationId": "listOwnListings",
         "summary": "Current seller listings including withdrawn",
         "security": [
@@ -865,7 +559,7 @@
       }
     },
     "/orders": {
-      "get": {
+      "post": {
         "operationId": "listOrders",
         "summary": "Current participant orders only",
         "security": [
@@ -975,140 +669,6 @@
             }
           }
         }
-      },
-      "post": {
-        "operationId": "createOrder",
-        "summary": "Create order; physical requires shipping, digital rejects shipping",
-        "security": [
-          {
-            "session": [],
-            "csrf": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "Origin",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uri"
-            },
-            "description": "Exact APP_ORIGIN; null/missing rejected"
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{1,100}$"
-            },
-            "description": "Same actor/action/key/content replays original orderId; changed content conflicts."
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OrderCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "HTTP 400; code/retryable only",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "HTTP 401; code/retryable only",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "HTTP 403; code/retryable only",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "HTTP 404; code/retryable only",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "HTTP 409; code/retryable only",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "HTTP 415; code/retryable only",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "HTTP 500; code/retryable only",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "HTTP 503; code/retryable only",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/orders/{id}": {
@@ -1123,7 +683,7 @@
           }
         }
       ],
-      "get": {
+      "post": {
         "operationId": "getOrder",
         "summary": "Participant only; outsiders and nonexistent IDs both 404",
         "security": [
@@ -1208,7 +768,7 @@
           }
         }
       ],
-      "get": {
+      "post": {
         "operationId": "listOrderDeliveries",
         "summary": "Participant-only history; newest first, stable ID tie break",
         "security": [
@@ -1314,7 +874,7 @@
           }
         }
       ],
-      "get": {
+      "post": {
         "operationId": "listOrderIssues",
         "summary": "Participant-only history; newest first, stable ID tie break",
         "security": [
@@ -1420,7 +980,7 @@
           }
         }
       ],
-      "get": {
+      "post": {
         "operationId": "listOrderRefunds",
         "summary": "Participant-only history; newest first, stable ID tie break",
         "security": [
@@ -1526,7 +1086,7 @@
           }
         }
       ],
-      "get": {
+      "post": {
         "operationId": "listOrderSettlements",
         "summary": "Participant-only history; newest first, stable ID tie break",
         "security": [
@@ -1632,7 +1192,7 @@
           }
         }
       ],
-      "get": {
+      "post": {
         "operationId": "listOrderEvents",
         "summary": "Participant-only history; newest first, stable ID tie break",
         "security": [
@@ -2903,7 +2463,7 @@
       }
     },
     "/currencies": {
-      "get": {
+      "post": {
         "operationId": "getCurrencies",
         "summary": "Supported pricing currencies and maximum decimal places",
         "security": [],
@@ -2917,6 +2477,318 @@
                   "items": {
                     "$ref": "#/components/schemas/CurrencyInfo"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings/search": {
+      "post": {
+        "operationId": "listListings",
+        "summary": "List published public listings",
+        "security": [],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ListingType"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Currency"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Price sorts compare USD reference amounts across currencies. Later pages require same quoteId. Rates unavailable: 503 FX_UNAVAILABLE.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newest",
+                "price_asc",
+                "price_desc"
+              ],
+              "default": "newest"
+            }
+          },
+          {
+            "name": "quoteId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required on later price-sorted pages; missing/expired snapshot: 409 FX_SNAPSHOT_EXPIRED. TTL 5 minutes."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "HTTP 400; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "HTTP 500; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "HTTP 503; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "FX_SNAPSHOT_EXPIRED; restart pagination with a fresh quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings/{id}/detail": {
+      "post": {
+        "operationId": "getListing",
+        "summary": "Public published listing; withdrawn returns 404",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Listing"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "HTTP 400; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "HTTP 404; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "HTTP 500; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "HTTP 503; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings/{id}/edit": {
+      "post": {
+        "operationId": "editListing",
+        "summary": "Owner edits with expected version",
+        "security": [
+          {
+            "session": [],
+            "csrf": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Must exactly match configured APP_ORIGIN. Missing/null origin rejected.",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Listing"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "HTTP 400; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "HTTP 401; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "HTTP 403; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "HTTP 404; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "HTTP 409; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "HTTP 415; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "HTTP 500; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "HTTP 503; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }

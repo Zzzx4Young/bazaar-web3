@@ -1,14 +1,14 @@
 // 价格格式化工具
 import type { Currency } from '@/types'
 
-const CURRENCY_SYMBOL: Record<Currency, string> = {
+const CURRENCY_SYMBOL: Partial<Record<Currency, string>> = {
   CNY: '¥',
   USDT: '₮',
   ETH: 'Ξ',
   SOL: '◎'
 }
 
-const FIAT_RATE: Record<Currency, number> = {
+const FIAT_RATE: Partial<Record<Currency, number>> = {
   CNY: 1,
   USDT: 7.2,
   ETH: 3400,
@@ -21,7 +21,7 @@ export function formatPrice(amount: number, currency: Currency): string {
   }
   const symbol = CURRENCY_SYMBOL[currency]
   const formatted = amount.toLocaleString('zh-CN', { maximumFractionDigits: 2 })
-  return `${symbol}${formatted}`
+  return `${symbol ?? currency}${formatted}`
 }
 
 export function fiatEstimate(amount: number, currency: Currency): number {

@@ -43,13 +43,13 @@ test('I1: sessions, rotation, restart, revocation, CSRF and password reset over 
     const csrf = rotated.json().csrfToken
     assert.notEqual(cookie, oldCookie)
     assert.equal(
-      (await app.inject({ url: '/api/auth/session', headers: { cookie: oldCookie } })).statusCode,
+      (await app.inject({ method: 'POST', url: '/api/auth/session', headers: { origin, 'content-type': 'application/json', cookie: oldCookie }, payload: {} })).statusCode,
       401
     )
     await app.close()
     app = await createApp(config, false)
     assert.equal(
-      (await app.inject({ url: '/api/auth/session', headers: { cookie } })).statusCode,
+      (await app.inject({ method: 'POST', url: '/api/auth/session', headers: { origin, 'content-type': 'application/json', cookie }, payload: {} })).statusCode,
       200
     )
     for (const headers of [
@@ -64,7 +64,7 @@ test('I1: sessions, rotation, restart, revocation, CSRF and password reset over 
         403
       )
       assert.equal(
-        (await app.inject({ url: '/api/auth/session', headers: { cookie } })).statusCode,
+        (await app.inject({ method: 'POST', url: '/api/auth/session', headers: { origin, 'content-type': 'application/json', cookie }, payload: {} })).statusCode,
         200
       )
     }
@@ -77,14 +77,14 @@ test('I1: sessions, rotation, restart, revocation, CSRF and password reset over 
     assert.equal(logout.statusCode, 204)
     assert.match(logout.headers['set-cookie'], /Max-Age=0/)
     assert.equal(
-      (await app.inject({ url: '/api/auth/session', headers: { cookie } })).statusCode,
+      (await app.inject({ method: 'POST', url: '/api/auth/session', headers: { origin, 'content-type': 'application/json', cookie }, payload: {} })).statusCode,
       401
     )
     const again = await login()
     assert.equal(again.statusCode, 200)
     await resetPassword(db.client, 'alice', 'Virtual-replacement-password-456')
     assert.equal(
-      (await app.inject({ url: '/api/auth/session', headers: { cookie: cookieOf(again) } }))
+      (await app.inject({ method: 'POST', url: '/api/auth/session', headers: { origin, 'content-type': 'application/json', cookie: cookieOf(again) }, payload: {} }))
         .statusCode,
       401
     )
@@ -139,14 +139,14 @@ test('I1: invalid inputs, enumeration resistance, expiration, disabled accounts 
       data: { createdAt: new Date(Date.now() - 10000), expiresAt: new Date(Date.now() - 1000) }
     })
     assert.equal(
-      (await app.inject({ url: '/api/auth/session', headers: { cookie } })).statusCode,
+      (await app.inject({ method: 'POST', url: '/api/auth/session', headers: { origin, 'content-type': 'application/json', cookie }, payload: {} })).statusCode,
       401
     )
     const active = await login()
     assert.equal(active.statusCode, 200)
     await db.client.account.update({ where: { loginName: 'alice' }, data: { status: 'disabled' } })
     assert.equal(
-      (await app.inject({ url: '/api/auth/session', headers: { cookie: cookieOf(active) } }))
+      (await app.inject({ method: 'POST', url: '/api/auth/session', headers: { origin, 'content-type': 'application/json', cookie: cookieOf(active) }, payload: {} }))
         .statusCode,
       401
     )

@@ -28,13 +28,13 @@
 | 接口 | 权限与响应 |
 |---|---|
 | POST /auth/login | 登录名/密码 → 200 当前账户及 csrfToken，Set-Cookie；错误 401/429 |
-| GET /auth/session | 登录 → 200 当前账户及 csrfToken；无有效会话 401 |
+| POST /auth/session | 登录 → 200 当前账户及 csrfToken；无有效会话 401 |
 | POST /auth/logout | Origin＋有效会话＋CSRF → 204；无有效会话 401 |
-| GET /listings | 公开商品分页；默认 published，可见已售出的公开历史，但可售状态明确 |
-| GET /listings/{id} | published 商品公开详情；withdrawn 返回 404，由卖家从自己的商品列表查看 |
-| GET /me/listings | 登录，只返回自己的商品，含 withdrawn |
+| POST /listings/search | 公开商品分页；默认 published，可见已售出的公开历史，但可售状态明确 |
+| POST /listings/{id}/detail | published 商品公开详情；withdrawn 返回 404，由卖家从自己的商品列表查看 |
+| POST /me/listings | 登录，只返回自己的商品，含 withdrawn |
 | POST /listings | 登录＋Origin/CSRF；创建商品，201；实物库存与商品同事务写入 |
-| PATCH /listings/{id} | 所属卖家＋Origin/CSRF；带期望 version；成功返回新版本，冲突 409 |
+| POST /listings/{id}/edit | 所属卖家＋Origin/CSRF；带期望 version；成功返回新版本，冲突 409 |
 
 创建商品不自动重试，响应不明先刷新自己的商品列表；本阶段不承诺商品创建幂等。编辑用版本条件阻止重复应用。订单写操作另有强幂等协议，不复用仅支持 orderId 的结果表存商品 ID。
 
