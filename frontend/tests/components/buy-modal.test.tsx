@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
 import { BuyModal } from '@/components/listing/buy-modal'
-import { useOrderStore } from '@/stores/use-order-store'
+import { useAuthStore } from '@/stores/use-auth-store'
 import type { Item } from '@/types'
 
-const baseItem: Item = {
-  id: 'item_test_001',
-  sellerId: 'seller_001',
+const item: Item = {
+  id: 'listing-1',
+  sellerId: 'seller-1',
+  backendVersion: 1,
   title: 'Test Item',
   description: 'desc',
   category: 'physical',
@@ -22,163 +22,24 @@ const baseItem: Item = {
 }
 
 beforeEach(() => {
-  window.localStorage.clear()
-  // reset zustand persist
-  useOrderStore.getState().reset()
+  vi.restoreAllMocks()
+  useAuthStore.setState({ status: 'anonymous', view: null, error: null })
 })
 
-afterEach(() => vi.restoreAllMocks())
-
-it('returns to confirmation on save failure and retries without duplicate orders', async () => {
-  const user = userEvent.setup()
-  render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-  const write = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
-    throw new DOMException('full', 'QuotaExceededError')
-  })
-  await user.click(screen.getByRole('button', { name: '确认下单' }))
-  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('订单未保存'), {
-    timeout: 3000
-  })
-  expect(screen.queryByText('下单成功 ✓')).not.toBeInTheDocument()
-  expect(useOrderStore.getState().userOrders).toHaveLength(0)
-  write.mockRestore()
-  await user.click(screen.getByRole('button', { name: '确认下单' }))
-  await waitFor(() => expect(screen.getByText('下单成功 ✓')).toBeInTheDocument(), { timeout: 3000 })
-  expect(useOrderStore.getState().userOrders).toHaveLength(1)
-  expect(JSON.parse(localStorage.getItem('c2c:orders')!).state.userOrders).toHaveLength(1)
-})
-
-describe('BuyModal — confirm step', () => {
-  it('renders the item title in confirmation', () => {
-    render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-    expect(screen.getByText('Test Item')).toBeInTheDocument()
+describe('BuyModal', () => {
+  it('shows the backend order boundary and requires authentication', () => {
+    render(<BuyModal item={item} open onOpenChange={vi.fn()} />)
+    expect(screen.getByText('订单将写入 Alpha 后端；付款仍为模拟动作。')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('请先登录')
+    expect(screen.getByRole('button', { name: '确认下单' })).toBeDisabled()
   })
 
-  it('renders the price in confirmation', () => {
-    render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-    expect(screen.getByText('¥100')).toBeInTheDocument()
-  })
-
-  it('shows platform fee (1%)', () => {
-    render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-    // fee = 100 * 0.01 = 1
-    expect(screen.getByText('¥1')).toBeInTheDocument()
-  })
-
-  it('does not render anything when item is null', () => {
-    const { container } = render(<BuyModal item={null} open={true} onOpenChange={() => {}} />)
-    // the Dialog renders a portal but with no content; check title not present
-    expect(screen.queryByText('确认购买')).not.toBeInTheDocument()
-  })
-
-  it('shows "实物二手" for physical items', () => {
-    render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-    expect(screen.getByText('实物二手')).toBeInTheDocument()
-  })
-
-  it('shows "数字资产" for digital items', () => {
-    const digitalItem = { ...baseItem, category: 'digital' as const }
-    render(<BuyModal item={digitalItem} open={true} onOpenChange={() => {}} />)
-    expect(screen.getByText('数字资产')).toBeInTheDocument()
-  })
-})
-
-describe('BuyModal — confirm → fund transition', () => {
-  it('clicking "确认下单" moves to fund step', async () => {
-    const user = userEvent.setup()
-    render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-
-    await user.click(screen.getByRole('button', { name: '确认下单' }))
-
-    await waitFor(() => {
-      expect(screen.getByText('模拟下单中...')).toBeInTheDocument()
-    })
-  })
-
-  it('shows "等待模拟完成" during fund step', async () => {
-    const user = userEvent.setup()
-    render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-
-    await user.click(screen.getByRole('button', { name: '确认下单' }))
-
-    expect(screen.getByText(/等待模拟完成/)).toBeInTheDocument()
-  })
-})
-
-describe('BuyModal — fund → done transition', () => {
-  it('after 1.5s, advances to done step', async () => {
-    const user = userEvent.setup()
-    render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-
-    await user.click(screen.getByRole('button', { name: '确认下单' }))
-
-    await waitFor(
-      () => {
-        expect(screen.getByText('下单成功 ✓')).toBeInTheDocument()
-      },
-      { timeout: 3000 }
-    )
-  })
-
-  it('done step shows the success message', async () => {
-    const user = userEvent.setup()
-    render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-
-    await user.click(screen.getByRole('button', { name: '确认下单' }))
-
-    await waitFor(() => screen.getByText('下单成功 ✓'), { timeout: 3000 })
-    expect(screen.getByText(/订单已创建/)).toBeInTheDocument()
-  })
-})
-
-describe('BuyModal — order creation', () => {
-  it('creates an order in the order store', async () => {
-    const user = userEvent.setup()
-    const orderCountBefore = useOrderStore.getState().userOrders.length
-
-    render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-
-    await user.click(screen.getByRole('button', { name: '确认下单' }))
-
-    await waitFor(() => screen.getByText('下单成功 ✓'), { timeout: 3000 })
-
-    const orderCountAfter = useOrderStore.getState().userOrders.length
-    expect(orderCountAfter).toBe(orderCountBefore + 1)
-  })
-
-  it('created order references the item and the buyer', async () => {
-    const user = userEvent.setup()
-    render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-
-    await user.click(screen.getByRole('button', { name: '确认下单' }))
-
-    await waitFor(() => screen.getByText('下单成功 ✓'), { timeout: 3000 })
-
-    const orders = useOrderStore.getState().userOrders
-    const newOrder = orders[0]
-    expect(newOrder?.itemId).toBe('item_test_001')
-  })
-})
-
-describe('BuyModal — done step for digital vs physical', () => {
-  it('digital items mention auto-release in done step', async () => {
-    const user = userEvent.setup()
-    const digitalItem = { ...baseItem, category: 'digital' as const }
-    render(<BuyModal item={digitalItem} open={true} onOpenChange={() => {}} />)
-
-    await user.click(screen.getByRole('button', { name: '确认下单' }))
-
-    await waitFor(() => screen.getByText('下单成功 ✓'), { timeout: 3000 })
-    expect(screen.getByText(/数字商品交付与资金释放尚未实现/)).toBeInTheDocument()
-  })
-
-  it('physical items mention "确认收货" in done step', async () => {
-    const user = userEvent.setup()
-    render(<BuyModal item={baseItem} open={true} onOpenChange={() => {}} />)
-
-    await user.click(screen.getByRole('button', { name: '确认下单' }))
-
-    await waitFor(() => screen.getByText('下单成功 ✓'), { timeout: 3000 })
-    expect(screen.getByText(/实物发货、确认收货与资金释放尚未实现/)).toBeInTheDocument()
+  it('renders shipping fields only for physical listings', () => {
+    render(<BuyModal item={item} open onOpenChange={vi.fn()} />)
+    expect(screen.getByLabelText('收件人')).toBeInTheDocument()
+    cleanup()
+    const digital = { ...item, category: 'digital' as const }
+    render(<BuyModal item={digital} open onOpenChange={vi.fn()} />)
+    expect(screen.queryByLabelText('收件人')).not.toBeInTheDocument()
   })
 })

@@ -10,6 +10,12 @@
     "publish": "发布",
     "me": "我的",
     "login": "登录",
+    "logout": "退出登录",
+    "loginHint": "使用 Alpha 预置账户登录。",
+    "loginName": "登录名",
+    "password": "密码",
+    "signingIn": "登录中…",
+    "authError": "账户请求失败，请重试。",
     "myItems": "我的商品",
     "favorites": "收藏",
     "notifications": "通知"

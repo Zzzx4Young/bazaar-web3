@@ -8,39 +8,39 @@ export function applyFilters(items: Item[], filter: FilterState): Item[] {
   if (filter.keyword && filter.keyword.trim()) {
     const kw = filter.keyword.trim().toLowerCase()
     result = result.filter(
-      i =>
+      (i) =>
         i.title.toLowerCase().includes(kw) ||
         i.description.toLowerCase().includes(kw) ||
-        i.tags.some(t => t.toLowerCase().includes(kw))
+        i.tags.some((t) => t.toLowerCase().includes(kw))
     )
   }
 
   // 实物/数字
   if (filter.itemCategory) {
-    result = result.filter(i => i.category === filter.itemCategory)
+    result = result.filter((i) => i.category === filter.itemCategory)
   }
 
   // 一级分类
   if (filter.category) {
-    result = result.filter(i => i.primaryCategory === filter.category)
+    result = result.filter((i) => i.primaryCategory === filter.category)
   }
 
   // 价格区间
   if (filter.priceMin !== undefined) {
-    result = result.filter(i => i.price.amount >= filter.priceMin!)
+    result = result.filter((i) => i.price.amount >= filter.priceMin!)
   }
   if (filter.priceMax !== undefined) {
-    result = result.filter(i => i.price.amount <= filter.priceMax!)
+    result = result.filter((i) => i.price.amount <= filter.priceMax!)
   }
 
   // 币种
   if (filter.currency) {
-    result = result.filter(i => i.price.currency === filter.currency)
+    result = result.filter((i) => i.price.currency === filter.currency)
   }
 
   // 物品成色（仅实物）
   if (filter.condition) {
-    result = result.filter(i => i.category === 'digital' || i.condition === filter.condition)
+    result = result.filter((i) => i.category === 'digital' || i.condition === filter.condition)
   }
 
   // 排序

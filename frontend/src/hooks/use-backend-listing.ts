@@ -12,10 +12,18 @@ export function useBackendListing(id: string) {
     let cancelled = false
     setLoading(true)
     backendPost<BackendListing>(`/listings/${encodeURIComponent(id)}/detail`)
-      .then(value => { if (!cancelled) setItem(toItem(value)) })
-      .catch(error => { if (!cancelled) setError(error instanceof Error ? error.message : 'NETWORK_ERROR') })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
+      .then((value) => {
+        if (!cancelled) setItem(toItem(value))
+      })
+      .catch((error) => {
+        if (!cancelled) setError(error instanceof Error ? error.message : 'NETWORK_ERROR')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [id])
   return { item, loading, error }
 }

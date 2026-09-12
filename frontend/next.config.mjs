@@ -5,6 +5,10 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async rewrites() {
+    const backendOrigin = process.env.BACKEND_ORIGIN ?? 'http://127.0.0.1:3001'
+    return [{ source: '/api/:path*', destination: `${backendOrigin}/api/:path*` }]
+  },
   images: {
     // Dev mode: skip Next.js image optimizer so the browser fetches the
     // origin URL directly. The dev optimizer (Node fetch) hits TLS

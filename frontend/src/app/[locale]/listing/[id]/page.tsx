@@ -27,27 +27,37 @@ interface Props {
 
 export default function ListingDetailPage({ params }: Props) {
   const t = useTranslations('common')
-  const { items, hydrated } = useItemStore()
+  const { items } = useItemStore()
   const backend = useBackendListing(params.id)
   const { toggle, isFavorite, error } = useFavoriteStore()
   const [buyOpen, setBuyOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
-  const item = backend.item ?? items.find(candidate => candidate.id === params.id)
+  const item = backend.item
   if (!item && backend.loading) {
-    return <p role="status">加载本地商品中...</p>
+    return <p role="status">正在加载商品…</p>
   }
-  if (!item) notFound()
+  if (!item) {
+    if (backend.error)
+      return (
+        <p role="alert" className="text-destructive">
+          商品加载失败：{backend.error}
+        </p>
+      )
+    notFound()
+  }
   const seller = findSeller(item.sellerId)
   const favorited = isFavorite(item.id)
 
   // 相关推荐（同分类，排除自己）
-  const related = items
-    .filter(i => i.category === item.category && i.id !== item.id)
-    .slice(0, 4)
+  const related = items.filter((i) => i.category === item.category && i.id !== item.id).slice(0, 4)
 
   return (
     <div className="space-y-6">
-      {error && <p role="alert" className="text-destructive">{error}</p>}
+      {error && (
+        <p role="alert" className="text-destructive">
+          {error}
+        </p>
+      )}
       {/* 面包屑 */}
       <nav className="text-sm text-muted-foreground">
         <Link href="/" className="hover:underline">
@@ -74,10 +84,14 @@ export default function ListingDetailPage({ params }: Props) {
               </Badge>
               {item.condition && (
                 <Badge variant="outline">
-                  {item.condition === 'like_new' ? '99新' : item.condition === 'good' ? '95新' : '其他'}
+                  {item.condition === 'like_new'
+                    ? '99新'
+                    : item.condition === 'good'
+                      ? '95新'
+                      : '其他'}
                 </Badge>
               )}
-              {item.tags.slice(0, 3).map(t => (
+              {item.tags.slice(0, 3).map((t) => (
                 <Badge key={t} variant="outline" className="text-xs">
                   {t}
                 </Badge>
@@ -204,7 +218,7 @@ export default function ListingDetailPage({ params }: Props) {
         </TabsContent>
         <TabsContent value="related" className="mt-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {related.map(r => (
+            {related.map((r) => (
               <Link key={r.id} href={`/listing/${r.id}`} className="block">
                 <Card className="overflow-hidden transition hover:opacity-90">
                   <div className="relative aspect-square bg-muted">

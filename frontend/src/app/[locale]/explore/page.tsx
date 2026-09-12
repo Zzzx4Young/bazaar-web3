@@ -13,7 +13,11 @@ import type { SortBy } from '@/types'
 import { useBackendListings } from '@/hooks/use-backend-listings'
 
 export default function ExplorePage() {
-  return <Suspense fallback={<p>加载商品中...</p>}><ExploreContent /></Suspense>
+  return (
+    <Suspense fallback={<p>加载商品中...</p>}>
+      <ExploreContent />
+    </Suspense>
+  )
 }
 
 function ExploreContent() {
@@ -24,10 +28,10 @@ function ExploreContent() {
   const filter = useFilterStore()
   const setCategory = filter.setCategory
   useEffect(() => {
-    setCategory(categories.find(category => category.id === categoryParam)?.id)
+    setCategory(categories.find((category) => category.id === categoryParam)?.id)
   }, [categoryParam, setCategory])
-  const sellerMap = useMemo(() => new Map(sellers.map(s => [s.id, s])), [])
-  const filtered = useMemo(() => applyFilters(backend.error ? items : backend.items, filter), [backend.error, backend.items, items, filter])
+  const sellerMap = useMemo(() => new Map(sellers.map((s) => [s.id, s])), [])
+  const filtered = useMemo(() => applyFilters(backend.items, filter), [backend.items, filter])
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
@@ -35,16 +39,21 @@ function ExploreContent() {
         <FilterSidebar
           categories={categories}
           filter={filter}
-          onKeyword={v => filter.setKeyword(v || undefined)}
-          onCategory={v => filter.setCategory(v)}
-          onItemCategory={v => filter.setItemCategory(v)}
-          onCurrency={v => filter.setCurrency(v)}
-          onCondition={v => filter.setCondition(v)}
+          onKeyword={(v) => filter.setKeyword(v || undefined)}
+          onCategory={(v) => filter.setCategory(v)}
+          onItemCategory={(v) => filter.setItemCategory(v)}
+          onCurrency={(v) => filter.setCurrency(v)}
+          onCondition={(v) => filter.setCondition(v)}
           onReset={() => filter.reset()}
         />
       </aside>
 
       <div className="flex-1 space-y-4">
+        {backend.error && (
+          <p role="alert" className="text-sm text-destructive">
+            商品加载失败：{backend.error}
+          </p>
+        )}
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             共 <span className="font-semibold text-foreground">{filtered.length}</span> 件商品

@@ -1,11 +1,4 @@
-import {
-  Smartphone,
-  Coins,
-  Code2,
-  Gamepad2,
-  Shirt,
-  ImageOff
-} from 'lucide-react'
+import { Smartphone, Coins, Code2, Gamepad2, Shirt, ImageOff } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { PrimaryCategory } from '@/types'
 
@@ -17,11 +10,16 @@ import type { PrimaryCategory } from '@/types'
 export function iconForCategory(cat: PrimaryCategory | undefined): LucideIcon {
   if (!cat) return ImageOff
   switch (cat) {
-    case 'electronics':         return Smartphone
-    case 'digital_assets':      return Coins
-    case 'software_source':     return Code2
-    case 'game_items':          return Gamepad2
-    case 'secondhand_fashion':  return Shirt
+    case 'electronics':
+      return Smartphone
+    case 'digital_assets':
+      return Coins
+    case 'software_source':
+      return Code2
+    case 'game_items':
+      return Gamepad2
+    case 'secondhand_fashion':
+      return Shirt
   }
 }
 
@@ -34,5 +32,5 @@ export function categoryForItem(
   itemId: string,
   categories: { id: PrimaryCategory; itemIds: string[] }[]
 ): PrimaryCategory | undefined {
-  return categories.find(c => c.itemIds.includes(itemId))?.id
+  return categories.find((c) => c.itemIds.includes(itemId))?.id
 }

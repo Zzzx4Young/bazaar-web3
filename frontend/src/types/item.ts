@@ -8,14 +8,30 @@ export type ItemStatus = 'active' | 'locked' | 'sold'
 export type ItemCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor'
 
 export type DigitalDeliveryType =
-  | 'download_link'
-  | 'license_key'
-  | 'cloud_link'
-  | 'account_credentials'
+  'download_link' | 'license_key' | 'cloud_link' | 'account_credentials'
 
 export type ShippingMethod = 'delivery' | 'face_to_face'
 
-export type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY' | 'CNY' | 'CAD' | 'AUD' | 'CHF' | 'HKD' | 'SGD' | 'KRW' | 'INR' | 'AED' | 'BRL' | 'BTC' | 'ETH' | 'USDT' | 'USDC' | 'SOL'
+export type Currency =
+  | 'USD'
+  | 'EUR'
+  | 'GBP'
+  | 'JPY'
+  | 'CNY'
+  | 'CAD'
+  | 'AUD'
+  | 'CHF'
+  | 'HKD'
+  | 'SGD'
+  | 'KRW'
+  | 'INR'
+  | 'AED'
+  | 'BRL'
+  | 'BTC'
+  | 'ETH'
+  | 'USDT'
+  | 'USDC'
+  | 'SOL'
 
 export interface Price {
   amount: number
@@ -32,6 +48,7 @@ export interface MediaItem {
 export interface Item {
   primaryCategory?: import('./category').PrimaryCategory // 一级分类；旧本地商品可缺省
   id: string
+  backendVersion?: number
   sellerId: string
   title: string
   description: string // Markdown

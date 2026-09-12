@@ -10,6 +10,12 @@
     "publish": "Publish",
     "me": "Profile",
     "login": "Sign in",
+    "logout": "Sign out",
+    "loginHint": "Sign in with a provisioned Alpha account.",
+    "loginName": "Login name",
+    "password": "Password",
+    "signingIn": "Signing in…",
+    "authError": "The account request failed. Please retry.",
     "myItems": "My Listings",
     "favorites": "Favorites",
     "notifications": "Notifications"
