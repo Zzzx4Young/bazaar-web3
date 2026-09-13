@@ -46,9 +46,11 @@ Codex 全局 MCP 名为 `bazaar-postgres`，通过项目的 `start-db-mcp.mjs` �
 3 秒连接/查询超时、100 行结果上限和只读 `execute_sql`。数据库角色权限是最终边界；
 DBHub 的 SQL 分类与只读事务只作为附加限制。
 
-配置后当前 Codex 进程不会动态获得新工具。新进程必须实际调用 `search_objects` 或执行
-一次只读查询，确认工具可调用、当前用户为 `bazaar_observer` 且只发现 `bazaar_observe`
-对象，才能把 Codex 集成标记为已验证。独立 MCP 协议验证不替代这项进程级检查。
+2026-09-13 已通过全新、临时 Codex CLI 进程完成端到端验收。进程自动加载
+`bazaar-postgres` skill，随后通过 `bazaar-postgres` MCP 调用 `search_objects` 找到
+`bazaar_observe.migration_status`，再调用 `execute_sql` 返回 `bazaar_observer`、只读 `on`、
+当前 schema `bazaar_observe` 和 16 个观察视图。该进程未使用 shell、`psql` 或其他数据库
+角色访问数据库。以后变更 skill、DBHub 版本、MCP 配置或观察角色后，应重复这两次调用。
 
 所有 DDL、DML、迁移、授权和数据清理都通过仓库脚本或明确的迁移流程执行，不通过 MCP。
 测试库 55432 可随时丢弃；持久重启和恢复证据使用 55433 的专用验证服务。

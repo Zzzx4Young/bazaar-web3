@@ -194,5 +194,7 @@ I8 按宿主机 PostgreSQL client、最小权限观察对象、stdio MCP、薄�
 通过；本机 observer 创建后实测 16 个视图、只读和 search_path，CREATE TABLE 被拒绝。
 DBHub stdio 配置固定 `@bytebase/dbhub@1.2.0`，行数上限 100、查询超时 3 秒，连接串只从
 本机 0600 文件注入。独立 MCP 客户端已完成 initialize、tools/list、observer 只读查询和
-写入拒绝探测；Codex 全局配置已启用 `bazaar-postgres`。当前进程不会动态加载新工具，
-仍待下一 Codex 进程执行一次内置 MCP 查询后完成进程级验证。
+写入拒绝探测；Codex 全局配置已启用 `bazaar-postgres`。全新临时 Codex CLI 进程已自动
+加载该 skill，并通过内置 MCP `search_objects` 找到迁移状态视图，再由 `execute_sql` 确认
+当前用户 `bazaar_observer`、默认只读、当前 schema `bazaar_observe` 和 16 个观察视图；全程
+未使用 shell、`psql` 或其他数据库角色。I8-0 的 skill + DBHub 链路验收完成。
