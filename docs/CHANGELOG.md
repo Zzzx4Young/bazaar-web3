@@ -1,5 +1,18 @@
 # 文档与交付变更
 
+## 2026-09-13 — I8-0 数据库工具链与当前基线
+
+- 宿主机 PostgreSQL 17 client、默认只读 psql 入口、`bazaar_observer`、16 个脱敏视图和
+  DBHub 1.2.0 MCP 已实现；数据库权限、写入拒绝和传递角色成员关系由 31 项 PostgreSQL
+  集成回归覆盖。
+- 全新 Codex 进程已自动加载 `bazaar-postgres` skill，并通过 DBHub MCP 完成对象搜索和
+  observer 只读查询；独立协议探测同时验证写入拒绝。
+- GitHub CLI 2.100.0 与 GitHub MCP 已统一使用唯一的 `GH_TOKEN`，分别完成 Actions 和
+  账户/提交查询。当前基线 `69c4cf2` 的 workflow `34765359979` 中 `verify` 与 `backend`
+  均成功。
+- I1—I7 与 I8-0 已完成；I8-1 备份恢复验证尚未开始，公开部署、高可用和生产备份仍不在
+  已验收范围。
+
 ## 2026-09-13 — I7 本地环境与账户演练
 
 - 发现持久开发库停在 5/6 迁移且应用角色凭据已丢失；增加严格限定本机 `bazaar_dev` 的凭据恢复命令，复核角色权限和 schema 所有权后原子轮换，并写入 Git 忽略的 0600 配置。

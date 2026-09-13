@@ -175,8 +175,8 @@ M1—M6 已由工程验收操作者通过真实 Chromium 界面执行。错误�
 
 最终本地门禁通过：backend build/typecheck/lint、6 项单测、PostgreSQL 30/30；frontend
 typecheck/lint、26 个测试文件共 193 项测试和 production build；真实 Chromium、DB-10
-及 I7 空持久库重启演练通过。没有开放阻塞或严重缺陷。I7-5 仅余提交、推送并确认最终
-SHA 的远端 `verify` 与 `backend`。
+及 I7 空持久库重启演练通过。没有开放阻塞或严重缺陷。在本地退出评审时，I7-5 仅余
+提交、推送并确认最终 SHA 的远端 `verify` 与 `backend`。
 
 收口提交 `db99184` 已推送；远端 workflow `34762181810` 的 `verify` 与 `backend` 均在
 同一 SHA 成功，I7 退出条件全部满足。
@@ -198,3 +198,9 @@ DBHub stdio 配置固定 `@bytebase/dbhub@1.2.0`，行数上限 100、查询超�
 加载该 skill，并通过内置 MCP `search_objects` 找到迁移状态视图，再由 `execute_sql` 确认
 当前用户 `bazaar_observer`、默认只读、当前 schema `bazaar_observe` 和 16 个观察视图；全程
 未使用 shell、`psql` 或其他数据库角色。I8-0 的 skill + DBHub 链路验收完成。
+
+I8-0 实现提交 `7163f54`、skill/DBHub 验收记录提交 `bf3ba88` 和 GitHub 凭据统一提交
+`69c4cf2` 均已推送。GitHub CLI 2.100.0 从官方软件源安装；GitHub MCP 和 `gh` 统一只读取
+`GH_TOKEN`。在显式移除旧变量的全新进程中，`gh` 成功读取 Actions，GitHub MCP 成功执行
+账户及提交查询。最终基线 `69c4cf2` 的 workflow `34765359979` 已完成，`verify` 与
+`backend` 均成功。工作区无待提交文件，I8-1 尚未开始。

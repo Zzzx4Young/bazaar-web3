@@ -1,6 +1,8 @@
 # Bazaar Web3 文档索引
 
-更新：2026-09-13。内部 Alpha 的认证、商品、订单、交付、退款恢复和前端联调已经完成；未认证页面保留明确标注的 Demo 内容。I5 与 I6 验收状态见阶段记录。
+更新：2026-09-13。I1—I7 与 I8-0 已完成，当前基线 `69c4cf2` 的远端 CI 成功；下一步为
+I8-1 备份恢复验证。内部 Alpha 的认证、商品、订单、交付、退款恢复、前端联调和受控内测
+已经完成；未认证页面保留明确标注的 Demo 内容。当前状态以执行计划和阶段记录为准。
 
 ## 当前文档与职责
 
@@ -17,7 +19,7 @@
 | [C1 核心契约](backend-core-contract.md) | schema 基线、事务、幂等、错误边界、数据库角色与迁移流程 |
 | [后端阶段记录](backend-stage-report.md) | 当前阶段的实际变更、命令、验收与未验证边界 |
 | [执行计划](execution-plan.md) | 依赖顺序、待交付物、工程加固和完成条件 |
-| [I7 受控内测计划](internal-alpha-testing-plan.md) | 当前阶段的基线、诊断、环境、人工场景、缺陷闭环与退出条件 |
+| [I7 受控内测计划](internal-alpha-testing-plan.md) | 已完成阶段的基线、诊断、环境、人工场景、缺陷闭环与退出条件 |
 | [请求关联与安全日志契约](backend-observability-contract.md) | I7 请求 ID、日志字段、脱敏和失败边界 |
 | [PostgreSQL 本地操作与只读 MCP](database-operations.md) | I8 宿主机 psql、观察角色、DBHub 和安全边界 |
 | [内测问题模板](internal-testing-issue-template.md) | 不记录凭据或私有业务值的问题复现与回归字段 |

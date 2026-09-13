@@ -8,8 +8,8 @@
 
 | 项目 | 当前结果 |
 |---|---|
-| 起始提交 | `af95a3f`；本次浏览器门禁扩展和记录待提交 |
-| 远端 CI | `f515080` 的 workflow `34738610736` 成功；I7 收口提交尚待同 SHA 远端结果 |
+| 起始提交 | `af95a3f`；I7 收口提交 `db99184` |
+| 远端 CI | `db99184` 的 workflow `34762181810` 成功，`verify` 与 `backend` 均通过 |
 | 工具版本 | Node 22.23.1、npm 10.9.8、PostgreSQL 17.11 |
 | 数据库 | 持久 `bazaar_dev`，6/6 追加迁移，运行角色 DDL 拒绝 |
 | 内测角色 | seller、buyer、outsider 完成操作后已删除；凭据输入文件已删除 |
@@ -55,9 +55,10 @@ env 与 runtime `.env` 继续作为权限 0600 的本机运行配置保留。
 | 浏览器门禁缺少数字重复销售和问题补交 | M4/M5 只有数据库证据 | 扩展真实 Chromium 门禁并完成两段界面流程 |
 | 人工入口使用 `127.0.0.1` | 与后端冻结的 `localhost` Origin 不一致并返回 403 | 验收入口改用已配置 Origin 后通过；未放宽后端校验 |
 
-## I7-3/I7-4 本地出口
+## I7 最终出口
 
 M1—M6 均有实际界面操作结果，无开放阻塞或严重缺陷。最终本地门禁通过：backend
 build/typecheck/lint、6 项单测、PostgreSQL 30/30；frontend typecheck/lint、26 个测试文件
 193 项测试和 production build；真实 Chromium、DB-10 及 I7 空持久库重启演练通过。
-I7-5 仅余提交、推送并确认同 SHA 的远端 `verify` 与 `backend`。
+收口提交 `db99184` 已推送；同 SHA 远端 workflow `34762181810` 的 `verify` 与
+`backend` 均成功。I7-5 完成，无开放阻塞或严重缺陷。
