@@ -150,6 +150,17 @@ try {
   await page.reload()
   await assertText(page, 'pending_delivery')
   const physicalOrderUrl = page.url()
+  stage = 'physical snapshot'
+  const editedPhysical = await app.inject({
+    method: 'POST',
+    url: `/api/listings/${physical.id}/edit`,
+    headers: { origin, cookie: seller.cookie, 'x-csrf-token': seller.csrf },
+    payload: { version: physical.version, title: 'I5 Physical Browser Edited' }
+  })
+  assert.equal(editedPhysical.statusCode, 200, editedPhysical.body)
+  await page.reload()
+  await assertText(page, 'I5 Physical Browser')
+  assert.equal(await page.getByText('I5 Physical Browser Edited', { exact: true }).count(), 0)
   const sellerContext = await browser.newContext()
   const sellerPage = await sellerContext.newPage()
   await sellerPage.goto(`${origin}/zh-CN`)
@@ -204,6 +215,40 @@ try {
   await page.reload()
   await assertText(page, 'pending_acceptance')
   await assertText(page, '提取码：I5-CODE')
+  stage = 'digital issue and redelivery'
+  await page.getByLabel('问题描述').fill('Browser digital delivery issue')
+  await page.getByRole('button', { name: 'issue' }).click()
+  await page.waitForTimeout(150)
+  await page.reload()
+  await assertText(page, 'issue')
+  await sellerPage.reload()
+  await sellerPage.getByLabel('交付链接').fill('https://example.com/i5-redelivery')
+  await sellerPage.getByLabel('提取码').fill('I5-NEW-CODE')
+  await sellerPage.getByRole('button', { name: 'deliver' }).click()
+  await sellerPage.waitForTimeout(150)
+  await page.reload()
+  await assertText(page, 'issue')
+  await assertText(page, '提取码：I5-NEW-CODE')
+  await page.getByRole('button', { name: 'accept' }).click()
+  await page.waitForTimeout(150)
+  await page.reload()
+  await assertText(page, 'completed')
+  stage = 'digital repeat sale'
+  await page.goto(`${origin}/zh-CN/listing/${digital.id}`)
+  await page.getByRole('button', { name: '立即购买' }).click()
+  await page.getByRole('button', { name: '确认下单' }).click()
+  await page.waitForURL(/\/zh-CN\/me$/)
+  await page.getByRole('button', { name: '查看详情' }).first().click()
+  await page.getByRole('button', { name: 'pay' }).click()
+  await page.waitForTimeout(150)
+  await page.reload()
+  const repeatedDigitalOrderUrl = page.url()
+  await sellerPage.goto(repeatedDigitalOrderUrl)
+  await sellerPage.getByLabel('交付链接').fill('https://example.com/i5-repeat-delivery')
+  await sellerPage.getByRole('button', { name: 'deliver' }).click()
+  await sellerPage.waitForTimeout(150)
+  await page.reload()
+  await assertText(page, 'pending_acceptance')
   await page.getByRole('button', { name: 'accept' }).click()
   await page.waitForTimeout(150)
   await page.reload()
@@ -242,7 +287,7 @@ try {
   await assertText(sellerPage, 'refunded')
   await sellerContext.close()
   console.log(
-    'PASS: I5 browser visible request ID, unknown-result replay, private history, outsider denial, physical refund/restore and digital access-code delivery'
+    'PASS: I5 browser visible request ID, unknown-result replay, private history, outsider denial, physical refund/restore, digital issue/redelivery and repeat sale'
   )
 } catch (error) {
   console.error(`I5 browser acceptance failed at ${stage}`)
