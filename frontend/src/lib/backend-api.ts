@@ -100,6 +100,7 @@ export function toItem(listing: BackendListing): Item {
     tags: [],
     price: {
       amount: Number(listing.price.amount),
+      exactAmount: listing.price.amount,
       currency: listing.price.currency,
       fiatEstimate: listing.priceUsd ? Number(listing.priceUsd) : undefined
     },

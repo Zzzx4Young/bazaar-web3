@@ -105,8 +105,20 @@ I5 已完成验收。后端专用测试库 `node scripts/with-test-db.mjs`：30/
 
 I6 已开始。CI 现在在 backend job 的专用 `postgres-test` 上安装前端 Chromium 依赖并运行 `node scripts/check-i5-browser.mjs`；脚本通过 `BACKEND_ORIGIN` 接入真实编译后端，创建随机 schema、runtime role 和账户，结束自动清理。该步骤同时覆盖实物/数字下单、付款、卖家交付、买家验收和第三账户私有边界。
 
-本机 I6 前置检查：后端 typecheck、lint、3 项单元测试通过；前端 typecheck、lint、188 项单元测试、生产 build 通过；后端专用数据库回归 30/30；持久化数据库 DB-10 通过，验证容器重启后历史数据、编译 API 进程重启和约束保持。真实 Chromium I5 验收脚本通过。CI 远端工作流尚未在本轮执行，不能提前标记 I6 完成。
+本机 I6 前置检查：后端 typecheck、lint、3 项单元测试通过；前端 typecheck、lint、188 项单元测试、生产 build 通过；后端专用数据库回归 30/30；持久化数据库 DB-10 通过，验证容器重启后历史数据、编译 API 进程重启和约束保持。真实 Chromium I5 验收脚本通过。提交 `3e45c00` 的远端 workflow `34702459728` 已通过 backend 与 verify；后续修复仍需新的远端运行。
 
 内测启动顺序：先按 [基础设施说明](../infra/README.md) 初始化忽略的本地密码并启动 `postgres`；按 [backend README](../backend/README.md) 部署迁移并授权运行账号；设置前端 `BACKEND_ORIGIN` 与后端 `APP_ORIGIN`；前端执行 typecheck、lint、test、build。交接账户必须通过显式 provision 脚本创建，密码只经环境或临时忽略文件传递，不写入前端构建参数或仓库。停止 `postgres-validation` 时保留其持久卷，`postgres-test` 仅用于临时 schema 测试。
 
-已知限制：CI 尚未实际回报通过；真实钱包/链上结算、注册、图片托管、通知不在 Alpha；旧 Demo 本地订单和 mock 商品 E2E 不证明后端业务；浏览器验收脚本只使用虚拟收货信息和 example.com HTTPS 链接，不执行外部交付访问。
+已知限制：当前未提交修复尚无远端 CI 结果；真实钱包/链上结算、注册、图片托管、通知不在 Alpha；旧 Demo 本地订单和 mock 商品 E2E 不证明后端业务；浏览器验收脚本只使用虚拟收货信息和 example.com HTTPS 链接，不执行外部交付访问。
+
+## I5 复核修复（2026-09-13）
+
+复核发现早期 I5 验收把后端异常回归错误地当作前端异常流程证据。现已补齐：订单详情并行读取交付、问题、退款、模拟结算和事件；数字交付展示 HTTPS 链接与可选提取码，链接使用新窗口及 `noopener noreferrer`；数字和实物都能提交问题；实物退款必须选择 `returnOutcome`；成功动作刷新详情和私有历史。
+
+结果未知命令按账户保存在 sessionStorage，包含冻结的 path、payload 和幂等键。刷新或组件重新挂载后禁用其他动作，只提供“重试原操作”；明确 4xx 或成功后清除。新增单元测试验证网络结果未知、重新挂载和同键同 payload 回放。
+
+浏览器验收改用 URL 中的真实订单 ID，让第三账户携带自己的 session/CSRF 读取该订单并验证 404。新增已提交付款但响应丢失、页面刷新、同键回放；实物问题、退款申请、卖家选择退货结果、退款与库存恢复；数字交付提取码的参与方读取。最终 Chromium 脚本通过，临时 schema、role 和账户自动清理。
+
+发布金额输入改为十进制字符串校验并原样发送，避免 `Number` 预转换损失精度；后端继续按币种 scale 做最终校验。数字商品发布字段改为实际的授权说明和内容版本，不再把交付方式枚举写入内容版本。认证个人页显示后端账户身份并隐藏 mock 信誉与商品，未认证内容明确标记 Demo。
+
+本轮前端 typecheck、lint、25 个测试文件共 189 项测试、生产 build 通过；backend lint 和修复后的真实 Chromium 验收通过。远端 CI 需在本轮提交后重新执行，不能沿用修复前的绿色结果。

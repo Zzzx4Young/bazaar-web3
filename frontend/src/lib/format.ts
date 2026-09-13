@@ -15,12 +15,15 @@ const FIAT_RATE: Partial<Record<Currency, number>> = {
   SOL: 150
 }
 
-export function formatPrice(amount: number, currency: Currency): string {
+export function formatPrice(amount: number | string, currency: Currency): string {
   if (currency === 'ETH' || currency === 'SOL') {
     return `${amount} ${currency}`
   }
   const symbol = CURRENCY_SYMBOL[currency]
-  const formatted = amount.toLocaleString('zh-CN', { maximumFractionDigits: 2 })
+  const formatted =
+    typeof amount === 'string'
+      ? amount
+      : amount.toLocaleString('zh-CN', { maximumFractionDigits: 2 })
   return `${symbol ?? currency}${formatted}`
 }
 

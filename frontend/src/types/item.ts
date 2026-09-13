@@ -35,6 +35,7 @@ export type Currency =
 
 export interface Price {
   amount: number
+  exactAmount?: string
   currency: Currency
   fiatEstimate?: number // 法币折算（USD）
 }

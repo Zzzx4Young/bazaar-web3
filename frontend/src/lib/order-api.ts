@@ -47,6 +47,41 @@ export interface OrderDetail extends OrderSummary {
     contentVersion: string | null
   }
 }
+export interface Delivery {
+  id: string
+  sequence: number
+  kind: 'physical' | 'digital'
+  reference: string
+  carrier: string | null
+  accessCode: string | null
+  createdAt: string
+}
+export interface Issue {
+  id: string
+  description: string
+  status: 'open' | 'resolved'
+  createdAt: string
+}
+export interface Refund {
+  id: string
+  status: 'pending' | 'approved' | 'closed'
+  returnOutcome: 'not_sent' | 'returned' | 'not_required' | 'digital' | null
+  createdAt: string
+}
+export interface Settlement {
+  id: string
+  mode: 'simulated'
+  operation: 'payment' | 'refund'
+  price: Money
+  createdAt: string
+}
+export interface OrderEvent {
+  id: string
+  operation: string
+  fromState: string | null
+  toState: string
+  createdAt: string
+}
 export type OrderAction =
   'cancel' | 'pay' | 'deliver' | 'issue' | 'request-refund' | 'accept' | 'refund' | 'restore'
 export function orderActions(order: OrderDetail, accountId: string): OrderAction[] {

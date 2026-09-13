@@ -28,6 +28,11 @@ export default function MePage() {
     <div className="space-y-6">
       <ProfileHeader />
       {auth.status === 'authenticated' && <BackendListings />}
+      {auth.status !== 'authenticated' && (
+        <p className="rounded-md border p-3 text-sm text-muted-foreground">
+          以下订单来自当前浏览器的 Demo 数据，登录 Alpha 账户后会切换为后端真实订单。
+        </p>
+      )}
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as 'buyer' | 'seller')}>
         <TabsList>

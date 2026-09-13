@@ -56,7 +56,7 @@ export function BuyModal({
         <div className="space-y-3 py-2">
           <p className="font-medium">{item.title}</p>
           <p className="text-sm text-muted-foreground">
-            {item.price.amount} {item.price.currency}
+            {item.price.exactAmount ?? item.price.amount} {item.price.currency}
           </p>
           {item.category === 'physical' && (
             <div className="space-y-2">
@@ -91,9 +91,22 @@ export function BuyModal({
             </p>
           )}
           {command.uncertain && (
-            <p role="alert" className="text-sm text-destructive">
-              请求结果未知，请使用同一按钮重试，系统会复用原幂等键。
-            </p>
+            <div role="alert" className="space-y-2 text-sm text-destructive">
+              <p>请求结果未知，请重试原操作，系统会复用原请求和幂等键。</p>
+              <Button
+                variant="outline"
+                disabled={command.busy}
+                onClick={async () => {
+                  const result = await command.retry()
+                  if (result) {
+                    onOpenChange(false)
+                    router.push('/me')
+                  }
+                }}
+              >
+                重试原操作
+              </Button>
+            </div>
           )}
         </div>
         <DialogFooter>
@@ -101,7 +114,7 @@ export function BuyModal({
             取消
           </Button>
           <Button
-            disabled={command.busy || auth.status !== 'authenticated'}
+            disabled={command.busy || command.uncertain || auth.status !== 'authenticated'}
             onClick={() => void submit()}
           >
             {command.busy ? '提交中…' : '确认下单'}

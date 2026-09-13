@@ -107,7 +107,7 @@ export default function ListingDetailPage({ params }: Props) {
             <CardContent className="p-4">
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-primary">
-                  {formatPrice(item.price.amount, item.price.currency)}
+                  {formatPrice(item.price.exactAmount ?? item.price.amount, item.price.currency)}
                 </span>
                 {item.originalPrice && item.originalPrice.amount > item.price.amount && (
                   <span className="text-sm text-muted-foreground line-through">
@@ -236,7 +236,7 @@ export default function ListingDetailPage({ params }: Props) {
                   <CardContent className="p-2">
                     <div className="line-clamp-2 text-xs">{r.title}</div>
                     <div className="mt-1 text-sm font-bold text-primary">
-                      {formatPrice(r.price.amount, r.price.currency)}
+                      {formatPrice(r.price.exactAmount ?? r.price.amount, r.price.currency)}
                     </div>
                   </CardContent>
                 </Card>

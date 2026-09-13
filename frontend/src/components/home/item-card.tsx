@@ -22,8 +22,7 @@ interface ItemCardProps {
  * PlaceholderArt directly. To enable real images again, unset
  * NEXT_PUBLIC_USE_PLACEHOLDER or set it to "0".
  */
-const USE_PLACEHOLDER =
-  process.env.NEXT_PUBLIC_USE_PLACEHOLDER !== '0'
+const USE_PLACEHOLDER = process.env.NEXT_PUBLIC_USE_PLACEHOLDER !== '0'
 
 export function ItemCard({ item, seller }: ItemCardProps) {
   const cover = item.media[0]
@@ -72,7 +71,7 @@ export function ItemCard({ item, seller }: ItemCardProps) {
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="text-lg font-bold text-primary">
-              {formatPrice(item.price.amount, item.price.currency)}
+              {formatPrice(item.price.exactAmount ?? item.price.amount, item.price.currency)}
             </span>
             {item.originalPrice && item.originalPrice.amount > item.price.amount && (
               <span className="text-xs text-muted-foreground line-through">
@@ -81,9 +80,7 @@ export function ItemCard({ item, seller }: ItemCardProps) {
             )}
           </div>
           {seller && (
-            <div className="mt-1 truncate text-xs text-muted-foreground">
-              {seller.displayName}
-            </div>
+            <div className="mt-1 truncate text-xs text-muted-foreground">{seller.displayName}</div>
           )}
         </CardContent>
       </Card>

@@ -22,36 +22,70 @@ import {
 import { categories } from '@/lib/mock-data'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { createListing } from '@/lib/backend-api'
-import type { ItemCategory, Currency, DigitalDeliveryType, ItemCondition, ShippingMethod } from '@/types'
+import type { ItemCategory, Currency, ItemCondition, ShippingMethod } from '@/types'
 
 const schema = z
   .object({
     title: z.string().min(3, '标题至少 3 个字符').max(80, '标题最长 80 字符'),
     description: z.string().min(10, '描述至少 10 个字符').max(2000, '描述最长 2000 字符'),
     category: z.enum(['physical', 'digital']),
-    primaryCategory: z.enum(['electronics', 'digital_assets', 'software_source', 'game_items', 'secondhand_fashion']),
-    priceAmount: z.coerce.number().positive('价格必须大于 0'),
-    priceCurrency: z.enum(['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'CAD', 'AUD', 'CHF', 'HKD', 'SGD', 'KRW', 'INR', 'AED', 'BRL', 'BTC', 'ETH', 'USDT', 'USDC', 'SOL']),
+    primaryCategory: z.enum([
+      'electronics',
+      'digital_assets',
+      'software_source',
+      'game_items',
+      'secondhand_fashion'
+    ]),
+    priceAmount: z
+      .string()
+      .trim()
+      .regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/, '请输入不使用指数格式的正数')
+      .refine((value) => /[1-9]/.test(value), '价格必须大于 0'),
+    priceCurrency: z.enum([
+      'USD',
+      'EUR',
+      'GBP',
+      'JPY',
+      'CNY',
+      'CAD',
+      'AUD',
+      'CHF',
+      'HKD',
+      'SGD',
+      'KRW',
+      'INR',
+      'AED',
+      'BRL',
+      'BTC',
+      'ETH',
+      'USDT',
+      'USDC',
+      'SOL'
+    ]),
     // 实物字段
     condition: z.enum(['new', 'like_new', 'good', 'fair', 'poor']).optional(),
     shippingMethod: z.enum(['delivery', 'face_to_face']).optional(),
     // 数字字段
-    deliveryType: z
-      .enum(['download_link', 'license_key', 'cloud_link', 'account_credentials'])
-      .optional(),
-    deliveryContent: z.string().optional()
+    licenseDescription: z.string().optional(),
+    contentVersion: z.string().optional()
   })
   .superRefine((data, ctx) => {
-    const issue = (path: string, message: string) => ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message })
-    if (categories.find(category => category.id === data.primaryCategory)?.itemCategory !== data.category) {
+    const issue = (path: string, message: string) =>
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message })
+    if (
+      categories.find((category) => category.id === data.primaryCategory)?.itemCategory !==
+      data.category
+    ) {
       issue('primaryCategory', '请选择与商品类型匹配的分类')
     }
     if (data.category === 'physical') {
       if (!data.condition) issue('condition', '请选择物品成色')
       if (!data.shippingMethod) issue('shippingMethod', '请选择交易方式')
     } else {
-      if (!data.deliveryType) issue('deliveryType', '请选择交付方式')
-      if (!data.deliveryContent || data.deliveryContent.trim().length < 3) issue('deliveryContent', '请填写交付示例（至少 3 个字符）')
+      if (!data.licenseDescription || data.licenseDescription.trim().length < 3)
+        issue('licenseDescription', '请填写授权说明（至少 3 个字符）')
+      if (!data.contentVersion || data.contentVersion.trim().length < 1)
+        issue('contentVersion', '请填写内容版本')
     }
   })
 
@@ -94,9 +128,12 @@ export function PublishForm() {
         title: data.title,
         description: data.description,
         category: data.primaryCategory,
-        price: { amount: data.priceAmount.toString(), currency: data.priceCurrency },
+        price: { amount: data.priceAmount, currency: data.priceCurrency },
         ...(data.category === 'digital'
-          ? { licenseDescription: data.deliveryContent, contentVersion: data.deliveryType }
+          ? {
+              licenseDescription: data.licenseDescription,
+              contentVersion: data.contentVersion
+            }
           : {})
       })
       router.push(`/listing/${listing.id}`)
@@ -115,7 +152,7 @@ export function PublishForm() {
           <Label className="mb-2 block">商品类型</Label>
           <Tabs
             value={category}
-            onValueChange={v => {
+            onValueChange={(v) => {
               setValue('category', v as ItemCategory)
               setValue('primaryCategory', v === 'physical' ? 'electronics' : 'digital_assets')
             }}
@@ -130,10 +167,24 @@ export function PublishForm() {
 
       <div className="space-y-2">
         <Label htmlFor="primaryCategory">商品分类</Label>
-        <select id="primaryCategory" className="flex h-10 w-full rounded-md border bg-background px-3 text-sm" {...register('primaryCategory')}>
-          {categories.filter(c => c.itemCategory === category).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+        <select
+          id="primaryCategory"
+          className="flex h-10 w-full rounded-md border bg-background px-3 text-sm"
+          {...register('primaryCategory')}
+        >
+          {categories
+            .filter((c) => c.itemCategory === category)
+            .map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.label}
+              </option>
+            ))}
         </select>
-        {errors.primaryCategory && <p role="alert" className="text-sm text-destructive">{errors.primaryCategory.message}</p>}
+        {errors.primaryCategory && (
+          <p role="alert" className="text-sm text-destructive">
+            {errors.primaryCategory.message}
+          </p>
+        )}
       </div>
 
       {/* 基本信息 */}
@@ -167,15 +218,14 @@ export function PublishForm() {
           <Label className="mb-2 block">价格</Label>
           <div className="flex gap-2">
             <Input
-              type="number"
-              step="0.01"
+              inputMode="decimal"
               placeholder="0.00"
               {...register('priceAmount')}
               className="flex-1"
             />
             <Select
               value={watch('priceCurrency')}
-              onValueChange={v => setValue('priceCurrency', v as Currency)}
+              onValueChange={(v) => setValue('priceCurrency', v as Currency)}
             >
               <SelectTrigger className="w-32">
                 <SelectValue />
@@ -205,7 +255,7 @@ export function PublishForm() {
               <Label>物品成色</Label>
               <Select
                 value={watch('condition')}
-                onValueChange={v => setValue('condition', v as ItemCondition)}
+                onValueChange={(v) => setValue('condition', v as ItemCondition)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="选择成色" />
@@ -218,15 +268,13 @@ export function PublishForm() {
                   <SelectItem value="poor">8成新</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.condition && (
-                <p className="mt-1 text-xs text-destructive">请选择物品成色</p>
-              )}
+              {errors.condition && <p className="mt-1 text-xs text-destructive">请选择物品成色</p>}
             </div>
             <div>
               <Label>交易方式</Label>
               <Select
                 value={watch('shippingMethod') ?? 'delivery'}
-                onValueChange={v => setValue('shippingMethod', v as ShippingMethod)}
+                onValueChange={(v) => setValue('shippingMethod', v as ShippingMethod)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -246,44 +294,33 @@ export function PublishForm() {
         <Card>
           <CardContent className="space-y-4 p-4">
             <div>
-              <Label>交付方式</Label>
-              <Select
-                value={watch('deliveryType')}
-                onValueChange={v => setValue('deliveryType', v as DigitalDeliveryType)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择交付方式" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="download_link">下载链接（GitHub / 网盘）</SelectItem>
-                  <SelectItem value="license_key">卡密 / 许可证</SelectItem>
-                  <SelectItem value="cloud_link">网盘链接</SelectItem>
-                  <SelectItem value="account_credentials">账号凭证</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.deliveryType && (
-                <p className="mt-1 text-xs text-destructive">请选择交付方式</p>
+              <Label htmlFor="licenseDescription">授权说明</Label>
+              <Textarea
+                id="licenseDescription"
+                rows={3}
+                placeholder="说明买家获得的使用授权，不要填写实际交付链接或密钥"
+                {...register('licenseDescription')}
+              />
+              {errors.licenseDescription && (
+                <p className="mt-1 text-xs text-destructive">请填写授权说明（至少 3 个字符）</p>
               )}
             </div>
             <div>
-              <Label htmlFor="deliveryContent">交付示例（演示用）</Label>
-              <Textarea
-                id="deliveryContent"
-                rows={3}
-                placeholder="填写虚构链接或示例文本，不要填写真实账号或密钥"
-                {...register('deliveryContent')}
-              />
-              {errors.deliveryContent && (
-                <p className="mt-1 text-xs text-destructive">
-                  请填写交付示例（至少 3 个字符）
-                </p>
+              <Label htmlFor="contentVersion">内容版本</Label>
+              <Input id="contentVersion" placeholder="例如 v1.0" {...register('contentVersion')} />
+              {errors.contentVersion && (
+                <p className="mt-1 text-xs text-destructive">请填写内容版本</p>
               )}
             </div>
           </CardContent>
         </Card>
       )}
 
-      {saveError && <p role="alert" className="text-destructive">{saveError}</p>}
+      {saveError && (
+        <p role="alert" className="text-destructive">
+          {saveError}
+        </p>
+      )}
       {/* 提交 */}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={() => router.back()}>

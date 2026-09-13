@@ -4,6 +4,14 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { OrderHistory, useOrderHistory } from '@/components/me/order-history'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { useOrderCommand } from '@/hooks/use-order-command'
 import { orderActions, type OrderDetail } from '@/lib/order-api'
@@ -14,10 +22,15 @@ export default function OrderDetailPage() {
   const auth = useAuthStore()
   const resource = useApiResource<OrderDetail>(`/orders/${encodeURIComponent(params.id)}`, {}, true)
   const command = useOrderCommand()
+  const history = useOrderHistory(params.id)
   const [description, setDescription] = useState('')
   const [url, setUrl] = useState('')
   const [carrier, setCarrier] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
+  const [accessCode, setAccessCode] = useState('')
+  const [returnOutcome, setReturnOutcome] = useState<'not_sent' | 'returned' | 'not_required'>(
+    'returned'
+  )
   if (resource.loading) return <p role="status">正在加载订单…</p>
   if (resource.error || !resource.data)
     return (
@@ -33,15 +46,20 @@ export default function OrderDetailPage() {
         ? { description }
         : action === 'deliver'
           ? order.type === 'digital'
-            ? { url }
+            ? { url, ...(accessCode ? { accessCode } : {}) }
             : { carrier, trackingNumber }
           : action === 'accept'
             ? { confirmed: true }
             : action === 'restore'
               ? { inHandAndResellable: true }
-              : {}
+              : action === 'refund' && order.type === 'physical'
+                ? { returnOutcome }
+                : {}
     const result = await command.run(`/orders/${order.id}/actions/${action}`, body)
-    if (result) resource.reload()
+    if (result) {
+      resource.reload()
+      history.reload()
+    }
   }
   return (
     <div className="mx-auto max-w-2xl space-y-5">
@@ -60,7 +78,7 @@ export default function OrderDetailPage() {
           <p>{order.shipping.address}</p>
         </div>
       )}
-      {order.type === 'physical' && actions.includes('issue') && (
+      {actions.includes('issue') && (
         <Input
           aria-label="问题描述"
           placeholder="描述商品问题"
@@ -69,12 +87,20 @@ export default function OrderDetailPage() {
         />
       )}
       {order.type === 'digital' && actions.includes('deliver') && (
-        <Input
-          aria-label="交付链接"
-          placeholder="https://…"
-          value={url}
-          onChange={(event) => setUrl(event.target.value)}
-        />
+        <div className="space-y-2">
+          <Input
+            aria-label="交付链接"
+            placeholder="https://…"
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+          />
+          <Input
+            aria-label="提取码"
+            placeholder="提取码（可选）"
+            value={accessCode}
+            onChange={(event) => setAccessCode(event.target.value)}
+          />
+        </div>
       )}
       {order.type === 'physical' && actions.includes('deliver') && (
         <div className="flex gap-2">
@@ -92,23 +118,56 @@ export default function OrderDetailPage() {
           />
         </div>
       )}
+      {order.type === 'physical' && actions.includes('refund') && (
+        <Select
+          value={returnOutcome}
+          onValueChange={(value) => setReturnOutcome(value as typeof returnOutcome)}
+        >
+          <SelectTrigger aria-label="退货结果">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="returned">已退回卖家</SelectItem>
+            <SelectItem value="not_sent">尚未发货</SelectItem>
+            <SelectItem value="not_required">无需退回</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
       {command.error && (
         <p role="alert" className="text-destructive">
           操作失败：{command.error}
         </p>
       )}
       {command.uncertain && (
-        <p role="alert" className="text-destructive">
-          结果未知，请重试同一操作。
-        </p>
+        <div role="alert" className="space-y-2 text-destructive">
+          <p>结果未知，请重试原操作。</p>
+          <Button
+            variant="outline"
+            disabled={command.busy}
+            onClick={async () => {
+              const result = await command.retry()
+              if (result) {
+                resource.reload()
+                history.reload()
+              }
+            }}
+          >
+            重试原操作
+          </Button>
+        </div>
       )}
       <div className="flex flex-wrap gap-2">
         {actions.map((action) => (
-          <Button key={action} disabled={command.busy} onClick={() => void act(action)}>
+          <Button
+            key={action}
+            disabled={command.busy || command.uncertain}
+            onClick={() => void act(action)}
+          >
             {action}
           </Button>
         ))}
       </div>
+      <OrderHistory history={history} />
     </div>
   )
 }
