@@ -2,6 +2,10 @@
 
 更新：2026-09-13。供本地开发、数据库实验和已有 Kubernetes 集群内测使用。内部 Alpha 后端见 [backend/README.md](../backend/README.md)，前端按 frontend/package.json 启动；本目录只编排 PostgreSQL，尚无 API 镜像；迁移、运行角色和启动见 backend 文档。
 
+宿主机 PostgreSQL client、只读观察角色和 DBHub 配置见 backend README。通用环境可在应用
+角色创建后由管理员执行 `scripts/create-observer-role.sql`，再由迁移角色运行版本化的观察
+视图授权逻辑。本机开发使用后端的受限 setup 命令，避免在命令参数或仓库中保存密码。
+
 ## 可行性与选择
 
 | 方案 | 适用场景 | 成本与边界 |

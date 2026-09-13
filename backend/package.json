@@ -14,6 +14,9 @@
     "lint": "eslint .",
     "start": "node --env-file-if-exists=.env dist/main.js",
     "dev": "npm run build && npm start",
+    "db:psql": "node scripts/local-psql.mjs",
+    "db:observer:grant": "node --env-file-if-exists=.tmp/i7-migrate.env scripts/apply-observer-grants.mjs",
+    "db:observer:setup": "node scripts/setup-local-observer.mjs --confirm-local-create",
     "test": "npm run build && node --test tests/*.test.mjs",
     "test:db": "npm run build && node --test tests/*.integration.mjs"
   },

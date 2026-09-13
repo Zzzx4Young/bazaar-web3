@@ -1,0 +1,17 @@
+[[sources]]
+id = "bazaar_local"
+description = "Local Bazaar operational views with private and free-text fields removed"
+dsn = "${BAZAAR_OBSERVER_DATABASE_URL}"
+connection_timeout = 3
+query_timeout = 3
+search_path = "bazaar_observe,pg_catalog"
+
+[[tools]]
+name = "execute_sql"
+source = "bazaar_local"
+readonly = true
+max_rows = 100
+
+[[tools]]
+name = "search_objects"
+source = "bazaar_local"

@@ -177,3 +177,22 @@ M1—M6 已由工程验收操作者通过真实 Chromium 界面执行。错误�
 typecheck/lint、26 个测试文件共 193 项测试和 production build；真实 Chromium、DB-10
 及 I7 空持久库重启演练通过。没有开放阻塞或严重缺陷。I7-5 仅余提交、推送并确认最终
 SHA 的远端 `verify` 与 `backend`。
+
+收口提交 `db99184` 已推送；远端 workflow `34762181810` 的 `verify` 与 `backend` 均在
+同一 SHA 成功，I7 退出条件全部满足。
+
+## I8-0 数据库操作入口（2026-09-13）
+
+I8 按宿主机 PostgreSQL client、最小权限观察对象、stdio MCP、薄层 skill 的顺序推进。
+新增 `bazaar_observer` 和独立 `bazaar_observe` schema：16 个 security-barrier 视图只暴露
+结构化 ID、状态、金额和时间，排除密码/会话哈希、登录名、自由文本、地址、交付引用、
+提取码、幂等键及汇率 JSON。角色无高权限和成员关系，默认只读，语句与空闲事务超时
+3 秒。原始业务 schema、DDL 和 DML 均不可访问。
+
+新增宿主机 `psql` 启动器，默认使用 observer；runtime/migrate 必须显式选择。连接目标
+固定为 loopback `bazaar_dev`，密码通过子进程环境传递。真实 PostgreSQL 回归 31/31
+通过；本机 observer 创建后实测 16 个视图、只读和 search_path，CREATE TABLE 被拒绝。
+DBHub stdio 配置固定 `@bytebase/dbhub@1.2.0`，行数上限 100、查询超时 3 秒，连接串只从
+本机 0600 文件注入。独立 MCP 客户端已完成 initialize、tools/list、observer 只读查询和
+写入拒绝探测；Codex 全局配置已启用 `bazaar-postgres`。当前进程不会动态加载新工具，
+仍待下一 Codex 进程执行一次内置 MCP 查询后完成进程级验证。

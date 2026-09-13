@@ -20,6 +20,20 @@ npm start
 
 启动不会迁移、seed 或清理数据库。首次使用先按 [C1 角色与迁移说明](../docs/backend-core-contract.md#数据库角色)创建迁移/运行账号，以迁移账号部署全部已检入迁移并授权，再以运行账号启动。日常开发只需一个持久化 postgres 容器；另外两个测试容器按需启动。不能把健康检查作为业务数据正确性的证明。
 
+宿主机安装 PostgreSQL 17 client 后，可在本目录执行 `npm run db:psql` 进入默认只读观察
+连接；显式追加 `-- runtime` 或 `-- migrate` 才切换到对应本机私有配置。启动器校验目标
+必须是 loopback `bazaar_dev`，密码只通过 `PGPASSWORD` 传给子进程，不出现在参数中。
+
+本地观察入口先执行 `npm run db:observer:setup`：它创建无成员关系的 `bazaar_observer`、
+`bazaar_observe` schema 和 16 个脱敏视图，并写入 Git 忽略、权限 0600 的
+`.tmp/i8-observer.env`。观察视图不暴露登录名、密码/会话哈希、自由文本、收件信息、交付
+引用/提取码、幂等键或汇率 JSON；角色默认只读、语句与空闲事务超时 3 秒。命令只允许
+本机开发库，目标对象或私有文件已存在时拒绝接管。
+
+应用 schema 变化后，由迁移角色执行 `npm run db:observer:grant`，以事务方式重复创建视图、
+撤销原始 schema 权限并重新授予安全视图读取。通用环境先由管理员执行
+`infra/scripts/create-observer-role.sql`，再执行该命令。
+
 若仅限本机的 `bazaar_dev` 已有正确的受限角色和 schema，但角色密码已丢失，可在确认没有其他进程依赖旧密码后显式运行 `node scripts/recover-local-role-credentials.mjs --confirm-local-rotation`。该命令要求通过 `ADMIN_DATABASE_URL` 提供 loopback 管理连接，复核角色权限和 schema 所有权后原子轮换两个密码，并创建权限 0600 的 `.tmp/i7-migrate.env` 与 `.env`；文件已被 Git 忽略，命令不输出密码或连接串。它不创建角色/schema，不适用于共享或远端数据库。
 
 ## 验证
