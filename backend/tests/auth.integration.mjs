@@ -128,7 +128,10 @@ test('I1: invalid inputs, enumeration resistance, expiration, disabled accounts 
     const missing = await login({ ...payload, loginName: 'missing' })
     assert.equal(wrong.statusCode, 401)
     assert.equal(missing.statusCode, 401)
-    assert.deepEqual(wrong.json(), missing.json())
+    assert.deepEqual(
+      { code: wrong.json().code, retryable: wrong.json().retryable },
+      { code: missing.json().code, retryable: missing.json().retryable }
+    )
     const response = await login()
     assert.equal(response.statusCode, 200)
     assert.match(response.headers['set-cookie'], /; Secure/)

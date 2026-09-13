@@ -128,3 +128,35 @@ I6 已开始。CI 现在在 backend job 的专用 `postgres-test` 上安装前�
 I6 已完成。CI 的 backend job 使用临时 `postgres-test` 运行 30 项数据库回归与真实 Alpha Chromium 流程，结束时停止测试库；最终远端运行成功。持久化 DB-10 已在独立命名卷验证历史升级、数据库容器重启、编译 API 重启和约束保持，验收后停止 `postgres-validation` 并保留卷。
 
 根 README、前后端 README、基础设施说明和文档索引已统一为当前 Alpha 状态。交接人员可按持久开发库、迁移/运行角色、全部迁移、运行授权、私有文件账户预置、后端和前端的顺序复现环境；Demo 浏览器回归与真实 Alpha 浏览器验收已明确区分。
+
+## I7 基线与安全诊断（2026-09-13）
+
+I7 已按[受控内测计划](internal-alpha-testing-plan.md)启动。I7-0 本地基线为 Node 22.23.1、npm 10.9.8、提交 `ddac854` 和六个追加迁移；新增不含凭据或私有业务值的[问题记录模板](internal-testing-issue-template.md)。`ddac854` 尚未推送，远端 CI 仍指向 `f515080`，因此当前 HEAD 的远端 SHA 对齐门槛未完成。
+
+I7-1 已先冻结[请求关联与安全日志契约](backend-observability-contract.md)，再同步实现。客户端可发送受限格式 `X-Request-Id`，非法值由服务端替换为 UUID；成功和错误响应返回有效 header，错误体增加同一 `requestId`。后端完成日志只包含 UTC 时间、request ID、方法、路由模板、状态、耗时及可选稳定错误码；不记录原始 URL/query、body、headers 或驱动错误。日志 sink 失败降级为不含请求内容的事件，不影响响应。前端发送 UUID，并在 `BackendError` 暴露 `requestId` 与 `retryable`。
+
+本地验证：backend build/typecheck/lint 通过，4 个单元测试文件通过；专用 PostgreSQL 数据库回归 30/30；frontend typecheck/lint、26 个测试文件共 190 项测试、production build 通过；OpenAPI 25 路径/25 operationId 的 JSON、引用、唯一性和全路径请求 ID 参数检查通过；真实 Chromium Alpha 验收脚本通过。测试 schema、role 和随机账户由入口清理，`postgres-test` 已停止。当前改动尚未提交或运行远端 CI，I7-2 环境与账户演练尚未开始。
+
+## I7 环境与账户演练（2026-09-13）
+
+I7-2 已完成本机演练。持久 `bazaar_dev` 初始已有 5 个迁移、1 个账户和 1 个商品，迁移/运行角色存在但仓库没有可用凭据，先前 `/tmp` runtime 密码也已失效。新增仅允许 loopback `bazaar_dev` 的角色凭据恢复命令：先确认两个角色均无 superuser/createdb/createrole/replication/bypassrls 权限且 `bazaar` schema 属于迁移角色，再原子轮换密码，创建 Git 忽略、权限 0600 的迁移和 runtime env 文件；不输出密码或连接串。
+
+使用恢复后的迁移角色追加部署第六个 `202609120004_delivery` 迁移，并重新应用运行授权。升级后六个迁移均成功，原有商品保留，carrier/accessCode 列存在；运行角色在回滚探测中仍无法创建表。通过私有 0600 文件预置 `i7-seller`、`i7-buyer`、`i7-outsider` 三个账户，开发库现有 4 个账户、1 个商品、0 个订单。账户输入文件保留在本机忽略目录供内测交接，不记录内容。
+
+旧后端进程从 11:17 起占用默认 3001，已用 SIGTERM 正常停止。当前编译后端随后在 3001 启动，live/ready、登录、会话读取、退出和撤销后 401 依次通过，request ID 全部匹配；临时会话通过受支持的同密码重置及 UI 退出撤销。前端以 `BACKEND_ORIGIN=http://127.0.0.1:3001` 启动后，真实 Chromium 经同源代理完成登录、刷新恢复和退出，登录响应可读取 request ID。演练后前后端进程已停止，持久 PostgreSQL 保持运行。I7-3 的团队人工场景和可用性反馈尚未执行。
+
+复核后补齐空库证据：`with-i7-environment.mjs` 在专用持久验证实例中新建随机数据库和
+两种受限角色，从空库部署 6 个迁移，经权限 0600 的临时输入文件预置 seller、buyer、
+outsider，验证 runtime DDL 拒绝及 ready/login/logout。重启 PostgreSQL 容器后再次确认
+6 个迁移和 3 个账户，最后删除本轮数据库、角色和临时文件；没有使用 `bazaar_dev` 的
+既有状态。凭据恢复命令同时增加角色直接/间接成员关系拒绝和单元测试。
+
+OpenAPI 复核修正了全部 176 个响应缺少可机读 `X-Request-Id` header，以及两个商品
+子路由未各自声明 `id` 的问题，并增加语义回归测试。前端可见错误现在显示稳定错误码和
+request ID，测试人员无需查开发者工具即可填写问题记录。I7 改动仍未提交，当前 HEAD
+仍无对应远端 CI；M1—M6 人工内测仍待执行。
+
+复核修复后的完整本地门禁通过：backend typecheck、lint、6 个单元测试文件，PostgreSQL
+30/30；frontend typecheck、lint、26 个测试文件共 193 项测试和 production build；
+DB-10、I7 空持久库重启演练及真实 Chromium Alpha 流程。浏览器流程新增错误登录时
+request ID 和结果未知请求 ID 可见断言。远端同 SHA CI 仍须在提交并推送后确认。

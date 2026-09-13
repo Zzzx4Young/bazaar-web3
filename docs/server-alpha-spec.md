@@ -1,6 +1,6 @@
 # 服务端 Alpha 业务规格
 
-更新：2026-09-08。状态：业务基线已确认，未实现；工程设计细节待技术契约细化。产品依据为 [ADR-0002](adr/0002-server-alpha.md) 的 Q1—Q4-10；以下状态命名、字段和保护措施为工程设计草案，不是额外用户决策。
+更新：2026-09-13。状态：业务基线已由 I1—I6 实现并验收，当前进入 [I7 受控内测](internal-alpha-testing-plan.md)。产品依据为 [ADR-0002](adr/0002-server-alpha.md) 的 Q1—Q4-10；实现接口见 [OpenAPI](openapi/alpha.json)，实际证据见[阶段记录](backend-stage-report.md)。
 
 ## 范围
 

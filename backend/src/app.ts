@@ -13,6 +13,11 @@ import { ListingController } from './listings/listing.controller.js'
 import { ListingService } from './listings/listing.service.js'
 import { RatesService, type RateLoader } from './pricing/rates.service.js'
 import { OrderController } from './orders/order.controller.js'
+import {
+  defaultRequestLogSink,
+  type RequestLogSink,
+  RequestTelemetry
+} from './common/request-telemetry.js'
 
 @Module({})
 class AppModule {}
@@ -20,12 +25,29 @@ class AppModule {}
 export async function createApp(
   config: AppConfig,
   logger: false | undefined = undefined,
-  dependencies: { loadRates?: RateLoader } = {}
+  dependencies: { loadRates?: RateLoader; logRequest?: RequestLogSink | false } = {}
 ) {
   const database = new DatabaseService(config.databaseUrl)
   const auth = new AuthService(database.client, config)
   const rates = new RatesService(database.client, dependencies.loadRates)
   const listings = new ListingService(database.client, rates)
+  const telemetry = new RequestTelemetry()
+  const requestLogSink =
+    dependencies.logRequest === undefined
+      ? logger === false
+        ? false
+        : defaultRequestLogSink
+      : dependencies.logRequest
+  const adapter = new FastifyAdapter({ bodyLimit: 1048576, requestIdHeader: false })
+  const instance = adapter.getInstance()
+  instance.addHook('onRequest', (request, reply, done) => {
+    telemetry.start(request, reply)
+    done()
+  })
+  instance.addHook('onResponse', (request, reply, done) => {
+    telemetry.finish(request, reply, requestLogSink)
+    done()
+  })
   const app = await NestFactory.create<NestFastifyApplication>(
     {
       module: AppModule,
@@ -36,7 +58,7 @@ export async function createApp(
         { provide: ListingService, useValue: listings }
       ]
     },
-    new FastifyAdapter({ bodyLimit: 1048576 }),
+    adapter,
     { logger, abortOnError: false }
   )
   app.setGlobalPrefix('api')
@@ -44,10 +66,19 @@ export async function createApp(
     origin: config.appOrigin,
     credentials: true,
     methods: ['POST', 'OPTIONS'],
-    allowedHeaders: ['Accept', 'Content-Type', 'Origin', 'Cookie', 'X-CSRF-Token', 'Idempotency-Key']
+    allowedHeaders: [
+      'Accept',
+      'Content-Type',
+      'Origin',
+      'Cookie',
+      'X-CSRF-Token',
+      'Idempotency-Key',
+      'X-Request-Id'
+    ],
+    exposedHeaders: ['X-Request-Id']
   })
   app.useGlobalGuards(new AuthGuard(auth, new Reflector()))
-  app.useGlobalFilters(new ApiErrorFilter())
+  app.useGlobalFilters(new ApiErrorFilter(telemetry))
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

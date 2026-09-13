@@ -83,7 +83,7 @@ export function TopNav() {
       </div>
       {auth.error && !open && (
         <p role="alert" className="container text-sm text-destructive">
-          {t('authError')}
+          {t('authError')}：{auth.error}
         </p>
       )}
       <Dialog open={open} onOpenChange={setOpen}>
@@ -128,7 +128,7 @@ export function TopNav() {
             </div>
             {auth.error && (
               <p role="alert" className="text-sm text-destructive">
-                {t('authError')}
+                {t('authError')}：{auth.error}
               </p>
             )}
             <Button type="submit" disabled={submitting}>

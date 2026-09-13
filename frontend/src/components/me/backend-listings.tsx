@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { authenticatedPost } from '@/lib/authenticated-api'
-import type { BackendListing, ListingPage } from '@/lib/backend-api'
+import { backendErrorMessage, type BackendListing, type ListingPage } from '@/lib/backend-api'
 
 export function BackendListings() {
   const resource = useApiResource<ListingPage>(
@@ -34,7 +34,7 @@ export function BackendListings() {
       setEditing(null)
       resource.reload()
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : 'UPDATE_FAILED')
+      setError(backendErrorMessage(failure))
     }
   }
   const items = resource.data?.items ?? []

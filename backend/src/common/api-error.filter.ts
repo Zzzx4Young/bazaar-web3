@@ -1,9 +1,12 @@
 import { Catch, HttpException, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common'
-import { type FastifyReply } from 'fastify'
+import { type FastifyReply, type FastifyRequest } from 'fastify'
 import { mapApplicationError } from './domain-error.js'
+import { RequestTelemetry } from './request-telemetry.js'
 
 @Catch()
 export class ApiErrorFilter implements ExceptionFilter {
+  constructor(private readonly telemetry: RequestTelemetry) {}
+
   catch(error: unknown, host: ArgumentsHost) {
     let result = mapApplicationError(error)
     if (error instanceof HttpException) {
@@ -22,9 +25,14 @@ export class ApiErrorFilter implements ExceptionFilter {
         ? { status, code: codes[status], retryable: status === 503 || status === 429 }
         : result
     }
-    const reply = host.switchToHttp().getResponse<FastifyReply>()
+    const http = host.switchToHttp()
+    const request = http.getRequest<FastifyRequest>()
+    const reply = http.getResponse<FastifyReply>()
+    this.telemetry.setError(request, result.code)
     reply.header('Cache-Control', 'no-store')
     if (result.status === 429) reply.header('Retry-After', '60')
-    reply.status(result.status).send({ code: result.code, retryable: result.retryable })
+    reply
+      .status(result.status)
+      .send({ code: result.code, retryable: result.retryable, requestId: request.id })
   }
 }

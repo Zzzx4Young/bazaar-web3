@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { BackendError, backendErrorCode } from '@/lib/backend-api'
+import { BackendError, backendErrorMessage } from '@/lib/backend-api'
 import { authenticatedPost } from '@/lib/authenticated-api'
 import { useAuthStore } from '@/stores/use-auth-store'
 
@@ -74,7 +74,7 @@ export function useOrderCommand() {
         setRetryPath(undefined)
       } else setRetryPath(command.path)
       setUncertain(unknown)
-      setError(backendErrorCode(failure))
+      setError(backendErrorMessage(failure))
     } finally {
       busyRef.current = false
       setBusy(false)

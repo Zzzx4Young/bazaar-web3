@@ -39,32 +39,54 @@ export interface AuthView {
 export class BackendError extends Error {
   constructor(
     public readonly code: string,
-    public readonly status: number
+    public readonly status: number,
+    public readonly requestId: string | null = null,
+    public readonly retryable: boolean = false
   ) {
     super(code)
   }
 }
 export async function backendRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    credentials: 'include',
-    cache: 'no-store',
-    headers: {
-      Accept: 'application/json',
-      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-      ...init?.headers
-    }
-  })
+  const requestId = globalThis.crypto?.randomUUID?.()
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      credentials: 'include',
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/json',
+        ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(requestId ? { 'X-Request-Id': requestId } : {}),
+        ...init?.headers
+      }
+    })
+  } catch {
+    throw new BackendError('NETWORK_ERROR', 0, requestId ?? null, true)
+  }
   if (!response.ok) {
     const error = (await response.json().catch(() => ({ code: 'NETWORK_ERROR' }))) as {
       code?: string
+      retryable?: boolean
+      requestId?: string
     }
-    throw new BackendError(error.code ?? `HTTP_${response.status}`, response.status)
+    throw new BackendError(
+      error.code ?? `HTTP_${response.status}`,
+      response.status,
+      error.requestId ?? response.headers.get('X-Request-Id'),
+      error.retryable === true
+    )
   }
   return response.status === 204 ? (undefined as T) : (response.json() as Promise<T>)
 }
 export function backendErrorCode(error: unknown) {
   return error instanceof Error ? error.message : 'NETWORK_ERROR'
+}
+export function backendErrorMessage(error: unknown) {
+  const code = backendErrorCode(error)
+  return error instanceof BackendError && error.requestId
+    ? `${code} · Request ID: ${error.requestId}`
+    : code
 }
 export function login(loginName: string, password: string) {
   return backendPost<AuthView>('/auth/login', { loginName, password })

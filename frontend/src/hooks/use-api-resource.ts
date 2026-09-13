@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { backendPost, backendErrorCode } from '@/lib/backend-api'
+import { backendPost, backendErrorMessage } from '@/lib/backend-api'
 import { authenticatedPost } from '@/lib/authenticated-api'
 import { useAuthStore } from '@/stores/use-auth-store'
 
@@ -19,7 +19,7 @@ export function useApiResource<T>(path: string, body: unknown = {}, privateRead 
         if (active) setResult({ key, data })
       },
       (error) => {
-        if (active) setResult({ key, error: backendErrorCode(error) })
+        if (active) setResult({ key, error: backendErrorMessage(error) })
       }
     )
     return () => {

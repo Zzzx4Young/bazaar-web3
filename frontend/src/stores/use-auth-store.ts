@@ -1,7 +1,14 @@
 'use client'
 
 import { create } from 'zustand'
-import { backendErrorCode, login, logout, refreshSession, type AuthView } from '@/lib/backend-api'
+import {
+  backendErrorCode,
+  backendErrorMessage,
+  login,
+  logout,
+  refreshSession,
+  type AuthView
+} from '@/lib/backend-api'
 
 type AuthStatus = 'loading' | 'anonymous' | 'authenticated' | 'unavailable'
 
@@ -40,7 +47,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           set({
             status: code === 'UNAUTHENTICATED' ? 'anonymous' : 'unavailable',
             view: null,
-            error: code === 'UNAUTHENTICATED' ? null : code
+            error: code === 'UNAUTHENTICATED' ? null : backendErrorMessage(error)
           })
         } finally {
           restoring = null
@@ -57,7 +64,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         return true
       } catch (error) {
         if (current !== generation) return false
-        set({ status: 'anonymous', view: null, error: backendErrorCode(error) })
+        set({ status: 'anonymous', view: null, error: backendErrorMessage(error) })
         return false
       }
     },
@@ -75,7 +82,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         if (current !== generation) return
         const code = backendErrorCode(error)
         if (code === 'UNAUTHENTICATED') set({ status: 'anonymous', view: null, error: null })
-        else set({ error: code })
+        else set({ error: backendErrorMessage(error) })
       }
     }
   }

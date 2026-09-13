@@ -6,7 +6,9 @@ vi.mock('@/lib/backend-api', () => ({
   login: vi.fn(),
   logout: vi.fn(),
   refreshSession: vi.fn(),
-  backendErrorCode: (error: Error) => error.message
+  backendErrorCode: (error: Error) => error.message,
+  backendErrorMessage: (error: Error & { requestId?: string }) =>
+    error.requestId ? `${error.message} · Request ID: ${error.requestId}` : error.message
 }))
 
 const view: AuthView = {
@@ -65,5 +67,12 @@ describe('backend session boundaries', () => {
     expect(useAuthStore.getState().status).toBe('unavailable')
     await useAuthStore.getState().restore()
     expect(useAuthStore.getState().status).toBe('anonymous')
+  })
+
+  it('keeps the request ID in a tester-visible authentication error', async () => {
+    const failure = Object.assign(new Error('UNAVAILABLE'), { requestId: 'request-123' })
+    vi.mocked(login).mockRejectedValue(failure)
+    await useAuthStore.getState().signIn('buyer', 'password')
+    expect(useAuthStore.getState().error).toBe('UNAVAILABLE · Request ID: request-123')
   })
 })

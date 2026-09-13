@@ -3,7 +3,7 @@
   "info": {
     "title": "Bazaar internal Alpha API",
     "version": "0.1.0",
-    "description": "C2/C3 contract, not implemented routes. Pre-provisioned accounts only; simulated settlement. No uploads, registration, wallet or real payments. Errors: {code,retryable}. Private/auth responses no-store."
+    "description": "Implemented internal Alpha contract. Pre-provisioned accounts only; simulated settlement. No uploads, registration, wallet or real payments. Every response returns X-Request-Id; errors contain code, retryable and the same requestId. Private/auth responses no-store."
   },
   "servers": [
     {
@@ -12,6 +12,11 @@
   ],
   "paths": {
     "/auth/login": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        }
+      ],
       "post": {
         "operationId": "login",
         "summary": "Log in with a provisioned account",
@@ -47,6 +52,11 @@
                   "$ref": "#/components/schemas/Session"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
@@ -56,6 +66,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -67,6 +82,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "403": {
@@ -76,6 +96,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -87,6 +112,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "429": {
@@ -96,6 +126,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -107,6 +142,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
@@ -117,12 +157,22 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           }
         }
       }
     },
     "/auth/session": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        }
+      ],
       "post": {
         "operationId": "session",
         "summary": "Read current account and CSRF token",
@@ -140,6 +190,11 @@
                   "$ref": "#/components/schemas/Session"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "401": {
@@ -149,6 +204,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -160,6 +220,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
@@ -170,12 +235,22 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           }
         }
       }
     },
     "/auth/logout": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        }
+      ],
       "post": {
         "operationId": "logout",
         "summary": "Revoke current session",
@@ -211,7 +286,12 @@
         },
         "responses": {
           "204": {
-            "description": "Session revoked and cookie cleared"
+            "description": "Session revoked and cookie cleared",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
           },
           "400": {
             "description": "HTTP 400; see error code contract",
@@ -220,6 +300,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -231,6 +316,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "403": {
@@ -240,6 +330,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -251,6 +346,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "500": {
@@ -260,6 +360,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -271,12 +376,22 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           }
         }
       }
     },
     "/listings": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        }
+      ],
       "post": {
         "operationId": "createListing",
         "summary": "Create listing and physical inventory atomically",
@@ -318,6 +433,11 @@
                   "$ref": "#/components/schemas/Listing"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
@@ -327,6 +447,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -338,6 +463,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "403": {
@@ -347,6 +477,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -358,6 +493,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "415": {
@@ -367,6 +507,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -378,6 +523,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
@@ -388,25 +538,22 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           }
         }
       }
     },
-    "/listings/{id}": {
+    "/me/listings": {
       "parameters": [
         {
-          "name": "id",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "format": "uuid"
-          }
+          "$ref": "#/components/parameters/RequestId"
         }
-      ]
-    },
-    "/me/listings": {
+      ],
       "post": {
         "operationId": "listOwnListings",
         "summary": "Current seller listings including withdrawn",
@@ -503,6 +650,11 @@
                   "$ref": "#/components/schemas/ListingPage"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
@@ -512,6 +664,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -523,6 +680,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "409": {
@@ -532,6 +694,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -543,6 +710,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
@@ -553,12 +725,22 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           }
         }
       }
     },
     "/orders": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        }
+      ],
       "post": {
         "operationId": "createOrder",
         "summary": "Create an order",
@@ -600,85 +782,130 @@
                   "$ref": "#/components/schemas/CommandResult"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "403": {
-            "description": "HTTP 403; code/retryable only",
+            "description": "HTTP 403; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "409": {
-            "description": "HTTP 409; code/retryable only",
+            "description": "HTTP 409; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "415": {
-            "description": "HTTP 415; code/retryable only",
+            "description": "HTTP 415; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -686,6 +913,11 @@
       }
     },
     "/orders/search": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        }
+      ],
       "post": {
         "operationId": "listOrders",
         "summary": "Current participant orders only",
@@ -752,55 +984,85 @@
                   "$ref": "#/components/schemas/OrderSummaryPage"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -820,6 +1082,9 @@
     },
     "/orders/{id}": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -858,55 +1123,85 @@
                   "$ref": "#/components/schemas/OrderDetail"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -926,6 +1221,9 @@
     },
     "/orders/{id}/deliveries": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -984,55 +1282,85 @@
                   "$ref": "#/components/schemas/DeliveryPage"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -1052,6 +1380,9 @@
     },
     "/orders/{id}/issues": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -1110,55 +1441,85 @@
                   "$ref": "#/components/schemas/IssuePage"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -1178,6 +1539,9 @@
     },
     "/orders/{id}/refunds": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -1236,55 +1600,85 @@
                   "$ref": "#/components/schemas/RefundPage"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -1304,6 +1698,9 @@
     },
     "/orders/{id}/settlements": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -1362,55 +1759,85 @@
                   "$ref": "#/components/schemas/SettlementPage"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -1430,6 +1857,9 @@
     },
     "/orders/{id}/events": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -1488,55 +1918,85 @@
                   "$ref": "#/components/schemas/EventPage"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -1556,6 +2016,9 @@
     },
     "/orders/{id}/actions/cancel": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -1616,85 +2079,130 @@
                   "$ref": "#/components/schemas/CommandResult"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "403": {
-            "description": "HTTP 403; code/retryable only",
+            "description": "HTTP 403; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "409": {
-            "description": "HTTP 409; code/retryable only",
+            "description": "HTTP 409; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "415": {
-            "description": "HTTP 415; code/retryable only",
+            "description": "HTTP 415; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -1703,6 +2211,9 @@
     },
     "/orders/{id}/actions/pay": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -1763,85 +2274,130 @@
                   "$ref": "#/components/schemas/CommandResult"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "403": {
-            "description": "HTTP 403; code/retryable only",
+            "description": "HTTP 403; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "409": {
-            "description": "HTTP 409; code/retryable only",
+            "description": "HTTP 409; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "415": {
-            "description": "HTTP 415; code/retryable only",
+            "description": "HTTP 415; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -1850,6 +2406,9 @@
     },
     "/orders/{id}/actions/deliver": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -1910,85 +2469,130 @@
                   "$ref": "#/components/schemas/CommandResult"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "403": {
-            "description": "HTTP 403; code/retryable only",
+            "description": "HTTP 403; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "409": {
-            "description": "HTTP 409; code/retryable only",
+            "description": "HTTP 409; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "415": {
-            "description": "HTTP 415; code/retryable only",
+            "description": "HTTP 415; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -1997,6 +2601,9 @@
     },
     "/orders/{id}/actions/issue": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -2057,85 +2664,130 @@
                   "$ref": "#/components/schemas/CommandResult"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "403": {
-            "description": "HTTP 403; code/retryable only",
+            "description": "HTTP 403; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "409": {
-            "description": "HTTP 409; code/retryable only",
+            "description": "HTTP 409; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "415": {
-            "description": "HTTP 415; code/retryable only",
+            "description": "HTTP 415; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -2144,6 +2796,9 @@
     },
     "/orders/{id}/actions/request-refund": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -2204,85 +2859,130 @@
                   "$ref": "#/components/schemas/CommandResult"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "403": {
-            "description": "HTTP 403; code/retryable only",
+            "description": "HTTP 403; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "409": {
-            "description": "HTTP 409; code/retryable only",
+            "description": "HTTP 409; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "415": {
-            "description": "HTTP 415; code/retryable only",
+            "description": "HTTP 415; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -2291,6 +2991,9 @@
     },
     "/orders/{id}/actions/accept": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -2351,85 +3054,130 @@
                   "$ref": "#/components/schemas/CommandResult"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "403": {
-            "description": "HTTP 403; code/retryable only",
+            "description": "HTTP 403; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "409": {
-            "description": "HTTP 409; code/retryable only",
+            "description": "HTTP 409; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "415": {
-            "description": "HTTP 415; code/retryable only",
+            "description": "HTTP 415; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -2438,6 +3186,9 @@
     },
     "/orders/{id}/actions/refund": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -2498,85 +3249,130 @@
                   "$ref": "#/components/schemas/CommandResult"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "403": {
-            "description": "HTTP 403; code/retryable only",
+            "description": "HTTP 403; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "409": {
-            "description": "HTTP 409; code/retryable only",
+            "description": "HTTP 409; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "415": {
-            "description": "HTTP 415; code/retryable only",
+            "description": "HTTP 415; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -2585,6 +3381,9 @@
     },
     "/orders/{id}/actions/restore": {
       "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
         {
           "name": "id",
           "in": "path",
@@ -2645,85 +3444,130 @@
                   "$ref": "#/components/schemas/CommandResult"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
-            "description": "HTTP 400; code/retryable only",
+            "description": "HTTP 400; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "401": {
-            "description": "HTTP 401; code/retryable only",
+            "description": "HTTP 401; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "403": {
-            "description": "HTTP 403; code/retryable only",
+            "description": "HTTP 403; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "404": {
-            "description": "HTTP 404; code/retryable only",
+            "description": "HTTP 404; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "409": {
-            "description": "HTTP 409; code/retryable only",
+            "description": "HTTP 409; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "415": {
-            "description": "HTTP 415; code/retryable only",
+            "description": "HTTP 415; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
           "500": {
-            "description": "HTTP 500; code/retryable only",
+            "description": "HTTP 500; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "503": {
-            "description": "HTTP 503; code/retryable only",
+            "description": "HTTP 503; code/retryable/requestId only",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           }
@@ -2731,6 +3575,11 @@
       }
     },
     "/currencies": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        }
+      ],
       "post": {
         "operationId": "getCurrencies",
         "summary": "Supported pricing currencies and maximum decimal places",
@@ -2747,12 +3596,22 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           }
         }
       }
     },
     "/listings/search": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        }
+      ],
       "post": {
         "operationId": "listListings",
         "summary": "List published public listings",
@@ -2834,6 +3693,11 @@
                   "$ref": "#/components/schemas/ListingPage"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
@@ -2843,6 +3707,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -2854,6 +3723,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "500": {
@@ -2863,6 +3737,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -2874,12 +3753,31 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           }
         }
       }
     },
     "/listings/{id}/detail": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
       "post": {
         "operationId": "getListing",
         "summary": "Public published listing; withdrawn returns 404",
@@ -2893,6 +3791,11 @@
                   "$ref": "#/components/schemas/Listing"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
@@ -2902,6 +3805,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -2913,6 +3821,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "500": {
@@ -2922,6 +3835,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -2933,12 +3851,31 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           }
         }
       }
     },
     "/listings/{id}/edit": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
       "post": {
         "operationId": "editListing",
         "summary": "Owner edits with expected version",
@@ -2979,6 +3916,11 @@
                   "$ref": "#/components/schemas/Listing"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "400": {
@@ -2988,6 +3930,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -2999,6 +3946,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "403": {
@@ -3008,6 +3960,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -3019,6 +3976,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "409": {
@@ -3028,6 +3990,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -3039,6 +4006,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "500": {
@@ -3048,6 +4020,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -3059,6 +4036,11 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           }
         }
@@ -3067,6 +4049,16 @@
   },
   "components": {
     "parameters": {
+      "RequestId": {
+        "name": "X-Request-Id",
+        "in": "header",
+        "required": false,
+        "description": "Optional diagnostic ID. Invalid values are replaced; the effective ID is returned in the response header and error body.",
+        "schema": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$"
+        }
+      },
       "IdempotencyKey": {
         "name": "Idempotency-Key",
         "in": "header",
@@ -3097,7 +4089,8 @@
         "additionalProperties": false,
         "required": [
           "code",
-          "retryable"
+          "retryable",
+          "requestId"
         ],
         "properties": {
           "code": {
@@ -3107,6 +4100,10 @@
           },
           "retryable": {
             "type": "boolean"
+          },
+          "requestId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$"
           }
         }
       },
@@ -4426,6 +5423,16 @@
             "minimum": 0,
             "maximum": 18
           }
+        }
+      }
+    },
+    "headers": {
+      "RequestId": {
+        "description": "Effective request correlation ID generated or accepted by the server.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$"
         }
       }
     }

@@ -81,7 +81,10 @@ test('I4 HTTP: participant privacy, query pagination and command replay', async 
       const hidden = await post(`/orders/${id}${suffix}`, accounts.outsider)
       const absent = await post(`/orders/${randomUUID()}${suffix}`, accounts.outsider)
       assert.equal(hidden.statusCode, 404)
-      assert.deepEqual(hidden.json(), absent.json())
+      assert.deepEqual(
+        { code: hidden.json().code, retryable: hidden.json().retryable },
+        { code: absent.json().code, retryable: absent.json().retryable }
+      )
       assert.equal((await post(`/orders/${id}${suffix}`, { origin })).statusCode, 401)
     }
     assert.deepEqual((await post(`/orders/${id}`, accounts.buyer)).json().shipping, shipping)

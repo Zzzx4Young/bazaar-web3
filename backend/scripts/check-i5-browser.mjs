@@ -114,6 +114,9 @@ try {
   await page.goto(`${origin}/zh-CN`)
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await page.getByLabel('登录名').fill('i5-buyer')
+  await page.getByLabel('密码').fill(`${password}-wrong`)
+  await page.getByRole('button', { name: '登录', exact: true }).last().click()
+  await page.getByText(/Request ID: [A-Za-z0-9._:-]+/).waitFor({ state: 'visible' })
   await page.getByLabel('密码').fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).last().click()
   await page.goto(`${origin}/zh-CN/listing/${physical.id}`)
@@ -139,6 +142,7 @@ try {
   )
   await page.getByRole('button', { name: 'pay' }).click()
   await assertText(page, '结果未知')
+  await page.getByText(/Request ID: [A-Za-z0-9._:-]+/).waitFor({ state: 'visible' })
   await page.reload()
   await page.unroute('**/actions/pay')
   await page.getByRole('button', { name: '重试原操作' }).click()
@@ -238,7 +242,7 @@ try {
   await assertText(sellerPage, 'refunded')
   await sellerContext.close()
   console.log(
-    'PASS: I5 browser unknown-result replay, private history, outsider denial, physical refund/restore and digital access-code delivery'
+    'PASS: I5 browser visible request ID, unknown-result replay, private history, outsider denial, physical refund/restore and digital access-code delivery'
   )
 } catch (error) {
   console.error(`I5 browser acceptance failed at ${stage}`)

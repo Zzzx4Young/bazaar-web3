@@ -21,11 +21,16 @@ test('real PostgreSQL readiness, failure mapping, and reconnection', async (cont
       assert.match(version[0].version, /^17\./)
       if (run === 0) context.diagnostic(`PostgreSQL server_version: ${version[0].version}`)
       for (const path of ['live', 'ready']) {
-        const response = await app.inject({ method: 'POST', url: `/api/health/${path}`, headers: { origin: config.appOrigin, 'content-type': 'application/json' }, payload: {} })
+        const requestId = `health-${run}-${path}`
+        const response = await app.inject({ method: 'POST', url: `/api/health/${path}`, headers: { origin: config.appOrigin, 'content-type': 'application/json', 'x-request-id': requestId }, payload: {} })
         assert.equal(response.statusCode, 200)
+        assert.equal(response.headers['x-request-id'], requestId)
         assert.deepEqual(response.json(), { status: 'ok' })
       }
-      assert.equal((await app.inject({ method: 'POST', url: '/api/unknown', headers: { origin: config.appOrigin, 'content-type': 'application/json' }, payload: {} })).statusCode, 404)
+      const unknown = await app.inject({ method: 'POST', url: '/api/unknown', headers: { origin: config.appOrigin, 'content-type': 'application/json', 'x-request-id': 'invalid request id' }, payload: {} })
+      assert.equal(unknown.statusCode, 404)
+      assert.equal(unknown.json().requestId, unknown.headers['x-request-id'])
+      assert.match(unknown.json().requestId, /^[0-9a-f-]{36}$/)
       const ping = database.ping
       database.ping = async () => {
         throw new Error('private connection details')

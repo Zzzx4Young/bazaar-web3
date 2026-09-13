@@ -240,7 +240,11 @@ test('I2: invalid rates fail closed; provider failure does not block newest list
     })
     const response = await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: { sort: 'price_asc' } })
     assert.equal(response.statusCode, 503)
-    assert.deepEqual(response.json(), { code: 'FX_UNAVAILABLE', retryable: true })
+    assert.deepEqual(
+      { code: response.json().code, retryable: response.json().retryable },
+      { code: 'FX_UNAVAILABLE', retryable: true }
+    )
+    assert.equal(response.json().requestId, response.headers['x-request-id'])
     assert.equal((await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: {} })).statusCode, 200)
   } finally {
     await app?.close()
