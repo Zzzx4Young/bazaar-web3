@@ -12,7 +12,7 @@ npm run dev
 
 开发时后端默认位于 `http://127.0.0.1:3001`；可用 `BACKEND_ORIGIN` 覆盖。生产运行使用 `npm run build` 后 `npm run start`，部署时需让后端 `APP_ORIGIN` 等于浏览器访问的完整前端 origin。
 
-检查：`npm run typecheck`、`npm run lint`、`npm test`、`npm run build`。浏览器验证：`npx playwright install chromium`，随后 `npm run test:e2e`。
+检查：`npm run typecheck`、`npm run lint`、`npm test`、`npm run build`。`npm run test:e2e` 是旧 Demo 浏览器回归；真实 Alpha 浏览器验收从 `backend/` 运行 `node scripts/check-i5-browser.mjs`，并要求专用 `postgres-test` 可用。
 
 - [文档入口](../docs/README.md)
 - [当前范围与后续规划](../docs/frontend-prototype-roadmap.md)

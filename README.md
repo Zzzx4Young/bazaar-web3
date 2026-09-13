@@ -1,14 +1,13 @@
 # Bazaar Web3 — Internal Alpha Development
 
-A C2C marketplace demo for physical secondhand goods and digital content.
-The frontend remains a browser-local demo. An independent NestJS/Fastify + Prisma
-backend with validated transaction experiments lives in [backend/](backend/README.md); authentication, business
-APIs, wallet, blockchain and real settlement are not implemented.
+A C2C marketplace internal Alpha for physical secondhand goods and digital content.
+The Next.js frontend connects through a same-origin proxy to an independent
+NestJS/Fastify + Prisma/PostgreSQL backend. The Alpha implements pre-provisioned
+accounts, shared listings, private orders, simulated settlement, physical delivery,
+digital delivery and refund recovery. Wallets, blockchain and real settlement remain
+outside the current scope.
 
-The next phase is an internal server Alpha with simulated settlement.
-Its business scope is confirmed; V1 runtime and V2 database validation are complete.
-
-## Quick start
+## Frontend Demo quick start
 
 Requirements: Node.js **>=22.12.0**, npm **10.9.8**.
 Dependency versions are defined by [package.json](frontend/package.json) and its lockfile.
@@ -21,9 +20,26 @@ npm run dev
 ```
 
 Open http://localhost:3000/zh-CN or http://localhost:3000/en.
-The root URL redirects to /zh-CN. No environment file is required for the Demo.
+The root URL redirects to /zh-CN. Without a running backend, only the explicitly
+labelled unauthenticated Demo content is available.
 Cards use local placeholders by default; some detail images and avatars require
 external image services. Optional NEXT_PUBLIC_USE_PLACEHOLDER=0 enables card image requests.
+
+## Internal Alpha local start
+
+1. Follow [the infrastructure guide](infra/README.md#docker-compose-启动) to create
+   ignored local secrets and start the persistent `postgres` service.
+2. Follow [the backend database-role procedure](docs/backend-core-contract.md#数据库角色)
+   to create `bazaar_migrate` and `bazaar_runtime`, deploy every checked-in migration,
+   and grant runtime permissions.
+3. Create accounts with the private-file workflow in
+   [backend account provisioning](backend/README.md#预置账户与认证), then start the backend
+   with its runtime-role `DATABASE_URL`. Its default address is `127.0.0.1:3001`.
+4. Start the frontend with `BACKEND_ORIGIN=http://127.0.0.1:3001`. Set backend
+   `APP_ORIGIN` to the exact browser origin, normally `http://localhost:3000`.
+
+The backend never migrates, seeds or cleans the database during startup. Do not use
+the temporary `postgres-test` service for data that must survive a container stop.
 
 ## Current pages
 
@@ -33,9 +49,10 @@ All routes below have a /zh-CN or /en prefix. Some business text is not yet tran
 |---|---|
 | / | Banners, categories and product grids, including local publications |
 | /explore | Keyword, category, type, currency, condition and sorting controls |
-| /listing/[id] | Media, Markdown, seller information, favorites, local chat and simulated purchase |
-| /publish | Validated publication with placeholder media; no image upload or draft saving |
-| /me | Fixed demo profile and buyer/seller order lists |
+| /listing/[id] | Media, seller information, favorites, local chat and authenticated Alpha purchase |
+| /publish | Authenticated Alpha publication with placeholder media; no image upload or draft saving |
+| /me | Authenticated account, seller listing management and private buyer/seller orders; unauthenticated Demo profile |
+| /me/orders/[id] | Private order history and role/state-specific payment, delivery, acceptance, issue and refund actions |
 | /seller/[id] | Demo seller profile and matching static/local products |
 | /favorites | Locally saved favorites |
 | /notifications | Static sample notifications |
@@ -46,10 +63,10 @@ Displayed currencies and fees do not represent connected payment channels.
 
 ## Storage and limitations
 
-Published products, favorites and simulated orders persist in localStorage across
-refreshes on the same browser and origin. They do not synchronize across devices.
-Clearing site data removes local additions; static samples remain. Local product
-links cannot be used by another browser that does not have that data.
+Unauthenticated Demo products, favorites and old simulated orders persist in
+localStorage on the same browser and origin. They do not synchronize across devices.
+Authenticated Alpha accounts, listings, orders and private histories are PostgreSQL
+facts and are never reconstructed from those Demo records.
 
 Order actions save before updating in-memory state. A failed purchase returns to
 confirmation with an error and allows retry. Invalid cached products are excluded
@@ -57,8 +74,9 @@ from the in-memory list while valid entries remain usable. Reading a corrupt cac
 does not overwrite it; a later successful publication saves the recovered valid
 list plus the new product.
 
-Chat messages only live in component memory. Product inventory, shared accounts,
-server permissions, shipment, download authorization and refunds are not implemented.
+Chat messages only live in component memory. Registration, image hosting, notifications,
+wallets, blockchain settlement and external digital-link availability checks are not
+implemented. The Alpha uses simulated payment/settlement and pre-provisioned accounts.
 See the [Demo data contract](docs/mock-data-spec.md) for exact storage formats.
 
 ## Development and verification
@@ -76,7 +94,7 @@ npm run start
 Stop the development server before building: dev and build share .next output.
 Restart development after a build to avoid stale assets.
 
-Browser tests:
+Legacy Demo browser tests, run from `frontend/`:
 
 ```bash
 npx playwright install chromium
@@ -87,6 +105,16 @@ Playwright starts or reuses the development server on port 3737.
 Current [CI](.github/workflows/ci.yml) runs frontend/backend checks, PostgreSQL
 integration tests, and the real Alpha Chromium acceptance flow. A local passing
 test does not establish remote CI status until the workflow run is green.
+
+The real Alpha browser flow runs from `backend/` with the isolated `postgres-test`
+service available:
+
+```bash
+node scripts/check-i5-browser.mjs
+```
+
+It creates random accounts, a schema and a restricted runtime role, then cleans them
+after the run. It uses fictitious delivery data and does not open external delivery links.
 
 Other scripts: npm run format formats source; npm run screenshot creates manual
 screenshots under docs/screenshots and may start a server on port 3737.

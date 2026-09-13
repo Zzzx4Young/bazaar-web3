@@ -1,6 +1,6 @@
 # Bazaar 后端
 
-独立 NestJS/Fastify + Prisma PostgreSQL 包，已完成 V1/V2/C1 与 I1 认证后端；商品、订单与前端联调按 [执行工单](../docs/backend-implementation-tasks.md)推进。当前验收见[阶段记录](../docs/backend-stage-report.md)。
+独立 NestJS/Fastify + Prisma PostgreSQL 包，已完成内部 Alpha 的认证、商品、订单、交付、退款恢复和前端联调。当前验收见[阶段记录](../docs/backend-stage-report.md)。
 
 ## 本地运行
 
@@ -16,7 +16,7 @@ npm start
 
 默认监听 `127.0.0.1:3001`。`POST /api/health/live` 表示进程可响应；`POST /api/health/ready` 执行真实数据库查询，失败返回 503 且不返回驱动错误详情。启动要求数据库可连接；SIGINT/SIGTERM 触发 Nest 关闭钩子，释放 Prisma 连接池。每进程连接池上限 5，连接与语句超时均为 3 秒。
 
-启动不会迁移、seed 或清理数据库。首次使用先按 [C1 角色与迁移说明](../docs/backend-core-contract.md#数据库角色)创建迁移/运行账号，以迁移账号部署三次迁移并授权，再以运行账号启动。日常开发只需一个持久化 postgres 容器；另外两个测试容器按需启动。不能把健康检查作为业务数据正确性的证明。
+启动不会迁移、seed 或清理数据库。首次使用先按 [C1 角色与迁移说明](../docs/backend-core-contract.md#数据库角色)创建迁移/运行账号，以迁移账号部署全部已检入迁移并授权，再以运行账号启动。日常开发只需一个持久化 postgres 容器；另外两个测试容器按需启动。不能把健康检查作为业务数据正确性的证明。
 
 ## 验证
 
@@ -31,17 +31,17 @@ node scripts/with-test-db.mjs
 
 也可以显式设置 `TEST_DATABASE_URL` 后运行 `npm run test:db`；入口要求数据库名为 `bazaar_test`，不会回退到 `DATABASE_URL`。测试密码只通过子进程环境传递，不输出带密码 URL。事务测试仅在本轮随机 schema 中建表/写入并清理；角色测试另外创建随机迁移/运行账号，验证后删除，需要专用测试管理员建角色权限。不会清理开发库或 public schema。
 
-测试覆盖配置拒绝、Nest DTO 校验、真实 PostgreSQL 查询、HTTP 200/404/503、失败信息隐藏、关闭后新应用重连。模拟 ping 失败用于验证 HTTP 错误映射，不代表真实数据库停机恢复已验收。DB-01—DB-11 与专用持久库重启验证已通过，详见 [V2 报告](../docs/backend-v2-report.md)。认证与 HTTP 资源越权验证待实施。
+测试覆盖配置拒绝、Nest DTO 校验、真实 PostgreSQL 查询、认证、HTTP 资源越权、商品与订单状态转换、并发和幂等回放。DB-01—DB-11 与专用持久库重启验证已通过，详见 [V2 报告](../docs/backend-v2-report.md)。
 
 ## 结构
 
 - `src/app.ts`：应用组合、输入校验与生命周期。
 - `src/database/`：Prisma client 与连接池，后续向用例层传递同一事务 client。
 - `src/health/`：存活与数据库就绪检查。
-- `prisma/`：C1 schema 基线、三次已审查迁移 SQL；手写 CHECK、条件索引和触发器随迁移管理，不改写已执行迁移。
-- `src/orders/`：订单命令、幂等和状态转换；暂未注册业务 HTTP 路由。
+- `prisma/`：schema 与追加迁移 SQL；手写 CHECK、条件索引和触发器随迁移管理，不改写已执行迁移。
+- `src/orders/`：订单 HTTP、私有读取、命令、幂等和状态转换。
 - `src/listings/`：商品锁和编辑/下架命令。
-- `src/accounts/`：账户有效性边界；认证实现属于 C2。
+- `src/accounts/` 与 `src/auth/`：账户有效性、凭据、Session、Origin 和 CSRF 边界。
 - `src/common/`：金额解析、错误映射等共享契约。
 - `tests/`：编译产物测试；数据库入口独立。
 

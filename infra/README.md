@@ -1,6 +1,6 @@
 # 容器化基础设施
 
-更新：2026-09-10。供本地开发、数据库实验和已有 Kubernetes 集群内测使用。独立后端 V1 骨架见 [backend/README.md](../backend/README.md)，前端仍按 frontend/package.json 启动；本目录只编排 PostgreSQL，尚无 API 镜像；实验迁移与启动见 backend 文档。
+更新：2026-09-13。供本地开发、数据库实验和已有 Kubernetes 集群内测使用。内部 Alpha 后端见 [backend/README.md](../backend/README.md)，前端按 frontend/package.json 启动；本目录只编排 PostgreSQL，尚无 API 镜像；迁移、运行角色和启动见 backend 文档。
 
 ## 可行性与选择
 
@@ -42,7 +42,7 @@ docker compose -f infra/compose.yaml ps
 
 端口仅绑定回环地址。可在命令前设置 POSTGRES_PORT 或 POSTGRES_TEST_PORT 覆盖宿主机端口，例如 POSTGRES_PORT=15432 docker compose -f infra/compose.yaml up -d --wait postgres。Compose 网络内开发库地址是 postgres:5432，测试库是 postgres-test:5432；两者网络、数据和密码独立。
 
-未来后端本地连接格式为 postgresql://bazaar_admin:<密码>@127.0.0.1:5432/bazaar_dev；实验入口使用独立 TEST_DATABASE_URL 和测试用户/端口/库名，不能回退到开发 URL。初始化用户具有超级用户权限，仅用于此开发环境和建库；正式 API 接入前拆分迁移角色和最小权限运行角色。
+初始化管理员本地连接格式为 postgresql://bazaar_admin:<密码>@127.0.0.1:5432/bazaar_dev；只用它按[数据库角色说明](../docs/backend-core-contract.md#数据库角色)创建迁移角色、运行角色和 schema。应用必须使用最小权限运行角色。实验入口使用独立 TEST_DATABASE_URL 和测试用户/端口/库名，不能回退到开发 URL。
 
 启动专用实验库（不启动开发库）：
 
