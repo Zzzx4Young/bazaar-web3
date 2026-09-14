@@ -171,3 +171,8 @@ node scripts/with-persistence-db.mjs
 ```
 
 DB-10 已验证空库迁移、历史数据升级、容器/API 进程重启及手写约束保留，见 [V2 报告](../docs/backend-v2-report.md)。I8-1 已在同一专用服务完成隔离源库的 custom-format 备份、空库恢复、权限、业务写入和恢复后容器重启验证，见[备份恢复记录](../docs/database-backup-recovery.md)。每轮随机数据库、角色和 archive 均已清理，容器停止并保留命名卷。HA、Kubernetes 和生产灾难恢复仍未验证。
+
+I8-2 新增 [compose.api.yaml](compose.api.yaml)，只编排一次性迁移和长期 API，不内置数据库。
+它使用独立数据库 URL secret、不可变镜像引用和迁移成功依赖，详细构建、发布、健康检查及
+回滚步骤见[API 部署手册](../docs/api-deployment-runbook.md)。该入口已在本机一次性测试库完成
+镜像级验收，尚未部署到远端主机或 Kubernetes。

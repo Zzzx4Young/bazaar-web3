@@ -222,3 +222,23 @@ runtime 无 DDL/迁移表权限、observer 默认只读和 16 个脱敏视图。
 SHA 成功。CI 有 actions v4 声明 Node 20、runner 强制 Node 24 的非阻塞注解，列入 I8-2
 工具链维护，不影响本次恢复结果。I8-1 完成；生产备份调度、保留、加密、异地副本、
 WAL/PITR、RPO/RTO、高可用和灾难环境仍未验收。
+
+## I8-2 API 部署产物（2026-09-14）
+
+新增多阶段 `backend/Dockerfile`。runtime target 固定 Node 22.23.1、安装 OpenSSL，只带编译
+产物和生产必需依赖；migrate target 保留 Prisma CLI、6 个迁移及 runtime 授权入口。两者均以
+非 root `node` 用户运行并记录 OCI source/revision。运行配置新增 `DATABASE_URL_FILE`，与
+`DATABASE_URL` 严格互斥，允许 Compose secret 挂载且启动失败不输出路径或 URL。
+
+新增 `infra/compose.api.yaml`，要求两个不可变镜像引用、精确 `APP_ORIGIN` 和独立迁移/运行 URL
+secret；迁移成功后才启动 API。API 绑定宿主回环端口，启用只读根文件系统、空 capabilities、
+`no-new-privileges`、init、日志轮转和 POST readiness。探针携带安全契约要求的 Origin；首次
+验收正是因此发现并修复 403 探针错误。
+
+`npm run test:deployment` 在临时 PostgreSQL 中创建随机 schema 和受限角色，以迁移镜像部署
+6 个迁移和授权，再以文件 secret 启动 runtime 镜像。最终验证 readiness、runtime DDL 拒绝、非 root、
+只读运行参数以及运行镜像无 Prisma CLI，容器/schema/角色均已清理。runtime 镜像依赖由
+226 个裁剪到 101 个，本机未压缩大小约 509 MB；migrate 镜像约 1.13 GB。CI 增加两个 target
+构建与上述镜像验收，并将 checkout/setup-node 从 v4 升至使用 Node 24 runtime 的 v5。
+实现提交为 `d9298db`，尚未推送，因此远端同 SHA CI 仍待执行。操作与回滚见
+[部署手册](api-deployment-runbook.md)。

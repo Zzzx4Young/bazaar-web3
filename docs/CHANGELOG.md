@@ -1,5 +1,13 @@
 # 文档与交付变更
 
+## 2026-09-14 — I8-2 API 部署产物（本地验收）
+
+- 新增分离的 runtime/migrate 镜像、数据库 URL secret 文件读取、受控 Compose 和部署/回滚手册。
+- 新增镜像级验收：随机角色/schema、6 个迁移、runtime 授权、DDL 拒绝、readiness、非 root、
+  只读根文件系统和运行镜像依赖裁剪均通过，临时对象已清理。
+- CI 构建并验收两个镜像，checkout/setup-node 升至 v5 以移除 Node 20 runtime 注解。实现
+  提交为 `d9298db`，尚未推送，远端 CI 待同 SHA 验证。
+
 ## 2026-09-14 — I8-1 PostgreSQL 备份恢复
 
 - 在 55433 专用持久服务中新增随机源库/恢复库演练，以 migration 角色创建 0600 custom

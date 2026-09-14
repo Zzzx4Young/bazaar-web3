@@ -20,6 +20,10 @@ npm start
 
 启动不会迁移、seed 或清理数据库。首次使用先按 [C1 角色与迁移说明](../docs/backend-core-contract.md#数据库角色)创建迁移/运行账号，以迁移账号部署全部已检入迁移并授权，再以运行账号启动。日常开发只需一个持久化 postgres 容器；另外两个测试容器按需启动。不能把健康检查作为业务数据正确性的证明。
 
+I8-2 提供 `backend/Dockerfile` 的 `runtime` 与 `migrate` target，以及
+`infra/compose.api.yaml`。部署环境使用 `DATABASE_URL_FILE` 挂载完整数据库 URL secret；不能
+同时设置 `DATABASE_URL`。镜像构建、迁移、启动、检查和回滚步骤见[部署手册](../docs/api-deployment-runbook.md)。
+
 宿主机安装 PostgreSQL 17 client 后，可在本目录执行 `npm run db:psql` 进入默认只读观察
 连接；显式追加 `-- runtime` 或 `-- migrate` 才切换到对应本机私有配置。启动器校验目标
 必须是 loopback `bazaar_dev`，密码只通过 `PGPASSWORD` 传给子进程，不出现在参数中。
@@ -50,6 +54,9 @@ node scripts/with-i7-environment.mjs
 
 # 在同一专用服务创建隔离源库/恢复库，验证 custom backup、权限与重启持久性：
 npm run test:backup-restore
+
+# 已构建 bazaar-api:ci 和 bazaar-api-migrate:ci 且 postgres-test 已启动时：
+npm run test:deployment
 ```
 
 也可以显式设置 `TEST_DATABASE_URL` 后运行 `npm run test:db`；入口要求数据库名为 `bazaar_test`，不会回退到 `DATABASE_URL`。测试密码只通过子进程环境传递，不输出带密码 URL。事务测试仅在本轮随机 schema 中建表/写入并清理；角色测试另外创建随机迁移/运行账号，验证后删除，需要专用测试管理员建角色权限。不会清理开发库或 public schema。
