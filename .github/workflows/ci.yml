@@ -17,8 +17,8 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: 'npm'
@@ -45,8 +45,8 @@ jobs:
     env:
       PRISMA_HIDE_UPDATE_MESSAGE: '1'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22.23.1'
           cache: 'npm'
@@ -63,6 +63,11 @@ jobs:
         run: npm run lint
       - name: Unit tests
         run: node --test tests/*.test.mjs
+      - name: Build deployment images
+        working-directory: .
+        run: |
+          docker build --target runtime --build-arg VCS_REF="$GITHUB_SHA" -t bazaar-api:ci backend
+          docker build --target migrate --build-arg VCS_REF="$GITHUB_SHA" -t bazaar-api-migrate:ci backend
       - name: Start isolated PostgreSQL
         working-directory: .
         run: |
@@ -70,6 +75,8 @@ jobs:
           docker compose -f infra/compose.yaml --profile test up -d --wait --wait-timeout 120 postgres-test
       - name: Database integration tests
         run: node scripts/with-test-db.mjs
+      - name: Deployment image acceptance
+        run: node scripts/with-test-db.mjs node scripts/check-deployment-images.mjs
       - name: Install frontend browser dependencies
         working-directory: frontend
         run: |

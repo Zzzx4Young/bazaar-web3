@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+
 export interface AppConfig {
   databaseUrl: string
   host: string
@@ -6,10 +8,26 @@ export interface AppConfig {
   secureCookie: boolean
 }
 
+export function readDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string {
+  const direct = env.DATABASE_URL
+  const file = env.DATABASE_URL_FILE
+  if ((direct && file) || (!direct && !file)) {
+    throw new Error('Set exactly one of DATABASE_URL or DATABASE_URL_FILE')
+  }
+  if (direct) return direct
+  try {
+    const value = readFileSync(file!, 'utf8').replace(/\r?\n$/, '')
+    if (!value || /[\r\n]/.test(value)) throw new Error()
+    return value
+  } catch {
+    throw new Error('DATABASE_URL_FILE must contain one database URL')
+  }
+}
+
 export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   let url: URL
   try {
-    url = new URL(env.DATABASE_URL ?? '')
+    url = new URL(readDatabaseUrl(env))
     if (
       !['postgres:', 'postgresql:'].includes(url.protocol) ||
       !url.hostname ||
