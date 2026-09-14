@@ -47,6 +47,9 @@ npm test
 node scripts/with-test-db.mjs
 # 启动 postgres-validation 后，从空的独立持久数据库演练 I7 环境并重启验证：
 node scripts/with-i7-environment.mjs
+
+# 在同一专用服务创建隔离源库/恢复库，验证 custom backup、权限与重启持久性：
+npm run test:backup-restore
 ```
 
 也可以显式设置 `TEST_DATABASE_URL` 后运行 `npm run test:db`；入口要求数据库名为 `bazaar_test`，不会回退到 `DATABASE_URL`。测试密码只通过子进程环境传递，不输出带密码 URL。事务测试仅在本轮随机 schema 中建表/写入并清理；角色测试另外创建随机迁移/运行账号，验证后删除，需要专用测试管理员建角色权限。不会清理开发库或 public schema。
@@ -88,6 +91,10 @@ node scripts/with-persistence-db.mjs
 ```
 
 此脚本使用 55433 端口的 bazaar_persistence 和独立命名卷，会重启 postgres-validation 容器，验证带数据升级与 API 进程重启后的历史/约束。它与 55432 的临时事务库独立。DB-10 测试结束清理本轮 schema，I7 环境测试清理本轮独立数据库和角色；在仓库根目录执行 `sudo docker compose -f infra/compose.validation.yaml stop postgres-validation` 停止验证服务并保留卷，无需常驻。
+
+I8-1 备份恢复脚本同样只接受该专用服务。它以随机源库和恢复库验证宿主机
+`pg_dump`/`pg_restore`，结束删除本轮数据库、角色和 0600 archive；详细步骤与生产边界见
+[备份恢复验证](../docs/database-backup-recovery.md)。
 
 实验金额 numeric(38,18)、TEST 币种、虚拟账户与地址只用于验证；产品币种/USD 参考价见[计价契约](../docs/backend-pricing-contract.md)。幂等及跨表状态规则见 C1 契约。
 

@@ -54,3 +54,11 @@ DBHub 的 SQL 分类与只读事务只作为附加限制。
 
 所有 DDL、DML、迁移、授权和数据清理都通过仓库脚本或明确的迁移流程执行，不通过 MCP。
 测试库 55432 可随时丢弃；持久重启和恢复证据使用 55433 的专用验证服务。
+
+## I8-1 备份恢复
+
+I8-1 已使用宿主机 PostgreSQL 17 `pg_dump`/`pg_restore` 和 55433 专用持久服务完成隔离
+恢复演练。`npm run test:backup-restore` 创建随机源库和恢复库，验证 custom archive、6 个
+迁移、精确数据、不可变约束、runtime/observer 权限、恢复后业务写入及容器重启，结束自动
+删除数据库、角色和私有 archive。执行方式、证据和未覆盖的生产边界见
+[备份恢复验证](database-backup-recovery.md)。

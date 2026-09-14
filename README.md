@@ -7,9 +7,9 @@ accounts, shared listings, private orders, simulated settlement, physical delive
 digital delivery and refund recovery. Wallets, blockchain and real settlement remain
 outside the current scope.
 
-Project status: I1—I7 and the I8-0 database tooling milestone are complete. The current baseline is
-`69c4cf2`; its GitHub Actions `verify` and `backend` jobs passed. The next unstarted milestone is I8-1
-backup and restore validation. See the [execution plan](docs/execution-plan.md) and
+Project status: I1—I7 and the I8-0/I8-1 database operations milestones are complete. The current code
+baseline is `a1c95cc`; its GitHub Actions `verify` and `backend` jobs passed. The next unstarted
+milestone is I8-2 deployable API packaging. See the [execution plan](docs/execution-plan.md) and
 [stage report](docs/backend-stage-report.md) for the verified boundary.
 
 ## Frontend Demo quick start

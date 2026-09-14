@@ -170,4 +170,4 @@ cd backend
 node scripts/with-persistence-db.mjs
 ```
 
-DB-10 已验证空库迁移、历史数据升级、容器/API 进程重启及手写约束保留，见 [V2 报告](../docs/backend-v2-report.md)。每轮随机实验 schema 已清理，容器和命名卷保留；可用 `sudo docker compose -f infra/compose.validation.yaml stop postgres-validation` 停止服务。未执行备份恢复、HA 或 Kubernetes 验证。
+DB-10 已验证空库迁移、历史数据升级、容器/API 进程重启及手写约束保留，见 [V2 报告](../docs/backend-v2-report.md)。I8-1 已在同一专用服务完成隔离源库的 custom-format 备份、空库恢复、权限、业务写入和恢复后容器重启验证，见[备份恢复记录](../docs/database-backup-recovery.md)。每轮随机数据库、角色和 archive 均已清理，容器停止并保留命名卷。HA、Kubernetes 和生产灾难恢复仍未验证。

@@ -203,4 +203,22 @@ I8-0 实现提交 `7163f54`、skill/DBHub 验收记录提交 `bf3ba88` 和 GitHu
 `69c4cf2` 均已推送。GitHub CLI 2.100.0 从官方软件源安装；GitHub MCP 和 `gh` 统一只读取
 `GH_TOKEN`。在显式移除旧变量的全新进程中，`gh` 成功读取 Actions，GitHub MCP 成功执行
 账户及提交查询。最终基线 `69c4cf2` 的 workflow `34765359979` 已完成，`verify` 与
-`backend` 均成功。工作区无待提交文件，I8-1 尚未开始。
+`backend` 均成功。I8-0 收口时工作区无待提交文件，随后进入 I8-1。
+
+## I8-1 备份恢复验证（2026-09-14）
+
+新增只接受 `127.0.0.1:55433/bazaar_persistence` 的备份恢复入口。每轮在专用持久服务创建
+随机源库、恢复库及 migration/runtime/observer 角色；源库部署 6 个迁移和虚构业务数据，
+以 migration 角色生成 0600 custom archive，再由管理员恢复到独立空库。连接串和密码只经
+子进程环境传递，archive 与临时目录结束删除，不读取或备份 `bazaar_dev`。
+
+恢复后验证迁移数量、各类行数、凭据哈希/会话归属、Prisma 无 drift、快照不可变约束、
+runtime 无 DDL/迁移表权限、observer 默认只读和 16 个脱敏视图。runtime 从恢复状态成功
+执行付款后重启数据库，恢复库保持 `pending_delivery` 和结算记录，源库仍为
+`pending_payment`，证明两库隔离。首次演练发现测试期望误写为不存在的 `paid` 状态；改为
+正式状态机的 `pending_delivery` 后完整重跑通过，失败轮次同样完成清理。
+
+实现提交 `a1c95cc` 已推送；远端 workflow `34843912602` 的 `verify` 与 `backend` 均在同一
+SHA 成功。CI 有 actions v4 声明 Node 20、runner 强制 Node 24 的非阻塞注解，列入 I8-2
+工具链维护，不影响本次恢复结果。I8-1 完成；生产备份调度、保留、加密、异地副本、
+WAL/PITR、RPO/RTO、高可用和灾难环境仍未验收。
