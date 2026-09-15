@@ -7,8 +7,9 @@ accounts, shared listings, private orders, simulated settlement, physical delive
 digital delivery and refund recovery. Wallets, blockchain and real settlement remain
 outside the current scope.
 
-Project status: I1—I8 are complete. M1 Alpha release hardening is implemented and locally verified;
-the current worktree still requires a commit, push, and same-SHA GitHub Actions result. See the [execution plan](docs/execution-plan.md),
+Project status: I1—I8 and M1 Alpha release hardening are complete. Commit `113c1ee` passed both
+GitHub Actions jobs, including PostgreSQL integration, deployment images, and Chromium acceptance.
+See the [execution plan](docs/execution-plan.md),
 [deployment runbook](docs/api-deployment-runbook.md), and
 [stage report](docs/backend-stage-report.md) for the verified boundary.
 

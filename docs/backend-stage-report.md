@@ -240,8 +240,8 @@ secret；迁移成功后才启动 API。API 绑定宿主回环端口，启用只
 只读运行参数以及运行镜像无 Prisma CLI，容器/schema/角色均已清理。runtime 镜像依赖由
 226 个裁剪到 101 个，本机未压缩大小约 509 MB；migrate 镜像约 1.13 GB。CI 增加两个 target
 构建与上述镜像验收，并将 checkout/setup-node 从 v4 升至使用 Node 24 runtime 的 v5。
-实现提交为 `d9298db`，尚未推送，因此远端同 SHA CI 仍待执行。操作与回滚见
-[部署手册](api-deployment-runbook.md)。
+实现提交为 `d9298db`，随后随 M1 收口推送；提交 `113c1ee` 的 workflow `34992766719`
+完成部署镜像验收并成功。操作与回滚见[部署手册](api-deployment-runbook.md)。
 
 ## Alpha 页面数据源收口（2026-09-14）
 
@@ -276,4 +276,5 @@ API 健康、前端顺序启动。运行用户只读共享配置卷中的凭据�
 
 本地门禁：`npm run check:frontend`、`npm run check:backend`、PostgreSQL 集成 31/31、observer
 权限验收及 `npm run test:e2e` 均通过。CI 的 Alpha browser job 已改走该标准 E2E 命令并使用
-`postgres-test`；当前工作树尚待提交、推送和同 SHA 远端结果。
+`postgres-test`。收口提交 `113c1ee` 的 workflow `34992766719` 中 `verify` 与 `backend`
+均成功，后者包含部署镜像、31 项 PostgreSQL 集成及 Alpha Chromium 验收。

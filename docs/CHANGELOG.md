@@ -6,6 +6,7 @@
 - readiness 增加 PostgreSQL 连接状态与延迟；Chromium 验证前端错误 Request ID 与后端结构化日志一致。
 - 新增可重复全栈 Alpha Compose 和前端生产镜像，修复非 root 凭据读取、可选平台依赖及重复启动密码轮换问题。
 - 标准化 `check:frontend`、`check:backend` 与 `test:e2e`，CI 对 `postgres-test` 运行完整多用户 Alpha 流程。
+- 收口提交 `113c1ee` 的 GitHub Actions workflow `34992766719` 两个 job 均成功。
 
 ## 2026-09-14 — Alpha 页面数据源收口（本地验收）
 
@@ -15,7 +16,7 @@
 - 分类改为接口固定枚举；默认页面移除后端不支持的热度排序、成色筛选/发布字段、模拟聊天
   和外部头像请求。页面文案统一说明 PostgreSQL 持久化与模拟结算边界。
 - frontend 类型、Lint、182 项单测和 production build 通过；隔离 PostgreSQL 的真实 Chromium
-  Alpha 流程通过并自动清理。远端 CI 尚未执行。
+  Alpha 流程通过并自动清理，随后由提交 `113c1ee` 的远端 CI 再次验证。
 
 ## 2026-09-14 — I8-2 API 部署产物（本地验收）
 
@@ -23,7 +24,7 @@
 - 新增镜像级验收：随机角色/schema、6 个迁移、runtime 授权、DDL 拒绝、readiness、非 root、
   只读根文件系统和运行镜像依赖裁剪均通过，临时对象已清理。
 - CI 构建并验收两个镜像，checkout/setup-node 升至 v5 以移除 Node 20 runtime 注解。实现
-  提交为 `d9298db`，尚未推送，远端 CI 待同 SHA 验证。
+  提交 `d9298db` 随 M1 收口推送，并由 workflow `34992766719` 验证成功。
 
 ## 2026-09-14 — I8-1 PostgreSQL 备份恢复
 
