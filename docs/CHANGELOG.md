@@ -1,5 +1,22 @@
 # 文档与交付变更
 
+## 2026-09-15 — M1 Alpha 发布加固
+
+- 增加前端错误/加载边界、Toast 和会话过期后的清理与本地化登录跳转。
+- readiness 增加 PostgreSQL 连接状态与延迟；Chromium 验证前端错误 Request ID 与后端结构化日志一致。
+- 新增可重复全栈 Alpha Compose 和前端生产镜像，修复非 root 凭据读取、可选平台依赖及重复启动密码轮换问题。
+- 标准化 `check:frontend`、`check:backend` 与 `test:e2e`，CI 对 `postgres-test` 运行完整多用户 Alpha 流程。
+
+## 2026-09-14 — Alpha 页面数据源收口（本地验收）
+
+- 首页、探索、商品详情、卖家页、收藏和个人中心统一读取 Alpha POST API；默认页面不再以
+  本地 mock 商品、卖家、订单、评分或浏览量作为业务事实。通知服务未实现时显示明确空态，
+  不再展示虚构通知。
+- 分类改为接口固定枚举；默认页面移除后端不支持的热度排序、成色筛选/发布字段、模拟聊天
+  和外部头像请求。页面文案统一说明 PostgreSQL 持久化与模拟结算边界。
+- frontend 类型、Lint、182 项单测和 production build 通过；隔离 PostgreSQL 的真实 Chromium
+  Alpha 流程通过并自动清理。远端 CI 尚未执行。
+
 ## 2026-09-14 — I8-2 API 部署产物（本地验收）
 
 - 新增分离的 runtime/migrate 镜像、数据库 URL secret 文件读取、受控 Compose 和部署/回滚手册。
@@ -61,6 +78,7 @@
 - 更新[验证报告](backend-validation-report.md)和实施入口；业务 schema、迁移及 DB-01—DB-11 属于下一工作包，尚未验收。
 
 只记录变化摘要，不复制完整决策或任务列表。[整理前完整日志](archive/changelog-before-cleanup.md) 保留原始记录。
+
 
 ## 2026-09-13 — I7 复核修复
 

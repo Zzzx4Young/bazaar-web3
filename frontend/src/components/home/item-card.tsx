@@ -79,8 +79,10 @@ export function ItemCard({ item, seller }: ItemCardProps) {
               </span>
             )}
           </div>
-          {seller && (
-            <div className="mt-1 truncate text-xs text-muted-foreground">{seller.displayName}</div>
+          {(item.sellerDisplayName || seller) && (
+            <div className="mt-1 truncate text-xs text-muted-foreground">
+              {item.sellerDisplayName ?? seller?.displayName}
+            </div>
           )}
         </CardContent>
       </Card>

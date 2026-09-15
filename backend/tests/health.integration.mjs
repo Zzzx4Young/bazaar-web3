@@ -25,7 +25,13 @@ test('real PostgreSQL readiness, failure mapping, and reconnection', async (cont
         const response = await app.inject({ method: 'POST', url: `/api/health/${path}`, headers: { origin: config.appOrigin, 'content-type': 'application/json', 'x-request-id': requestId }, payload: {} })
         assert.equal(response.statusCode, 200)
         assert.equal(response.headers['x-request-id'], requestId)
-        assert.deepEqual(response.json(), { status: 'ok' })
+        if (path === 'live') assert.deepEqual(response.json(), { status: 'ok' })
+        else {
+          assert.equal(response.json().status, 'ok')
+          assert.deepEqual(response.json().database.status, 'ok')
+          assert.equal(typeof response.json().database.latencyMs, 'number')
+          assert.ok(response.json().database.latencyMs >= 0)
+        }
       }
       const unknown = await app.inject({ method: 'POST', url: '/api/unknown', headers: { origin: config.appOrigin, 'content-type': 'application/json', 'x-request-id': 'invalid request id' }, payload: {} })
       assert.equal(unknown.statusCode, 404)

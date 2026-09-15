@@ -2,17 +2,13 @@ import { Sparkles } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Link } from '@/i18n/routing'
-import { categories } from '@/lib/mock-data'
+import { marketplaceCategories } from '@/lib/categories'
 
 export function TrendingCategories() {
   const t = useTranslations('home.trending')
 
   return (
-    <section
-      aria-label={t('title')}
-      className="space-y-3"
-      data-testid="trending-categories"
-    >
+    <section aria-label={t('title')} className="space-y-3" data-testid="trending-categories">
       <div className="flex items-baseline justify-between">
         <h2 className="flex items-center gap-2 text-lg font-semibold">
           <Sparkles className="h-4 w-4 text-primary" aria-hidden />
@@ -23,7 +19,7 @@ export function TrendingCategories() {
         </Button>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-        {categories.map(cat => (
+        {marketplaceCategories.map((cat) => (
           <Link
             key={cat.id}
             href={`/explore?category=${cat.id}`}
@@ -34,9 +30,7 @@ export function TrendingCategories() {
                 {cat.label.slice(0, 1)}
               </span>
             </div>
-            <div className="text-center text-sm font-medium text-foreground">
-              {cat.label}
-            </div>
+            <div className="text-center text-sm font-medium text-foreground">{cat.label}</div>
           </Link>
         ))}
       </div>

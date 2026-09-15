@@ -14,7 +14,9 @@ npm run dev
 
 API 客户端为请求生成 `X-Request-Id`。失败时 `BackendError` 保留服务端的稳定错误码、HTTP 状态、`requestId` 和 `retryable`，供内测问题记录关联，不作为身份或幂等键。
 
-检查：`npm run typecheck`、`npm run lint`、`npm test`、`npm run build`。`npm run test:e2e` 是旧 Demo 浏览器回归；真实 Alpha 浏览器验收从 `backend/` 运行 `node scripts/check-i5-browser.mjs`，并要求专用 `postgres-test` 可用。
+完整静态与构建检查使用 `npm run check:frontend`。`npm run test:e2e` 是真实 Alpha
+Chromium 验收入口，会从 `backend/` 运行隔离数据库流程；执行前需启动专用
+`postgres-test`。旧 Demo 浏览器回归保留为 `npm run test:e2e:demo`。
 
 - [文档入口](../docs/README.md)
 - [当前范围与后续规划](../docs/frontend-prototype-roadmap.md)

@@ -23,12 +23,18 @@ let app,
   browser,
   roleCreated = false,
   stage = 'setup'
+const requestLogs = []
+const logRequest = (entry) => {
+  requestLogs.push(entry)
+  if (entry.status >= 400) console.log(JSON.stringify(entry))
+}
 try {
   const password = `I5-${randomUUID()}`
   await provisionAccounts(db.client, [
     { loginName: 'i5-seller', displayName: 'I5 Seller', password },
     { loginName: 'i5-buyer', displayName: 'I5 Buyer', password },
-    { loginName: 'i5-outsider', displayName: 'I5 Outsider', password }
+    { loginName: 'i5-outsider', displayName: 'I5 Outsider', password },
+    { loginName: 'i5-expiring', displayName: 'I5 Expiring', password }
   ])
   const secret = randomUUID()
   await admin.client.$executeRawUnsafe(`CREATE ROLE "${role}" LOGIN PASSWORD '${secret}'`)
@@ -37,7 +43,9 @@ try {
   const runtime = new URL(db.url)
   runtime.username = role
   runtime.password = secret
-  app = await createApp(readConfig({ DATABASE_URL: runtime.toString(), APP_ORIGIN: origin }), false)
+  app = await createApp(readConfig({ DATABASE_URL: runtime.toString(), APP_ORIGIN: origin }), false, {
+    logRequest
+  })
   const login = async (name) => {
     const response = await app.inject({
       method: 'POST',
@@ -85,7 +93,9 @@ try {
     contentVersion: 'v1'
   })
   await app.close()
-  app = await createApp(readConfig({ DATABASE_URL: runtime.toString(), APP_ORIGIN: origin }), false)
+  app = await createApp(readConfig({ DATABASE_URL: runtime.toString(), APP_ORIGIN: origin }), false, {
+    logRequest
+  })
   await app.listen(0, '127.0.0.1')
   const backendPort = app.getHttpServer().address().port
   frontend = spawn(
@@ -108,6 +118,24 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 250))
   }
   browser = await chromium.launch({ headless: true })
+  stage = 'expired session redirect'
+  const expiringContext = await browser.newContext()
+  const expiringPage = await expiringContext.newPage()
+  await expiringPage.goto(`${origin}/zh-CN/login`)
+  await expiringPage.getByLabel('登录名').fill('i5-expiring')
+  await expiringPage.getByLabel('密码').fill(password)
+  await expiringPage.getByRole('button', { name: '登录', exact: true }).last().click()
+  await expiringPage
+    .getByRole('button', { name: 'I5 Expiring · 退出登录' })
+    .waitFor({ state: 'visible' })
+  await db.client.session.updateMany({
+    where: { account: { loginName: 'i5-expiring' }, revokedAt: null },
+    data: { revokedAt: new Date() }
+  })
+  await expiringPage.getByRole('link', { name: '我的', exact: true }).click()
+  await expiringPage.waitForURL(/\/zh-CN\/login\?returnTo=%2Fzh-CN%2Fme$/)
+  await expiringPage.getByRole('heading', { name: '登录' }).waitFor({ state: 'visible' })
+  await expiringContext.close()
   const context = await browser.newContext()
   const page = await context.newPage()
   stage = 'login'
@@ -116,7 +144,19 @@ try {
   await page.getByLabel('登录名').fill('i5-buyer')
   await page.getByLabel('密码').fill(`${password}-wrong`)
   await page.getByRole('button', { name: '登录', exact: true }).last().click()
-  await page.getByText(/Request ID: [A-Za-z0-9._:-]+/).waitFor({ state: 'visible' })
+  const requestIdText = page.getByText(/Request ID: [A-Za-z0-9._:-]+/)
+  await requestIdText.waitFor({ state: 'visible' })
+  const visibleRequestId = (await requestIdText.textContent())?.match(/Request ID: (\S+)/)?.[1]
+  assert.ok(visibleRequestId, 'The intentional login error did not expose a request ID')
+  assert.ok(
+    requestLogs.some(
+      (entry) =>
+        entry.requestId === visibleRequestId &&
+        entry.route === '/api/auth/login' &&
+        entry.status === 401
+    ),
+    `No backend stdout log matched frontend request ID ${visibleRequestId}`
+  )
   await page.getByLabel('密码').fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).last().click()
   await page.goto(`${origin}/zh-CN/listing/${physical.id}`)
@@ -287,7 +327,7 @@ try {
   await assertText(sellerPage, 'refunded')
   await sellerContext.close()
   console.log(
-    'PASS: I5 browser visible request ID, unknown-result replay, private history, outsider denial, physical refund/restore, digital issue/redelivery and repeat sale'
+    'PASS: Alpha browser expired-session redirect, correlated request ID, unknown-result replay, private history, outsider denial, physical refund/restore, digital issue/redelivery and repeat sale'
   )
 } catch (error) {
   console.error(`I5 browser acceptance failed at ${stage}`)

@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
@@ -9,15 +8,11 @@ import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MediaCarousel } from '@/components/listing/media-carousel'
 import { MarkdownRenderer } from '@/components/listing/markdown-renderer'
 import { SellerCard } from '@/components/listing/seller-card'
 import { BuyModal } from '@/components/listing/buy-modal'
-import { ChatDrawer } from '@/components/listing/chat-drawer'
-import { findSeller } from '@/lib/mock-data'
 import { formatPrice, formatDate } from '@/lib/format'
-import { useItemStore } from '@/stores/use-item-store'
 import { useFavoriteStore } from '@/stores/use-favorite-store'
 import { useBackendListing } from '@/hooks/use-backend-listing'
 
@@ -27,11 +22,9 @@ interface Props {
 
 export default function ListingDetailPage({ params }: Props) {
   const t = useTranslations('common')
-  const { items } = useItemStore()
   const backend = useBackendListing(params.id)
   const { toggle, isFavorite, error } = useFavoriteStore()
   const [buyOpen, setBuyOpen] = useState(false)
-  const [chatOpen, setChatOpen] = useState(false)
   const item = backend.item
   if (!item && backend.loading) {
     return <p role="status">正在加载商品…</p>
@@ -45,11 +38,8 @@ export default function ListingDetailPage({ params }: Props) {
       )
     notFound()
   }
-  const seller = findSeller(item.sellerId)
+  const seller = { id: item.sellerId, displayName: item.sellerDisplayName ?? 'Alpha 卖家' }
   const favorited = isFavorite(item.id)
-
-  // 相关推荐（同分类，排除自己）
-  const related = items.filter((i) => i.category === item.category && i.id !== item.id).slice(0, 4)
 
   return (
     <div className="space-y-6">
@@ -64,7 +54,10 @@ export default function ListingDetailPage({ params }: Props) {
           首页
         </Link>
         <span className="mx-1">/</span>
-        <Link href={`/explore?category=${item.category}`} className="hover:underline">
+        <Link
+          href={item.primaryCategory ? `/explore?category=${item.primaryCategory}` : '/explore'}
+          className="hover:underline"
+        >
           {item.category === 'physical' ? '实物' : '数字'}
         </Link>
         <span className="mx-1">/</span>
@@ -91,15 +84,10 @@ export default function ListingDetailPage({ params }: Props) {
                       : '其他'}
                 </Badge>
               )}
-              {item.tags.slice(0, 3).map((t) => (
-                <Badge key={t} variant="outline" className="text-xs">
-                  {t}
-                </Badge>
-              ))}
             </div>
             <h1 className="mt-3 text-2xl font-bold">{item.title}</h1>
             <div className="mt-2 text-xs text-muted-foreground">
-              {formatDate(item.createdAt)}发布 · {item.viewCount} 浏览 · {item.favoriteCount} 收藏
+              {formatDate(item.createdAt)}发布 · 数据来自 Alpha 服务端
             </div>
           </div>
 
@@ -124,15 +112,9 @@ export default function ListingDetailPage({ params }: Props) {
                 <Button className="w-full" size="lg" onClick={() => setBuyOpen(true)}>
                   立即购买
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  size="lg"
-                  onClick={() => setChatOpen(true)}
-                  disabled={!seller}
-                >
+                <Button variant="outline" className="w-full" size="lg" disabled>
                   <MessageCircle className="mr-1 h-4 w-4" />
-                  联系卖家
+                  联系卖家（未开放）
                 </Button>
                 <Button
                   variant="outline"
@@ -153,7 +135,7 @@ export default function ListingDetailPage({ params }: Props) {
             </CardContent>
           </Card>
 
-          {seller && <SellerCard seller={seller} />}
+          <SellerCard seller={seller} />
 
           {/* 实物成色 / 数字交付提示 */}
           {item.category === 'physical' && item.condition && (
@@ -180,22 +162,16 @@ export default function ListingDetailPage({ params }: Props) {
               </CardContent>
             </Card>
           )}
-          {item.category === 'digital' && item.deliveryType && (
+          {item.category === 'digital' && (
             <Card>
               <CardContent className="p-4 text-sm">
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="text-muted-foreground">交付方式</div>
-                  <div>
-                    {item.deliveryType === 'download_link'
-                      ? '下载链接'
-                      : item.deliveryType === 'license_key'
-                        ? '卡密 / 许可证'
-                        : item.deliveryType === 'cloud_link'
-                          ? '网盘链接'
-                          : '账号凭证'}
-                  </div>
-                  <div className="text-muted-foreground">交易说明</div>
-                  <div>演示版不执行交付、放款或退款</div>
+                  <div className="text-muted-foreground">授权说明</div>
+                  <div>{item.licenseDescription ?? '以订单交付记录为准'}</div>
+                  <div className="text-muted-foreground">内容版本</div>
+                  <div>{item.contentVersion ?? '未标注'}</div>
+                  <div className="text-muted-foreground">隐私边界</div>
+                  <div>交付链接和提取码仅对订单参与方可见</div>
                 </div>
               </CardContent>
             </Card>
@@ -203,51 +179,16 @@ export default function ListingDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* 描述 tabs */}
-      <Tabs defaultValue="description">
-        <TabsList>
-          <TabsTrigger value="description">商品描述</TabsTrigger>
-          <TabsTrigger value="related">相关推荐</TabsTrigger>
-        </TabsList>
-        <TabsContent value="description" className="mt-4">
-          <Card>
-            <CardContent className="p-6">
-              <MarkdownRenderer content={item.description} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="related" className="mt-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {related.map((r) => (
-              <Link key={r.id} href={`/listing/${r.id}`} className="block">
-                <Card className="overflow-hidden transition hover:opacity-90">
-                  <div className="relative aspect-square bg-muted">
-                    {r.media[0] && (
-                      <Image
-                        src={r.media[0].url}
-                        alt={r.title}
-                        fill
-                        sizes="(max-width: 640px) 50vw, 25vw"
-                        className="object-cover"
-                        unoptimized
-                      />
-                    )}
-                  </div>
-                  <CardContent className="p-2">
-                    <div className="line-clamp-2 text-xs">{r.title}</div>
-                    <div className="mt-1 text-sm font-bold text-primary">
-                      {formatPrice(r.price.exactAmount ?? r.price.amount, r.price.currency)}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">商品描述</h2>
+        <Card>
+          <CardContent className="p-6">
+            <MarkdownRenderer content={item.description} />
+          </CardContent>
+        </Card>
+      </section>
 
       <BuyModal item={item} open={buyOpen} onOpenChange={setBuyOpen} />
-      <ChatDrawer seller={seller ?? null} open={chatOpen} onOpenChange={setChatOpen} />
     </div>
   )
 }

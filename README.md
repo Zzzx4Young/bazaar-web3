@@ -7,13 +7,12 @@ accounts, shared listings, private orders, simulated settlement, physical delive
 digital delivery and refund recovery. Wallets, blockchain and real settlement remain
 outside the current scope.
 
-Project status: I1—I7 and the I8-0/I8-1 database operations milestones are complete. Remote baseline
-`a7778a0` passed both GitHub Actions jobs. I8-2 implementation commit `d9298db` passed local image
-acceptance and has not been pushed for same-SHA remote CI. See the [execution plan](docs/execution-plan.md),
+Project status: I1—I8 are complete. M1 Alpha release hardening is implemented and locally verified;
+the current worktree still requires a commit, push, and same-SHA GitHub Actions result. See the [execution plan](docs/execution-plan.md),
 [deployment runbook](docs/api-deployment-runbook.md), and
 [stage report](docs/backend-stage-report.md) for the verified boundary.
 
-## Frontend Demo quick start
+## Frontend development server
 
 Requirements: Node.js **>=22.12.0**, npm **10.9.8**.
 Dependency versions are defined by [package.json](frontend/package.json) and its lockfile.
@@ -26,23 +25,17 @@ npm run dev
 ```
 
 Open http://localhost:3000/zh-CN or http://localhost:3000/en.
-The root URL redirects to /zh-CN. Without a running backend, only the explicitly
-labelled unauthenticated Demo content is available.
-Cards use local placeholders by default; some detail images and avatars require
-external image services. Optional NEXT_PUBLIC_USE_PLACEHOLDER=0 enables card image requests.
+The root URL redirects to /zh-CN. This command starts the web process only. Current
+pages load listings, accounts and orders from the backend, so use the complete startup
+below for an operational Alpha. Browser GET requests for pages, React Server Components,
+scripts and icons are normal; business API requests use the POST-only Alpha contract.
 
 ## Internal Alpha local start
 
-1. Follow [the infrastructure guide](infra/README.md#docker-compose-启动) to create
-   ignored local secrets and start the persistent `postgres` service.
-2. Follow [the backend database-role procedure](docs/backend-core-contract.md#数据库角色)
-   to create `bazaar_migrate` and `bazaar_runtime`, deploy every checked-in migration,
-   and grant runtime permissions.
-3. Create accounts with the private-file workflow in
-   [backend account provisioning](backend/README.md#预置账户与认证), then start the backend
-   with its runtime-role `DATABASE_URL`. Its default address is `127.0.0.1:3001`.
-4. Start the frontend with `BACKEND_ORIGIN=http://127.0.0.1:3001`. Set backend
-   `APP_ORIGIN` to the exact browser origin, normally `http://localhost:3000`.
+1. Run `bash infra/scripts/init-secrets.sh` from the repository root.
+2. Run `docker compose -f infra/compose.alpha.yaml up -d --build --wait`.
+3. Open `http://localhost:3000/zh-CN`. Provision test accounts through the private-file workflow in
+   [backend account provisioning](backend/README.md#预置账户与认证) when needed.
 
 The backend never migrates, seeds or cleans the database during startup. Do not use
 the temporary `postgres-test` service for data that must survive a container stop.
@@ -53,37 +46,27 @@ All routes below have a /zh-CN or /en prefix. Some business text is not yet tran
 
 | Route suffix | Implemented capability |
 |---|---|
-| / | Banners, categories and product grids, including local publications |
-| /explore | Keyword, category, type, currency, condition and sorting controls |
-| /listing/[id] | Media, seller information, favorites, local chat and authenticated Alpha purchase |
+| / | Alpha introduction, fixed categories and server-backed product grids |
+| /explore | Server-backed listings with keyword, category, type, currency and supported sorting controls |
+| /listing/[id] | Server-backed detail and seller identity, local favorite preference and authenticated purchase |
 | /publish | Authenticated Alpha publication with placeholder media; no image upload or draft saving |
-| /me | Authenticated account, seller listing management and private buyer/seller orders; unauthenticated Demo profile |
+| /me | Authenticated account, seller listing management and private buyer/seller orders |
 | /me/orders/[id] | Private order history and role/state-specific payment, delivery, acceptance, issue and refund actions |
-| /seller/[id] | Demo seller profile and matching static/local products |
-| /favorites | Locally saved favorites |
-| /notifications | Static sample notifications |
-
-Mock data: 25 products, 6 sellers, 12 orders, 5 banners and 5 categories.
-Demo samples do not establish which assets are authorized for future trading.
-Displayed currencies and fees do not represent connected payment channels.
+| /seller/[id] | Public seller identity derived from current server-backed listings |
+| /favorites | Local favorite IDs resolved against current server-backed listings |
+| /notifications | Explicit unavailable state; no synthetic notifications |
 
 ## Storage and limitations
 
-Unauthenticated Demo products, favorites and old simulated orders persist in
-localStorage on the same browser and origin. They do not synchronize across devices.
-Authenticated Alpha accounts, listings, orders and private histories are PostgreSQL
-facts and are never reconstructed from those Demo records.
+Theme and favorite IDs remain browser preferences. Accounts, listings, orders and private
+histories are PostgreSQL facts; API failures show an error and never switch to sample or
+local business data. Unknown order-command results retain their payload and idempotency key
+for safe retry.
 
-Order actions save before updating in-memory state. A failed purchase returns to
-confirmation with an error and allows retry. Invalid cached products are excluded
-from the in-memory list while valid entries remain usable. Reading a corrupt cache
-does not overwrite it; a later successful publication saves the recovered valid
-list plus the new product.
-
-Chat messages only live in component memory. Registration, image hosting, notifications,
+Registration, image hosting, notifications, chat,
 wallets, blockchain settlement and external digital-link availability checks are not
 implemented. The Alpha uses simulated payment/settlement and pre-provisioned accounts.
-See the [Demo data contract](docs/mock-data-spec.md) for exact storage formats.
+The [Demo data contract](docs/mock-data-spec.md) documents the superseded prototype only.
 
 ## Development and verification
 
@@ -100,24 +83,18 @@ npm run start
 Stop the development server before building: dev and build share .next output.
 Restart development after a build to avoid stale assets.
 
-Legacy Demo browser tests, run from `frontend/`:
+Historical Demo browser specs remain for traceability and are not Alpha acceptance. The
+active Alpha browser flow runs from `backend/` against an isolated PostgreSQL schema:
 
 ```bash
 npx playwright install chromium
-npm run test:e2e
+cd ../backend
+node scripts/with-test-db.mjs node scripts/check-i5-browser.mjs
 ```
 
-Playwright starts or reuses the development server on port 3737.
 Current [CI](.github/workflows/ci.yml) runs frontend/backend checks, PostgreSQL
 integration tests, and the real Alpha Chromium acceptance flow. A local passing
 test does not establish remote CI status until the workflow run is green.
-
-The real Alpha browser flow runs from `backend/` with the isolated `postgres-test`
-service available:
-
-```bash
-node scripts/check-i5-browser.mjs
-```
 
 It creates random accounts, a schema and a restricted runtime role, then cleans them
 after the run. It uses fictitious delivery data and does not open external delivery links.
@@ -129,9 +106,7 @@ screenshots under docs/screenshots and may start a server on port 3737.
 
 Current stack: Next.js 14 App Router, React 18, TypeScript, Tailwind CSS,
 Radix components, next-intl, React Hook Form and Zod.
-User/filter/order stores use Zustand; products/favorites use a shared localStorage hook.
-This describes the checked-in implementation, not a recommendation to retain its
-framework version for the planned authenticated Alpha.
+Authentication and filter state use Zustand; only theme and favorite IDs use browser storage.
 
 A standard Node runtime can serve a production build with npm run start.
 Public deployment is outside the approved internal Alpha scope. The repository

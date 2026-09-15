@@ -1,7 +1,11 @@
 // 列表筛选纯函数
 import type { Item, FilterState } from '@/types'
 
-export function applyFilters(items: Item[], filter: FilterState): Item[] {
+export function applyFilters(
+  items: Item[],
+  filter: FilterState,
+  options: { sort?: boolean } = {}
+): Item[] {
   let result = [...items]
 
   // 关键词
@@ -44,15 +48,13 @@ export function applyFilters(items: Item[], filter: FilterState): Item[] {
   }
 
   // 排序
+  if (options.sort === false) return result
   switch (filter.sortBy) {
     case 'price_asc':
       result.sort((a, b) => a.price.amount - b.price.amount)
       break
     case 'price_desc':
       result.sort((a, b) => b.price.amount - a.price.amount)
-      break
-    case 'popular':
-      result.sort((a, b) => b.viewCount - a.viewCount)
       break
     case 'newest':
     default:

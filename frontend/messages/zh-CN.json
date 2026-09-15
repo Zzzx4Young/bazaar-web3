@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "Bazaar Web3 — 加密货币 C2C 二手交易平台",
-    "description": "C2C 商品市场前端演示版，使用样例商品和本地模拟订单，不连接钱包、区块链或支付服务。",
+    "description": "Bazaar 内部 Alpha 商品市场，使用共享服务端数据与模拟结算。",
     "siteName": "Bazaar Web3"
   },
   "nav": {
@@ -21,6 +21,15 @@
     "notifications": "通知"
   },
   "home": {
+    "hero": {
+      "eyebrow": "内部 Alpha · 共享服务端数据",
+      "title": "发布、发现并完成一笔可追踪的交易",
+      "body": "商品、订单和私有交付信息写入 PostgreSQL。付款与结算仍为模拟流程，不涉及真实资金。",
+      "explore": "探索商品",
+      "publish": "发布商品"
+    },
+    "loading": "正在从服务端加载商品…",
+    "loadError": "商品服务暂时不可用",
     "featured": "🔥 精选推荐",
     "digital": "💎 数字资产",
     "physical": "📦 实物二手",
@@ -28,20 +37,20 @@
     "trust": {
       "title": "为什么选择 Bazaar Web3",
       "escrow": {
-        "title": "模拟订单",
-        "body": "体验购买流程，不转移资金或调用合约"
+        "title": "服务端订单",
+        "body": "订单状态、交付和退款记录统一写入数据库"
       },
       "fee": {
-        "title": "不实际收费",
-        "body": "价格与手续费仅用于演示，不收取任何款项"
+        "title": "权限隔离",
+        "body": "私有交付信息仅对订单参与方开放"
       },
       "testnet": {
-        "title": "纯前端演示",
-        "body": "未接入后端或区块链，所有交易均为模拟"
+        "title": "安全重试",
+        "body": "结果未知时复用原请求，避免重复创建订单"
       },
       "wallet": {
-        "title": "本地体验",
-        "body": "使用演示身份，商品与收藏保存在当前浏览器"
+        "title": "模拟结算",
+        "body": "可体验完整状态流，不连接钱包或转移资金"
       }
     },
     "trending": {
@@ -76,7 +85,7 @@
     }
   },
   "footer": {
-    "tagline": "前端演示版 · 模拟交易 · 无真实资金"
+    "tagline": "内部 Alpha · 服务端持久化 · 模拟结算"
   },
   "common": {
     "buy": "立即购买",
@@ -96,7 +105,7 @@
     "languageLabel": "语言"
   },
   "demo": {
-    "notice": "前端演示版 · 使用虚构数据，不连接钱包或执行真实交易",
-    "publishNotice": "发布内容仅保存在当前浏览器。订单均为模拟，不连接钱包、区块链或支付服务。"
+    "notice": "内部 Alpha · 商品与订单写入共享服务端 · 付款和结算仍为模拟流程",
+    "publishNotice": "发布内容将写入 Alpha 服务端并对其他测试账户可见。请勿填写真实个人或敏感信息。"
   }
 }

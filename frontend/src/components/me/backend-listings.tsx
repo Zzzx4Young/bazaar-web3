@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useApiResource } from '@/hooks/use-api-resource'
@@ -32,9 +33,12 @@ export function BackendListings() {
         ...(publicationStatus ? { publicationStatus } : { title, priceAmount: price })
       })
       setEditing(null)
+      toast.success(publicationStatus === 'withdrawn' ? '商品已下架' : '商品已更新')
       resource.reload()
     } catch (failure) {
-      setError(backendErrorMessage(failure))
+      const message = backendErrorMessage(failure)
+      setError(message)
+      toast.error(`更新失败：${message}`)
     }
   }
   const items = resource.data?.items ?? []

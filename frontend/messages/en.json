@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "Bazaar Web3 — Crypto-Powered C2C Marketplace",
-    "description": "Frontend C2C marketplace demo with sample listings and local simulated orders. No wallet, blockchain, or payment connection.",
+    "description": "Bazaar internal Alpha marketplace with shared server data and simulated settlement.",
     "siteName": "Bazaar Web3"
   },
   "nav": {
@@ -21,6 +21,15 @@
     "notifications": "Notifications"
   },
   "home": {
+    "hero": {
+      "eyebrow": "Internal Alpha · Shared server data",
+      "title": "Publish, discover, and complete a traceable trade",
+      "body": "Listings, orders, and private delivery records are stored in PostgreSQL. Payment and settlement remain simulated with no real funds.",
+      "explore": "Explore listings",
+      "publish": "Publish a listing"
+    },
+    "loading": "Loading listings from the server…",
+    "loadError": "The listing service is unavailable",
     "featured": "🔥 Featured",
     "digital": "💎 Digital Assets",
     "physical": "📦 Physical Goods",
@@ -28,20 +37,20 @@
     "trust": {
       "title": "Why Bazaar Web3",
       "escrow": {
-        "title": "Simulated orders",
-        "body": "Explore the purchase flow without transferring funds or using a contract."
+        "title": "Server-backed orders",
+        "body": "Order states, delivery, and refunds are stored in the database."
       },
       "fee": {
-        "title": "No actual charges",
-        "body": "Prices and fees are illustrative; no payments are collected."
+        "title": "Private by role",
+        "body": "Private delivery details are available only to order participants."
       },
       "testnet": {
-        "title": "Frontend demo",
-        "body": "No backend or blockchain connection. All transactions are simulated."
+        "title": "Safe retries",
+        "body": "Unknown results reuse the original request to avoid duplicate orders."
       },
       "wallet": {
-        "title": "Try it locally",
-        "body": "Use a demo profile; listings and favorites stay in this browser."
+        "title": "Simulated settlement",
+        "body": "Test the full state flow without a wallet or real fund transfer."
       }
     },
     "trending": {
@@ -76,7 +85,7 @@
     }
   },
   "footer": {
-    "tagline": "Frontend demo · simulated transactions · no real funds"
+    "tagline": "Internal Alpha · server persistence · simulated settlement"
   },
   "common": {
     "buy": "Buy now",
@@ -96,7 +105,7 @@
     "languageLabel": "Language"
   },
   "demo": {
-    "notice": "Frontend demo · Sample data only; no wallet connection or real transactions",
-    "publishNotice": "Published listings appear in this browser only. Orders are simulated; no wallet, blockchain, or payment connection."
+    "notice": "Internal Alpha · Listings and orders use the shared server · Payment and settlement remain simulated",
+    "publishNotice": "Listings are stored by the Alpha server and visible to other test accounts. Do not enter real personal or sensitive information."
   }
 }

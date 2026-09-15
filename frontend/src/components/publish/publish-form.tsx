@@ -2,6 +2,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useRouter } from '@/i18n/routing'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -19,10 +20,10 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { categories } from '@/lib/mock-data'
+import { marketplaceCategories } from '@/lib/categories'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { createListing } from '@/lib/backend-api'
-import type { ItemCategory, Currency, ItemCondition, ShippingMethod } from '@/types'
+import type { ItemCategory, Currency } from '@/types'
 
 const schema = z
   .object({
@@ -62,9 +63,6 @@ const schema = z
       'USDC',
       'SOL'
     ]),
-    // 实物字段
-    condition: z.enum(['new', 'like_new', 'good', 'fair', 'poor']).optional(),
-    shippingMethod: z.enum(['delivery', 'face_to_face']).optional(),
     // 数字字段
     licenseDescription: z.string().optional(),
     contentVersion: z.string().optional()
@@ -73,15 +71,12 @@ const schema = z
     const issue = (path: string, message: string) =>
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message })
     if (
-      categories.find((category) => category.id === data.primaryCategory)?.itemCategory !==
-      data.category
+      marketplaceCategories.find((category) => category.id === data.primaryCategory)
+        ?.itemCategory !== data.category
     ) {
       issue('primaryCategory', '请选择与商品类型匹配的分类')
     }
-    if (data.category === 'physical') {
-      if (!data.condition) issue('condition', '请选择物品成色')
-      if (!data.shippingMethod) issue('shippingMethod', '请选择交易方式')
-    } else {
+    if (data.category === 'digital') {
       if (!data.licenseDescription || data.licenseDescription.trim().length < 3)
         issue('licenseDescription', '请填写授权说明（至少 3 个字符）')
       if (!data.contentVersion || data.contentVersion.trim().length < 1)
@@ -108,8 +103,7 @@ export function PublishForm() {
     defaultValues: {
       category: 'physical',
       primaryCategory: 'electronics',
-      priceCurrency: 'CNY',
-      shippingMethod: 'delivery'
+      priceCurrency: 'CNY'
     }
   })
 
@@ -136,9 +130,13 @@ export function PublishForm() {
             }
           : {})
       })
+      toast.success('商品发布成功')
       router.push(`/listing/${listing.id}`)
     } catch (error) {
-      setSaveError(error instanceof Error ? `发布失败：${error.message}` : '发布失败，请稍后重试。')
+      const message =
+        error instanceof Error ? `发布失败：${error.message}` : '发布失败，请稍后重试。'
+      setSaveError(message)
+      toast.error(message)
     } finally {
       setSubmitting(false)
     }
@@ -172,7 +170,7 @@ export function PublishForm() {
           className="flex h-10 w-full rounded-md border bg-background px-3 text-sm"
           {...register('primaryCategory')}
         >
-          {categories
+          {marketplaceCategories
             .filter((c) => c.itemCategory === category)
             .map((c) => (
               <option key={c.id} value={c.id}>
@@ -246,48 +244,6 @@ export function PublishForm() {
           )}
         </CardContent>
       </Card>
-
-      {/* 实物字段 */}
-      {category === 'physical' && (
-        <Card>
-          <CardContent className="space-y-4 p-4">
-            <div>
-              <Label>物品成色</Label>
-              <Select
-                value={watch('condition')}
-                onValueChange={(v) => setValue('condition', v as ItemCondition)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择成色" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="new">全新</SelectItem>
-                  <SelectItem value="like_new">99新</SelectItem>
-                  <SelectItem value="good">95新</SelectItem>
-                  <SelectItem value="fair">9成新</SelectItem>
-                  <SelectItem value="poor">8成新</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.condition && <p className="mt-1 text-xs text-destructive">请选择物品成色</p>}
-            </div>
-            <div>
-              <Label>交易方式</Label>
-              <Select
-                value={watch('shippingMethod') ?? 'delivery'}
-                onValueChange={(v) => setValue('shippingMethod', v as ShippingMethod)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="delivery">快递发货 / 同城面交</SelectItem>
-                  <SelectItem value="face_to_face">仅限同城面交</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* 数字字段 */}
       {category === 'digital' && (

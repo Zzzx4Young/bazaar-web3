@@ -41,7 +41,7 @@ describe('applyFilters — keyword', () => {
       makeItem({ id: 'b', title: 'MacBook Air' })
     ]
     const result = applyFilters(items, { ...baseFilter, keyword: 'iphone' })
-    expect(result.map(i => i.id)).toEqual(['a'])
+    expect(result.map((i) => i.id)).toEqual(['a'])
   })
 
   it('matches description content', () => {
@@ -50,7 +50,7 @@ describe('applyFilters — keyword', () => {
       makeItem({ id: 'b', description: 'A camera lens' })
     ]
     const result = applyFilters(items, { ...baseFilter, keyword: 'sneaker' })
-    expect(result.map(i => i.id)).toEqual(['a'])
+    expect(result.map((i) => i.id)).toEqual(['a'])
   })
 
   it('matches tags case-insensitively', () => {
@@ -59,7 +59,7 @@ describe('applyFilters — keyword', () => {
       makeItem({ id: 'b', tags: ['used'] })
     ]
     const result = applyFilters(items, { ...baseFilter, keyword: '99NEW' })
-    expect(result.map(i => i.id)).toEqual(['a'])
+    expect(result.map((i) => i.id)).toEqual(['a'])
   })
 
   it('returns empty when no match', () => {
@@ -82,7 +82,7 @@ describe('applyFilters — category & type', () => {
       makeItem({ id: 'd1', category: 'digital' })
     ]
     const result = applyFilters(items, { ...baseFilter, itemCategory: 'physical' as ItemCategory })
-    expect(result.map(i => i.id)).toEqual(['p1'])
+    expect(result.map((i) => i.id)).toEqual(['p1'])
   })
 
   it('filters by itemCategory=digital', () => {
@@ -91,7 +91,7 @@ describe('applyFilters — category & type', () => {
       makeItem({ id: 'd1', category: 'digital' })
     ]
     const result = applyFilters(items, { ...baseFilter, itemCategory: 'digital' as ItemCategory })
-    expect(result.map(i => i.id)).toEqual(['d1'])
+    expect(result.map((i) => i.id)).toEqual(['d1'])
   })
 })
 
@@ -102,7 +102,7 @@ describe('applyFilters — price range', () => {
       makeItem({ id: 'b', price: { amount: 200, currency: 'CNY' } })
     ]
     const result = applyFilters(items, { ...baseFilter, priceMin: 100 })
-    expect(result.map(i => i.id)).toEqual(['b'])
+    expect(result.map((i) => i.id)).toEqual(['b'])
   })
 
   it('filters by priceMax', () => {
@@ -111,7 +111,7 @@ describe('applyFilters — price range', () => {
       makeItem({ id: 'b', price: { amount: 200, currency: 'CNY' } })
     ]
     const result = applyFilters(items, { ...baseFilter, priceMax: 100 })
-    expect(result.map(i => i.id)).toEqual(['a'])
+    expect(result.map((i) => i.id)).toEqual(['a'])
   })
 
   it('combines priceMin and priceMax', () => {
@@ -121,7 +121,7 @@ describe('applyFilters — price range', () => {
       makeItem({ id: 'c', price: { amount: 300, currency: 'CNY' } })
     ]
     const result = applyFilters(items, { ...baseFilter, priceMin: 100, priceMax: 200 })
-    expect(result.map(i => i.id)).toEqual(['b'])
+    expect(result.map((i) => i.id)).toEqual(['b'])
   })
 })
 
@@ -132,14 +132,14 @@ describe('applyFilters — condition', () => {
       makeItem({ id: 'b', condition: 'good' as ItemCondition })
     ]
     const result = applyFilters(items, { ...baseFilter, condition: 'like_new' as ItemCondition })
-    expect(result.map(i => i.id)).toEqual(['a'])
+    expect(result.map((i) => i.id)).toEqual(['a'])
   })
 
   it('does not filter digital items by condition', () => {
     const items = [makeItem({ id: 'd', category: 'digital' })]
     // digital items don't have condition — should not be filtered out
     const result = applyFilters(items, { ...baseFilter, condition: 'like_new' as ItemCondition })
-    expect(result.map(i => i.id)).toEqual(['d'])
+    expect(result.map((i) => i.id)).toEqual(['d'])
   })
 })
 
@@ -151,7 +151,7 @@ describe('applyFilters — sort', () => {
       makeItem({ id: 'mid', createdAt: '2026-06-01T00:00:00Z' })
     ]
     const result = applyFilters(items, { ...baseFilter, sortBy: 'newest' })
-    expect(result.map(i => i.id)).toEqual(['new', 'mid', 'old'])
+    expect(result.map((i) => i.id)).toEqual(['new', 'mid', 'old'])
   })
 
   it('sorts by price_asc', () => {
@@ -161,7 +161,7 @@ describe('applyFilters — sort', () => {
       makeItem({ id: 'pricey', price: { amount: 500, currency: 'CNY' } })
     ]
     const result = applyFilters(items, { ...baseFilter, sortBy: 'price_asc' })
-    expect(result.map(i => i.id)).toEqual(['cheap', 'mid', 'pricey'])
+    expect(result.map((i) => i.id)).toEqual(['cheap', 'mid', 'pricey'])
   })
 
   it('sorts by price_desc', () => {
@@ -171,34 +171,45 @@ describe('applyFilters — sort', () => {
       makeItem({ id: 'pricey', price: { amount: 500, currency: 'CNY' } })
     ]
     const result = applyFilters(items, { ...baseFilter, sortBy: 'price_desc' })
-    expect(result.map(i => i.id)).toEqual(['pricey', 'mid', 'cheap'])
-  })
-
-  it('sorts by popular (viewCount desc)', () => {
-    const items = [
-      makeItem({ id: 'low', viewCount: 10 }),
-      makeItem({ id: 'high', viewCount: 1000 }),
-      makeItem({ id: 'mid', viewCount: 500 })
-    ]
-    const result = applyFilters(items, { ...baseFilter, sortBy: 'popular' })
-    expect(result.map(i => i.id)).toEqual(['high', 'mid', 'low'])
+    expect(result.map((i) => i.id)).toEqual(['pricey', 'mid', 'cheap'])
   })
 })
 
 describe('applyFilters — combined', () => {
   it('combines keyword + category + sort', () => {
     const items = [
-      makeItem({ id: 'a', title: 'iPhone', category: 'physical', price: { amount: 5000, currency: 'CNY' }, viewCount: 100, createdAt: '2026-01-01T00:00:00Z' }),
-      makeItem({ id: 'b', title: 'iPad', category: 'physical', price: { amount: 4000, currency: 'CNY' }, viewCount: 50, createdAt: '2026-02-01T00:00:00Z' }),
-      makeItem({ id: 'c', title: 'iPhone Skin', category: 'digital', price: { amount: 5, currency: 'USDT' }, viewCount: 200, createdAt: '2026-03-01T00:00:00Z' })
+      makeItem({
+        id: 'a',
+        title: 'iPhone',
+        category: 'physical',
+        price: { amount: 5000, currency: 'CNY' },
+        viewCount: 100,
+        createdAt: '2026-01-01T00:00:00Z'
+      }),
+      makeItem({
+        id: 'b',
+        title: 'iPad',
+        category: 'physical',
+        price: { amount: 4000, currency: 'CNY' },
+        viewCount: 50,
+        createdAt: '2026-02-01T00:00:00Z'
+      }),
+      makeItem({
+        id: 'c',
+        title: 'iPhone Skin',
+        category: 'digital',
+        price: { amount: 5, currency: 'USDT' },
+        viewCount: 200,
+        createdAt: '2026-03-01T00:00:00Z'
+      })
     ]
     const result = applyFilters(items, {
       ...baseFilter,
       keyword: 'iphone',
       itemCategory: 'physical',
-      sortBy: 'popular'
+      sortBy: 'newest'
     })
-    expect(result.map(i => i.id)).toEqual(['a']) // c is digital, b is iPad (no keyword match)
+    expect(result.map((i) => i.id)).toEqual(['a']) // c is digital, b is iPad (no keyword match)
   })
 })
 it('keeps electronics separate from fashion and digital categories distinct', () => {
@@ -208,6 +219,10 @@ it('keeps electronics separate from fashion and digital categories distinct', ()
     makeItem({ id: 'code', category: 'digital', primaryCategory: 'software_source' }),
     makeItem({ id: 'game', category: 'digital', primaryCategory: 'game_items' })
   ]
-  expect(applyFilters(items, { ...baseFilter, category: 'electronics' }).map(i => i.id)).toEqual(['phone'])
-  expect(applyFilters(items, { ...baseFilter, category: 'software_source' }).map(i => i.id)).toEqual(['code'])
+  expect(applyFilters(items, { ...baseFilter, category: 'electronics' }).map((i) => i.id)).toEqual([
+    'phone'
+  ])
+  expect(
+    applyFilters(items, { ...baseFilter, category: 'software_source' }).map((i) => i.id)
+  ).toEqual(['code'])
 })

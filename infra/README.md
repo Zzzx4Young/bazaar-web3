@@ -1,6 +1,8 @@
 # 容器化基础设施
 
-更新：2026-09-13。供本地开发、数据库实验和已有 Kubernetes 集群内测使用。内部 Alpha 后端见 [backend/README.md](../backend/README.md)，前端按 frontend/package.json 启动；本目录只编排 PostgreSQL，尚无 API 镜像；迁移、运行角色和启动见 backend 文档。
+更新：2026-09-15。供本地开发、数据库实验和已有 Kubernetes 集群内测使用。完整内部
+Alpha 可由 `compose.alpha.yaml` 启动 PostgreSQL、迁移、NestJS API 和 Next.js 前端；
+独立后端部署入口见 [backend/README.md](../backend/README.md)。
 
 宿主机 PostgreSQL client、只读观察角色和 DBHub 配置见 backend README。通用环境可在应用
 角色创建后由管理员执行 `scripts/create-observer-role.sql`，再由迁移角色运行版本化的观察
@@ -29,6 +31,20 @@ StatefulSet 提供稳定身份与存储关联，默认删除工作负载不删�
 ## Docker Compose 启动
 
 前置：Docker Engine 或 Docker Desktop，以及支持 up --wait 的 Docker Compose 插件；Linux 主机需可访问 Docker daemon。所有以下命令在仓库根目录运行。
+
+完整 Alpha 首次启动或重复启动：
+
+```bash
+bash infra/scripts/init-secrets.sh
+docker compose -f infra/compose.alpha.yaml up -d --build --wait
+docker compose -f infra/compose.alpha.yaml ps
+```
+
+该入口按 `postgres -> bootstrap -> migrate -> api -> frontend` 启动。bootstrap 首次生成迁移
+与运行角色的随机凭据到仅容器可读的命名卷，重复启动复用已有凭据。迁移成功后 API 才
+启动，API 健康后再启动前端。默认页面为 `http://localhost:3000/zh-CN`。端口冲突时可设置
+`POSTGRES_PORT`、`API_PORT`、`FRONTEND_PORT`，并将 `APP_ORIGIN` 设为浏览器实际 origin。
+停止时运行 `docker compose -f infra/compose.alpha.yaml down`；命名卷默认保留。
 
 ```bash
 bash infra/scripts/init-secrets.sh

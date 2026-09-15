@@ -1,57 +1,44 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ProfileHeader } from '@/components/me/profile-header'
-import { OrderTable } from '@/components/me/order-table'
-import { useOrderStore, selectByBuyer, selectBySeller } from '@/stores/use-order-store'
-import { useUserStore } from '@/stores/use-user-store'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { BackendOrders } from '@/components/me/backend-orders'
 import { BackendListings } from '@/components/me/backend-listings'
+import { Card, CardContent } from '@/components/ui/card'
 
 export default function MePage() {
-  const user = useUserStore((s) => s.user)
-  const auth = useAuthStore()
-  const orderState = useOrderStore()
+  const status = useAuthStore((state) => state.status)
   const [tab, setTab] = useState<'buyer' | 'seller'>('buyer')
 
-  const buyerOrders = useMemo(() => selectByBuyer(user.id)(orderState), [orderState, user.id])
-  // Match orders against the user's linkedSellerId (mock) so that a registered
-  // merchant sees both their personal buys and their merchant-side sales.
-  const sellerOrders = useMemo(
-    () => selectBySeller(user.linkedSellerId ?? user.id)(orderState),
-    [orderState, user.id, user.linkedSellerId]
-  )
+  if (status === 'loading') return <p role="status">正在恢复账户会话…</p>
+  if (status !== 'authenticated')
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <h1 className="text-xl font-semibold">登录后查看个人中心</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            请使用页面右上角的登录入口。个人商品和订单均从 Alpha 服务端读取。
+          </p>
+        </CardContent>
+      </Card>
+    )
 
   return (
     <div className="space-y-6">
       <ProfileHeader />
-      {auth.status === 'authenticated' && <BackendListings />}
-      {auth.status !== 'authenticated' && (
-        <p className="rounded-md border p-3 text-sm text-muted-foreground">
-          以下订单来自当前浏览器的 Demo 数据，登录 Alpha 账户后会切换为后端真实订单。
-        </p>
-      )}
-
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'buyer' | 'seller')}>
+      <BackendListings />
+      <Tabs value={tab} onValueChange={(value) => setTab(value as 'buyer' | 'seller')}>
         <TabsList>
           <TabsTrigger value="buyer">我买到的</TabsTrigger>
           <TabsTrigger value="seller">我卖出的</TabsTrigger>
         </TabsList>
         <TabsContent value="buyer" className="mt-4">
-          {auth.status === 'authenticated' ? (
-            <BackendOrders role="buyer" />
-          ) : (
-            <OrderTable orders={buyerOrders} emptyVariant="buyer" />
-          )}
+          <BackendOrders role="buyer" />
         </TabsContent>
         <TabsContent value="seller" className="mt-4">
-          {auth.status === 'authenticated' ? (
-            <BackendOrders role="seller" />
-          ) : (
-            <OrderTable orders={sellerOrders} emptyVariant="seller" />
-          )}
+          <BackendOrders role="seller" />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,5 +1,5 @@
 import { setRequestLocale } from 'next-intl/server'
-import { HeroBanner } from '@/components/home/hero-banner'
+import { AlphaHero } from '@/components/home/alpha-hero'
 import { CategoryTabs } from '@/components/home/category-tabs'
 import { HomeItemGrids } from '@/components/home/home-item-grids'
 import { TrustStrip } from '@/components/home/trust-strip'
@@ -7,7 +7,7 @@ import { TrendingCategories } from '@/components/home/trending-categories'
 import { Button } from '@/components/ui/button'
 import { Link } from '@/i18n/routing'
 import { getTranslations } from 'next-intl/server'
-import { banners, categories } from '@/lib/mock-data'
+import { marketplaceCategories } from '@/lib/categories'
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
@@ -16,9 +16,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <div className="space-y-8">
-      <HeroBanner banners={banners} />
+      <AlphaHero />
 
-      <CategoryTabs categories={categories} />
+      <CategoryTabs categories={marketplaceCategories} />
 
       <TrustStrip />
 

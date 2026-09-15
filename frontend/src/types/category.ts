@@ -16,10 +16,10 @@ export interface Category {
   itemCategory: ItemCategory // 主归属（实物/数字）
   icon: string // lucide-react icon name
   subcategories?: string[]
-  itemIds: string[] // mock 数据归属
+  itemIds: string[] // 旧 Demo 样例可用于关联商品，Alpha 分类使用空数组
 }
 
-export type SortBy = 'newest' | 'price_asc' | 'price_desc' | 'popular'
+export type SortBy = 'newest' | 'price_asc' | 'price_desc'
 
 export interface FilterState {
   category?: PrimaryCategory

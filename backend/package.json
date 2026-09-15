@@ -12,6 +12,7 @@
     "build": "npm run generate && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "check:backend": "npm run build && npm run typecheck && npm run lint && node --test tests/*.test.mjs",
     "start": "node --env-file-if-exists=.env dist/main.js",
     "dev": "npm run build && npm start",
     "db:psql": "node scripts/local-psql.mjs",

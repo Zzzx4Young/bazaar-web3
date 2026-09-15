@@ -1,5 +1,5 @@
 import { iconForCategory, categoryForItem } from '@/lib/category-icons'
-import { categories } from '@/lib/mock-data'
+import { marketplaceCategories } from '@/lib/categories'
 import { cn } from '@/lib/utils'
 import type { Item, PrimaryCategory } from '@/types'
 
@@ -17,14 +17,13 @@ interface PlaceholderArtProps {
  */
 export function PlaceholderArt({ item, categoryHint }: PlaceholderArtProps) {
   const cat: PrimaryCategory | undefined =
-    categoryHint ?? categoryForItem(item.id, categories)
+    categoryHint ?? item.primaryCategory ?? categoryForItem(item.id, marketplaceCategories)
   const Icon = iconForCategory(cat)
   // Grab the first **letter** (Unicode letter class) for the watermark. If
   // the title starts with digits / punctuation, fall back to the title's
   // first non-space character; otherwise to "?" so the layout never breaks.
   const stripped = item.title.replace(/[\s\p{P}\p{S}]/gu, '')
-  const letter =
-    (stripped.match(/[\p{L}\p{N}]/u)?.[0] ?? item.title[0] ?? '?').toUpperCase()
+  const letter = (stripped.match(/[\p{L}\p{N}]/u)?.[0] ?? item.title[0] ?? '?').toUpperCase()
 
   const klass = cn(
     'flex h-full w-full flex-col items-center justify-center gap-1 overflow-hidden',
@@ -48,11 +47,7 @@ export function PlaceholderArt({ item, categoryHint }: PlaceholderArtProps) {
         {letter}
       </span>
       {/* Icon, centered, slightly toward the bottom */}
-      <Icon
-        className="relative -mt-12 h-12 w-12 opacity-90"
-        strokeWidth={1.5}
-        aria-hidden
-      />
+      <Icon className="relative -mt-12 h-12 w-12 opacity-90" strokeWidth={1.5} aria-hidden />
     </div>
   )
 }

@@ -1,74 +1,59 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import FavoritesPage from '@/app/[locale]/favorites/page'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import { items } from '@/lib/mock-data'
 
-// Mock the next-intl Link to render plain anchors so the test can read hrefs
-vi.mock('@/i18n/routing', () => ({
-  Link: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
-    <a href={href} className={className}>{children}</a>
-  )
+const backend = vi.hoisted(() => ({
+  current: { items: [], loading: false, error: null, hasMore: false } as {
+    items: typeof items
+    loading: boolean
+    error: string | null
+    hasMore: boolean
+  }
 }))
 
-function seedFavoritesDirect(ids: string[]) {
-  // Imperative: directly write localStorage so the store rehydrates with
-  // these ids on its first render. Avoids React render-timing races.
+vi.mock('@/hooks/use-backend-listings', () => ({
+  useBackendListings: () => backend.current
+}))
+
+import FavoritesPage from '@/app/[locale]/favorites/page'
+
+function seedFavorites(ids: string[]) {
   window.localStorage.setItem('c2c:user:favorites', JSON.stringify(ids))
 }
 
-beforeEach(() => {
-  window.localStorage.clear()
-})
+describe('FavoritesPage server-backed listings', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+    backend.current = { items: [], loading: false, error: null, hasMore: false }
+  })
 
-// next-intl is mocked globally in setup.ts — useTranslations returns the leaf
-// key segment (e.g. "title", "description", "explore"), so we assert on
-// structural markers (data-testid, role, href) instead of translated text.
-describe('FavoritesPage — empty state', () => {
-  it('renders the shared empty-state component when no favorites', () => {
+  it('renders an empty state after the server returns no matching listings', () => {
     render(<FavoritesPage />)
     expect(screen.getByTestId('empty-state')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /explore/i })).toHaveAttribute('href', '/explore')
   })
 
-  it('renders a link to /explore when empty', () => {
+  it('matches local favorite ids against current server listings', () => {
+    backend.current = { items: items.slice(0, 2), loading: false, error: null, hasMore: false }
+    seedFavorites([items[0]!.id])
     render(<FavoritesPage />)
-    const link = screen.getByRole('link', { name: /explore/i })
-    expect(link.getAttribute('href')).toBe('/explore')
-  })
-})
-
-describe('FavoritesPage — with items', () => {
-  it('renders favorited items', () => {
-    seedFavoritesDirect(['item_001', 'item_006'])
-    render(<FavoritesPage />)
-    expect(screen.getByText(/iPhone 15 Pro/)).toBeInTheDocument()
-    expect(screen.getByText(/ENS 域名.*crypto\.eth/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '我的收藏 (1)' })).toBeInTheDocument()
+    expect(screen.getByText(items[0]!.title)).toBeInTheDocument()
+    expect(screen.queryByText(items[1]!.title)).not.toBeInTheDocument()
   })
 
-  it('shows count in heading', () => {
-    seedFavoritesDirect(['item_001', 'item_006'])
+  it('shows server failures instead of falling back to mock listings', () => {
+    backend.current = { items: [], loading: false, error: 'NETWORK_ERROR', hasMore: false }
+    seedFavorites([items[0]!.id])
     render(<FavoritesPage />)
-    expect(screen.getByText(/我的收藏.*\(2\)/)).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('NETWORK_ERROR')
+    expect(screen.queryByText(items[0]!.title)).not.toBeInTheDocument()
   })
 
-  it('links each item to its detail page', () => {
-    seedFavoritesDirect(['item_001'])
+  it('removes stale local favorite ids after a complete server response', async () => {
+    seedFavorites(['item_from_old_demo'])
     render(<FavoritesPage />)
-    const link = screen.getByRole('link', { name: /iPhone 15 Pro/ })
-    expect(link.getAttribute('href')).toBe('/listing/item_001')
-  })
-
-  it('does not render non-favorited items', () => {
-    seedFavoritesDirect(['item_001'])
-    render(<FavoritesPage />)
-    // item_006 (ENS) is not favorited
-    expect(screen.queryByText('ENS 域名：crypto.eth')).not.toBeInTheDocument()
-  })
-})
-
-describe('FavoritesPage — handles stale favorite ids', () => {
-  it('silently ignores favorited item ids that no longer exist', () => {
-    seedFavoritesDirect(['item_does_not_exist'])
-    render(<FavoritesPage />)
-    // Should not crash, should show empty state (data-testid present)
-    expect(screen.getByTestId('empty-state')).toBeInTheDocument()
+    await waitFor(() => expect(window.localStorage.getItem('c2c:user:favorites')).toBe('[]'))
+    expect(screen.getByRole('heading', { name: '我的收藏 (0)' })).toBeInTheDocument()
   })
 })

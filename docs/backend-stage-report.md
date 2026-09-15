@@ -242,3 +242,38 @@ secret；迁移成功后才启动 API。API 绑定宿主回环端口，启用只
 构建与上述镜像验收，并将 checkout/setup-node 从 v4 升至使用 Node 24 runtime 的 v5。
 实现提交为 `d9298db`，尚未推送，因此远端同 SHA CI 仍待执行。操作与回滚见
 [部署手册](api-deployment-runbook.md)。
+
+## Alpha 页面数据源收口（2026-09-14）
+
+浏览器复核确认业务 API 均为 POST；开发者工具中的 GET 来自 Next.js 页面、RSC、静态脚本和
+图标。默认首页此前仍从旧 mock 商品/卖家渲染，顶部和页脚也错误宣称未接后端，导致只启动
+前端时看似可用、进入详情后却与服务端事实冲突。
+
+当前工作区已将首页、探索、详情、卖家页、收藏和个人中心统一到服务端商品、账户和订单。
+收藏仅在浏览器保存 ID，再与当前服务端商品交集；API 失败显示错误，不回退到样例数据。
+默认页面移除虚构评分、浏览量、自动聊天、通知以及后端不支持的热度排序和成色字段。分类
+作为接口固定枚举保留在前端，不属于业务记录。
+
+验证结果：frontend typecheck、Lint、26 个测试文件共 182 项测试和 production build 通过；
+真实 Chromium Alpha 验收在隔离 schema 覆盖实物/数字成交、数字补交、退款恢复、越权和结果
+未知同键重试并通过，随机账户、schema 和角色已清理。远端 CI 待提交推送后确认。
+
+## M1 Alpha 发布加固（2026-09-15）
+
+前端增加路由级 loading/error 边界、统一 Toast 反馈和独立登录页。受保护 API 收到 401/403
+后会按当前 CSRF 会话代际清除 Zustand 身份，并携带 `returnTo` 跳转本地化登录页。Chromium
+验收通过真实撤销服务端会话证明该流程不会闪现私有数据或崩溃。
+
+后端 readiness 现在执行 Prisma PostgreSQL ping，返回连接状态与毫秒延迟，不返回数据库
+地址或凭据。结构化请求日志及响应继续传递同一 `x-request-id`；验收脚本以错误密码触发前端
+错误，再断言页面显示的 ID 与后端 stdout 中 401 日志逐值相同。原有事务、版本检查和幂等键
+覆盖快速重复付款、冲突与丢失响应重放。
+
+新增完整 `compose.alpha.yaml` 和前端生产镜像，按 PostgreSQL、凭据/角色 bootstrap、迁移、
+API 健康、前端顺序启动。运行用户只读共享配置卷中的凭据；bootstrap 重复执行复用凭据，
+避免轮换密码后旧 API 连接池失效。隔离端口验收中 6 个迁移成功、API healthy、readiness
+返回数据库延迟、前端页面返回 200。
+
+本地门禁：`npm run check:frontend`、`npm run check:backend`、PostgreSQL 集成 31/31、observer
+权限验收及 `npm run test:e2e` 均通过。CI 的 Alpha browser job 已改走该标准 E2E 命令并使用
+`postgres-test`；当前工作树尚待提交、推送和同 SHA 远端结果。

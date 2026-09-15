@@ -1,79 +1,47 @@
 'use client'
 
-// 公开卖家页
-import { notFound } from 'next/navigation'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Star } from 'lucide-react'
 import { ItemGrid } from '@/components/home/item-grid'
-import { findSeller, sellers } from '@/lib/mock-data'
-import { useItemStore } from '@/stores/use-item-store'
-import { formatDate } from '@/lib/format'
+import { useBackendListings } from '@/hooks/use-backend-listings'
 
-interface Props {
-  params: { id: string }
-}
+export default function SellerPage({ params }: { params: { id: string } }) {
+  const backend = useBackendListings(new URLSearchParams({ sort: 'newest', limit: '50' }))
+  if (backend.loading) return <p role="status">正在从服务端加载卖家商品…</p>
+  if (backend.error)
+    return (
+      <p role="alert" className="text-destructive">
+        卖家商品加载失败：{backend.error}
+      </p>
+    )
+  const sellerItems = backend.items.filter((item) => item.sellerId === params.id)
+  const displayName = sellerItems[0]?.sellerDisplayName
 
-export default function SellerPage({ params }: Props) {
-  const { items } = useItemStore()
-  const seller = findSeller(params.id)
-  if (!seller) notFound()
-
-  const sellerItems = items.filter(i => i.sellerId === seller.id)
-  const sellerMap = new Map(sellers.map(s => [s.id, s]))
+  if (!displayName)
+    return (
+      <Card>
+        <CardContent className="p-8 text-center text-sm text-muted-foreground">
+          当前没有可展示的卖家商品。
+        </CardContent>
+      </Card>
+    )
 
   return (
     <div className="space-y-6">
-      {/* 卖家头部 */}
       <Card>
-        <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start">
-          <Avatar className="h-20 w-20">
-            <AvatarImage
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${seller.avatarSeed}`}
-              alt={seller.displayName}
-            />
-            <AvatarFallback className="text-lg">
-              {seller.displayName.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
+        <CardContent className="flex items-center gap-4 p-6">
+          <Avatar className="h-16 w-16">
+            <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <div className="flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold">{seller.displayName}</h1>
-              <Badge variant="secondary">
-                {seller.completedOrders > 200
-                  ? '金牌卖家'
-                  : seller.completedOrders > 100
-                    ? '银牌卖家'
-                    : '普通卖家'}
-              </Badge>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-0.5">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-medium text-foreground">{seller.rating.toFixed(1)}</span>
-              </span>
-              <span>· {seller.ratingCount} 评价</span>
-              <span>· {seller.completedOrders} 单成交</span>
-              <span>· 加入于 {formatDate(seller.joinedAt)}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              本卖家共发布 {sellerItems.length} 件商品，仅用于模拟交易展示。
+          <div>
+            <h1 className="text-2xl font-bold">{displayName}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Alpha 预置账户 · {sellerItems.length} 件公开在售商品
             </p>
           </div>
-          <button
-            type="button"
-            disabled
-            className="rounded-md bg-muted px-4 py-2 text-sm text-muted-foreground"
-            title="私聊功能开发中"
-          >
-            私聊（敬请期待）
-          </button>
         </CardContent>
       </Card>
-
-      {/* 商品列表 */}
-      <ItemGrid items={sellerItems} sellers={sellerMap} title="📦 在售商品" />
+      <ItemGrid items={sellerItems} title="在售商品" />
     </div>
   )
 }

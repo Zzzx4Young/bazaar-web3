@@ -29,7 +29,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   async ping() {
+    const startedAt = process.hrtime.bigint()
     await this.client.$queryRaw`SELECT 1`
+    return Math.round((Number(process.hrtime.bigint() - startedAt) / 1_000_000) * 1000) / 1000
   }
 
   async onModuleDestroy() {

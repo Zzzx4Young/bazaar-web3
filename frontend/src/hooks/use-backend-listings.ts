@@ -5,14 +5,19 @@ import { fetchListings, toItem } from '@/lib/backend-api'
 export function useBackendListings(params: URLSearchParams) {
   const [items, setItems] = useState<Item[]>([]),
     [loading, setLoading] = useState(true),
-    [error, setError] = useState<string | null>(null)
+    [error, setError] = useState<string | null>(null),
+    [hasMore, setHasMore] = useState(false)
   const query = params.toString()
   useEffect(() => {
     let cancelled = false
     setLoading(true)
+    setError(null)
     fetchListings(new URLSearchParams(query))
       .then((page) => {
-        if (!cancelled) setItems(page.items.map(toItem))
+        if (!cancelled) {
+          setItems(page.items.map(toItem))
+          setHasMore(page.hasMore)
+        }
       })
       .catch((error) => {
         if (!cancelled) setError(error instanceof Error ? error.message : 'NETWORK_ERROR')
@@ -24,5 +29,5 @@ export function useBackendListings(params: URLSearchParams) {
       cancelled = true
     }
   }, [query])
-  return { items, loading, error }
+  return { items, loading, error, hasMore }
 }

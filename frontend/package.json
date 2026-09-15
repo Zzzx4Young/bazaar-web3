@@ -10,10 +10,12 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "check:frontend": "npm run typecheck && npm run lint && npm test && npm run build",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/run-alpha-e2e.mjs",
+    "test:e2e:demo": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "screenshot": "node scripts/screenshot.mjs",
     "format": "prettier --write \"src/**/*.{ts,tsx,md}\""

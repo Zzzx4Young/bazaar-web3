@@ -51,6 +51,7 @@ export interface Item {
   id: string
   backendVersion?: number
   sellerId: string
+  sellerDisplayName?: string
   title: string
   description: string // Markdown
   category: ItemCategory
@@ -63,6 +64,8 @@ export interface Item {
   // 数字字段（仅 category=digital）
   deliveryType?: DigitalDeliveryType
   deliveryPreview?: string // 仅 seller 可见
+  licenseDescription?: string
+  contentVersion?: string
   // 媒体
   media: MediaItem[]
   // 元信息

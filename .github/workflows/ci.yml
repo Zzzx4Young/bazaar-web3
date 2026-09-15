@@ -83,7 +83,8 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
       - name: Alpha browser acceptance
-        run: node scripts/check-i5-browser.mjs
+        working-directory: frontend
+        run: npm run test:e2e
         env:
           I5_BROWSER_PORT: '3939'
       - name: Database service status on failure

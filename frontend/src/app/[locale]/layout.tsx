@@ -5,12 +5,13 @@ import { LanguageSwitcher } from '@/components/layout/language-switcher'
 import { ThemeProvider } from '@/components/layout/theme-provider'
 import { ThemeFaviconSync } from '@/components/layout/theme-favicon-sync'
 import { AuthSession } from '@/components/auth/auth-session'
+import { Toaster } from '@/components/ui/toaster'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
 import './globals.css'
 
 export function generateStaticParams() {
-  return routing.locales.map(locale => ({ locale }))
+  return routing.locales.map((locale) => ({ locale }))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -48,14 +49,16 @@ export default async function LocaleLayout({
           <ThemeProvider>
             <AuthSession />
             <ThemeFaviconSync />
+            <Toaster />
             <TopNav />
-            <div className="border-b bg-muted px-4 py-2 text-center text-xs text-muted-foreground">{tDemo('notice')}</div>
+            <div className="border-b bg-muted px-4 py-2 text-center text-xs text-muted-foreground">
+              {tDemo('notice')}
+            </div>
             <main className="container py-6">{children}</main>
             <footer className="mt-12 border-t py-6">
               <div className="container flex flex-col items-center justify-between gap-3 text-xs text-muted-foreground sm:flex-row">
                 <span>
-                  Bazaar Web3 ·{' '}
-                  <FooterTagline />
+                  Bazaar Web3 · <FooterTagline />
                 </span>
                 <LanguageSwitcher />
               </div>
