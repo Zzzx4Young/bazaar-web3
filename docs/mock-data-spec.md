@@ -1,12 +1,14 @@
 # 演示数据与本地存储契约
 
-状态：当前有效。更新：2026-09-09。类型以 `frontend/src/types/` 为准，静态样本以 `frontend/src/mock/` 为准。
+状态：已由服务端 Alpha 取代，仅保留历史格式说明。更新：2026-09-16。生产源码中的
+`frontend/src/mock/`、`mock-data.ts` 和本地商品/订单/用户 store 已删除；当前业务事实来自
+NestJS API 与 PostgreSQL，测试样例只在测试文件中定义。
 
 ## 数据集
 
 25 件商品、6 个卖家、12 条订单、5 个 Banner、5 个一级分类和一个固定当前用户。各一级分类 5 件；实物 10 件、数字 15 件。样本不是实际库存、交易历史或可交付资产。
 
-`src/lib/mock-data.ts` 导入 JSON，并根据 `categories.json.itemIds` 补充静态商品的 `primaryCategory`。使用 TS 类型断言，不应宣称做了运行时 schema 校验。
+以下字段描述冻结于旧 Demo，不再对应可执行的数据加载入口。
 
 ## 商品与分类
 

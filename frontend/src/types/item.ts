@@ -1,5 +1,4 @@
-// Item / 资源类型定义
-// 对应 docs/mock-data-spec.md §4.1
+// Item view model derived from the Alpha listing API.
 
 export type ItemCategory = 'physical' | 'digital'
 
@@ -47,7 +46,7 @@ export interface MediaItem {
 }
 
 export interface Item {
-  primaryCategory?: import('./category').PrimaryCategory // 一级分类；旧本地商品可缺省
+  primaryCategory?: import('./category').PrimaryCategory
   id: string
   backendVersion?: number
   sellerId: string

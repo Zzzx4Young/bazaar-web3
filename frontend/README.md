@@ -21,6 +21,6 @@ Chromium 验收入口，会从 `backend/` 运行隔离数据库流程；执行�
 - [文档入口](../docs/README.md)
 - [当前范围与后续规划](../docs/frontend-prototype-roadmap.md)
 - [技术栈和架构](../docs/frontend-stack-recommendation.md)
-- [数据与持久化契约](../docs/mock-data-spec.md)
+- [历史 Demo 数据格式](../docs/mock-data-spec.md)
 
 Alpha 订单动作使用幂等键；结果未知时只能复用原请求重试。真实钱包、链上结算、注册、图片托管和通知系统仍不在范围内。旧本地订单 E2E 属于 Demo 范围，不作为后端 Alpha 验收证据。

@@ -1,5 +1,5 @@
 // Seller / 卖家公开信息
-// 对应 docs/mock-data-spec.md §4.2
+// Public seller presentation model derived from listing data.
 
 export interface Seller {
   id: string

@@ -1,5 +1,5 @@
-// Order / 订单（mock，不上链）
-// 对应 docs/mock-data-spec.md §4.3
+// Legacy UI order shape. Active Alpha order data uses src/lib/order-api.ts.
+// Legacy UI order types retained for shared status presentation.
 
 import type { Currency } from './item'
 

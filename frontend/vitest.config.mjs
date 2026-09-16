@@ -15,7 +15,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html'],
       include: ['src/lib/**', 'src/stores/**'],
-      exclude: ['src/lib/utils.ts', 'src/lib/mock-data.ts']
+      exclude: ['src/lib/utils.ts']
     }
   },
   resolve: {

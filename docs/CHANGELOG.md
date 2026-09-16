@@ -7,6 +7,8 @@
 - 新增可重复全栈 Alpha Compose 和前端生产镜像，修复非 root 凭据读取、可选平台依赖及重复启动密码轮换问题。
 - 标准化 `check:frontend`、`check:backend` 与 `test:e2e`，CI 对 `postgres-test` 运行完整多用户 Alpha 流程。
 - 收口提交 `113c1ee` 的 GitHub Actions workflow `34992766719` 两个 job 均成功。
+- 删除无调用方的 Demo 商品、订单、用户 store、静态业务 JSON 和旧订单表组件；测试样例改为
+  测试内夹具。清理后 frontend 22 个测试文件共 139 项、生产构建及 Alpha E2E 通过。
 
 ## 2026-09-14 — Alpha 页面数据源收口（本地验收）
 

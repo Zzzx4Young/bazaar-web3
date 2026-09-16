@@ -1,5 +1,5 @@
 // Category / 分类 + 筛选状态
-// 对应 docs/mock-data-spec.md §4.4
+// Public category identifiers shared with the Alpha listing contract.
 
 import type { ItemCategory, ItemCondition, Currency } from './item'
 

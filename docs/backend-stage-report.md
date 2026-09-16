@@ -278,3 +278,8 @@ API 健康、前端顺序启动。运行用户只读共享配置卷中的凭据�
 权限验收及 `npm run test:e2e` 均通过。CI 的 Alpha browser job 已改走该标准 E2E 命令并使用
 `postgres-test`。收口提交 `113c1ee` 的 workflow `34992766719` 中 `verify` 与 `backend`
 均成功，后者包含部署镜像、31 项 PostgreSQL 集成及 Alpha Chromium 验收。
+
+最终源码审计继续删除无生产调用方的旧 Demo 商品/订单/用户 store、`src/mock` 静态业务
+数据、旧订单表组件及对应历史单测；收藏页测试改用测试内夹具。生产源码复核无 Prisma
+引用、无 mock 数据入口。清理后 `check:frontend` 通过：22 个测试文件共 139 项、Lint、类型
+检查和 17 路由生产构建均成功；标准 `npm run test:e2e` 再次通过完整 Alpha 流程。

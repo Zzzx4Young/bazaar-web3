@@ -1,5 +1,5 @@
 // Banner / 首页轮播位
-// 对应 docs/mock-data-spec.md §5
+// Optional presentation banner model.
 
 export interface Banner {
   id: string

@@ -1,6 +1,43 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import { items } from '@/lib/mock-data'
+import type { Item } from '@/types'
+
+const items: Item[] = [
+  {
+    id: 'listing-1',
+    sellerId: 'seller-1',
+    sellerDisplayName: 'Seller One',
+    title: 'Server listing one',
+    description: 'First server-backed listing',
+    category: 'physical',
+    primaryCategory: 'electronics',
+    tags: [],
+    price: { amount: 10, exactAmount: '10.00', currency: 'USD' },
+    media: [],
+    status: 'active',
+    viewCount: 0,
+    favoriteCount: 0,
+    createdAt: '2026-09-01T00:00:00.000Z',
+    updatedAt: '2026-09-01T00:00:00.000Z'
+  },
+  {
+    id: 'listing-2',
+    sellerId: 'seller-2',
+    sellerDisplayName: 'Seller Two',
+    title: 'Server listing two',
+    description: 'Second server-backed listing',
+    category: 'digital',
+    primaryCategory: 'digital_assets',
+    tags: [],
+    price: { amount: 2, exactAmount: '2.00', currency: 'USD' },
+    media: [],
+    status: 'active',
+    viewCount: 0,
+    favoriteCount: 0,
+    createdAt: '2026-09-02T00:00:00.000Z',
+    updatedAt: '2026-09-02T00:00:00.000Z'
+  }
+]
 
 const backend = vi.hoisted(() => ({
   current: { items: [], loading: false, error: null, hasMore: false } as {
