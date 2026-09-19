@@ -14,7 +14,9 @@ desktop.ini
 **/.claude/
 **/.windsurf/
 **/skills-lock.json
-/doc/
+
+# Repository documentation kept locally
+/docs/
 
 # Environment files and credentials; keep shareable templates
 .env
