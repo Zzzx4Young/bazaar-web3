@@ -133,6 +133,7 @@ export class ListingService {
       'type',
       'category',
       'currency',
+      'keyword',
       'sort',
       'quoteId',
       ...(actorId ? ['publicationStatus'] : [])
@@ -166,6 +167,12 @@ export class ListingService {
       clauses.push(Prisma.sql`l."category" = ${textInput(input.category, 50)}`)
     if (input.currency !== undefined)
       clauses.push(Prisma.sql`l."currency" = ${currencyInput(input.currency)}`)
+    if (input.keyword !== undefined) {
+      const keyword = textInput(input.keyword, 100)
+      clauses.push(
+        Prisma.sql`(l."title" ILIKE ${`%${keyword}%`} OR l."description" ILIKE ${`%${keyword}%`})`
+      )
+    }
     if (
       (sort === 'newest' && input.quoteId !== undefined) ||
       (sort !== 'newest' && page > 1 && input.quoteId === undefined)
@@ -190,6 +197,10 @@ export class ListingService {
         const rows = await tx.$queryRaw<{ id: string; usd: string | null }[]>`
         SELECT l.id, (${price})::text AS usd FROM "Listing" l
         WHERE ${Prisma.join(clauses, ' AND ')} ORDER BY ${order} LIMIT ${limit + 1} OFFSET ${(page - 1) * limit}`
+        const [{ total }] = await tx.$queryRaw<{ total: bigint }[]>`
+          SELECT COUNT(*)::bigint AS total FROM "Listing" l
+          WHERE ${Prisma.join(clauses, ' AND ')}
+        `
         const selected = rows.slice(0, limit)
         const listings = await tx.listing.findMany({
           where: { id: { in: selected.map((row) => row.id) } },
@@ -200,6 +211,7 @@ export class ListingService {
           items: selected.map((row) => this.view(byId.get(row.id)!, row.usd)),
           page,
           limit,
+          total: Number(total),
           hasMore: rows.length > limit,
           quote: quote ? this.rates.view(quote) : null
         }

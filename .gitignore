@@ -8,8 +8,13 @@ desktop.ini
 *.swo
 *~
 
-# Local agent instructions (not versioned)
+# Local agent instructions and scratch directories (not versioned)
 /AGENTS.md
+**/.agents/
+**/.claude/
+**/.windsurf/
+**/skills-lock.json
+/doc/
 
 # Environment files and credentials; keep shareable templates
 .env
@@ -21,7 +26,7 @@ desktop.ini
 *.pem
 *.key
 
-# Dependencies and build output (applies to all packages)
+# Dependencies and build output (all packages)
 node_modules/
 .next/
 out/
@@ -46,6 +51,7 @@ test-results/
 playwright-report/
 playwright/.cache/
 e2e-results/
+e2e-results-v2/
 
 # Local infrastructure secrets and database backups
 /infra/.secrets/

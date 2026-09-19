@@ -85,6 +85,16 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     assert.equal(await db.client.physicalInventory.count(), 3)
     const list = await app.inject({ method: 'POST', url: '/api/listings/search', headers: bob, payload: {} })
     assert.equal(list.json().items.length, 4)
+    const keyword = await app.inject({
+      method: 'POST',
+      url: '/api/listings/search',
+      headers: { origin, 'content-type': 'application/json' },
+      payload: { keyword: 'Virtual listing', limit: '2' }
+    })
+    assert.equal(keyword.statusCode, 200, keyword.body)
+    assert.equal(keyword.json().total, 4)
+    assert.equal(keyword.json().items.length, 2)
+    assert.equal(keyword.json().hasMore, true)
     assert.equal(list.body.includes('loginName'), false)
     assert.equal(list.body.includes('passwordHash'), false)
     for (const payload of [

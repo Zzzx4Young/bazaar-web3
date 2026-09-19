@@ -95,6 +95,19 @@ jobs:
           path: frontend/e2e-results
           if-no-files-found: warn
           retention-days: 14
+      - name: V2 business data acceptance
+        working-directory: frontend
+        run: npm run test:e2e:v2
+        env:
+          V2_E2E_PORT: '3941'
+      - name: Upload V2 browser artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-e2e-results
+          path: frontend/e2e-results-v2
+          if-no-files-found: warn
+          retention-days: 14
       - name: Database service status on failure
         if: failure()
         working-directory: .

@@ -19,6 +19,10 @@ Chromium 验收入口，会从 `backend/` 运行隔离数据库流程，并在 `
 trace、截图和视频。命令会启动并停止专用
 `postgres-test`。旧 Demo 浏览器回归保留为 `npm run test:e2e:demo`。
 
+V2 压力验收使用 `npm run test:e2e:v2`：自动生成 100 条商品和 60 条多状态订单，验证关键词、分类、
+跨币种排序、分页、长文本、争议退款和 observer 数据一致性，并在 `e2e-results-v2/` 输出 trace、
+截图和视频。
+
 - [文档入口](../docs/README.md)
 - [当前范围与后续规划](../docs/frontend-prototype-roadmap.md)
 - [技术栈和架构](../docs/frontend-stack-recommendation.md)

@@ -22,6 +22,7 @@ export interface ListingPage {
   items: BackendListing[]
   page: number
   limit: number
+  total: number
   hasMore: boolean
   quote: {
     id: string

@@ -16,7 +16,9 @@ const FIAT_RATE: Partial<Record<Currency, number>> = {
 }
 
 export function formatPrice(amount: number | string, currency: Currency): string {
-  if (currency === 'ETH' || currency === 'SOL') {
+  if (typeof amount === 'number' && !Number.isFinite(amount)) return `— ${currency}`
+  if (typeof amount === 'string' && amount.trim().toLowerCase() === 'nan') return `— ${currency}`
+  if (currency === 'BTC' || currency === 'ETH' || currency === 'SOL') {
     return `${amount} ${currency}`
   }
   const symbol = CURRENCY_SYMBOL[currency]

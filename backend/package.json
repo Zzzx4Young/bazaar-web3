@@ -18,6 +18,7 @@
     "db:psql": "node scripts/local-psql.mjs",
     "db:observer:grant": "node --env-file-if-exists=.tmp/i7-migrate.env scripts/apply-observer-grants.mjs",
     "db:observer:setup": "node scripts/setup-local-observer.mjs --confirm-local-create",
+    "seed:v2": "npm run build && node --env-file-if-exists=.env scripts/v2-seed.mjs",
     "test:deployment": "npm run build && node scripts/with-test-db.mjs node scripts/check-deployment-images.mjs",
     "test:backup-restore": "npm run build && node scripts/with-backup-restore.mjs",
     "test": "npm run build && node --test tests/*.test.mjs",

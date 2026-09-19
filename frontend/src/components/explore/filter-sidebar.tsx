@@ -42,8 +42,9 @@ export function FilterSidebar({
       <CardContent className="space-y-4 text-sm">
         {/* 关键词 */}
         <div className="space-y-1.5">
-          <Label>关键词</Label>
+          <Label htmlFor="explore-keyword">关键词</Label>
           <Input
+            id="explore-keyword"
             placeholder="搜索商品..."
             value={filter.keyword ?? ''}
             onChange={(e) => onKeyword(e.target.value)}

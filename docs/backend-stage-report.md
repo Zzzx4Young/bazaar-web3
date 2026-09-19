@@ -301,4 +301,18 @@ observer 角色只读 `bazaar_observe` 脱敏视图，验证实物库存从 `ava
 
 本地完整命令已通过；产物包含两个 trace、两个视频、三张流程截图和 observer 摘要。CI 的
 Alpha browser job 已切换为 `test:e2e:alpha`，并始终上传 `alpha-e2e-results`。当前 V1
-仍需以包含本轮改动的提交执行远端 CI，远端绿色结果作为最终收口证据。
+远端 CI 已在提交 `476c747` 的 workflow `35437149285` 中完成，`verify`、`backend`、Alpha 浏览器
+验收和 Alpha 产物上传均成功，V1 已完成。
+
+## V2 业务数据压力与边界验收（2026-09-19）
+
+新增 `backend/scripts/v2-seed.mjs` 和 `npm run seed:v2`，在 loopback PostgreSQL 目标上生成 100 条
+商品、60 条订单、14 个测试账户和有效多币种汇率快照。商品覆盖公开、下架、草稿、归档、库存锁定、
+售罄、零价格、高精度金额、加密货币、多语言及超长文本；订单覆盖待付款、已付款待交付、待验收、
+争议、完成、退款和取消等 canonical domain states。V2 迁移允许合法的零价格和非公开商品状态。
+
+探索页改为服务端关键词、分类、类型、币种、排序和分页，增加总数与可访问分页控件，金额格式化避免
+`NaN`。`npm run test:e2e:v2` 在隔离 schema 中运行双角色 Chromium 流程，通过 observer 校验 100
+条商品、60 条订单、库存状态、争议退款事件和 request ID 关联，并输出到 `frontend/e2e-results-v2/`。
+本地完整 V2 验收、前端 127 项测试、后端单元检查和 PostgreSQL 集成 31/31 已通过；远端 CI 待本轮
+提交推送后确认。

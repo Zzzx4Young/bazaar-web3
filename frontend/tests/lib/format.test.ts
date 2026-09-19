@@ -22,6 +22,12 @@ describe('formatPrice', () => {
     expect(formatPrice(0.5, 'SOL')).toBe('0.5 SOL')
   })
 
+  it('keeps exact high precision strings and protects the UI from NaN', () => {
+    expect(formatPrice('0.00012345', 'BTC')).toBe('0.00012345 BTC')
+    expect(formatPrice(Number.NaN, 'USD')).toBe('— USD')
+    expect(formatPrice('NaN', 'USD')).toBe('— USD')
+  })
+
   it('respects maximumFractionDigits for fiat', () => {
     expect(formatPrice(100.456, 'CNY')).toMatch(/¥100\.46/)
   })
@@ -41,7 +47,7 @@ describe('fiatEstimate', () => {
   })
 
   it('rounds to integer', () => {
-    expect(fiatEstimate(7.7, 'CNY')).toBe(1) // 7.7 * 0.14 = 1.078 → 1
+    expect(fiatEstimate(7.7, 'CNY')).toBe(1)
   })
 })
 

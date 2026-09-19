@@ -6,7 +6,9 @@ export function useBackendListings(params: URLSearchParams) {
   const [items, setItems] = useState<Item[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState<string | null>(null),
-    [hasMore, setHasMore] = useState(false)
+    [hasMore, setHasMore] = useState(false),
+    [total, setTotal] = useState(0),
+    [page, setPage] = useState(1)
   const query = params.toString()
   useEffect(() => {
     let cancelled = false
@@ -17,6 +19,8 @@ export function useBackendListings(params: URLSearchParams) {
         if (!cancelled) {
           setItems(page.items.map(toItem))
           setHasMore(page.hasMore)
+          setTotal(page.total)
+          setPage(page.page)
         }
       })
       .catch((error) => {
@@ -29,5 +33,5 @@ export function useBackendListings(params: URLSearchParams) {
       cancelled = true
     }
   }, [query])
-  return { items, loading, error, hasMore }
+  return { items, loading, error, hasMore, total, page }
 }
