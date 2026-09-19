@@ -72,6 +72,9 @@ export default function ListingDetailPage({ params }: Props) {
         <div className="space-y-4">
           <div>
             <div className="flex flex-wrap gap-2">
+              <Badge data-testid="acceptance-listing-status" variant="outline">
+                {item.status === 'active' ? 'ACTIVE' : item.status.toUpperCase()}
+              </Badge>
               <Badge variant={item.category === 'digital' ? 'secondary' : 'outline'}>
                 {item.category === 'digital' ? '数字资产' : '实物二手'}
               </Badge>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +14,7 @@ import {
 import { OrderHistory, useOrderHistory } from '@/components/me/order-history'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { useOrderCommand } from '@/hooks/use-order-command'
-import { orderActions, type OrderDetail } from '@/lib/order-api'
+import { acceptanceOrderStatus, orderActions, type OrderDetail } from '@/lib/order-api'
 import { useAuthStore } from '@/stores/use-auth-store'
 
 export default function OrderDetailPage() {
@@ -31,6 +31,10 @@ export default function OrderDetailPage() {
   const [returnOutcome, setReturnOutcome] = useState<'not_sent' | 'returned' | 'not_required'>(
     'returned'
   )
+  useEffect(() => {
+    const timer = window.setInterval(resource.reload, 1000)
+    return () => window.clearInterval(timer)
+  }, [resource.reload])
   if (resource.loading) return <p role="status">正在加载订单…</p>
   if (resource.error || !resource.data)
     return (
@@ -66,7 +70,9 @@ export default function OrderDetailPage() {
       <div>
         <h1 className="text-2xl font-bold">{order.title}</h1>
         <p className="text-sm text-muted-foreground">
-          {order.status} · {order.price.amount} {order.price.currency}
+          <span data-testid="acceptance-order-status">{acceptanceOrderStatus(order.status)}</span>
+          {' · '}
+          <span>{order.status}</span> · {order.price.amount} {order.price.currency}
         </p>
       </div>
       {order.shipping && (

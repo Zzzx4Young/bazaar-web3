@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useApiResource } from '@/hooks/use-api-resource'
 import type { Delivery, Issue, OrderEvent, Page, Refund, Settlement } from '@/lib/order-api'
 
@@ -9,6 +10,21 @@ export function useOrderHistory(orderId: string) {
   const refunds = useApiResource<Page<Refund>>(`/orders/${orderId}/refunds`, {}, true)
   const settlements = useApiResource<Page<Settlement>>(`/orders/${orderId}/settlements`, {}, true)
   const events = useApiResource<Page<OrderEvent>>(`/orders/${orderId}/events`, {}, true)
+  const reloadDeliveries = deliveries.reload
+  const reloadIssues = issues.reload
+  const reloadRefunds = refunds.reload
+  const reloadSettlements = settlements.reload
+  const reloadEvents = events.reload
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      reloadDeliveries()
+      reloadIssues()
+      reloadRefunds()
+      reloadSettlements()
+      reloadEvents()
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [reloadDeliveries, reloadIssues, reloadRefunds, reloadSettlements, reloadEvents])
   return {
     deliveries,
     issues,

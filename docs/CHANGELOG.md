@@ -1,5 +1,13 @@
 # 文档与交付变更
 
+## 2026-09-19 — V1 全栈自动化验收
+
+- 新增 `npm run test:e2e:alpha`，自动启动/停止 `postgres-test`，预置双角色、汇率快照并运行
+  双 Chromium context 的卖家发布、买家付款、数字私有交付、问题和退款流程。
+- 新增 observer SQL 断言：实物库存预留、退款终态、交付记录以及数据库事件 request ID 与
+  API 结构化日志匹配。
+- 新增 Playwright trace、截图、视频和验收摘要；CI 始终上传 `alpha-e2e-results`。
+
 ## 2026-09-15 — M1 Alpha 发布加固
 
 - 增加前端错误/加载边界、Toast 和会话过期后的清理与本地化登录跳转。

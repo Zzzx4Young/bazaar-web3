@@ -84,6 +84,13 @@ export interface OrderEvent {
 }
 export type OrderAction =
   'cancel' | 'pay' | 'deliver' | 'issue' | 'request-refund' | 'accept' | 'refund' | 'restore'
+
+export function acceptanceOrderStatus(status: OrderDetail['status']) {
+  if (status === 'pending_delivery') return 'PAID_HELD'
+  if (status === 'pending_acceptance') return 'DELIVERED'
+  return status.toUpperCase()
+}
+
 export function orderActions(order: OrderDetail, accountId: string): OrderAction[] {
   if (accountId === order.buyerId) {
     if (order.status === 'pending_payment') return ['pay', 'cancel']

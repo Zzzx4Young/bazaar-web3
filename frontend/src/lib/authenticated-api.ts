@@ -19,7 +19,10 @@ export async function authenticatedPost<T>(path: string, body: unknown = {}, key
     return await backendRequest<T>(path, {
       method: 'POST',
       body: JSON.stringify(body),
-      headers: { 'X-CSRF-Token': view.csrfToken, ...(key ? { 'Idempotency-Key': key } : {}) }
+      headers: {
+        'X-CSRF-Token': view.csrfToken,
+        ...(key ? { 'Idempotency-Key': key, 'X-Request-Id': key } : {})
+      }
     })
   } catch (error) {
     if (error instanceof BackendError && (error.status === 401 || error.status === 403)) {

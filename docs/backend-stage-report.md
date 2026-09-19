@@ -283,3 +283,22 @@ API 健康、前端顺序启动。运行用户只读共享配置卷中的凭据�
 数据、旧订单表组件及对应历史单测；收藏页测试改用测试内夹具。生产源码复核无 Prisma
 引用、无 mock 数据入口。清理后 `check:frontend` 通过：22 个测试文件共 139 项、Lint、类型
 检查和 17 路由生产构建均成功；标准 `npm run test:e2e` 再次通过完整 Alpha 流程。
+
+## V1 全栈用户旅程验收（2026-09-19）
+
+新增 `frontend` 的 `npm run test:e2e:alpha` 单命令入口。入口启动并停止 disposable
+`postgres-test`，构建后端，在随机 schema 中预置 `seller_alpha@test.com`、
+`buyer_alpha@test.com`、固定 Alpha 分类契约和一小时有效的多币种 `RateSnapshot`，再以两个
+Chromium context 运行真实 Next.js UI。卖家从 `/listings/create` 发布实物和数字商品；买家
+完成下单、模拟付款、数字私有链接/提取码交付、问题和退款；订单页每秒读取服务端状态，两个
+页面会看到 `PAID_HELD`、`DELIVERED` 和 `REFUNDED` 语义状态。
+
+observer 角色只读 `bazaar_observe` 脱敏视图，验证实物库存从 `available` 进入 `reserved`、
+数字订单最终为 `refunded`、交付记录存在，且每个订单事件的 request ID 都能在同一轮 API
+结构化日志中找到。幂等键同时作为订单命令的 `X-Request-Id`，使数据库审计事件与 HTTP
+日志可以逐值关联。成功和失败均保留 Playwright trace；成功流程还输出截图、视频和
+`acceptance-summary.json` 到 `frontend/e2e-results/`。
+
+本地完整命令已通过；产物包含两个 trace、两个视频、三张流程截图和 observer 摘要。CI 的
+Alpha browser job 已切换为 `test:e2e:alpha`，并始终上传 `alpha-e2e-results`。当前 V1
+仍需以包含本轮改动的提交执行远端 CI，远端绿色结果作为最终收口证据。

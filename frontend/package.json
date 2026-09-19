@@ -2,7 +2,7 @@
   "name": "crypto-c2c-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Pure-frontend prototype for CryptoC2C marketplace. No backend, no contracts \u2014 UI + mock data only.",
+  "description": "Next.js frontend for the Bazaar Web3 internal Alpha marketplace.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,6 +15,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "node scripts/run-alpha-e2e.mjs",
+    "test:e2e:alpha": "node scripts/run-alpha-e2e.mjs",
     "test:e2e:demo": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "screenshot": "node scripts/screenshot.mjs",

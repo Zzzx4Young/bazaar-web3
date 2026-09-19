@@ -22,7 +22,10 @@ export function validatePassword(password: string) {
 export function normalizeLogin(value: string) {
   if (typeof value !== 'string') throw new DomainError('INVALID_INPUT')
   const login = value.trim().toLowerCase()
-  if (!/^[a-z0-9][a-z0-9_-]{2,63}$/.test(login)) throw new DomainError('INVALID_INPUT')
+  const handle = /^[a-z0-9][a-z0-9_-]{2,63}$/
+  const email = /^[a-z0-9][a-z0-9._+-]{0,63}@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/
+  if (login.length > 100 || (!handle.test(login) && !email.test(login)))
+    throw new DomainError('INVALID_INPUT')
   return login
 }
 

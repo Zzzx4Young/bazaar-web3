@@ -84,9 +84,17 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Alpha browser acceptance
         working-directory: frontend
-        run: npm run test:e2e
+        run: npm run test:e2e:alpha
         env:
-          I5_BROWSER_PORT: '3939'
+          ALPHA_E2E_PORT: '3939'
+      - name: Upload Alpha browser artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-e2e-results
+          path: frontend/e2e-results
+          if-no-files-found: warn
+          retention-days: 14
       - name: Database service status on failure
         if: failure()
         working-directory: .

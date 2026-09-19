@@ -180,6 +180,14 @@ test('I1: provisioning normalizes names and rolls back the whole batch on duplic
     const stored = await db.client.accountCredential.findFirstOrThrow()
     assert.equal(stored.passwordHash.includes(password), false)
     assert.match(stored.passwordHash, /^scrypt\$v1\$131072\$8\$1\$/)
+    await provisionAccounts(db.client, [
+      { loginName: 'Seller_Alpha@Test.COM', displayName: 'Email account', password }
+    ])
+    assert.equal(
+      (await db.client.account.findUniqueOrThrow({ where: { loginName: 'seller_alpha@test.com' } }))
+        .displayName,
+      'Email account'
+    )
   } finally {
     await db.close()
   }
