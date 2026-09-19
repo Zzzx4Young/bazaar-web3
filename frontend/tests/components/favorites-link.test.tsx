@@ -1,19 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen, act, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render, screen } from '@testing-library/react'
 
 // Module-level mocks BEFORE importing the component
-const mockToggle = vi.fn()
 const mockFavorites: { current: string[] } = { current: [] }
-const mockIsFavorite = vi.fn((id: string) => mockFavorites.current.includes(id))
 
-vi.mock('@/stores/use-favorite-store', () => ({
-  // useFavoriteStore is called as a hook: useFavoriteStore()
-  useFavoriteStore: () => ({
-    favorites: mockFavorites.current,
-    toggle: mockToggle,
-    isFavorite: mockIsFavorite
-  })
+vi.mock('@/hooks/use-resolved-favorites', () => ({
+  useResolvedFavorites: () => ({ items: mockFavorites.current, loading: false, error: null })
 }))
 
 vi.mock('@/i18n/routing', () => ({
@@ -33,8 +25,6 @@ import { FavoritesLink } from '@/components/layout/favorites-link'
 describe('FavoritesLink', () => {
   beforeEach(() => {
     mockFavorites.current = []
-    mockToggle.mockClear()
-    mockIsFavorite.mockClear()
   })
 
   it('shows the link text', () => {

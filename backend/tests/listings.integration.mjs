@@ -95,6 +95,19 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     assert.equal(keyword.json().total, 4)
     assert.equal(keyword.json().items.length, 2)
     assert.equal(keyword.json().hasMore, true)
+    const resolvedFavorites = await app.inject({
+      method: 'POST', url: '/api/listings/favorites/resolve',
+      headers: { origin, 'content-type': 'application/json' },
+      payload: { ids: [created[3].id, randomUUID(), created[0].id] }
+    })
+    assert.equal(resolvedFavorites.statusCode, 200, resolvedFavorites.body)
+    assert.deepEqual(resolvedFavorites.json().items.map((item) => item.id), [created[3].id, created[0].id])
+    assert.equal(resolvedFavorites.json().total, 2)
+    assert.equal((await app.inject({
+      method: 'POST', url: '/api/listings/favorites/resolve',
+      headers: { origin, 'content-type': 'application/json' },
+      payload: { ids: ['invalid-id'] }
+    })).statusCode, 400)
     assert.equal(list.body.includes('loginName'), false)
     assert.equal(list.body.includes('passwordHash'), false)
     for (const payload of [

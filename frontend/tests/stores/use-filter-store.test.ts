@@ -8,11 +8,11 @@ beforeEach(() => {
 })
 
 describe('useFilterStore — default state', () => {
-  it('initializes with sortBy=newest, page=1, pageSize=12', () => {
+  it('initializes with sortBy=newest, page=1, pageSize=10', () => {
     const state = useFilterStore.getState()
     expect(state.sortBy).toBe('newest')
     expect(state.page).toBe(1)
-    expect(state.pageSize).toBe(12)
+    expect(state.pageSize).toBe(10)
   })
 
   it('initializes with no filter fields set', () => {
@@ -112,6 +112,6 @@ describe('useFilterStore — reset', () => {
     expect(state.keyword).toBeUndefined()
     expect(state.sortBy).toBe('newest')
     expect(state.page).toBe(1)
-    expect(state.pageSize).toBe(12)
+    expect(state.pageSize).toBe(10)
   })
 })

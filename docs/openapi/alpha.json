@@ -3763,6 +3763,70 @@
         }
       }
     },
+    "/listings/favorites/resolve": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RequestId" }
+      ],
+      "post": {
+        "operationId": "resolveFavoriteListings",
+        "summary": "Resolve locally saved listing IDs against current public listings",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["ids"],
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "maxItems": 100,
+                    "items": { "type": "string", "format": "uuid" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Published listings in input order; missing or unpublished IDs omitted",
+            "headers": {
+              "X-Request-Id": { "$ref": "#/components/headers/RequestId" }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["items", "total"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Listing" }
+                    },
+                    "total": { "type": "integer", "minimum": 0 }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid IDs or request body",
+            "headers": {
+              "X-Request-Id": { "$ref": "#/components/headers/RequestId" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/listings/{id}/detail": {
       "parameters": [
         {

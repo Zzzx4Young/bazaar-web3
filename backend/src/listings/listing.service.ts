@@ -51,6 +51,24 @@ export class ListingService {
     return this.view(listing)
   }
 
+  async resolveFavorites(body: unknown) {
+    const input = objectInput(body, ['ids'])
+    if (!Array.isArray(input.ids) || input.ids.length > 100 ||
+      input.ids.some((id) => typeof id !== 'string'))
+      throw new DomainError('INVALID_INPUT')
+    const ids = [...new Set(input.ids.map((id) => idInput(id)))]
+    const listings = await this.client.listing.findMany({
+      where: { id: { in: ids }, publicationStatus: 'published', currency: { in: currencyCodes } },
+      include
+    })
+    const byId = new Map(listings.map((listing) => [listing.id, listing]))
+    const items = ids.flatMap((id) => {
+      const listing = byId.get(id)
+      return listing ? [this.view(listing)] : []
+    })
+    return { items, total: items.length }
+  }
+
   async create(actorId: string, body: unknown) {
     const input = objectInput(
       body,

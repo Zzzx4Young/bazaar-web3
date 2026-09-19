@@ -22,6 +22,13 @@ export class ListingController {
   }
 
   @Public()
+  @Post('listings/favorites/resolve')
+  @HttpCode(200)
+  favorites(@Body() body: unknown) {
+    return this.listings.resolveFavorites(body)
+  }
+
+  @Public()
   @Post('listings/:id/detail')
   @HttpCode(200)
   detail(@Param('id') id: string) {

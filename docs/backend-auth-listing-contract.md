@@ -31,6 +31,7 @@
 | POST /auth/session | 登录 → 200 当前账户及 csrfToken；无有效会话 401 |
 | POST /auth/logout | Origin＋有效会话＋CSRF → 204；无有效会话 401 |
 | POST /listings/search | 公开商品分页；默认 published，可见已售出的公开历史，但可售状态明确 |
+| POST /listings/favorites/resolve | 公开批量查询收藏 ID；body 为 `ids` UUID 数组（最多 100）；只返回仍公开的商品，按输入顺序返回 `items` 和 `total`，无效 ID 返回 400 |
 | POST /listings/{id}/detail | published 商品公开详情；withdrawn 返回 404，由卖家从自己的商品列表查看 |
 | POST /me/listings | 登录，只返回自己的商品，含 withdrawn |
 | POST /listings | 登录＋Origin/CSRF；创建商品，201；实物库存与商品同事务写入 |

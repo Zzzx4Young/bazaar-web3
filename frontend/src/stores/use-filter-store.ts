@@ -19,7 +19,7 @@ interface FilterStore extends FilterState {
 const defaultState: FilterState = {
   sortBy: 'newest',
   page: 1,
-  pageSize: 12,
+  pageSize: 10,
   category: undefined,
   itemCategory: undefined,
   keyword: undefined,

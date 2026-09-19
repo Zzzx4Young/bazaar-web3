@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import type { Item } from '@/types'
 
 const items: Item[] = [
@@ -40,28 +40,23 @@ const items: Item[] = [
 ]
 
 const backend = vi.hoisted(() => ({
-  current: { items: [], loading: false, error: null, hasMore: false } as {
+  current: { items: [], loading: false, error: null } as {
     items: typeof items
     loading: boolean
     error: string | null
-    hasMore: boolean
   }
 }))
 
-vi.mock('@/hooks/use-backend-listings', () => ({
-  useBackendListings: () => backend.current
+vi.mock('@/hooks/use-resolved-favorites', () => ({
+  useResolvedFavorites: () => backend.current
 }))
 
 import FavoritesPage from '@/app/[locale]/favorites/page'
 
-function seedFavorites(ids: string[]) {
-  window.localStorage.setItem('c2c:user:favorites', JSON.stringify(ids))
-}
-
 describe('FavoritesPage server-backed listings', () => {
   beforeEach(() => {
     window.localStorage.clear()
-    backend.current = { items: [], loading: false, error: null, hasMore: false }
+    backend.current = { items: [], loading: false, error: null }
   })
 
   it('renders an empty state after the server returns no matching listings', () => {
@@ -70,9 +65,8 @@ describe('FavoritesPage server-backed listings', () => {
     expect(screen.getByRole('link', { name: /explore/i })).toHaveAttribute('href', '/explore')
   })
 
-  it('matches local favorite ids against current server listings', () => {
-    backend.current = { items: items.slice(0, 2), loading: false, error: null, hasMore: false }
-    seedFavorites([items[0]!.id])
+  it('shows exactly the listings resolved by the favorites API', () => {
+    backend.current = { items: items.slice(0, 1), loading: false, error: null }
     render(<FavoritesPage />)
     expect(screen.getByRole('heading', { name: '我的收藏 (1)' })).toBeInTheDocument()
     expect(screen.getByText(items[0]!.title)).toBeInTheDocument()
@@ -80,17 +74,15 @@ describe('FavoritesPage server-backed listings', () => {
   })
 
   it('shows server failures instead of falling back to mock listings', () => {
-    backend.current = { items: [], loading: false, error: 'NETWORK_ERROR', hasMore: false }
-    seedFavorites([items[0]!.id])
+    backend.current = { items: [], loading: false, error: 'NETWORK_ERROR' }
     render(<FavoritesPage />)
     expect(screen.getByRole('alert')).toHaveTextContent('NETWORK_ERROR')
     expect(screen.queryByText(items[0]!.title)).not.toBeInTheDocument()
   })
 
-  it('removes stale local favorite ids after a complete server response', async () => {
-    seedFavorites(['item_from_old_demo'])
+  it('does not count stale local ids missing from the API response', () => {
+    window.localStorage.setItem('c2c:user:favorites', JSON.stringify(['item_from_old_demo']))
     render(<FavoritesPage />)
-    await waitFor(() => expect(window.localStorage.getItem('c2c:user:favorites')).toBe('[]'))
     expect(screen.getByRole('heading', { name: '我的收藏 (0)' })).toBeInTheDocument()
   })
 })

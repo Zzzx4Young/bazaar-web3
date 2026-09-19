@@ -1,6 +1,6 @@
 'use client'
 
-import { useFavoriteStore } from '@/stores/use-favorite-store'
+import { useResolvedFavorites } from '@/hooks/use-resolved-favorites'
 import { Link, usePathname } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 import { Heart } from 'lucide-react'
@@ -13,9 +13,9 @@ import { cn } from '@/lib/utils'
 export function FavoritesLink() {
   const t = useTranslations('nav')
   const pathname = usePathname()
-  const { favorites } = useFavoriteStore()
+  const { items, loading, error } = useResolvedFavorites()
   const isActive = pathname.startsWith('/favorites')
-  const count = favorites.length
+  const count = loading || error ? 0 : items.length
 
   return (
     <Link
