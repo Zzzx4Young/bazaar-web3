@@ -1,8 +1,9 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Item } from '@/types'
 import { fetchListings, toItem } from '@/lib/backend-api'
 export function useBackendListings(params: URLSearchParams) {
+  const quote = useRef<{ key: string; id: string } | null>(null)
   const [items, setItems] = useState<Item[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState<string | null>(null),
@@ -14,9 +15,18 @@ export function useBackendListings(params: URLSearchParams) {
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetchListings(new URLSearchParams(query))
+    const request = new URLSearchParams(query)
+    const pageNumber = Number(request.get('page') ?? '1')
+    request.delete('page')
+    const filterKey = request.toString()
+    if (pageNumber === 1) quote.current = null
+    else if (request.get('sort')?.startsWith('price_') && quote.current?.key === filterKey)
+      request.set('quoteId', quote.current.id)
+    request.set('page', String(pageNumber))
+    fetchListings(request)
       .then((page) => {
         if (!cancelled) {
+          if (page.quote && pageNumber === 1) quote.current = { key: filterKey, id: page.quote.id }
           setItems(page.items.map(toItem))
           setHasMore(page.hasMore)
           setTotal(page.total)

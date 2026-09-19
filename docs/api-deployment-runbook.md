@@ -70,6 +70,13 @@ docker compose -f infra/compose.api.yaml ps
 与 `APP_ORIGIN` 相同的 `Origin` 和 `Content-Type: application/json`。Compose 和镜像内置
 readiness 探针。业务数据、迁移数量和权限仍需按发布检查表核对，不能只看 health。
 
+价格排序首次需要从 Coinbase 获取汇率，随后在数据库中复用 1 小时快照；上述健康检查不验证
+供应商连通性。部署网络应允许容器直连 Coinbase HTTPS，或显式提供容器可达的代理并仅对
+`api` 进程启用 Node 的环境代理支持（当前镜像固定 Node 22.23.1）。不要将宿主机的
+`127.0.0.1` 代理地址直接注入容器。发布检查应以有效 `Origin` 请求一次
+`POST /api/listings/search` 的 `price_asc`，确认返回 200 和 `quote`；否则快照过期后该排序
+返回 `FX_UNAVAILABLE`，即使 readiness 仍正常。生产环境不依赖本机演示数据的预置汇率。
+
 部署后至少确认：migrate 退出码为 0、API healthy、`_prisma_migrations` 有 6 个已完成迁移、
 runtime 能读写正式表且不能读取迁移表或执行 DDL、登录和一个只读业务请求成功。日志不得
 出现 URL、密码、Cookie、CSRF、请求 body 或私有业务值。

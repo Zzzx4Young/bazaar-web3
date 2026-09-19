@@ -129,9 +129,26 @@ try {
   await buyerPage.getByRole('button', { name: '重置筛选' }).click()
   await waitText(buyerPage, '共 70 件商品')
   await buyerPage.getByTestId('sort-trigger').click()
+  const firstPricePage = buyerPage.waitForResponse((response) =>
+    response.url().endsWith('/api/listings/search') &&
+    response.request().postDataJSON()?.sort === 'price_asc' &&
+    response.request().postDataJSON()?.page === '1'
+  )
   await buyerPage.getByTestId('sort-option-price_asc').click()
+  const firstPriceResponse = await firstPricePage
+  assert.equal(firstPriceResponse.status(), 200)
+  const quoteId = (await firstPriceResponse.json()).quote?.id
+  assert.ok(quoteId)
   await waitText(buyerPage, '第 1 / 7 页')
+  const secondPricePage = buyerPage.waitForResponse((response) =>
+    response.url().endsWith('/api/listings/search') &&
+    response.request().postDataJSON()?.sort === 'price_asc' &&
+    response.request().postDataJSON()?.page === '2'
+  )
   await buyerPage.getByRole('button', { name: '下一页' }).click()
+  const secondPriceResponse = await secondPricePage
+  assert.equal(secondPriceResponse.status(), 200)
+  assert.equal(secondPriceResponse.request().postDataJSON().quoteId, quoteId)
   await waitText(buyerPage, '第 2 / 7 页')
   const savedListing = buyerPage.locator('main section a[href*="/listing/"]').first()
   const savedHref = await savedListing.getAttribute('href')

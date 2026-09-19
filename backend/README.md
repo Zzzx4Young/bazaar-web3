@@ -14,6 +14,10 @@ cp .env.example .env
 npm start
 ```
 
+若宿主机只能通过 `HTTP_PROXY`/`HTTPS_PROXY` 访问 Coinbase，可在支持该选项的 Node
+版本（已验证 22.23.1）使用 `NODE_OPTIONS=--use-env-proxy npm start`。价格排序会在数据库中
+复用 1 小时有效的汇率快照；供应商不可达且快照过期时返回 `FX_UNAVAILABLE`。
+
 默认监听 `127.0.0.1:3001`。`POST /api/health/live` 表示进程可响应；`POST /api/health/ready` 执行真实数据库查询，失败返回 503 且不返回驱动错误详情。启动要求数据库可连接；SIGINT/SIGTERM 触发 Nest 关闭钩子，释放 Prisma 连接池。每进程连接池上限 5，连接与语句超时均为 3 秒。
 
 每个响应返回 `X-Request-Id`；客户端可发送受限格式值，否则服务端生成 UUID。错误体包含同一 `requestId`。默认请求日志只记录方法、路由模板、状态、耗时和稳定错误码，不记录 body、headers、原始 URL 或私有值，完整边界见[安全日志契约](../docs/backend-observability-contract.md)。

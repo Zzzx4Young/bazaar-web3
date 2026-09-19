@@ -161,6 +161,15 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     const quote = await db.client.rateSnapshot.findUniqueOrThrow({
       where: { id: sorted.json().quote.id }
     })
+    assert.equal(quote.expiresAt.getTime() - quote.fetchedAt.getTime(), 60 * 60 * 1000)
+    const filteredSort = await app.inject({
+      method: 'POST', url: '/api/listings/search',
+      headers: { origin, 'content-type': 'application/json' },
+      payload: { sort: 'price_desc', category: 'test', limit: '2' }
+    })
+    assert.equal(filteredSort.statusCode, 200, filteredSort.body)
+    assert.equal(filteredSort.json().quote.id, quote.id)
+    assert.equal(calls, 1)
     await db.client.rateSnapshot.create({
       data: {
         provider: 'Fixture later snapshot',

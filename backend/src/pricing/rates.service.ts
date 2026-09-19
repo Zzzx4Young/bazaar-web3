@@ -107,7 +107,7 @@ export class RatesService {
           provider: 'Coinbase',
           rates,
           fetchedAt,
-          expiresAt: new Date(fetchedAt.getTime() + 300000)
+          expiresAt: new Date(fetchedAt.getTime() + 60 * 60 * 1000)
         }
       })
     } catch {
