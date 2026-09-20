@@ -9,6 +9,7 @@ import { hashPassword } from '../dist/auth/password.js'
 import { cli, fixture } from '../tests/helpers/database.mjs'
 import { grantRuntime } from './runtime-grants.mjs'
 import { grantObserver } from './observer-grants.mjs'
+import { expectedMigrationNames } from './expected-migrations.mjs'
 
 const base = new URL(process.env.BACKUP_TEST_DATABASE_URL ?? '')
 if (
@@ -236,8 +237,8 @@ try {
   await restoreMigration.onModuleInit()
   stage = 'verify restored migrations'
   const migrations =
-    await restoreMigration.client.$queryRaw`SELECT COUNT(*)::int AS count FROM "_prisma_migrations"`
-  assert.equal(migrations[0].count, 6)
+    await restoreMigration.client.$queryRaw`SELECT migration_name FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY migration_name`
+  assert.deepEqual(migrations.map((item) => item.migration_name), expectedMigrationNames())
   stage = 'verify restored row counts'
   assert.deepEqual(
     {
@@ -331,7 +332,7 @@ try {
     'pending_payment'
   )
   console.log(
-    'I8-1 PASS: private custom backup, clean restore, 6 migrations, exact data, runtime/observer restrictions, business write and restart persistence verified'
+    `I8-1 PASS: private custom backup, clean restore, ${migrations.length} migrations, exact data, runtime/observer restrictions, business write and restart persistence verified`
   )
 } catch {
   console.error(`I8-1 backup/restore failed during ${stage}; no credentials or private values were logged`)

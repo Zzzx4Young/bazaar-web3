@@ -6,7 +6,7 @@ const methods = new Set(['get', 'put', 'post', 'delete', 'options', 'head', 'pat
 
 test('OpenAPI declares path parameters and request correlation on every operation', async () => {
   const api = JSON.parse(
-    await readFile(new URL('../../docs/openapi/alpha.json', import.meta.url), 'utf8')
+    await readFile(new URL('../openapi/alpha.json', import.meta.url), 'utf8')
   )
 
   for (const [path, item] of Object.entries(api.paths)) {

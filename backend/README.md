@@ -115,4 +115,4 @@ I8-1 备份恢复脚本同样只接受该专用服务。它以随机源库和恢
 
 密码重置输入为 `{"loginName":"...","password":"..."}`，执行同脚本加 `--reset-password`，会同时撤销该账户现有会话。脚本要求显式 DATABASE_URL 和私有文件，密码不放命令行或日志。
 
-认证路由为 POST /api/auth/login、POST /api/auth/session、POST /api/auth/logout。前端 Origin 必须等于 APP_ORIGIN（默认 http://localhost:3000）；登录后写请求另外携带 session Cookie 与 X-CSRF-Token；退出 body 为 `{}`。HTTPS origin 自动启用 Secure Cookie，HTTP 只允许 loopback。本阶段不开放注册。完整请求/响应见 [OpenAPI](../docs/openapi/alpha.json)。
+认证路由为 POST /api/auth/login、POST /api/auth/session、POST /api/auth/logout。前端 Origin 必须等于 APP_ORIGIN（默认 http://localhost:3000）；登录后写请求另外携带 session Cookie 与 X-CSRF-Token；退出 body 为 `{}`。HTTPS origin 自动启用 Secure Cookie，HTTP 只允许 loopback。本阶段不开放注册。完整请求/响应见 [OpenAPI](openapi/alpha.json)。

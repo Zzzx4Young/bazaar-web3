@@ -8,6 +8,7 @@ import { readConfig } from '../dist/config.js'
 import { DatabaseService } from '../dist/database/database.service.js'
 import { cli } from '../tests/helpers/database.mjs'
 import { grantRuntime } from './runtime-grants.mjs'
+import { expectedMigrationNames } from './expected-migrations.mjs'
 
 const base = new URL(process.env.I7_ADMIN_DATABASE_URL ?? '')
 if (
@@ -202,9 +203,9 @@ try {
   assert.equal(await runtime.client.account.count(), 3)
   migration = new DatabaseService(targetUrl(migrationRole, migrationPassword).toString())
   await migration.onModuleInit()
-  const migrations = await migration.client.$queryRaw`SELECT COUNT(*)::int AS count FROM "_prisma_migrations"`
-  assert.equal(migrations[0].count, 6)
-  console.log('I7 fresh persistent environment passed: 6 migrations, 3 accounts, restart and runtime restriction')
+  const migrations = await migration.client.$queryRaw`SELECT migration_name FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY migration_name`
+  assert.deepEqual(migrations.map((item) => item.migration_name), expectedMigrationNames())
+  console.log(`I7 fresh persistent environment passed: ${migrations.length} migrations, 3 accounts, restart and runtime restriction`)
 } catch {
   console.error(`I7 fresh persistent environment failed during ${stage}; no secrets were logged`)
   process.exitCode = 1

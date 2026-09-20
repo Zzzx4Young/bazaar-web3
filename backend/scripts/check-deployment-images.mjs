@@ -6,6 +6,7 @@ import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseService } from '../dist/database/database.service.js'
+import { expectedMigrationNames } from './expected-migrations.mjs'
 
 const adminUrl = new URL(process.env.TEST_DATABASE_URL ?? '')
 if (adminUrl.pathname !== '/bazaar_test' || adminUrl.hostname !== '127.0.0.1') {
@@ -117,9 +118,9 @@ try {
   )
 
   const migrations = await admin.client.$queryRawUnsafe(
-    `SELECT count(*)::int AS count FROM "${schema}"."_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL`
+    `SELECT migration_name FROM "${schema}"."_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY migration_name`
   )
-  assert.equal(migrations[0].count, 6)
+  assert.deepEqual(migrations.map((migration) => migration.migration_name), expectedMigrationNames())
 
   runtime = new DatabaseService(runtimeUrl.toString())
   await runtime.onModuleInit()
@@ -191,7 +192,7 @@ try {
     { allowFailure: true }
   )
   assert.equal(prismaCli.code, 0, 'Runtime image contains the Prisma migration CLI')
-  console.log('I8-2 PASS: migration and runtime images, 6 migrations, grants, readiness and hardening verified')
+  console.log(`I8-2 PASS: migration and runtime images, ${migrations.length} migrations, grants, readiness and hardening verified`)
 } finally {
   await command(['stop', '--time', '5', containerName], { allowFailure: true })
   await command(['rm', '--force', containerName], { allowFailure: true })

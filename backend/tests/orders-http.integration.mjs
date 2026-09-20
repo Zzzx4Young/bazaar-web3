@@ -36,7 +36,7 @@ test('I4 HTTP: participant privacy, query pagination and command replay', async 
     runtimeUrl.password = secret
     app = await createApp(readConfig({ DATABASE_URL: runtimeUrl.toString() }), false)
     const api = JSON.parse(
-      await readFile(new URL('../../docs/openapi/alpha.json', import.meta.url), 'utf8')
+      await readFile(new URL('../openapi/alpha.json', import.meta.url), 'utf8')
     )
     const ajv = new Ajv({ strict: false, validateFormats: false })
     ajv.addSchema({ components: api.components }, 'alpha')
