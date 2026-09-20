@@ -44,6 +44,28 @@ async function observerRows(sql) {
   return observer.client.$queryRawUnsafe(sql)
 }
 
+async function assertListingLayout(page) {
+  const layout = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+    text: document.querySelector('main')?.textContent ?? ''
+  }))
+  assert.ok(layout.content <= layout.viewport + 1, `Listing page overflows: ${layout.content} > ${layout.viewport}`)
+  assert.doesNotMatch(layout.text, /\bNaN\b/, 'Listing page displays NaN')
+}
+
+function assertSortedByUsd(items) {
+  const values = items.map((item) => item.priceUsd)
+  assert.ok(values.every((value) => typeof value === 'string' && /^(0|[1-9]\d*)(\.\d+)?$/.test(value)))
+  const scale = Math.max(...values.map((value) => value.split('.')[1]?.length ?? 0))
+  const cents = values.map((value) => {
+    const [whole, fraction = ''] = value.split('.')
+    return BigInt(`${whole}${fraction.padEnd(scale, '0')}`)
+  })
+  for (let index = 1; index < cents.length; index++)
+    assert.ok(cents[index - 1] <= cents[index], `USD sort decreases at item ${index + 1}`)
+}
+
 try {
   db = await sandbox(base)
   admin = await connect(base)
@@ -114,12 +136,21 @@ try {
   await buyerContext.tracing.start({ screenshots: true, snapshots: true, sources: true })
   const sellerPage = await sellerContext.newPage()
   const buyerPage = await buyerContext.newPage()
+  const browserErrors = []
+  for (const page of [sellerPage, buyerPage]) {
+    page.on('pageerror', (error) => browserErrors.push(error.message))
+    page.on('console', (message) => {
+      if (message.type() === 'error' && /hydration|did not match|text content does not match/i.test(message.text()))
+        browserErrors.push(message.text())
+    })
+  }
 
   stage = 'desktop and mobile listing search, filters, sort, and pagination'
   await buyerPage.goto(`${origin}/zh-CN/explore`)
   await waitText(buyerPage, '共 70 件商品')
   await buyerPage.getByLabel('关键词').fill('超长中文标题')
   await waitText(buyerPage, '共 1 件商品')
+  await assertListingLayout(buyerPage)
   await buyerPage.screenshot({ path: resolve(resultsDirectory, 'long-title-desktop.png'), fullPage: true })
   await buyerPage.getByRole('button', { name: '重置筛选' }).click()
   await waitText(buyerPage, '共 70 件商品')
@@ -137,8 +168,10 @@ try {
   await buyerPage.getByTestId('sort-option-price_asc').click()
   const firstPriceResponse = await firstPricePage
   assert.equal(firstPriceResponse.status(), 200)
-  const quoteId = (await firstPriceResponse.json()).quote?.id
+  const firstPriceResult = await firstPriceResponse.json()
+  const quoteId = firstPriceResult.quote?.id
   assert.ok(quoteId)
+  assert.equal(firstPriceResult.items.length, 10)
   await waitText(buyerPage, '第 1 / 7 页')
   const secondPricePage = buyerPage.waitForResponse((response) =>
     response.url().endsWith('/api/listings/search') &&
@@ -149,6 +182,10 @@ try {
   const secondPriceResponse = await secondPricePage
   assert.equal(secondPriceResponse.status(), 200)
   assert.equal(secondPriceResponse.request().postDataJSON().quoteId, quoteId)
+  const secondPriceResult = await secondPriceResponse.json()
+  assert.equal(secondPriceResult.items.length, 10)
+  assertSortedByUsd([...firstPriceResult.items, ...secondPriceResult.items])
+  await assertListingLayout(buyerPage)
   await waitText(buyerPage, '第 2 / 7 页')
   const savedListing = buyerPage.locator('main section a[href*="/listing/"]').first()
   const savedHref = await savedListing.getAttribute('href')
@@ -166,6 +203,8 @@ try {
   await buyerPage.getByRole('heading', { name: '我的收藏 (0)' }).waitFor()
   await buyerPage.goto(`${origin}/zh-CN/explore`)
   await buyerPage.setViewportSize({ width: 390, height: 844 })
+  await waitText(buyerPage, '共 70 件商品')
+  await assertListingLayout(buyerPage)
   await buyerPage.screenshot({ path: resolve(resultsDirectory, 'explore-mobile.png'), fullPage: true })
 
   stage = 'buyer dispute lifecycle'
@@ -193,13 +232,29 @@ try {
   assert.equal(statusCounts.length, 7)
   const inventory = await observerRows(`SELECT availability, count(*)::int AS count FROM physical_inventory GROUP BY availability ORDER BY availability`)
   assert.ok(inventory.length >= 2)
+  const targetInventory = await observerRows(`SELECT availability, active_order_id FROM physical_inventory WHERE listing_id = '${target.listingId}'::uuid`)
+  assert.deepEqual(targetInventory, [{ availability: 'refund_hold', active_order_id: target.id }])
+  const targetReservation = await observerRows(`SELECT state, closed_at IS NOT NULL AS closed FROM inventory_reservations WHERE order_id = '${target.id}'::uuid`)
+  assert.deepEqual(targetReservation, [{ state: 'refunded', closed: true }])
+  const targetRefund = await observerRows(`SELECT status, requested_by, approved_by, approved_at IS NOT NULL AS approved FROM refunds WHERE order_id = '${target.id}'::uuid`)
+  assert.deepEqual(targetRefund, [{ status: 'approved', requested_by: target.buyerId, approved_by: target.sellerId, approved: true }])
+  const targetSettlements = await observerRows(`SELECT s.operation, s.amount = o.price_amount AS amount_matches, s.currency = o.currency AS currency_matches FROM settlements s JOIN order_snapshots o ON o.order_id = s.order_id WHERE s.order_id = '${target.id}'::uuid ORDER BY s.operation`)
+  assert.deepEqual(targetSettlements, [
+    { operation: 'payment', amount_matches: true, currency_matches: true },
+    { operation: 'refund', amount_matches: true, currency_matches: true }
+  ])
+  const deliveryViewRows = await observerRows(`SELECT * FROM deliveries WHERE order_id = '${target.id}'::uuid LIMIT 1`)
+  assert.equal(deliveryViewRows.length, 1)
+  assert.equal('reference' in deliveryViewRows[0], false)
+  assert.equal('access_code' in deliveryViewRows[0], false)
   const newEvents = await observerRows(`SELECT operation, request_id FROM order_events WHERE order_id = '${target.id}'::uuid ORDER BY created_at, id OFFSET ${baselineEvents}`)
   assert.deepEqual(newEvents.map((event) => event.operation), ['issue', 'request_refund', 'refund'])
   for (const event of newEvents) {
     assert.match(event.request_id, /^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/)
     assert.ok(requestLogs.some((entry) => entry.requestId === event.request_id && entry.route.includes('/api/orders')))
   }
-  await writeFile(resolve(resultsDirectory, 'acceptance-summary.json'), `${JSON.stringify({ result: 'passed', listings: counts[0].listings, orders: counts[0].orders, statusCounts, inventory, targetOrderId: target.id, newEvents }, null, 2)}\n`)
+  assert.deepEqual(browserErrors, [], 'Browser emitted runtime or hydration errors')
+  await writeFile(resolve(resultsDirectory, 'acceptance-summary.json'), `${JSON.stringify({ result: 'passed', listings: counts[0].listings, orders: counts[0].orders, statusCounts, inventory, targetOrderId: target.id, targetInventory, targetReservation, targetRefund, targetSettlements, newEvents }, null, 2)}\n`)
   console.log(`PASS: V2 business data and edge-case journey; artifacts: ${resultsDirectory}`)
 } catch (error) {
   console.error(`V2 E2E failed at ${stage}`)
