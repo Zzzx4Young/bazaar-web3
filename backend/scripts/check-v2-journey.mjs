@@ -207,6 +207,19 @@ try {
   await assertListingLayout(buyerPage)
   await buyerPage.screenshot({ path: resolve(resultsDirectory, 'explore-mobile.png'), fullPage: true })
 
+  for (const [availability, expectedStatus] of [
+    ['refund_hold', 'LOCKED'],
+    ['reserved', 'LOCKED'],
+    ['sold', 'SOLD']
+  ]) {
+    const inventory = await db.client.physicalInventory.findFirstOrThrow({
+      where: { availability, inventoryListing: { publicationStatus: 'published' } }
+    })
+    await buyerPage.goto(`${origin}/zh-CN/listing/${inventory.listingId}`)
+    await buyerPage.getByTestId('acceptance-listing-status').getByText(expectedStatus).waitFor()
+    assert.equal(await buyerPage.getByRole('button', { name: '立即购买' }).isDisabled(), true)
+  }
+
   stage = 'buyer dispute lifecycle'
   await login(buyerPage, buyer.loginName, password)
   await buyerPage.goto(`${origin}/zh-CN/me/orders/${target.id}`)

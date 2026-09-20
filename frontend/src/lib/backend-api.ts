@@ -10,7 +10,7 @@ export interface BackendListing {
   category: string
   price: { amount: string; currency: Currency }
   priceUsd: string | null
-  publicationStatus: 'published' | 'withdrawn'
+  publicationStatus: 'published' | 'withdrawn' | 'draft' | 'archived'
   availability: string
   version: number
   licenseDescription: string | null
@@ -135,7 +135,8 @@ export function toItem(listing: BackendListing): Item {
     status:
       listing.availability === 'sold'
         ? 'sold'
-        : listing.availability === 'reserved'
+        : listing.publicationStatus !== 'published' ||
+            !['available', 'unlimited'].includes(listing.availability)
           ? 'locked'
           : 'active',
     viewCount: 0,

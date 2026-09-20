@@ -4355,7 +4355,9 @@
             "type": "string",
             "enum": [
               "published",
-              "withdrawn"
+              "withdrawn",
+              "draft",
+              "archived"
             ]
           },
           "availability": {

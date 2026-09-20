@@ -112,7 +112,12 @@ export default function ListingDetailPage({ params }: Props) {
                 </div>
               )}
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <Button className="w-full" size="lg" onClick={() => setBuyOpen(true)}>
+                <Button
+                  className="w-full"
+                  size="lg"
+                  disabled={item.status !== 'active'}
+                  onClick={() => setBuyOpen(true)}
+                >
                   立即购买
                 </Button>
                 <Button variant="outline" className="w-full" size="lg" disabled>
