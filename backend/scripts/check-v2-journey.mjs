@@ -45,10 +45,10 @@ async function observerRows(sql) {
 }
 
 async function assertListingLayout(page) {
-  const layout = await page.evaluate(() => ({
-    viewport: document.documentElement.clientWidth,
-    content: document.documentElement.scrollWidth,
-    text: document.querySelector('main')?.textContent ?? ''
+  const layout = await page.locator('html').evaluate((element) => ({
+    viewport: element.clientWidth,
+    content: element.scrollWidth,
+    text: element.querySelector('main')?.textContent ?? ''
   }))
   assert.ok(layout.content <= layout.viewport + 1, `Listing page overflows: ${layout.content} > ${layout.viewport}`)
   assert.doesNotMatch(layout.text, /\bNaN\b/, 'Listing page displays NaN')
