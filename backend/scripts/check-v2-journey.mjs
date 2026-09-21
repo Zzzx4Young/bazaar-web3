@@ -245,6 +245,10 @@ try {
   assert.equal(statusCounts.length, 7)
   const inventory = await observerRows(`SELECT availability, count(*)::int AS count FROM physical_inventory GROUP BY availability ORDER BY availability`)
   assert.ok(inventory.length >= 2)
+  const digitalInventory = await observerRows(`SELECT availability, count(*)::int AS count FROM digital_inventory GROUP BY availability ORDER BY availability`)
+  assert.ok(digitalInventory.some((row) => row.availability === 'reserved'), JSON.stringify(digitalInventory))
+  assert.ok(digitalInventory.some((row) => row.availability === 'sold'), JSON.stringify(digitalInventory))
+  assert.ok(digitalInventory.some((row) => row.availability === 'refund_hold'), JSON.stringify(digitalInventory))
   const targetInventory = await observerRows(`SELECT availability, active_order_id FROM physical_inventory WHERE listing_id = '${target.listingId}'::uuid`)
   assert.deepEqual(targetInventory, [{ availability: 'refund_hold', active_order_id: target.id }])
   const targetReservation = await observerRows(`SELECT state, closed_at IS NOT NULL AS closed FROM inventory_reservations WHERE order_id = '${target.id}'::uuid`)
@@ -267,7 +271,7 @@ try {
     assert.ok(requestLogs.some((entry) => entry.requestId === event.request_id && entry.route.includes('/api/orders')))
   }
   assert.deepEqual(browserErrors, [], 'Browser emitted runtime or hydration errors')
-  await writeFile(resolve(resultsDirectory, 'acceptance-summary.json'), `${JSON.stringify({ result: 'passed', listings: counts[0].listings, orders: counts[0].orders, statusCounts, inventory, targetOrderId: target.id, targetInventory, targetReservation, targetRefund, targetSettlements, newEvents }, null, 2)}\n`)
+  await writeFile(resolve(resultsDirectory, 'acceptance-summary.json'), `${JSON.stringify({ result: 'passed', listings: counts[0].listings, orders: counts[0].orders, statusCounts, inventory, digitalInventory, targetOrderId: target.id, targetInventory, targetReservation, targetRefund, targetSettlements, newEvents }, null, 2)}\n`)
   console.log(`PASS: V2 business data and edge-case journey; artifacts: ${resultsDirectory}`)
 } catch (error) {
   console.error(`V2 E2E failed at ${stage}`)

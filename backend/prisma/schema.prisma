@@ -70,6 +70,7 @@ model Listing {
   listingSeller        Account             @relation("listingSeller", fields: [sellerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   orderListingRows     Order[]             @relation("orderListing")
   inventoryListingRows PhysicalInventory[] @relation("inventoryListing")
+  digitalInventoryRows DigitalInventory[]  @relation("digitalInventoryListing")
 
   @@unique([id, sellerId])
   @@unique([id, type])
@@ -78,24 +79,25 @@ model Listing {
 }
 
 model Order {
-  id                   String                 @id @default(uuid()) @db.Uuid
-  listingId            String                 @db.Uuid
-  buyerId              String                 @db.Uuid
-  sellerId             String                 @db.Uuid
-  status               String                 @default("pending_payment")
-  version              Int                    @default(1)
-  createdAt            DateTime               @default(now()) @db.Timestamptz(6)
-  updatedAt            DateTime               @updatedAt @db.Timestamptz(6)
-  orderListing         Listing                @relation("orderListing", fields: [listingId, sellerId], references: [id, sellerId], onDelete: Restrict, onUpdate: Restrict)
-  orderBuyer           Account                @relation("orderBuyer", fields: [buyerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  snapshot             OrderSnapshot?         @relation("snapshotOrder")
-  shipping             OrderShipping?         @relation("shippingOrder")
-  inventoryOrderRows   PhysicalInventory[]    @relation("inventoryOrder")
-  reservationOrderRows InventoryReservation[] @relation("reservationOrder")
-  deliveryOrderRows    DeliveryRecord[]       @relation("deliveryOrder")
-  issueOrderRows       IssueRecord[]          @relation("issueOrder")
-  eventOrderRows       OrderEvent[]           @relation("eventOrder")
-  idempotencyOrderRows IdempotencyRecord[]    @relation("idempotencyOrder")
+  id                        String                 @id @default(uuid()) @db.Uuid
+  listingId                 String                 @db.Uuid
+  buyerId                   String                 @db.Uuid
+  sellerId                  String                 @db.Uuid
+  status                    String                 @default("pending_payment")
+  version                   Int                    @default(1)
+  createdAt                 DateTime               @default(now()) @db.Timestamptz(6)
+  updatedAt                 DateTime               @updatedAt @db.Timestamptz(6)
+  orderListing              Listing                @relation("orderListing", fields: [listingId, sellerId], references: [id, sellerId], onDelete: Restrict, onUpdate: Restrict)
+  orderBuyer                Account                @relation("orderBuyer", fields: [buyerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  snapshot                  OrderSnapshot?         @relation("snapshotOrder")
+  shipping                  OrderShipping?         @relation("shippingOrder")
+  inventoryOrderRows        PhysicalInventory[]    @relation("inventoryOrder")
+  digitalInventoryOrderRows DigitalInventory[]     @relation("digitalInventoryOrder")
+  reservationOrderRows      InventoryReservation[] @relation("reservationOrder")
+  deliveryOrderRows         DeliveryRecord[]       @relation("deliveryOrder")
+  issueOrderRows            IssueRecord[]          @relation("issueOrder")
+  eventOrderRows            OrderEvent[]           @relation("eventOrder")
+  idempotencyOrderRows      IdempotencyRecord[]    @relation("idempotencyOrder")
 
   refundBuyerRows  RefundRequest[] @relation("refundBuyer")
   refundSellerRows RefundRequest[] @relation("refundSeller")
@@ -141,6 +143,16 @@ model PhysicalInventory {
   inventoryListing         Listing                @relation("inventoryListing", fields: [listingId, listingType], references: [id, type], onDelete: Restrict, onUpdate: Restrict)
   inventoryOrder           Order?                 @relation("inventoryOrder", fields: [activeOrderId, listingId], references: [id, listingId], onDelete: Restrict, onUpdate: Restrict)
   reservationInventoryRows InventoryReservation[] @relation("reservationInventory")
+}
+
+model DigitalInventory {
+  listingId        String  @id @db.Uuid
+  listingType      String  @default("digital")
+  availability     String  @default("available")
+  activeOrderId    String? @db.Uuid
+  version          Int     @default(1)
+  inventoryListing Listing @relation("digitalInventoryListing", fields: [listingId, listingType], references: [id, type], onDelete: Restrict, onUpdate: Restrict)
+  inventoryOrder   Order?  @relation("digitalInventoryOrder", fields: [activeOrderId, listingId], references: [id, listingId], onDelete: Restrict, onUpdate: Restrict)
 }
 
 model InventoryReservation {

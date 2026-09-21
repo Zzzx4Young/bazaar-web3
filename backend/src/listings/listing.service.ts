@@ -9,7 +9,8 @@ import { ListingCommands } from './listing-commands.js'
 
 const include = {
   listingSeller: { select: { id: true, displayName: true } },
-  inventoryListingRows: { select: { availability: true } }
+  inventoryListingRows: { select: { availability: true } },
+  digitalInventoryRows: { select: { availability: true } }
 } satisfies Prisma.ListingInclude
 type ListingRow = Prisma.ListingGetPayload<{ include: typeof include }>
 
@@ -32,7 +33,7 @@ export class ListingService {
       publicationStatus: listing.publicationStatus,
       availability:
         listing.type === 'digital'
-          ? 'unlimited'
+          ? (listing.digitalInventoryRows[0]?.availability ?? 'unlimited')
           : (listing.inventoryListingRows[0]?.availability ?? 'unavailable'),
       version: listing.version,
       licenseDescription: listing.licenseDescription,
@@ -72,12 +73,16 @@ export class ListingService {
   async create(actorId: string, body: unknown) {
     const input = objectInput(
       body,
-      ['type', 'title', 'description', 'category', 'price', 'licenseDescription', 'contentVersion'],
+      ['type', 'title', 'description', 'category', 'price', 'licenseDescription', 'contentVersion', 'supplyMode'],
       ['type', 'title', 'description', 'category', 'price']
     )
     if (input.type !== 'physical' && input.type !== 'digital')
       throw new DomainError('INVALID_INPUT')
     const type = input.type as 'physical' | 'digital'
+    const supplyMode = input.supplyMode ?? 'unlimited'
+    if (type === 'physical' && 'supplyMode' in input) throw new DomainError('INVALID_INPUT')
+    if (type === 'digital' && supplyMode !== 'single' && supplyMode !== 'unlimited')
+      throw new DomainError('INVALID_INPUT')
     const price = objectInput(input.price, ['amount', 'currency'])
     const currency = currencyInput(price.currency)
     const data = {
@@ -98,6 +103,8 @@ export class ListingService {
       const listing = await tx.listing.create({ data })
       if (type === 'physical')
         await tx.physicalInventory.create({ data: { listingId: listing.id } })
+      if (type === 'digital' && supplyMode === 'single')
+        await tx.digitalInventory.create({ data: { listingId: listing.id } })
       return listing.id
     })
     const listing = await this.client.listing.findUniqueOrThrow({ where: { id }, include })
@@ -138,6 +145,10 @@ export class ListingService {
           .displayName
       },
       inventoryListingRows: await this.client.physicalInventory.findMany({
+        where: { listingId: id },
+        select: { availability: true }
+      }),
+      digitalInventoryRows: await this.client.digitalInventory.findMany({
         where: { listingId: id },
         select: { availability: true }
       })

@@ -17,6 +17,8 @@ const views = {
     FROM SOURCE."OrderShipping"`,
   physical_inventory: `SELECT "listingId" AS listing_id, availability,
     "activeOrderId" AS active_order_id, version FROM SOURCE."PhysicalInventory"`,
+  digital_inventory: `SELECT "listingId" AS listing_id, availability,
+    "activeOrderId" AS active_order_id, version FROM SOURCE."DigitalInventory"`,
   inventory_reservations: `SELECT id, "listingId" AS listing_id, "orderId" AS order_id,
     state, "createdAt" AS created_at, "closedAt" AS closed_at
     FROM SOURCE."InventoryReservation"`,

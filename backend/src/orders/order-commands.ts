@@ -55,13 +55,15 @@ export class OrderCommands {
             if (listing.sellerId === actorId) throw new DomainError('FORBIDDEN')
             if (listing.publicationStatus !== 'published' || listing.version !== input.version)
               throw new DomainError('LISTING_CONFLICT')
-            const inventory = await tx.physicalInventory.findUnique({
-              where: { listingId: listing.id }
-            })
+            const inventory = listing.type === 'physical'
+              ? await tx.physicalInventory.findUnique({ where: { listingId: listing.id } })
+              : await tx.digitalInventory.findUnique({ where: { listingId: listing.id } })
             if (
               listing.type === 'physical' &&
               (!inventory || inventory.availability !== 'available')
             )
+              throw new DomainError('UNAVAILABLE')
+            if (listing.type === 'digital' && inventory && inventory.availability !== 'available')
               throw new DomainError('UNAVAILABLE')
             if (listing.type === 'physical' && !input.shipping)
               throw new DomainError('SHIPPING_REQUIRED')
@@ -79,6 +81,15 @@ export class OrderCommands {
               })
               await tx.inventoryReservation.create({
                 data: { listingId: listing.id, orderId: order.id }
+              })
+            } else if (inventory) {
+              await tx.digitalInventory.update({
+                where: { listingId: listing.id },
+                data: {
+                  availability: 'reserved',
+                  activeOrderId: order.id,
+                  version: { increment: 1 }
+                }
               })
             }
             await options.checkpoint?.('inventory', tx, attempt)
@@ -179,12 +190,12 @@ export class OrderCommands {
             const sellerAction = ['deliver', 'refund', 'restore'].includes(action)
             if (actorId !== (sellerAction ? order.sellerId : order.buyerId))
               throw new DomainError('FORBIDDEN')
-            const inventory = await tx.physicalInventory.findUnique({
-              where: { listingId: listing.id }
-            })
             const physical = listing.type === 'physical'
+            const inventory = physical
+              ? await tx.physicalInventory.findUnique({ where: { listingId: listing.id } })
+              : await tx.digitalInventory.findUnique({ where: { listingId: listing.id } })
             if (
-              physical &&
+              (physical || (inventory && action !== 'restore')) &&
               (inventory?.activeOrderId !== orderId ||
                 inventory.availability !== (action === 'restore' ? 'refund_hold' : 'reserved'))
             )
@@ -195,19 +206,29 @@ export class OrderCommands {
               if (!states.includes(order.status)) throw new DomainError('STATE_CONFLICT')
             }
             const closeInventory = async (state: string, availability: string) => {
-              if (!physical) return
-              await tx.inventoryReservation.update({
-                where: { orderId },
-                data: { state, closedAt: new Date() }
-              })
-              await tx.physicalInventory.update({
-                where: { listingId: listing.id },
-                data: {
-                  availability,
-                  activeOrderId: availability === 'available' ? null : orderId,
-                  version: { increment: 1 }
-                }
-              })
+              if (physical) {
+                await tx.inventoryReservation.update({
+                  where: { orderId },
+                  data: { state, closedAt: new Date() }
+                })
+                await tx.physicalInventory.update({
+                  where: { listingId: listing.id },
+                  data: {
+                    availability,
+                    activeOrderId: availability === 'available' ? null : orderId,
+                    version: { increment: 1 }
+                  }
+                })
+              } else if (inventory) {
+                await tx.digitalInventory.update({
+                  where: { listingId: listing.id },
+                  data: {
+                    availability,
+                    activeOrderId: availability === 'available' ? null : orderId,
+                    version: { increment: 1 }
+                  }
+                })
+              }
             }
             const settle = async (operation: string) => {
               await tx.settlementRecord.create({

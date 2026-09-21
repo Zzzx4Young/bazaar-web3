@@ -394,7 +394,7 @@
       ],
       "post": {
         "operationId": "createListing",
-        "summary": "Create listing and physical inventory atomically",
+        "summary": "Create listing and finite inventory atomically",
         "description": "Not automatically retried. Unknown response outcome: refresh own listings before another creation.",
         "security": [
           {
@@ -4495,6 +4495,12 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 100
+          },
+          "supplyMode": {
+            "type": "string",
+            "enum": ["unlimited", "single"],
+            "default": "unlimited",
+            "description": "Single reserves one digital entitlement at order creation; cancellation releases it, completion consumes it, and a refund keeps it unavailable. Delivery reference and access code remain private order data."
           }
         }
       },

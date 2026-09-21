@@ -17,6 +17,8 @@ test('V2 seed plan covers dense listings, orders, currencies, and edge states', 
   assert.ok(plan.listings.some((listing) => /[\u4e00-\u9fff]/u.test(listing.title)))
   assert.ok(plan.listings.some((listing) => listing.price.currency === 'BTC'))
   assert.ok(plan.listings.some((listing) => listing.price.amount === '0'))
+  assert.ok(plan.listings.some((listing) => listing.type === 'digital' && listing.supplyMode === 'single'))
+  assert.ok(plan.listings.some((listing) => listing.type === 'digital' && listing.supplyMode === 'unlimited'))
   assert.deepEqual(Object.keys(plan.orderStates).sort(), [
     'cancelled',
     'completed',

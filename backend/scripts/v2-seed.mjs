@@ -96,9 +96,22 @@ export function buildV2SeedPlan({ seed = V2_SEED_PREFIX } = {}) {
       description: `V2 seeded description ${index + 1}. Markdown **bold**, emoji 🧪, and edge text: <>&/\\`,
       category: categories[index % categories.length],
       price,
+      supplyMode: type === 'digital' ? (index % 4 === 1 ? 'single' : 'unlimited') : null,
       publicationStatus,
       inventoryState:
-        type === 'digital' ? 'unlimited' : index % 15 === 0 ? 'sold' : index % 11 === 0 ? 'reserved' : 'available'
+        type === 'digital'
+          ? index % 4 === 1
+            ? index % 8 === 1
+              ? 'sold'
+              : index % 8 === 5
+                ? 'refund_hold'
+                : 'available'
+            : 'unlimited'
+          : index % 15 === 0
+            ? 'sold'
+            : index % 11 === 0
+              ? 'reserved'
+              : 'available'
     }
   })
 
@@ -166,13 +179,16 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
       await client.physicalInventory.create({ data: { listingId: listing.id } })
       if (spec.inventoryState === 'sold')
         await client.physicalInventory.update({ where: { listingId: listing.id }, data: { availability: 'available' } })
+    } else if (spec.supplyMode === 'single') {
+      await client.digitalInventory.create({ data: { listingId: listing.id } })
     }
   }
 
   for (const spec of plan.orders) {
     const listing = listingByKey.get(spec.listingKey)
     const buyer = accountByKey.get(spec.buyerKey)
-    const seller = accountByKey.get(plan.listings.find((item) => item.key === spec.listingKey).sellerKey)
+    const listingSpec = plan.listings.find((item) => item.key === spec.listingKey)
+    const seller = accountByKey.get(listingSpec.sellerKey)
     assert.ok(listing && buyer && seller)
     const order = await client.order.create({
       data: {
@@ -207,11 +223,25 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
           ? 'sold'
           : spec.status === 'refunded'
             ? 'refund_hold'
-            : spec.status === 'cancelled'
+            : ['pending_payment', 'cancelled'].includes(spec.status)
               ? 'available'
               : 'reserved'
       await client.physicalInventory.update({ where: { listingId: listing.id }, data: { availability, activeOrderId: availability === 'available' ? null : order.id } })
       await client.inventoryReservation.create({ data: { listingId: listing.id, orderId: order.id, state: closed ? spec.status : 'active', closedAt: closed ? new Date() : null } })
+    }
+    if (listing.type === 'digital' && listingSpec.supplyMode === 'single') {
+      const availability =
+        spec.status === 'completed'
+          ? 'sold'
+          : spec.status === 'refunded'
+            ? 'refund_hold'
+            : ['pending_payment', 'cancelled'].includes(spec.status)
+              ? 'available'
+              : 'reserved'
+      await client.digitalInventory.update({
+        where: { listingId: listing.id },
+        data: { availability, activeOrderId: availability === 'available' ? null : order.id }
+      })
     }
     if (!['pending_payment', 'cancelled'].includes(spec.status) && Number(listing.priceAmount) > 0)
       await client.settlementRecord.create({ data: { orderId: order.id, operation: 'payment', amount: listing.priceAmount, currency: listing.currency } })

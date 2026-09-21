@@ -7,6 +7,8 @@ export async function lockListing(tx: Transaction, listingId: string) {
   if (!listing) throw new DomainError('NOT_FOUND')
   if (listing.type === 'physical') {
     await tx.$queryRaw`SELECT "listingId" FROM "PhysicalInventory" WHERE "listingId" = ${listingId}::uuid FOR UPDATE`
+  } else if (listing.type === 'digital') {
+    await tx.$queryRaw`SELECT "listingId" FROM "DigitalInventory" WHERE "listingId" = ${listingId}::uuid FOR UPDATE`
   }
   return listing
 }

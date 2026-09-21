@@ -17,6 +17,7 @@ export async function grantRuntime(client, schema, role) {
     'Listing',
     'Order',
     'PhysicalInventory',
+    'DigitalInventory',
     'InventoryReservation',
     'IssueRecord',
     'RefundRequest',
