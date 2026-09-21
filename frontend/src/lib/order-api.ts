@@ -20,6 +20,7 @@ export type OrderStatus =
   | 'issue'
   | 'completed'
   | 'cancelled'
+  | 'expired'
   | 'refunded'
 export interface OrderSummary {
   id: string

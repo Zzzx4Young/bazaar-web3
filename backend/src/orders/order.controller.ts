@@ -116,6 +116,7 @@ export class OrderController {
           'issue',
           'completed',
           'cancelled',
+          'expired',
           'refunded'
         ].includes(input.status))
     )

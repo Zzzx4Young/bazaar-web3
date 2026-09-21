@@ -4679,6 +4679,7 @@
           "issue",
           "completed",
           "cancelled",
+          "expired",
           "refunded"
         ]
       },

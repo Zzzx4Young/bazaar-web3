@@ -11,7 +11,15 @@ export interface CreateOrderInput {
   shipping?: { recipient: string; contact: string; address: string }
 }
 export type OrderAction =
-  'cancel' | 'pay' | 'deliver' | 'issue' | 'request_refund' | 'accept' | 'refund' | 'restore'
+  | 'cancel'
+  | 'expire'
+  | 'pay'
+  | 'deliver'
+  | 'issue'
+  | 'request_refund'
+  | 'accept'
+  | 'refund'
+  | 'restore'
 export interface ActionInput {
   carrier?: string
   accessCode?: string
@@ -152,6 +160,7 @@ export class OrderCommands {
     if (
       ![
         'cancel',
+        'expire',
         'pay',
         'deliver',
         'issue',
@@ -246,6 +255,11 @@ export class OrderCommands {
                 requireStatus('pending_payment')
                 next = 'cancelled'
                 await closeInventory('cancelled', 'available')
+                break
+              case 'expire':
+                requireStatus('pending_payment')
+                next = 'expired'
+                await closeInventory('expired', 'available')
                 break
               case 'pay':
                 requireStatus('pending_payment')
@@ -373,5 +387,25 @@ export class OrderCommands {
       },
       options
     )
+  }
+
+  async expirePendingPaymentOrders(before: Date, options: { limit?: number } = {}) {
+    const candidates = await this.client.order.findMany({
+      where: { status: 'pending_payment', createdAt: { lt: before } },
+      select: { id: true, buyerId: true },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      take: options.limit ?? 100
+    })
+    const expired: string[] = []
+    for (const order of candidates) {
+      try {
+        await this.act(order.buyerId, `system-expire-${order.id}`, order.id, 'expire')
+        expired.push(order.id)
+      } catch (error) {
+        if (!(error instanceof DomainError) || !['STATE_CONFLICT', 'INVENTORY_CONFLICT'].includes(error.code))
+          throw error
+      }
+    }
+    return { expired, scanned: candidates.length }
   }
 }

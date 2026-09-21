@@ -22,6 +22,7 @@ test('V2 seed plan covers dense listings, orders, currencies, and edge states', 
   assert.deepEqual(Object.keys(plan.orderStates).sort(), [
     'cancelled',
     'completed',
+    'expired',
     'issue',
     'pending_acceptance',
     'pending_delivery',

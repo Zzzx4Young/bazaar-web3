@@ -74,6 +74,7 @@ export async function sandbox(base = testUrl(), migrate = true) {
       market: {
         create: orders.create.bind(orders),
         act: orders.act.bind(orders),
+        expirePendingPaymentOrders: orders.expirePendingPaymentOrders.bind(orders),
         edit: listings.edit.bind(listings)
       },
       async read(work) {
