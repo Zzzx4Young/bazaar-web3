@@ -19,6 +19,8 @@ test('V2 seed plan covers dense listings, orders, currencies, and edge states', 
   assert.ok(plan.listings.some((listing) => listing.price.amount === '0'))
   assert.ok(plan.listings.some((listing) => listing.type === 'digital' && listing.supplyMode === 'single'))
   assert.ok(plan.listings.some((listing) => listing.type === 'digital' && listing.supplyMode === 'unlimited'))
+  assert.ok(plan.orders.some((order) => order.status === 'pending_payment' &&
+    plan.listings.find((listing) => listing.key === order.listingKey)?.supplyMode === 'single'))
   assert.deepEqual(Object.keys(plan.orderStates).sort(), [
     'cancelled',
     'completed',

@@ -12,7 +12,6 @@ export interface CreateOrderInput {
 }
 export type OrderAction =
   | 'cancel'
-  | 'expire'
   | 'pay'
   | 'deliver'
   | 'issue'
@@ -29,8 +28,8 @@ export interface ActionInput {
   inHandAndResellable?: boolean
 }
 
-// C1 application layer. actorId must be supplied by a trusted authentication boundary.
-// No business HTTP routes are exposed before C2/C3 authentication and contracts are ready.
+// User actions receive actorId from the authenticated HTTP boundary.
+// Expiry uses a separate system path so its event has no user actor.
 export class OrderCommands {
   constructor(private readonly client: PrismaClient) {}
 
@@ -160,7 +159,6 @@ export class OrderCommands {
     if (
       ![
         'cancel',
-        'expire',
         'pay',
         'deliver',
         'issue',
@@ -255,11 +253,6 @@ export class OrderCommands {
                 requireStatus('pending_payment')
                 next = 'cancelled'
                 await closeInventory('cancelled', 'available')
-                break
-              case 'expire':
-                requireStatus('pending_payment')
-                next = 'expired'
-                await closeInventory('expired', 'available')
                 break
               case 'pay':
                 requireStatus('pending_payment')
@@ -390,21 +383,68 @@ export class OrderCommands {
   }
 
   async expirePendingPaymentOrders(before: Date, options: { limit?: number } = {}) {
+    if (Number.isNaN(before.getTime()) ||
+      !Number.isInteger(options.limit ?? 100) ||
+      (options.limit ?? 100) < 1 ||
+      (options.limit ?? 100) > 1000)
+      throw new DomainError('INVALID_INPUT')
     const candidates = await this.client.order.findMany({
       where: { status: 'pending_payment', createdAt: { lt: before } },
-      select: { id: true, buyerId: true },
+      select: { id: true },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       take: options.limit ?? 100
     })
     const expired: string[] = []
-    for (const order of candidates) {
-      try {
-        await this.act(order.buyerId, `system-expire-${order.id}`, order.id, 'expire')
-        expired.push(order.id)
-      } catch (error) {
-        if (!(error instanceof DomainError) || !['STATE_CONFLICT', 'INVENTORY_CONFLICT'].includes(error.code))
-          throw error
-      }
+    for (const candidate of candidates) {
+      const didExpire = await transact(this.client, async (tx) => {
+        const hint = await tx.order.findUnique({ where: { id: candidate.id } })
+        if (!hint) return false
+        const listing = await lockListing(tx, hint.listingId)
+        await tx.$queryRaw`SELECT "id" FROM "Order" WHERE "id" = ${candidate.id}::uuid FOR UPDATE`
+        const order = await tx.order.findUniqueOrThrow({ where: { id: candidate.id } })
+        if (order.status !== 'pending_payment' || order.createdAt >= before) return false
+        if (listing.type === 'physical') {
+          const inventory = await tx.physicalInventory.findUniqueOrThrow({
+            where: { listingId: listing.id }
+          })
+          if (inventory.availability !== 'reserved' || inventory.activeOrderId !== order.id)
+            throw new DomainError('INVENTORY_CONFLICT')
+          await tx.inventoryReservation.update({
+            where: { orderId: order.id },
+            data: { state: 'expired', closedAt: new Date() }
+          })
+          await tx.physicalInventory.update({
+            where: { listingId: listing.id },
+            data: { availability: 'available', activeOrderId: null, version: { increment: 1 } }
+          })
+        } else {
+          const inventory = await tx.digitalInventory.findUnique({ where: { listingId: listing.id } })
+          if (inventory) {
+            if (inventory.availability !== 'reserved' || inventory.activeOrderId !== order.id)
+              throw new DomainError('INVENTORY_CONFLICT')
+            await tx.digitalInventory.update({
+              where: { listingId: listing.id },
+              data: { availability: 'available', activeOrderId: null, version: { increment: 1 } }
+            })
+          }
+        }
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: 'expired', version: { increment: 1 } }
+        })
+        await tx.orderEvent.create({
+          data: {
+            orderId: order.id,
+            actorId: null,
+            operation: 'expire',
+            fromState: 'pending_payment',
+            toState: 'expired',
+            requestId: `system-expire-${order.id}`
+          }
+        })
+        return true
+      })
+      if (didExpire) expired.push(candidate.id)
     }
     return { expired, scanned: candidates.length }
   }

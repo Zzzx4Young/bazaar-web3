@@ -228,14 +228,14 @@ model OrderEvent {
   note       String?
   id         String   @id @default(uuid()) @db.Uuid
   orderId    String   @db.Uuid
-  actorId    String   @db.Uuid
+  actorId    String?  @db.Uuid
   operation  String
   fromState  String?
   toState    String
   requestId  String
   createdAt  DateTime @default(now()) @db.Timestamptz(6)
   eventOrder Order    @relation("eventOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  eventActor Account  @relation("eventActor", fields: [actorId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  eventActor Account? @relation("eventActor", fields: [actorId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([orderId, createdAt, id])
 }

@@ -20,6 +20,8 @@ npm start
 
 默认监听 `127.0.0.1:3001`。`POST /api/health/live` 表示进程可响应；`POST /api/health/ready` 执行真实数据库查询，失败返回 503 且不返回驱动错误详情。启动要求数据库可连接；SIGINT/SIGTERM 触发 Nest 关闭钩子，释放 Prisma 连接池。每进程连接池上限 5，连接与语句超时均为 3 秒。
 
+服务进程启动后立即扫描一次待付款订单，此后每分钟扫描一次；创建超过 30 分钟仍未付款的订单会在同一数据库事务中转为 `expired`，释放实物或单份数字库存，并写入无用户 actor 的系统事件。每轮最多扫描 100 条；多实例并发由商品/订单行锁串行化。测试种子的待付款订单也保留真实库存预留。
+
 每个响应返回 `X-Request-Id`；客户端可发送受限格式值，否则服务端生成 UUID。错误体包含同一 `requestId`。默认请求日志只记录方法、路由模板、状态、耗时和稳定错误码，不记录 body、headers、原始 URL 或私有值，完整边界见[安全日志契约](../docs/backend-observability-contract.md)。
 
 启动不会迁移、seed 或清理数据库。首次使用先按 [C1 角色与迁移说明](../docs/backend-core-contract.md#数据库角色)创建迁移/运行账号，以迁移账号部署全部已检入迁移并授权，再以运行账号启动。日常开发只需一个持久化 postgres 容器；另外两个测试容器按需启动。不能把健康检查作为业务数据正确性的证明。
@@ -33,7 +35,7 @@ I8-2 提供 `backend/Dockerfile` 的 `runtime` 与 `migrate` target，以及
 必须是 loopback `bazaar_dev`，密码只通过 `PGPASSWORD` 传给子进程，不出现在参数中。
 
 本地观察入口先执行 `npm run db:observer:setup`：它创建无成员关系的 `bazaar_observer`、
-`bazaar_observe` schema 和 16 个脱敏视图，并写入 Git 忽略、权限 0600 的
+`bazaar_observe` schema 和 17 个脱敏视图，并写入 Git 忽略、权限 0600 的
 `.tmp/i8-observer.env`。观察视图不暴露登录名、密码/会话哈希、自由文本、收件信息、交付
 引用/提取码、幂等键或汇率 JSON；角色默认只读、语句与空闲事务超时 3 秒。命令只允许
 本机开发库，目标对象或私有文件已存在时拒绝接管。

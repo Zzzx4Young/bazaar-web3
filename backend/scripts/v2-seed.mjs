@@ -125,7 +125,13 @@ export function buildV2SeedPlan({ seed = V2_SEED_PREFIX } = {}) {
       key: `order${index + 1}`,
       listingKey: `listing${index + 1}`,
       buyerKey: `buyer${(index % 6) + 1}`,
-      status: listing.supplyMode === 'single' && listing.inventoryState === 'sold' ? 'completed' : baseStatus,
+      // Keep one finite digital order unpaid so scheduled expiry has a real reservation to release.
+      status:
+        index === 21
+          ? 'pending_payment'
+          : listing.supplyMode === 'single' && listing.inventoryState === 'sold'
+            ? 'completed'
+            : baseStatus,
       partialDelivery: index % 10 === 0,
       requestId: `${seed}-order-${index + 1}`
     }
@@ -223,7 +229,7 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
           : {})
       }
     })
-    const needsReservation = listing.type === 'physical' && spec.status !== 'pending_payment'
+    const needsReservation = listing.type === 'physical'
     if (needsReservation) {
       const closed = ['completed', 'refunded', 'cancelled', 'expired'].includes(spec.status)
       const availability =
@@ -231,7 +237,7 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
           ? 'sold'
           : spec.status === 'refunded'
             ? 'refund_hold'
-            : ['pending_payment', 'cancelled', 'expired'].includes(spec.status)
+            : ['cancelled', 'expired'].includes(spec.status)
               ? 'available'
               : 'reserved'
       await client.physicalInventory.update({ where: { listingId: listing.id }, data: { availability, activeOrderId: availability === 'available' ? null : order.id } })
@@ -243,7 +249,7 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
           ? 'sold'
           : spec.status === 'refunded'
             ? 'refund_hold'
-            : ['pending_payment', 'cancelled', 'expired'].includes(spec.status)
+            : ['cancelled', 'expired'].includes(spec.status)
               ? 'available'
               : 'reserved'
       await client.digitalInventory.update({
@@ -266,7 +272,7 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
       await client.settlementRecord.create({ data: { orderId: order.id, operation: 'refund', amount: listing.priceAmount, currency: listing.currency } })
     const transitions = spec.status === 'pending_payment' ? [['create', null, 'pending_payment']] : [['create', null, 'pending_payment'], [spec.status === 'cancelled' ? 'cancel' : spec.status === 'expired' ? 'expire' : 'pay', 'pending_payment', ['cancelled', 'expired'].includes(spec.status) ? spec.status : 'pending_delivery']]
     for (const [operation, fromState, toState] of transitions)
-      await client.orderEvent.create({ data: { orderId: order.id, actorId: buyer.id, operation, fromState, toState, requestId: `${spec.requestId}-${operation}` } })
+      await client.orderEvent.create({ data: { orderId: order.id, actorId: operation === 'expire' ? null : buyer.id, operation, fromState, toState, requestId: `${spec.requestId}-${operation}` } })
     if (['pending_acceptance', 'issue', 'completed', 'refunded'].includes(spec.status))
       await client.orderEvent.create({ data: { orderId: order.id, actorId: seller.id, operation: 'deliver', fromState: 'pending_delivery', toState: spec.status === 'refunded' ? 'pending_acceptance' : 'pending_acceptance', requestId: `${spec.requestId}-deliver` } })
     if (spec.status === 'issue')
