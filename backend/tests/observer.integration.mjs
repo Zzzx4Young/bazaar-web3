@@ -42,6 +42,20 @@ test('I8: observer sees only curated views and cannot write or read private tabl
     ownerUrl.searchParams.set('schema', sourceSchema)
     await cli(['migrate', 'deploy'], ownerUrl)
     ownerClient = await connect(ownerUrl)
+    for (const [name, select] of Object.entries({
+      accounts: `SELECT id, status, "createdAt" AS created_at FROM "${sourceSchema}"."Account"`,
+      orders: `SELECT id, "listingId" AS listing_id, "buyerId" AS buyer_id,
+        "sellerId" AS seller_id, status, version, "createdAt" AS created_at,
+        "updatedAt" AS updated_at FROM "${sourceSchema}"."Order"`,
+      refunds: `SELECT id, "orderId" AS order_id, "issueId" AS issue_id,
+        "requestedBy" AS requested_by, status, "approvedBy" AS approved_by,
+        "returnOutcome" AS return_outcome, "createdAt" AS created_at,
+        "approvedAt" AS approved_at FROM "${sourceSchema}"."RefundRequest"`
+    })) {
+      await ownerClient.client.$executeRawUnsafe(
+        `CREATE VIEW "${observeSchema}"."${name}" AS ${select}`
+      )
+    }
     await admin.client.$executeRawUnsafe(`GRANT "${inherited}" TO "${observer}"`)
     await assert.rejects(
       grantObserver(ownerClient.client, sourceSchema, observeSchema, observer),

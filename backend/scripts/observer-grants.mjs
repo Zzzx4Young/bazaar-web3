@@ -4,13 +4,13 @@ const identifier = (value) => {
 }
 
 const views = {
-  accounts: `SELECT id, status, role, "createdAt" AS created_at FROM SOURCE."Account"`,
+  accounts: `SELECT id, status, "createdAt" AS created_at, role FROM SOURCE."Account"`,
   listings: `SELECT id, "sellerId" AS seller_id, type, category, "priceAmount" AS price_amount,
     currency, "publicationStatus" AS publication_status, version, "createdAt" AS created_at,
     "updatedAt" AS updated_at FROM SOURCE."Listing"`,
   orders: `SELECT id, "listingId" AS listing_id, "buyerId" AS buyer_id,
-    "sellerId" AS seller_id, "checkoutId" AS checkout_id, status, version, "createdAt" AS created_at,
-    "updatedAt" AS updated_at FROM SOURCE."Order"`,
+    "sellerId" AS seller_id, status, version, "createdAt" AS created_at,
+    "updatedAt" AS updated_at, "checkoutId" AS checkout_id FROM SOURCE."Order"`,
   checkouts: `SELECT id, "buyerId" AS buyer_id, "createdAt" AS created_at FROM SOURCE."Checkout"`,
   order_snapshots: `SELECT "orderId" AS order_id, "listingVersion" AS listing_version, type,
     category, "priceAmount" AS price_amount, currency FROM SOURCE."OrderSnapshot"`,
@@ -30,9 +30,8 @@ const views = {
     "resolvedAt" AS resolved_at FROM SOURCE."IssueRecord"`,
   refunds: `SELECT id, "orderId" AS order_id, "issueId" AS issue_id,
     "requestedBy" AS requested_by, status, "approvedBy" AS approved_by,
-    "resolvedBy" AS resolved_by,
     "returnOutcome" AS return_outcome, "createdAt" AS created_at,
-    "approvedAt" AS approved_at FROM SOURCE."RefundRequest"`,
+    "approvedAt" AS approved_at, "resolvedBy" AS resolved_by FROM SOURCE."RefundRequest"`,
   settlements: `SELECT id, "orderId" AS order_id, mode, operation, amount, currency,
     "createdAt" AS created_at FROM SOURCE."SettlementRecord"`,
   seller_reviews: `SELECT id, "orderId" AS order_id, "buyerId" AS buyer_id,
