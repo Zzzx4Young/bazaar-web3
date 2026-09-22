@@ -67,24 +67,33 @@ export interface Refund {
   id: string
   status: 'pending' | 'approved' | 'closed'
   returnOutcome: 'not_sent' | 'returned' | 'not_required' | 'digital' | null
+  resolvedBy: string | null
   createdAt: string
 }
 export interface Settlement {
   id: string
   mode: 'simulated'
-  operation: 'payment' | 'refund'
+  operation: 'payment' | 'refund' | 'release'
   price: Money
   createdAt: string
 }
 export interface OrderEvent {
   id: string
+  actorId: string | null
   operation: string
+  note: string | null
   fromState: string | null
   toState: string
   createdAt: string
 }
 export type OrderAction =
-  'cancel' | 'pay' | 'deliver' | 'issue' | 'request-refund' | 'accept' | 'refund' | 'restore'
+  'cancel' | 'pay' | 'deliver' | 'issue' | 'request-refund' | 'counteroffer' | 'accept' | 'refund' | 'restore'
+
+export interface SimulatedBalance {
+  currency: string
+  amount: string
+  mode: 'simulated'
+}
 
 export function acceptanceOrderStatus(status: OrderDetail['status']) {
   if (status === 'pending_delivery') return 'PAID_HELD'
@@ -102,7 +111,7 @@ export function orderActions(order: OrderDetail, accountId: string): OrderAction
   if (accountId === order.sellerId) {
     if (order.status === 'pending_delivery' || order.status === 'pending_acceptance')
       return ['deliver']
-    if (order.status === 'issue') return ['deliver', 'refund']
+    if (order.status === 'issue') return ['deliver', 'counteroffer', 'refund']
     if (order.status === 'refunded' && order.type === 'physical') return ['restore']
   }
   return []

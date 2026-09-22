@@ -49,8 +49,8 @@ export class AuthService {
   }
 
   view(auth: Authenticated) {
-    const { id, loginName, displayName } = auth.account
-    return { account: { id, loginName, displayName }, csrfToken: csrfToken(auth.token) }
+    const { id, loginName, displayName, role } = auth.account
+    return { account: { id, loginName, displayName, role }, csrfToken: csrfToken(auth.token) }
   }
 
   async authenticate(cookie: string | undefined): Promise<Authenticated> {

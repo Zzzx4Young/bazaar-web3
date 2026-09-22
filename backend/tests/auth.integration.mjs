@@ -34,8 +34,10 @@ test('I1: sessions, rotation, restart, revocation, CSRF and password reset over 
     assert.deepEqual(Object.keys(response.json().account).sort(), [
       'displayName',
       'id',
-      'loginName'
+      'loginName',
+      'role'
     ])
+    assert.equal(response.json().account.role, 'participant')
     const oldCookie = cookieOf(response)
     const rotated = await login({ cookie: oldCookie })
     assert.equal(rotated.statusCode, 200)

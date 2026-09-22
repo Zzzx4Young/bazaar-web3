@@ -13,6 +13,8 @@ import { ListingController } from './listings/listing.controller.js'
 import { ListingService } from './listings/listing.service.js'
 import { RatesService, type RateLoader } from './pricing/rates.service.js'
 import { OrderController } from './orders/order.controller.js'
+import { DisputeController } from './orders/dispute.controller.js'
+import { BalanceController } from './orders/balance.controller.js'
 import {
   defaultRequestLogSink,
   type RequestLogSink,
@@ -51,7 +53,8 @@ export async function createApp(
   const app = await NestFactory.create<NestFastifyApplication>(
     {
       module: AppModule,
-      controllers: [HealthController, AuthController, ListingController, OrderController],
+      controllers: [HealthController, AuthController, ListingController, OrderController,
+        DisputeController, BalanceController],
       providers: [
         { provide: DatabaseService, useValue: database },
         { provide: AuthService, useValue: auth },

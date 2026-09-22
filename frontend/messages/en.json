@@ -18,7 +18,34 @@
     "authError": "The account request failed. Please retry.",
     "myItems": "My Listings",
     "favorites": "Favorites",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "adminDisputes": "Dispute review"
+  },
+  "adminDisputes": {
+    "restricted": "Only administrators can review disputes.",
+    "loading": "Loading disputes…",
+    "loadError": "Could not load disputes: {error}",
+    "title": "Disputes awaiting review",
+    "empty": "No disputes await review.",
+    "offerReady": "Seller has proposed a solution",
+    "offerPending": "Waiting for a seller proposal",
+    "buyerIssue": "Buyer issue",
+    "sellerOffer": "Seller proposal",
+    "noIssue": "No description",
+    "refundOutcome": "Return outcome",
+    "returned": "Returned to seller",
+    "notSent": "Not shipped",
+    "notRequired": "Return not required",
+    "refund": "Resolve with buyer refund",
+    "release": "Resolve with seller payout",
+    "actionError": "Action failed: {error}",
+    "retry": "Retry resolution"
+  },
+  "orderDispute": {
+    "sellerOffer": "Seller proposal",
+    "sellerOfferHint": "Describe redelivery or another solution",
+    "balance": "Simulated balance",
+    "adminResolved": "Administrator decision"
   },
   "home": {
     "hero": {

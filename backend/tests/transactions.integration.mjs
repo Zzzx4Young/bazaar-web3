@@ -165,7 +165,10 @@ test('DB-05: acceptance/refund races exercise both lock orders with exact settle
     assert.equal(results[1].status, 'rejected')
     const state = await orderState(db, id)
     assert.equal(state.order.status, first === 'accept' ? 'completed' : 'refunded')
-    assert.equal(state.settlements.length, first === 'accept' ? 1 : 2)
+    assert.deepEqual(
+      state.settlements.map((settlement) => settlement.operation).sort(),
+      first === 'accept' ? ['payment', 'release'] : ['payment', 'refund']
+    )
     assert.equal(state.events.length, 6)
     for (const settlement of state.settlements) {
       assert.equal(settlement.amount.toFixed(18), f.listing.priceAmount.toFixed(18))

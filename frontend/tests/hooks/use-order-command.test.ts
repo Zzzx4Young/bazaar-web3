@@ -12,7 +12,7 @@ beforeEach(() => {
   useAuthStore.setState({
     status: 'authenticated',
     view: {
-      account: { id: 'buyer-1', loginName: 'buyer', displayName: 'Buyer' },
+      account: { id: 'buyer-1', loginName: 'buyer', displayName: 'Buyer', role: 'participant' },
       csrfToken: 'csrf'
     },
     error: null

@@ -14,7 +14,8 @@ export async function idempotent(
   operation: string,
   key: string,
   payload: object,
-  work: () => Promise<string>
+  work: () => Promise<string>,
+  allowAdminReplay = false
 ) {
   const hash = requestHash(payload)
   const inserted = await tx.$queryRaw<{ actorId: string }[]>`
@@ -30,7 +31,7 @@ export async function idempotent(
     if (!previous.resourceId || !previous.resultCode)
       throw new Error('Incomplete idempotency result')
     const resource = await tx.order.findUniqueOrThrow({ where: { id: previous.resourceId } })
-    if (resource.buyerId !== actorId && resource.sellerId !== actorId)
+    if (!allowAdminReplay && resource.buyerId !== actorId && resource.sellerId !== actorId)
       throw new DomainError('FORBIDDEN')
     return previous.resourceId
   }

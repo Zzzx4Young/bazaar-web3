@@ -19,7 +19,7 @@ const resultsDirectory = resolve(process.env.E2E_RESULTS_DIR ?? new URL('../../f
 await rm(resultsDirectory, { recursive: true, force: true })
 await mkdir(resultsDirectory, { recursive: true })
 
-let db, admin, observer, app, frontend, browser, sellerContext, buyerContext
+let db, admin, observer, app, frontend, browser, sellerContext, buyerContext, adminContext
 const suffix = randomUUID().replaceAll('-', '')
 const runtimeRole = `v2_runtime_${suffix}`
 const observerRole = `v2_observer_${suffix}`
@@ -76,6 +76,7 @@ try {
   const plan = buildV2SeedPlan({ seed: 'v2-e2e' })
   const seller = plan.accounts.find((account) => account.key === 'seller5')
   const buyer = plan.accounts.find((account) => account.key === 'buyer5')
+  const adminAccount = plan.accounts.find((account) => account.key === 'admin')
   const target = await db.client.order.findFirstOrThrow({
     where: { status: 'pending_acceptance', sellerId: (await db.client.account.findUniqueOrThrow({ where: { loginName: seller.loginName } })).id, buyerId: (await db.client.account.findUniqueOrThrow({ where: { loginName: buyer.loginName } })).id },
     orderBy: { createdAt: 'asc' },
@@ -132,12 +133,15 @@ try {
   browser = await chromium.launch({ headless: process.env.HEADED !== '1' })
   sellerContext = await browser.newContext({ recordVideo: { dir: resolve(resultsDirectory, 'video-seller') } })
   buyerContext = await browser.newContext({ recordVideo: { dir: resolve(resultsDirectory, 'video-buyer') } })
+  adminContext = await browser.newContext({ recordVideo: { dir: resolve(resultsDirectory, 'video-admin') } })
   await sellerContext.tracing.start({ screenshots: true, snapshots: true, sources: true })
   await buyerContext.tracing.start({ screenshots: true, snapshots: true, sources: true })
+  await adminContext.tracing.start({ screenshots: true, snapshots: true, sources: true })
   const sellerPage = await sellerContext.newPage()
   const buyerPage = await buyerContext.newPage()
+  const adminPage = await adminContext.newPage()
   const browserErrors = []
-  for (const page of [sellerPage, buyerPage]) {
+  for (const page of [sellerPage, buyerPage, adminPage]) {
     page.on('pageerror', (error) => browserErrors.push(error.message))
     page.on('console', (message) => {
       if (message.type() === 'error' && /hydration|did not match|text content does not match/i.test(message.text()))
@@ -228,20 +232,41 @@ try {
   await login(buyerPage, buyer.loginName, password)
   await buyerPage.goto(`${origin}/zh-CN/me/orders/${target.id}`)
   await buyerPage.getByTestId('acceptance-order-status').getByText('DELIVERED').waitFor()
+  const balanceBefore = await buyerPage.getByTestId('simulated-balance').textContent()
   await buyerPage.getByLabel('问题描述').fill('V2 physical delivery dispute with a long multilingual explanation 🧪')
   await buyerPage.getByRole('button', { name: 'issue' }).click()
   await buyerPage.getByTestId('acceptance-order-status').getByText('ISSUE').waitFor()
   await buyerPage.getByRole('button', { name: 'request-refund' }).click()
 
-  stage = 'seller resolution and observer verification'
+  stage = 'seller counteroffer and admin resolution'
   await login(sellerPage, seller.loginName, password)
   await sellerPage.goto(`${origin}/zh-CN/me/orders/${target.id}`)
   await waitText(sellerPage, 'V2 physical delivery dispute')
-  await sellerPage.getByRole('button', { name: 'refund' }).click()
+  await sellerPage.getByLabel('卖家方案').fill('V2 seller offers a replacement and tracked return')
+  await sellerPage.getByRole('button', { name: 'counteroffer' }).click()
+  await waitText(sellerPage, 'V2 seller offers a replacement and tracked return')
+  await login(adminPage, adminAccount.loginName, password)
+  await adminPage.goto(`${origin}/zh-CN/admin/disputes`)
+  await adminPage.locator(`main a[href$="/admin/disputes/${target.id}"]`).click()
+  await waitText(adminPage, 'V2 seller offers a replacement and tracked return')
+  await adminPage.getByRole('button', { name: '裁决退款给买家' }).click()
+  await adminPage.getByTestId('admin-dispute-status').getByText('refunded', { exact: false }).waitFor()
   await sellerPage.getByTestId('acceptance-order-status').getByText('REFUNDED').waitFor()
   await buyerPage.getByTestId('acceptance-order-status').getByText('REFUNDED').waitFor({ timeout: 15000 })
+  await buyerPage.getByTestId('simulated-balance').evaluate((element, before) => new Promise((resolveWait, reject) => {
+    const deadline = Date.now() + 15000
+    const check = () => {
+      if (element.textContent !== before) resolveWait(true)
+      else if (Date.now() > deadline) reject(new Error('Buyer simulated balance did not update'))
+      else setTimeout(check, 100)
+    }
+    check()
+  }), balanceBefore)
+  await adminPage.screenshot({ path: resolve(resultsDirectory, 'admin-refunded.png'), fullPage: true })
   await sellerPage.screenshot({ path: resolve(resultsDirectory, 'seller-refunded.png'), fullPage: true })
   await buyerPage.screenshot({ path: resolve(resultsDirectory, 'buyer-refunded.png'), fullPage: true })
+
+  stage = 'observer verification'
 
   const counts = await observerRows(`SELECT (SELECT count(*)::int FROM listings) AS listings, (SELECT count(*)::int FROM orders) AS orders`)
   assert.deepEqual(counts, [{ listings: 100, orders: 60 }])
@@ -263,8 +288,9 @@ try {
   assert.deepEqual(targetInventory, [{ availability: 'refund_hold', active_order_id: target.id }])
   const targetReservation = await observerRows(`SELECT state, closed_at IS NOT NULL AS closed FROM inventory_reservations WHERE order_id = '${target.id}'::uuid`)
   assert.deepEqual(targetReservation, [{ state: 'refunded', closed: true }])
-  const targetRefund = await observerRows(`SELECT status, requested_by, approved_by, approved_at IS NOT NULL AS approved FROM refunds WHERE order_id = '${target.id}'::uuid`)
-  assert.deepEqual(targetRefund, [{ status: 'approved', requested_by: target.buyerId, approved_by: target.sellerId, approved: true }])
+  const targetRefund = await observerRows(`SELECT status, requested_by, approved_by, resolved_by, approved_at IS NOT NULL AS approved FROM refunds WHERE order_id = '${target.id}'::uuid`)
+  const adminId = (await db.client.account.findUniqueOrThrow({ where: { loginName: adminAccount.loginName } })).id
+  assert.deepEqual(targetRefund, [{ status: 'approved', requested_by: target.buyerId, approved_by: null, resolved_by: adminId, approved: true }])
   const targetSettlements = await observerRows(`SELECT s.operation, s.amount = o.price_amount AS amount_matches, s.currency = o.currency AS currency_matches FROM settlements s JOIN order_snapshots o ON o.order_id = s.order_id WHERE s.order_id = '${target.id}'::uuid ORDER BY s.operation`)
   assert.deepEqual(targetSettlements, [
     { operation: 'payment', amount_matches: true, currency_matches: true },
@@ -275,10 +301,11 @@ try {
   assert.equal('reference' in deliveryViewRows[0], false)
   assert.equal('access_code' in deliveryViewRows[0], false)
   const newEvents = await observerRows(`SELECT operation, request_id FROM order_events WHERE order_id = '${target.id}'::uuid ORDER BY created_at, id OFFSET ${baselineEvents}`)
-  assert.deepEqual(newEvents.map((event) => event.operation), ['issue', 'request_refund', 'refund'])
+  assert.deepEqual(newEvents.map((event) => event.operation), ['issue', 'request_refund', 'counteroffer', 'resolve_refund'])
   for (const event of newEvents) {
     assert.match(event.request_id, /^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/)
-    assert.ok(requestLogs.some((entry) => entry.requestId === event.request_id && entry.route.includes('/api/orders')))
+    assert.ok(requestLogs.some((entry) => entry.requestId === event.request_id &&
+      (entry.route.includes('/api/orders') || entry.route.includes('/api/admin/disputes'))))
   }
   assert.deepEqual(browserErrors, [], 'Browser emitted runtime or hydration errors')
   await writeFile(resolve(resultsDirectory, 'acceptance-summary.json'), `${JSON.stringify({ result: 'passed', listings: counts[0].listings, orders: counts[0].orders, statusCounts, inventory, digitalInventory, targetOrderId: target.id, targetInventory, targetReservation, targetRefund, targetSettlements, newEvents }, null, 2)}\n`)
@@ -290,9 +317,10 @@ try {
 } finally {
   await Promise.allSettled([
     sellerContext?.tracing.stop({ path: resolve(resultsDirectory, 'seller-trace.zip') }),
-    buyerContext?.tracing.stop({ path: resolve(resultsDirectory, 'buyer-trace.zip') })
+    buyerContext?.tracing.stop({ path: resolve(resultsDirectory, 'buyer-trace.zip') }),
+    adminContext?.tracing.stop({ path: resolve(resultsDirectory, 'admin-trace.zip') })
   ])
-  await Promise.allSettled([sellerContext?.close(), buyerContext?.close()])
+  await Promise.allSettled([sellerContext?.close(), buyerContext?.close(), adminContext?.close()])
   await browser?.close()
   if (frontend?.pid && frontend.exitCode === null) {
     try {

@@ -16,6 +16,7 @@ export type OrderAction =
   | 'deliver'
   | 'issue'
   | 'request_refund'
+  | 'counteroffer'
   | 'accept'
   | 'refund'
   | 'restore'
@@ -141,10 +142,11 @@ export class OrderCommands {
     operation: string,
     key: string,
     fromState: string | null,
-    toState: string
+    toState: string,
+    note?: string
   ) {
     await tx.orderEvent.create({
-      data: { orderId: order.id, actorId, operation, requestId: key, fromState, toState }
+      data: { orderId: order.id, actorId, operation, requestId: key, fromState, toState, note }
     })
   }
 
@@ -163,6 +165,7 @@ export class OrderCommands {
         'deliver',
         'issue',
         'request_refund',
+        'counteroffer',
         'accept',
         'refund',
         'restore'
@@ -194,7 +197,7 @@ export class OrderCommands {
             await tx.$queryRaw`SELECT "id" FROM "Order" WHERE "id" = ${orderId}::uuid FOR UPDATE`
             const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } })
             await options.checkpoint?.('locked', tx, attempt)
-            const sellerAction = ['deliver', 'refund', 'restore'].includes(action)
+            const sellerAction = ['deliver', 'counteroffer', 'refund', 'restore'].includes(action)
             if (actorId !== (sellerAction ? order.sellerId : order.buyerId))
               throw new DomainError('FORBIDDEN')
             const physical = listing.type === 'physical'
@@ -238,6 +241,7 @@ export class OrderCommands {
               }
             }
             const settle = async (operation: string) => {
+              if (snapshot.priceAmount.isZero()) return
               await tx.settlementRecord.create({
                 data: {
                   orderId,
@@ -300,11 +304,20 @@ export class OrderCommands {
                 })
                 break
               }
+              case 'counteroffer': {
+                requireStatus('issue')
+                if (!input.description) throw new DomainError('DESCRIPTION_REQUIRED')
+                if (!(await tx.refundRequest.findFirst({ where: { orderId, status: 'pending' } })) ||
+                  (await tx.orderEvent.findFirst({ where: { orderId, operation: 'counteroffer' } })))
+                  throw new DomainError('STATE_CONFLICT')
+                break
+              }
               case 'accept':
                 requireStatus('pending_acceptance', 'issue')
                 if ((await tx.deliveryRecord.count({ where: { orderId } })) === 0)
                   throw new DomainError('DELIVERY_REQUIRED')
                 next = 'completed'
+                await settle('release')
                 await closeInventory('completed', 'sold')
                 await tx.issueRecord.updateMany({
                   where: { orderId, status: 'open' },
@@ -323,7 +336,8 @@ export class OrderCommands {
                 const payment = await tx.settlementRecord.findUnique({
                   where: { orderId_operation: { orderId, operation: 'payment' } }
                 })
-                if (!request || !payment) throw new DomainError('REFUND_REQUIRED')
+                if (!request || (!payment && !snapshot.priceAmount.isZero()))
+                  throw new DomainError('REFUND_REQUIRED')
                 if (
                   physical &&
                   !['not_sent', 'returned', 'not_required'].includes(input.returnOutcome ?? '')
@@ -352,9 +366,10 @@ export class OrderCommands {
                 if (
                   !physical ||
                   !input.inHandAndResellable ||
-                  !(await tx.settlementRecord.findUnique({
-                    where: { orderId_operation: { orderId, operation: 'refund' } }
-                  }))
+                  (!snapshot.priceAmount.isZero() &&
+                    !(await tx.settlementRecord.findUnique({
+                      where: { orderId_operation: { orderId, operation: 'refund' } }
+                    })))
                 )
                   throw new DomainError('RESTORE_CONFLICT')
                 await tx.physicalInventory.update({
@@ -372,7 +387,8 @@ export class OrderCommands {
                 where: { id: orderId },
                 data: { status: next, version: { increment: 1 } }
               })
-            await this.event(tx, order, actorId, action, key, order.status, next)
+            await this.event(tx, order, actorId, action, key, order.status, next,
+              action === 'counteroffer' ? input.description : undefined)
             await options.checkpoint?.('event', tx, attempt)
             return orderId
           }
@@ -380,6 +396,104 @@ export class OrderCommands {
       },
       options
     )
+  }
+
+  async resolveDispute(
+    actorId: string,
+    key: string,
+    orderId: string,
+    input: { outcome: 'refund' | 'release'; returnOutcome?: string },
+    options: TransactionOptions = {}
+  ) {
+    if (!['refund', 'release'].includes(input.outcome)) throw new DomainError('INVALID_INPUT')
+    return transact(this.client, async (tx, attempt) => {
+      await requireActiveAccount(tx, actorId, 'admin')
+      return idempotent(tx, actorId, 'resolve_dispute', key, { orderId, ...input }, async () => {
+        const hint = await tx.order.findUnique({ where: { id: orderId } })
+        if (!hint) throw new DomainError('NOT_FOUND')
+        const listing = await lockListing(tx, hint.listingId)
+        await tx.$queryRaw`SELECT "id" FROM "Order" WHERE "id" = ${orderId}::uuid FOR UPDATE`
+        const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } })
+        await options.checkpoint?.('locked', tx, attempt)
+        if (order.status !== 'issue') throw new DomainError('STATE_CONFLICT')
+        const request = await tx.refundRequest.findFirst({ where: { orderId, status: 'pending' } })
+        const offer = await tx.orderEvent.findFirst({ where: { orderId, operation: 'counteroffer' } })
+        if (!request || !offer) throw new DomainError('REFUND_REQUIRED')
+        const snapshot = await tx.orderSnapshot.findUniqueOrThrow({ where: { orderId } })
+        if (!snapshot.priceAmount.isZero() &&
+          !(await tx.settlementRecord.findUnique({
+            where: { orderId_operation: { orderId, operation: 'payment' } }
+          }))) throw new DomainError('REFUND_REQUIRED')
+        const physical = listing.type === 'physical'
+        const inventory = physical
+          ? await tx.physicalInventory.findUnique({ where: { listingId: listing.id } })
+          : await tx.digitalInventory.findUnique({ where: { listingId: listing.id } })
+        if ((physical || inventory) &&
+          (inventory?.activeOrderId !== orderId || inventory.availability !== 'reserved'))
+          throw new DomainError('INVENTORY_CONFLICT')
+        if (input.outcome === 'refund' && physical &&
+          !['not_sent', 'returned', 'not_required'].includes(input.returnOutcome ?? ''))
+          throw new DomainError('RETURN_REQUIRED')
+        if (input.outcome === 'release' &&
+          (await tx.deliveryRecord.count({ where: { orderId } })) === 0)
+          throw new DomainError('DELIVERY_REQUIRED')
+        if (!snapshot.priceAmount.isZero()) {
+          await tx.settlementRecord.create({
+            data: {
+              orderId,
+              operation: input.outcome,
+              amount: snapshot.priceAmount,
+              currency: snapshot.currency
+            }
+          })
+          await options.checkpoint?.('settlement', tx, attempt)
+        }
+        const next = input.outcome === 'refund' ? 'refunded' : 'completed'
+        await tx.refundRequest.update({
+          where: { id: request.id },
+          data: input.outcome === 'refund'
+            ? {
+                status: 'approved',
+                resolvedBy: actorId,
+                approvedAt: new Date(),
+                returnOutcome: physical ? input.returnOutcome : 'digital'
+              }
+            : { status: 'closed' }
+        })
+        await tx.issueRecord.update({
+          where: { id: request.issueId },
+          data: { status: 'resolved', resolvedAt: new Date() }
+        })
+        if (physical) {
+          await tx.inventoryReservation.update({
+            where: { orderId },
+            data: { state: next, closedAt: new Date() }
+          })
+          await tx.physicalInventory.update({
+            where: { listingId: listing.id },
+            data: {
+              availability: input.outcome === 'refund' ? 'refund_hold' : 'sold',
+              version: { increment: 1 }
+            }
+          })
+        } else if (inventory) {
+          await tx.digitalInventory.update({
+            where: { listingId: listing.id },
+            data: {
+              availability: input.outcome === 'refund' ? 'refund_hold' : 'sold',
+              version: { increment: 1 }
+            }
+          })
+        }
+        await tx.order.update({
+          where: { id: orderId },
+          data: { status: next, version: { increment: 1 } }
+        })
+        await this.event(tx, order, actorId, `resolve_${input.outcome}`, key, 'issue', next)
+        await options.checkpoint?.('event', tx, attempt)
+        return orderId
+      }, true)
+    }, options)
   }
 
   async expirePendingPaymentOrders(before: Date, options: { limit?: number } = {}) {

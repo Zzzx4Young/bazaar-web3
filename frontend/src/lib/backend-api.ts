@@ -34,7 +34,7 @@ export interface ListingPage {
   } | null
 }
 export interface AuthView {
-  account: { id: string; loginName: string; displayName: string }
+  account: { id: string; loginName: string; displayName: string; role: 'participant' | 'admin' | 'observer' }
   csrfToken: string
 }
 export class BackendError extends Error {

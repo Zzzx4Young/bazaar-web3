@@ -14,11 +14,13 @@ model Account {
   loginName            String              @unique @db.VarChar(100)
   displayName          String
   status               String              @default("active")
+  role                 String              @default("participant")
   createdAt            DateTime            @default(now()) @db.Timestamptz(6)
   listingSellerRows    Listing[]           @relation("listingSeller")
   orderBuyerRows       Order[]             @relation("orderBuyer")
   eventActorRows       OrderEvent[]        @relation("eventActor")
   idempotencyActorRows IdempotencyRecord[] @relation("idempotencyActor")
+  resolvedRefundRows   RefundRequest[]     @relation("refundResolver")
   credential           AccountCredential?
   sessions             Session[]
 }
@@ -203,12 +205,14 @@ model RefundRequest {
   requestedBy   String      @db.Uuid
   status        String      @default("pending")
   approvedBy    String?     @db.Uuid
+  resolvedBy    String?     @db.Uuid
   returnOutcome String?
   createdAt     DateTime    @default(now()) @db.Timestamptz(6)
   approvedAt    DateTime?   @db.Timestamptz(6)
   refundIssue   IssueRecord @relation("refundIssue", fields: [issueId, orderId], references: [id, orderId], onDelete: Restrict, onUpdate: Restrict)
   refundBuyer   Order       @relation("refundBuyer", fields: [orderId, requestedBy], references: [id, buyerId], onDelete: Restrict, onUpdate: Restrict)
   refundSeller  Order?      @relation("refundSeller", fields: [orderId, approvedBy], references: [id, sellerId], onDelete: Restrict, onUpdate: Restrict)
+  refundResolver Account?   @relation("refundResolver", fields: [resolvedBy], references: [id], onDelete: Restrict, onUpdate: Restrict)
 }
 
 model SettlementRecord {

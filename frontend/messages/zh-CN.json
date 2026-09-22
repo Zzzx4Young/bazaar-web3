@@ -18,7 +18,34 @@
     "authError": "账户请求失败，请重试。",
     "myItems": "我的商品",
     "favorites": "收藏",
-    "notifications": "通知"
+    "notifications": "通知",
+    "adminDisputes": "争议裁决"
+  },
+  "adminDisputes": {
+    "restricted": "仅管理员可查看争议。",
+    "loading": "正在加载争议…",
+    "loadError": "争议加载失败：{error}",
+    "title": "待裁决争议",
+    "empty": "暂无待裁决争议。",
+    "offerReady": "卖家已提出方案",
+    "offerPending": "等待卖家方案",
+    "buyerIssue": "买家问题",
+    "sellerOffer": "卖家方案",
+    "noIssue": "暂无描述",
+    "refundOutcome": "裁决退货结果",
+    "returned": "已退回卖家",
+    "notSent": "尚未发货",
+    "notRequired": "无需退回",
+    "refund": "裁决退款给买家",
+    "release": "裁决放款给卖家",
+    "actionError": "操作失败：{error}",
+    "retry": "重试原裁决"
+  },
+  "orderDispute": {
+    "sellerOffer": "卖家方案",
+    "sellerOfferHint": "说明补交、重新交付或其他处理方案",
+    "balance": "模拟余额",
+    "adminResolved": "管理员裁决"
   },
   "home": {
     "hero": {

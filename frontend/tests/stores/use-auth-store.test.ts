@@ -12,7 +12,7 @@ vi.mock('@/lib/backend-api', () => ({
 }))
 
 const view: AuthView = {
-  account: { id: 'buyer', loginName: 'buyer', displayName: 'Buyer' },
+  account: { id: 'buyer', loginName: 'buyer', displayName: 'Buyer', role: 'participant' },
   csrfToken: 'test'
 }
 

@@ -21,6 +21,7 @@ const actions = new Map<string, OrderAction>([
   ['deliver', 'deliver'],
   ['issue', 'issue'],
   ['request-refund', 'request_refund'],
+  ['counteroffer', 'counteroffer'],
   ['accept', 'accept'],
   ['refund', 'refund'],
   ['restore', 'restore']
@@ -283,6 +284,7 @@ export class OrderController {
         issueId: row.issueId,
         orderId: row.orderId,
         approvedBy: row.approvedBy,
+        resolvedBy: row.resolvedBy,
         requestedBy: row.requestedBy,
         status: row.status,
         returnOutcome: row.returnOutcome,
@@ -346,6 +348,7 @@ export class OrderController {
         actorId: row.actorId,
         orderId: row.orderId,
         operation: row.operation,
+        note: row.note,
         fromState: row.fromState,
         toState: row.toState,
         createdAt: row.createdAt
@@ -369,7 +372,7 @@ export class OrderController {
     const order = await this.participantOrder(idInput(id), request.auth.account.id)
     const operation = actions.get(action)
     if (!operation) throw new DomainError('INVALID_INPUT')
-    const sellerAction = ['deliver', 'refund', 'restore'].includes(operation)
+    const sellerAction = ['deliver', 'counteroffer', 'refund', 'restore'].includes(operation)
     if (request.auth.account.id !== (sellerAction ? order.sellerId : order.buyerId))
       throw new DomainError('FORBIDDEN')
     const physical = order.snapshot?.type === 'physical'
@@ -398,6 +401,9 @@ export class OrderController {
         break
       }
       case 'issue':
+        actionInput.description = textInput(objectInput(body, ['description']).description, 2000)
+        break
+      case 'counteroffer':
         actionInput.description = textInput(objectInput(body, ['description']).description, 2000)
         break
       case 'accept':

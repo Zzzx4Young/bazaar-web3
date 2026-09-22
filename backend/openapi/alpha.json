@@ -3827,6 +3827,73 @@
         }
       }
     },
+    "/balances": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "post": {
+        "operationId": "listSimulatedBalances",
+        "summary": "Read balances derived from immutable simulated payment, refund and release records",
+        "security": [{ "session": [], "csrf": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Empty" } } } },
+        "responses": {
+          "200": { "description": "Per-currency simulated balances", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BalancePage" } } } },
+          "default": { "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/admin/disputes": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "post": {
+        "operationId": "listAdminDisputes",
+        "summary": "Admin-only list of pending dispute decisions",
+        "security": [{ "session": [], "csrf": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Empty" } } } },
+        "responses": {
+          "200": { "description": "Pending disputes", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminDisputePage" } } } },
+          "default": { "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/admin/disputes/{id}": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }, { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+      "post": {
+        "operationId": "getAdminDispute",
+        "summary": "Admin-only dispute evidence without delivery secrets",
+        "security": [{ "session": [], "csrf": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Empty" } } } },
+        "responses": {
+          "200": { "description": "Dispute detail", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminDispute" } } } },
+          "default": { "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/admin/disputes/{id}/resolve": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }, { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+      "post": {
+        "operationId": "resolveAdminDispute",
+        "summary": "Admin decides refund or release once, with simulated balance and audit updates",
+        "security": [{ "session": [], "csrf": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DisputeResolutionInput" } } } },
+        "responses": {
+          "200": { "description": "Resolved order", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CommandResult" } } } },
+          "default": { "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/orders/{id}/actions/counteroffer": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }, { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+      "post": {
+        "operationId": "orderCounteroffer",
+        "summary": "Seller proposes a dispute resolution before administrator decision",
+        "security": [{ "session": [], "csrf": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/IssueInput" } } } },
+        "responses": {
+          "200": { "description": "Counteroffer recorded", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CommandResult" } } } },
+          "default": { "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
     "/listings/{id}/detail": {
       "parameters": [
         {
@@ -4171,13 +4238,31 @@
           }
         }
       },
+      "BalancePage": {
+        "type": "object", "additionalProperties": false, "required": ["items"],
+        "properties": { "items": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["currency", "amount", "mode"], "properties": { "currency": { "type": "string" }, "amount": { "type": "string" }, "mode": { "type": "string", "enum": ["simulated"] } } } } }
+      },
+      "AdminDisputePage": {
+        "type": "object", "additionalProperties": false, "required": ["items"],
+        "properties": { "items": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["id", "status", "hasCounteroffer"], "properties": { "id": { "type": "string", "format": "uuid" }, "title": { "type": "string" }, "status": { "$ref": "#/components/schemas/OrderStatus" }, "currency": { "type": "string" }, "amount": { "type": "string" }, "hasCounteroffer": { "type": "boolean" } } } } }
+      },
+      "AdminDispute": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "status", "buyerId", "sellerId", "issue", "refundRequested", "counteroffer"],
+        "properties": { "id": { "type": "string", "format": "uuid" }, "status": { "$ref": "#/components/schemas/OrderStatus" }, "buyerId": { "type": "string", "format": "uuid" }, "sellerId": { "type": "string", "format": "uuid" }, "title": { "type": "string" }, "type": { "$ref": "#/components/schemas/ListingType" }, "price": { "$ref": "#/components/schemas/Price" }, "issue": { "type": "string", "nullable": true }, "refundRequested": { "type": "boolean" }, "counteroffer": { "type": "string", "nullable": true } }
+      },
+      "DisputeResolutionInput": {
+        "type": "object", "additionalProperties": false, "required": ["outcome"],
+        "properties": { "outcome": { "type": "string", "enum": ["refund", "release"] }, "returnOutcome": { "type": "string", "enum": ["not_sent", "returned", "not_required"] } }
+      },
       "Account": {
         "type": "object",
         "additionalProperties": false,
         "required": [
           "id",
           "loginName",
-          "displayName"
+          "displayName",
+          "role"
         ],
         "properties": {
           "id": {
@@ -4193,6 +4278,10 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 80
+          },
+          "role": {
+            "type": "string",
+            "enum": ["participant", "admin", "observer"]
           }
         }
       },
@@ -5023,6 +5112,7 @@
           "requestedBy",
           "status",
           "approvedBy",
+          "resolvedBy",
           "returnOutcome",
           "createdAt",
           "approvedAt"
@@ -5053,6 +5143,11 @@
             ]
           },
           "approvedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "resolvedBy": {
             "type": "string",
             "format": "uuid",
             "nullable": true
@@ -5109,7 +5204,8 @@
             "type": "string",
             "enum": [
               "payment",
-              "refund"
+              "refund",
+              "release"
             ]
           },
           "price": {
@@ -5129,6 +5225,7 @@
           "orderId",
           "actorId",
           "operation",
+          "note",
           "fromState",
           "toState",
           "createdAt"
@@ -5144,12 +5241,17 @@
           },
           "actorId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "nullable": true
           },
           "operation": {
             "type": "string",
             "minLength": 1,
             "maxLength": 100
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
           },
           "fromState": {
             "type": "string",

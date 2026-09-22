@@ -58,6 +58,11 @@ export function TopNav() {
             )
           })}
           <FavoritesLink />
+          {auth.view?.account.role === 'admin' && (
+            <Link href="/admin/disputes" className="text-muted-foreground hover:text-foreground">
+              {t('adminDisputes')}
+            </Link>
+          )}
         </nav>
         <div className="flex items-center gap-2">
           <ModeToggle />

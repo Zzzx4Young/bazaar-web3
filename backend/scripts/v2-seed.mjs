@@ -160,6 +160,11 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
   assert.equal(createdAccounts, plan.accounts.length)
   const accountRows = await client.account.findMany({ where: { loginName: { startsWith: `${seed}_` } } })
   const accountByKey = new Map(plan.accounts.map((account) => [account.key, accountRows.find((row) => row.loginName === account.loginName)]))
+  for (const role of ['admin', 'observer']) {
+    const account = accountByKey.get(role)
+    assert.ok(account)
+    await client.account.update({ where: { id: account.id }, data: { role } })
+  }
   await client.rateSnapshot.create({
     data: {
       provider: 'V2 deterministic stress rates',
@@ -270,6 +275,8 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
     }
     if (spec.status === 'refunded' && Number(listing.priceAmount) > 0)
       await client.settlementRecord.create({ data: { orderId: order.id, operation: 'refund', amount: listing.priceAmount, currency: listing.currency } })
+    if (spec.status === 'completed' && Number(listing.priceAmount) > 0)
+      await client.settlementRecord.create({ data: { orderId: order.id, operation: 'release', amount: listing.priceAmount, currency: listing.currency } })
     const transitions = spec.status === 'pending_payment' ? [['create', null, 'pending_payment']] : [['create', null, 'pending_payment'], [spec.status === 'cancelled' ? 'cancel' : spec.status === 'expired' ? 'expire' : 'pay', 'pending_payment', ['cancelled', 'expired'].includes(spec.status) ? spec.status : 'pending_delivery']]
     for (const [operation, fromState, toState] of transitions)
       await client.orderEvent.create({ data: { orderId: order.id, actorId: operation === 'expire' ? null : buyer.id, operation, fromState, toState, requestId: `${spec.requestId}-${operation}` } })
@@ -277,6 +284,8 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
       await client.orderEvent.create({ data: { orderId: order.id, actorId: seller.id, operation: 'deliver', fromState: 'pending_delivery', toState: spec.status === 'refunded' ? 'pending_acceptance' : 'pending_acceptance', requestId: `${spec.requestId}-deliver` } })
     if (spec.status === 'issue')
       await client.orderEvent.create({ data: { orderId: order.id, actorId: buyer.id, operation: 'issue', fromState: 'pending_acceptance', toState: 'issue', requestId: `${spec.requestId}-issue` } })
+    if (spec.status === 'issue')
+      await client.orderEvent.create({ data: { orderId: order.id, actorId: seller.id, operation: 'counteroffer', fromState: 'issue', toState: 'issue', note: `V2 seller offers to redeliver ${spec.key} before arbitration.`, requestId: `${spec.requestId}-counteroffer` } })
     if (spec.status === 'refunded')
       for (const [operation, fromState, toState, actorId] of [['issue', 'pending_acceptance', 'issue', buyer.id], ['request_refund', 'issue', 'issue', buyer.id], ['refund', 'issue', 'refunded', seller.id]])
         await client.orderEvent.create({ data: { orderId: order.id, actorId, operation, fromState, toState, requestId: `${spec.requestId}-${operation}` } })

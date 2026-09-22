@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { useApiResource } from '@/hooks/use-api-resource'
 import type { Delivery, Issue, OrderEvent, Page, Refund, Settlement } from '@/lib/order-api'
 
@@ -42,6 +43,7 @@ export function useOrderHistory(orderId: string) {
 }
 
 export function OrderHistory({ history }: { history: ReturnType<typeof useOrderHistory> }) {
+  const tDispute = useTranslations('orderDispute')
   const error = [
     history.deliveries,
     history.issues,
@@ -96,6 +98,7 @@ export function OrderHistory({ history }: { history: ReturnType<typeof useOrderH
             <p key={refund.id}>
               {refund.status}
               {refund.returnOutcome ? ` · ${refund.returnOutcome}` : ''}
+              {refund.resolvedBy ? ` · ${tDispute('adminResolved')}` : ''}
             </p>
           ))}
         </section>
@@ -116,6 +119,7 @@ export function OrderHistory({ history }: { history: ReturnType<typeof useOrderH
           {history.events.data.items.map((event) => (
             <p key={event.id}>
               {event.operation} · {event.fromState ?? 'created'} → {event.toState}
+              {event.note ? ` · ${event.note}` : ''}
             </p>
           ))}
         </section>

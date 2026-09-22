@@ -4,7 +4,7 @@ const identifier = (value) => {
 }
 
 const views = {
-  accounts: `SELECT id, status, "createdAt" AS created_at FROM SOURCE."Account"`,
+  accounts: `SELECT id, status, role, "createdAt" AS created_at FROM SOURCE."Account"`,
   listings: `SELECT id, "sellerId" AS seller_id, type, category, "priceAmount" AS price_amount,
     currency, "publicationStatus" AS publication_status, version, "createdAt" AS created_at,
     "updatedAt" AS updated_at FROM SOURCE."Listing"`,
@@ -29,6 +29,7 @@ const views = {
     "resolvedAt" AS resolved_at FROM SOURCE."IssueRecord"`,
   refunds: `SELECT id, "orderId" AS order_id, "issueId" AS issue_id,
     "requestedBy" AS requested_by, status, "approvedBy" AS approved_by,
+    "resolvedBy" AS resolved_by,
     "returnOutcome" AS return_outcome, "createdAt" AS created_at,
     "approvedAt" AS approved_at FROM SOURCE."RefundRequest"`,
   settlements: `SELECT id, "orderId" AS order_id, mode, operation, amount, currency,

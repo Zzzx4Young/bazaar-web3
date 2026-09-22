@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -14,15 +15,19 @@ import {
 import { OrderHistory, useOrderHistory } from '@/components/me/order-history'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { useOrderCommand } from '@/hooks/use-order-command'
-import { acceptanceOrderStatus, orderActions, type OrderDetail } from '@/lib/order-api'
+import { acceptanceOrderStatus, orderActions, type OrderDetail, type SimulatedBalance } from '@/lib/order-api'
 import { useAuthStore } from '@/stores/use-auth-store'
 
 export default function OrderDetailPage() {
   const params = useParams<{ id: string }>()
+  const tDispute = useTranslations('orderDispute')
   const auth = useAuthStore()
   const resource = useApiResource<OrderDetail>(`/orders/${encodeURIComponent(params.id)}`, {}, true)
   const command = useOrderCommand()
   const history = useOrderHistory(params.id)
+  const balances = useApiResource<{ items: SimulatedBalance[] }>('/balances', {}, true)
+  const reloadOrder = resource.reload
+  const reloadBalances = balances.reload
   const [description, setDescription] = useState('')
   const [url, setUrl] = useState('')
   const [carrier, setCarrier] = useState('')
@@ -32,9 +37,12 @@ export default function OrderDetailPage() {
     'returned'
   )
   useEffect(() => {
-    const timer = window.setInterval(resource.reload, 1000)
+    const timer = window.setInterval(() => {
+      reloadOrder()
+      reloadBalances()
+    }, 1000)
     return () => window.clearInterval(timer)
-  }, [resource.reload])
+  }, [reloadOrder, reloadBalances])
   if (resource.loading) return <p role="status">正在加载订单…</p>
   if (resource.error || !resource.data)
     return (
@@ -46,7 +54,7 @@ export default function OrderDetailPage() {
   const actions = orderActions(order, auth.view?.account.id ?? '')
   const act = async (action: string) => {
     const body =
-      action === 'issue'
+      action === 'issue' || action === 'counteroffer'
         ? { description }
         : action === 'deliver'
           ? order.type === 'digital'
@@ -63,6 +71,7 @@ export default function OrderDetailPage() {
     if (result) {
       resource.reload()
       history.reload()
+      balances.reload()
     }
   }
   return (
@@ -88,6 +97,14 @@ export default function OrderDetailPage() {
         <Input
           aria-label="问题描述"
           placeholder="描述商品问题"
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+        />
+      )}
+      {actions.includes('counteroffer') && (
+        <Input
+          aria-label={tDispute('sellerOffer')}
+          placeholder={tDispute('sellerOfferHint')}
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
@@ -173,6 +190,14 @@ export default function OrderDetailPage() {
           </Button>
         ))}
       </div>
+      {!!balances.data?.items.length && (
+        <div data-testid="simulated-balance" className="rounded-lg border p-3 text-sm">
+          <p className="font-medium">{tDispute('balance')}</p>
+          {balances.data.items.map((item) => (
+            <p key={item.currency}>{item.amount} {item.currency}</p>
+          ))}
+        </div>
+      )}
       <OrderHistory history={history} />
     </div>
   )
