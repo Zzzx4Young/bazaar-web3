@@ -30,6 +30,7 @@ export function TopNav() {
   const links = [
     { href: '/', label: t('home') },
     { href: '/explore', label: t('explore') },
+    { href: '/cart', label: t('cart') },
     { href: '/publish', label: t('publish') },
     { href: '/notifications', label: t('notifications') },
     { href: '/me', label: t('me') }

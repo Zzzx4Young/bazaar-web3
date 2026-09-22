@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { Link } from '@/i18n/routing'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,6 +22,7 @@ import { useAuthStore } from '@/stores/use-auth-store'
 export default function OrderDetailPage() {
   const params = useParams<{ id: string }>()
   const tDispute = useTranslations('orderDispute')
+  const tReview = useTranslations('orderReview')
   const auth = useAuthStore()
   const resource = useApiResource<OrderDetail>(`/orders/${encodeURIComponent(params.id)}`, {}, true)
   const command = useOrderCommand()
@@ -29,6 +31,7 @@ export default function OrderDetailPage() {
   const reloadOrder = resource.reload
   const reloadBalances = balances.reload
   const [description, setDescription] = useState('')
+  const [rating, setRating] = useState('5')
   const [url, setUrl] = useState('')
   const [carrier, setCarrier] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
@@ -84,6 +87,11 @@ export default function OrderDetailPage() {
           <span>{order.status}</span> · {order.price.amount} {order.price.currency}
         </p>
       </div>
+      {order.checkoutId && (
+        <Link href={`/me/checkouts/${order.checkoutId}`} className="text-sm text-primary hover:underline">
+          {tReview('viewCheckout')}
+        </Link>
+      )}
       {order.shipping && (
         <div className="rounded-lg border p-4 text-sm">
           <p className="font-medium">收货信息</p>
@@ -190,6 +198,29 @@ export default function OrderDetailPage() {
           </Button>
         ))}
       </div>
+      {order.status === 'completed' && auth.view?.account.id === order.buyerId && (
+        <div className="space-y-2 rounded-lg border p-3">
+          <p className="font-medium">{tReview('title')}</p>
+          {order.review ? (
+            <p data-testid="order-review">{tReview('submitted', { rating: order.review.rating })}</p>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Select value={rating} onValueChange={setRating}>
+                <SelectTrigger aria-label={tReview('rating')} className="w-32"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <SelectItem key={value} value={String(value)}>{value}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button disabled={command.busy || command.uncertain} onClick={async () => {
+                if (await command.run(`/orders/${order.id}/review`, { rating: Number(rating) }))
+                  resource.reload()
+              }}>{tReview('submit')}</Button>
+            </div>
+          )}
+        </div>
+      )}
       {!!balances.data?.items.length && (
         <div data-testid="simulated-balance" className="rounded-lg border p-3 text-sm">
           <p className="font-medium">{tDispute('balance')}</p>

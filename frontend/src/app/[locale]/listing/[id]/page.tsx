@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Heart, Share2, MessageCircle } from 'lucide-react'
@@ -15,6 +15,8 @@ import { BuyModal } from '@/components/listing/buy-modal'
 import { formatPrice, formatDate } from '@/lib/format'
 import { useFavoriteStore } from '@/stores/use-favorite-store'
 import { useBackendListing } from '@/hooks/use-backend-listing'
+import { useAuthStore } from '@/stores/use-auth-store'
+import { useCartStore } from '@/stores/use-cart-store'
 
 interface Props {
   params: { id: string }
@@ -22,8 +24,15 @@ interface Props {
 
 export default function ListingDetailPage({ params }: Props) {
   const t = useTranslations('common')
+  const tCart = useTranslations('commonCart')
   const backend = useBackendListing(params.id)
   const { toggle, isFavorite, error } = useFavoriteStore()
+  const account = useAuthStore((state) => state.view?.account)
+  const addToCart = useCartStore((state) => state.add)
+  const [cartReady, setCartReady] = useState(false)
+  useEffect(() => {
+    void Promise.resolve(useCartStore.persist.rehydrate()).then(() => setCartReady(true))
+  }, [])
   const [buyOpen, setBuyOpen] = useState(false)
   const item = backend.item
   if (!item && backend.loading) {
@@ -111,7 +120,7 @@ export default function ListingDetailPage({ params }: Props) {
                   ≈ ${item.price.fiatEstimate.toLocaleString()} USD
                 </div>
               )}
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
                 <Button
                   className="w-full"
                   size="lg"
@@ -119,6 +128,16 @@ export default function ListingDetailPage({ params }: Props) {
                   onClick={() => setBuyOpen(true)}
                 >
                   立即购买
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  size="lg"
+                  disabled={!cartReady || item.status !== 'active' || !account ||
+                    account.role !== 'participant' || account.id === item.sellerId}
+                  onClick={() => account && addToCart(account.id, item)}
+                >
+                  {tCart('addToCart')}
                 </Button>
                 <Button variant="outline" className="w-full" size="lg" disabled>
                   <MessageCircle className="mr-1 h-4 w-4" />

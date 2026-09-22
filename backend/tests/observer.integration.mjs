@@ -61,7 +61,7 @@ test('I8: observer sees only curated views and cannot write or read private tabl
     const viewCount = await observerClient.client.$queryRawUnsafe(
       `SELECT count(*)::int AS count FROM information_schema.views WHERE table_schema = '${observeSchema}'`
     )
-    assert.deepEqual(viewCount, [{ count: 17 }])
+    assert.deepEqual(viewCount, [{ count: 19 }])
     const columns = await observerClient.client.$queryRawUnsafe(
       `SELECT column_name FROM information_schema.columns WHERE table_schema = '${observeSchema}'`
     )

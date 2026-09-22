@@ -71,7 +71,7 @@ try {
   admin = await connect(base)
   const password = `V2-E2E-${randomUUID()}`
   const seeded = await seedV2(db.client, { password, seed: 'v2-e2e' })
-  assert.equal(seeded.createdListings, 100)
+  assert.equal(seeded.createdListings, 200)
   assert.equal(seeded.createdOrders, 60)
   const plan = buildV2SeedPlan({ seed: 'v2-e2e' })
   const seller = plan.accounts.find((account) => account.key === 'seller5')
@@ -151,18 +151,18 @@ try {
 
   stage = 'desktop and mobile listing search, filters, sort, and pagination'
   await buyerPage.goto(`${origin}/zh-CN/explore`)
-  await waitText(buyerPage, '共 70 件商品')
+  await waitText(buyerPage, '共 140 件商品')
   await buyerPage.getByLabel('关键词').fill('超长中文标题')
   await waitText(buyerPage, '共 1 件商品')
   await assertListingLayout(buyerPage)
   await buyerPage.screenshot({ path: resolve(resultsDirectory, 'long-title-desktop.png'), fullPage: true })
   await buyerPage.getByRole('button', { name: '重置筛选' }).click()
-  await waitText(buyerPage, '共 70 件商品')
+  await waitText(buyerPage, '共 140 件商品')
   await buyerPage.getByRole('combobox').first().click()
   await buyerPage.getByRole('option', { name: '数字资产' }).click()
-  await waitText(buyerPage, '共 14 件商品')
+  await waitText(buyerPage, '共 28 件商品')
   await buyerPage.getByRole('button', { name: '重置筛选' }).click()
-  await waitText(buyerPage, '共 70 件商品')
+  await waitText(buyerPage, '共 140 件商品')
   await buyerPage.getByTestId('sort-trigger').click()
   const firstPricePage = buyerPage.waitForResponse((response) =>
     response.url().endsWith('/api/listings/search') &&
@@ -176,7 +176,7 @@ try {
   const quoteId = firstPriceResult.quote?.id
   assert.ok(quoteId)
   assert.equal(firstPriceResult.items.length, 10)
-  await waitText(buyerPage, '第 1 / 7 页')
+  await waitText(buyerPage, '第 1 / 14 页')
   const secondPricePage = buyerPage.waitForResponse((response) =>
     response.url().endsWith('/api/listings/search') &&
     response.request().postDataJSON()?.sort === 'price_asc' &&
@@ -190,7 +190,7 @@ try {
   assert.equal(secondPriceResult.items.length, 10)
   assertSortedByUsd([...firstPriceResult.items, ...secondPriceResult.items])
   await assertListingLayout(buyerPage)
-  await waitText(buyerPage, '第 2 / 7 页')
+  await waitText(buyerPage, '第 2 / 14 页')
   const savedListing = buyerPage.locator('main section a[href*="/listing/"]').first()
   const savedHref = await savedListing.getAttribute('href')
   assert.ok(savedHref)
@@ -207,9 +207,13 @@ try {
   await buyerPage.getByRole('heading', { name: '我的收藏 (0)' }).waitFor()
   await buyerPage.goto(`${origin}/zh-CN/explore`)
   await buyerPage.setViewportSize({ width: 390, height: 844 })
-  await waitText(buyerPage, '共 70 件商品')
+  await waitText(buyerPage, '共 140 件商品')
   await assertListingLayout(buyerPage)
   await buyerPage.screenshot({ path: resolve(resultsDirectory, 'explore-mobile.png'), fullPage: true })
+  await buyerPage.goto(`${origin}/zh-CN/seller/${target.sellerId}`)
+  await buyerPage.getByTestId('seller-reputation').getByText('评分 5.00 / 5', { exact: false }).waitFor()
+  await assertListingLayout(buyerPage)
+  await buyerPage.screenshot({ path: resolve(resultsDirectory, 'seller-reputation-mobile.png'), fullPage: true })
 
   for (const [availability, expectedStatus] of [
     ['refund_hold', 'LOCKED'],
@@ -269,9 +273,14 @@ try {
   stage = 'observer verification'
 
   const counts = await observerRows(`SELECT (SELECT count(*)::int FROM listings) AS listings, (SELECT count(*)::int FROM orders) AS orders`)
-  assert.deepEqual(counts, [{ listings: 100, orders: 60 }])
+  assert.deepEqual(counts, [{ listings: 200, orders: 60 }])
   const statusCounts = await observerRows(`SELECT status, count(*)::int AS count FROM orders GROUP BY status ORDER BY status`)
   assert.ok(statusCounts.some((row) => row.status === 'expired'), JSON.stringify(statusCounts))
+  const reputation = await observerRows(`SELECT rating, count(*)::int AS count FROM seller_reviews GROUP BY rating ORDER BY rating`)
+  assert.deepEqual(reputation.map((row) => row.rating), [1, 2, 3, 4, 5])
+  const seededCheckouts = await observerRows(`SELECT checkout_id, count(*)::int AS lines, count(DISTINCT seller_id)::int AS sellers, count(DISTINCT buyer_id)::int AS buyers FROM orders WHERE checkout_id IS NOT NULL GROUP BY checkout_id`)
+  assert.equal(seededCheckouts.length, 3)
+  assert.ok(seededCheckouts.every((row) => row.lines === 3 && row.sellers === 3 && row.buyers === 1))
   const systemExpiryEvents = await observerRows(`SELECT count(*)::int AS count FROM order_events WHERE operation = 'expire' AND actor_id IS NULL`)
   assert.ok(systemExpiryEvents[0].count > 0, JSON.stringify(systemExpiryEvents))
   const inventory = await observerRows(`SELECT availability, count(*)::int AS count FROM physical_inventory GROUP BY availability ORDER BY availability`)
@@ -280,6 +289,8 @@ try {
   assert.ok(digitalInventory.some((row) => row.availability === 'reserved'), JSON.stringify(digitalInventory))
   assert.ok(digitalInventory.some((row) => row.availability === 'sold'), JSON.stringify(digitalInventory))
   assert.ok(digitalInventory.some((row) => row.availability === 'refund_hold'), JSON.stringify(digitalInventory))
+  const partialDeliveries = await observerRows(`SELECT count(*)::int AS orders FROM (SELECT order_id FROM deliveries GROUP BY order_id HAVING count(*) >= 2) parts`)
+  assert.ok(partialDeliveries[0].orders >= 2)
   const pendingPhysical = await observerRows(`SELECT count(*)::int AS count FROM orders o JOIN physical_inventory i ON i.listing_id = o.listing_id JOIN inventory_reservations r ON r.order_id = o.id WHERE o.status = 'pending_payment' AND i.availability = 'reserved' AND i.active_order_id = o.id AND r.state = 'active'`)
   assert.ok(pendingPhysical[0].count > 0, JSON.stringify(pendingPhysical))
   const pendingSingleDigital = await observerRows(`SELECT count(*)::int AS count FROM orders o JOIN digital_inventory i ON i.listing_id = o.listing_id WHERE o.status = 'pending_payment' AND i.availability = 'reserved' AND i.active_order_id = o.id`)
@@ -307,8 +318,38 @@ try {
     assert.ok(requestLogs.some((entry) => entry.requestId === event.request_id &&
       (entry.route.includes('/api/orders') || entry.route.includes('/api/admin/disputes'))))
   }
+  stage = 'multi-item cart browser checkout and observer audit'
+  const cartListings = await Promise.all(plan.listings.slice(62, 64).map((spec) =>
+    db.client.listing.findFirstOrThrow({ where: { title: spec.title } })))
+  for (const listing of cartListings) {
+    await buyerPage.goto(`${origin}/zh-CN/listing/${listing.id}`)
+    await buyerPage.getByTestId('acceptance-listing-status').getByText('ACTIVE').waitFor()
+    await buyerPage.getByRole('button', { name: '加入购物车' }).click()
+  }
+  await buyerPage.goto(`${origin}/zh-CN/cart`)
+  await buyerPage.getByRole('heading', { name: '购物车' }).waitFor()
+  assert.equal(await buyerPage.locator('main article').count(), 2)
+  await buyerPage.getByLabel('收件人').fill('V2 Cart Buyer')
+  await buyerPage.getByLabel('联系方式').fill('13800000000')
+  await buyerPage.getByLabel('收货地址').fill('V2 Cart Shipping Address')
+  await buyerPage.screenshot({ path: resolve(resultsDirectory, 'cart-mobile.png'), fullPage: true })
+  await buyerPage.getByRole('button', { name: '一起下单' }).click()
+  await buyerPage.getByRole('heading', { name: '本次购买的订单' }).waitFor()
+  const checkoutId = buyerPage.url().split('/').at(-1)
+  assert.match(checkoutId, /^[0-9a-f-]{36}$/)
+  assert.equal(await buyerPage.locator('main article').count(), 2)
+  await buyerPage.setViewportSize({ width: 1280, height: 900 })
+  await assertListingLayout(buyerPage)
+  await buyerPage.screenshot({ path: resolve(resultsDirectory, 'checkout-desktop.png'), fullPage: true })
+  const checkoutRows = await observerRows(`SELECT o.id, o.status, o.buyer_id, o.seller_id, s.currency FROM orders o JOIN order_snapshots s ON s.order_id = o.id WHERE o.checkout_id = '${checkoutId}'::uuid`)
+  assert.equal(checkoutRows.length, 2)
+  assert.ok(checkoutRows.every((row) => row.status === 'pending_payment' && row.buyer_id === target.buyerId))
+  assert.equal(new Set(checkoutRows.map((row) => row.seller_id)).size, 2)
+  assert.equal(new Set(checkoutRows.map((row) => row.currency)).size, 2)
+  const afterCart = await observerRows(`SELECT count(*)::int AS orders FROM orders`)
+  assert.deepEqual(afterCart, [{ orders: 62 }])
   assert.deepEqual(browserErrors, [], 'Browser emitted runtime or hydration errors')
-  await writeFile(resolve(resultsDirectory, 'acceptance-summary.json'), `${JSON.stringify({ result: 'passed', listings: counts[0].listings, orders: counts[0].orders, statusCounts, inventory, digitalInventory, targetOrderId: target.id, targetInventory, targetReservation, targetRefund, targetSettlements, newEvents }, null, 2)}\n`)
+  await writeFile(resolve(resultsDirectory, 'acceptance-summary.json'), `${JSON.stringify({ result: 'passed', listings: counts[0].listings, seededOrders: counts[0].orders, ordersAfterCart: afterCart[0].orders, seededCheckouts, checkoutId, checkoutRows, statusCounts, reputation, partialDeliveries, inventory, digitalInventory, targetOrderId: target.id, targetInventory, targetReservation, targetRefund, targetSettlements, newEvents }, null, 2)}\n`)
   console.log(`PASS: V2 business data and edge-case journey; artifacts: ${resultsDirectory}`)
 } catch (error) {
   console.error(`V2 E2E failed at ${stage}`)

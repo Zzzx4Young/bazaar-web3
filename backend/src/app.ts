@@ -15,6 +15,7 @@ import { RatesService, type RateLoader } from './pricing/rates.service.js'
 import { OrderController } from './orders/order.controller.js'
 import { DisputeController } from './orders/dispute.controller.js'
 import { BalanceController } from './orders/balance.controller.js'
+import { SellerReviewController } from './reviews/seller-review.controller.js'
 import {
   defaultRequestLogSink,
   type RequestLogSink,
@@ -54,7 +55,7 @@ export async function createApp(
     {
       module: AppModule,
       controllers: [HealthController, AuthController, ListingController, OrderController,
-        DisputeController, BalanceController],
+        DisputeController, BalanceController, SellerReviewController],
       providers: [
         { provide: DatabaseService, useValue: database },
         { provide: AuthService, useValue: auth },

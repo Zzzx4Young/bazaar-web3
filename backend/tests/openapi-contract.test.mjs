@@ -40,4 +40,12 @@ test('OpenAPI declares path parameters and request correlation on every operatio
       }
     }
   }
+  for (const [path, schema] of [
+    ['/listings/search', 'ListingSearchInput'],
+    ['/me/listings', 'OwnListingSearchInput']
+  ]) {
+    assert.equal(api.paths[path].post.requestBody.content['application/json'].schema.$ref,
+      `#/components/schemas/${schema}`)
+    assert.equal(api.paths[path].post.parameters?.some((item) => item.in === 'query') ?? false, false)
+  }
 })

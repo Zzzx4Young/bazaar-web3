@@ -26,6 +26,10 @@ npm start
 
 启动不会迁移、seed 或清理数据库。首次使用先按 [C1 角色与迁移说明](../docs/backend-core-contract.md#数据库角色)创建迁移/运行账号，以迁移账号部署全部已检入迁移并授权，再以运行账号启动。日常开发只需一个持久化 postgres 容器；另外两个测试容器按需启动。不能把健康检查作为业务数据正确性的证明。
 
+本机开发库完成迁移与授权后运行 `npm run seed:v2`，会以 `v2-stress-r2` 前缀新增
+200 件多币种商品、60 笔多状态订单、3 组跨卖家购物车订单以及买家评价；仅接受 loopback
+PostgreSQL。该前缀是一次性数据批次，重复运行会拒绝同名账户，避免默默叠加。
+
 I8-2 提供 `backend/Dockerfile` 的 `runtime` 与 `migrate` target，以及
 `infra/compose.api.yaml`。部署环境使用 `DATABASE_URL_FILE` 挂载完整数据库 URL secret；不能
 同时设置 `DATABASE_URL`。镜像构建、迁移、启动、检查和回滚步骤见[部署手册](../docs/api-deployment-runbook.md)。
@@ -35,7 +39,7 @@ I8-2 提供 `backend/Dockerfile` 的 `runtime` 与 `migrate` target，以及
 必须是 loopback `bazaar_dev`，密码只通过 `PGPASSWORD` 传给子进程，不出现在参数中。
 
 本地观察入口先执行 `npm run db:observer:setup`：它创建无成员关系的 `bazaar_observer`、
-`bazaar_observe` schema 和 17 个脱敏视图，并写入 Git 忽略、权限 0600 的
+`bazaar_observe` schema 和 19 个脱敏视图，并写入 Git 忽略、权限 0600 的
 `.tmp/i8-observer.env`。观察视图不暴露登录名、密码/会话哈希、自由文本、收件信息、交付
 引用/提取码、幂等键或汇率 JSON；角色默认只读、语句与空闲事务超时 3 秒。命令只允许
 本机开发库，目标对象或私有文件已存在时拒绝接管。

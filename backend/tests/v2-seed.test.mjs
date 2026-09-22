@@ -21,6 +21,17 @@ test('V2 seed plan covers dense listings, orders, currencies, and edge states', 
   assert.ok(plan.listings.some((listing) => listing.type === 'digital' && listing.supplyMode === 'unlimited'))
   assert.ok(plan.orders.some((order) => order.status === 'pending_payment' &&
     plan.listings.find((listing) => listing.key === order.listingKey)?.supplyMode === 'single'))
+  const ratedSellers = new Set(plan.orders.filter((order) => order.status === 'completed')
+    .map((order) => plan.listings.find((listing) => listing.key === order.listingKey)?.sellerKey))
+  assert.equal(ratedSellers.size, 6)
+  assert.equal(plan.cartCheckouts.length, 3)
+  for (const checkout of plan.cartCheckouts) {
+    const lines = checkout.orderKeys.map((key) => plan.orders.find((order) => order.key === key))
+    assert.equal(lines.length, 3)
+    assert.ok(lines.every((order) => order?.buyerKey === checkout.buyerKey))
+    assert.equal(new Set(lines.map((order) => plan.listings.find((listing) =>
+      listing.key === order?.listingKey)?.sellerKey)).size, 3)
+  }
   assert.deepEqual(Object.keys(plan.orderStates).sort(), [
     'cancelled',
     'completed',

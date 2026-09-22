@@ -27,6 +27,7 @@ export interface OrderSummary {
   listingId: string
   buyerId: string
   sellerId: string
+  checkoutId: string | null
   status: OrderStatus
   title: string
   type: 'physical' | 'digital'
@@ -36,6 +37,7 @@ export interface OrderSummary {
   updatedAt: string
 }
 export interface OrderDetail extends OrderSummary {
+  review: { rating: number; createdAt: string } | null
   shipping: Shipping | null
   snapshot: {
     listingVersion: number

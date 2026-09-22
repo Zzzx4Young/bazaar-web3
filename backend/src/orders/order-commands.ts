@@ -34,6 +34,80 @@ export interface ActionInput {
 export class OrderCommands {
   constructor(private readonly client: PrismaClient) {}
 
+  private async createOne(
+    tx: Transaction,
+    actorId: string,
+    key: string,
+    input: CreateOrderInput,
+    options: TransactionOptions,
+    attempt: number,
+    checkoutId?: string
+  ) {
+    const listing = await lockListing(tx, input.listingId)
+    if (listing.type === 'digital' && input.shipping) throw new DomainError('INVALID_INPUT')
+    await options.checkpoint?.('locked', tx, attempt)
+    if (listing.sellerId === actorId) throw new DomainError('FORBIDDEN')
+    if (listing.publicationStatus !== 'published' || listing.version !== input.version)
+      throw new DomainError('LISTING_CONFLICT')
+    const inventory = listing.type === 'physical'
+      ? await tx.physicalInventory.findUnique({ where: { listingId: listing.id } })
+      : await tx.digitalInventory.findUnique({ where: { listingId: listing.id } })
+    if (listing.type === 'physical' && (!inventory || inventory.availability !== 'available'))
+      throw new DomainError('UNAVAILABLE')
+    if (listing.type === 'digital' && inventory && inventory.availability !== 'available')
+      throw new DomainError('UNAVAILABLE')
+    if (listing.type === 'physical' && !input.shipping)
+      throw new DomainError('SHIPPING_REQUIRED')
+    const order = await tx.order.create({
+      data: {
+        listingId: listing.id,
+        buyerId: actorId,
+        sellerId: listing.sellerId,
+        ...(checkoutId ? { checkoutId } : {})
+      }
+    })
+    if (listing.type === 'physical') {
+      await tx.physicalInventory.update({
+        where: { listingId: listing.id },
+        data: { availability: 'reserved', activeOrderId: order.id, version: { increment: 1 } }
+      })
+      await tx.inventoryReservation.create({ data: { listingId: listing.id, orderId: order.id } })
+    } else if (inventory) {
+      await tx.digitalInventory.update({
+        where: { listingId: listing.id },
+        data: { availability: 'reserved', activeOrderId: order.id, version: { increment: 1 } }
+      })
+    }
+    await options.checkpoint?.('inventory', tx, attempt)
+    await tx.orderSnapshot.create({
+      data: {
+        orderId: order.id,
+        listingVersion: listing.version,
+        title: listing.title,
+        description: listing.description,
+        type: listing.type,
+        category: listing.category,
+        priceAmount: listing.priceAmount,
+        currency: listing.currency,
+        licenseDescription: listing.licenseDescription,
+        contentVersion: listing.contentVersion
+      }
+    })
+    if (listing.type === 'physical' && input.shipping)
+      await tx.orderShipping.create({
+        data: {
+          orderId: order.id,
+          recipient: input.shipping.recipient,
+          contact: input.shipping.contact,
+          address: input.shipping.address
+        }
+      })
+    await options.checkpoint?.('snapshot', tx, attempt)
+    await this.event(tx, order, actorId, 'create', key, null, order.status)
+    await options.checkpoint?.('event', tx, attempt)
+    return order.id
+  }
+
   async create(
     actorId: string,
     key: string,
@@ -56,83 +130,60 @@ export class OrderCommands {
               ? [input.shipping.recipient, input.shipping.contact, input.shipping.address]
               : null
           },
-          async () => {
-            const listing = await lockListing(tx, input.listingId)
-            if (listing.type === 'digital' && input.shipping) throw new DomainError('INVALID_INPUT')
-            await options.checkpoint?.('locked', tx, attempt)
-            if (listing.sellerId === actorId) throw new DomainError('FORBIDDEN')
-            if (listing.publicationStatus !== 'published' || listing.version !== input.version)
-              throw new DomainError('LISTING_CONFLICT')
-            const inventory = listing.type === 'physical'
-              ? await tx.physicalInventory.findUnique({ where: { listingId: listing.id } })
-              : await tx.digitalInventory.findUnique({ where: { listingId: listing.id } })
-            if (
-              listing.type === 'physical' &&
-              (!inventory || inventory.availability !== 'available')
-            )
-              throw new DomainError('UNAVAILABLE')
-            if (listing.type === 'digital' && inventory && inventory.availability !== 'available')
-              throw new DomainError('UNAVAILABLE')
-            if (listing.type === 'physical' && !input.shipping)
-              throw new DomainError('SHIPPING_REQUIRED')
-            const order = await tx.order.create({
-              data: { listingId: listing.id, buyerId: actorId, sellerId: listing.sellerId }
-            })
-            if (listing.type === 'physical') {
-              await tx.physicalInventory.update({
-                where: { listingId: listing.id },
-                data: {
-                  availability: 'reserved',
-                  activeOrderId: order.id,
-                  version: { increment: 1 }
-                }
-              })
-              await tx.inventoryReservation.create({
-                data: { listingId: listing.id, orderId: order.id }
-              })
-            } else if (inventory) {
-              await tx.digitalInventory.update({
-                where: { listingId: listing.id },
-                data: {
-                  availability: 'reserved',
-                  activeOrderId: order.id,
-                  version: { increment: 1 }
-                }
-              })
-            }
-            await options.checkpoint?.('inventory', tx, attempt)
-            await tx.orderSnapshot.create({
-              data: {
-                orderId: order.id,
-                listingVersion: listing.version,
-                title: listing.title,
-                description: listing.description,
-                type: listing.type,
-                category: listing.category,
-                priceAmount: listing.priceAmount,
-                currency: listing.currency,
-                licenseDescription: listing.licenseDescription,
-                contentVersion: listing.contentVersion
-              }
-            })
-            if (listing.type === 'physical' && input.shipping)
-              await tx.orderShipping.create({
-                data: {
-                  orderId: order.id,
-                  recipient: input.shipping.recipient,
-                  contact: input.shipping.contact,
-                  address: input.shipping.address
-                }
-              })
-            await options.checkpoint?.('snapshot', tx, attempt)
-            await this.event(tx, order, actorId, 'create', key, null, order.status)
-            await options.checkpoint?.('event', tx, attempt)
-            return order.id
-          }
+          () => this.createOne(tx, actorId, key, input, options, attempt)
         )
       },
       options
     )
+  }
+
+  async createCheckout(
+    actorId: string,
+    key: string,
+    items: CreateOrderInput[],
+    options: TransactionOptions = {}
+  ) {
+    if (items.length < 2 || items.length > 5 ||
+      new Set(items.map((item) => item.listingId)).size !== items.length)
+      throw new DomainError('INVALID_INPUT')
+    return transact(this.client, async (tx, attempt) => {
+      await requireActiveAccount(tx, actorId)
+      const firstOrderId = await idempotent(
+        tx,
+        actorId,
+        'checkout',
+        key,
+        { items: items.map((item) => ({
+          listingId: item.listingId,
+          version: item.version,
+          shipping: item.shipping
+            ? [item.shipping.recipient, item.shipping.contact, item.shipping.address]
+            : null
+        })) },
+        async () => {
+          const checkout = await tx.checkout.create({ data: { buyerId: actorId } })
+          const sorted = [...items].sort((left, right) =>
+            left.listingId.localeCompare(right.listingId))
+          let firstId = ''
+          for (const item of sorted) {
+            const id = await this.createOne(tx, actorId, key, item, options, attempt, checkout.id)
+            if (!firstId) firstId = id
+          }
+          return firstId
+        }
+      )
+      const firstOrder = await tx.order.findUniqueOrThrow({ where: { id: firstOrderId } })
+      if (!firstOrder.checkoutId) throw new Error('Checkout idempotency target is ungrouped')
+      const orders = await tx.order.findMany({
+        where: { checkoutId: firstOrder.checkoutId },
+        select: { id: true, listingId: true }
+      })
+      const idsByListing = new Map(orders.map((order) => [order.listingId, order.id]))
+      return {
+        checkoutId: firstOrder.checkoutId,
+        orderIds: items.map((item) => idsByListing.get(item.listingId)!)
+      }
+    }, options)
   }
 
   private async event(

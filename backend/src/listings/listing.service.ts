@@ -165,6 +165,7 @@ export class ListingService {
       'keyword',
       'sort',
       'quoteId',
+      ...(actorId ? [] : ['sellerId']),
       ...(actorId ? ['publicationStatus'] : [])
     ]
     const input = objectInput(query, keys, [])
@@ -182,6 +183,8 @@ export class ListingService {
     const clauses: Prisma.Sql[] = [Prisma.sql`l."currency" IN (${Prisma.join(currencyCodes)})`]
     if (actorId) clauses.push(Prisma.sql`l."sellerId" = ${actorId}::uuid`)
     else clauses.push(Prisma.sql`l."publicationStatus" = 'published'`)
+    if (input.sellerId !== undefined)
+      clauses.push(Prisma.sql`l."sellerId" = ${idInput(input.sellerId)}::uuid`)
     if (input.publicationStatus !== undefined) {
       if (input.publicationStatus !== 'published' && input.publicationStatus !== 'withdrawn')
         throw new DomainError('INVALID_INPUT')

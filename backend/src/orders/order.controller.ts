@@ -40,6 +40,23 @@ function queryInteger(value: unknown, fallback: number, max: number) {
   return positiveInteger(Number(value), max)
 }
 
+function createOrderInput(body: unknown) {
+  const input = objectInput(body, ['listingId', 'version', 'shipping'], ['listingId', 'version'])
+  const shipping = input.shipping === undefined
+    ? undefined
+    : objectInput(input.shipping, ['recipient', 'contact', 'address'],
+      ['recipient', 'contact', 'address'])
+  return {
+    listingId: idInput(input.listingId),
+    version: positiveInteger(input.version),
+    shipping: shipping ? {
+      recipient: textInput(shipping.recipient, 100),
+      contact: textInput(shipping.contact, 100),
+      address: textInput(shipping.address, 500)
+    } : undefined
+  }
+}
+
 @Controller()
 export class OrderController {
   private readonly commands: OrderCommands
@@ -75,27 +92,47 @@ export class OrderController {
     @Body() body: unknown
   ) {
     const key = idempotencyKey(header)
-    const input = objectInput(body, ['listingId', 'version', 'shipping'], ['listingId', 'version'])
-    const shipping =
-      input.shipping === undefined
-        ? undefined
-        : objectInput(
-            input.shipping,
-            ['recipient', 'contact', 'address'],
-            ['recipient', 'contact', 'address']
-          )
     return {
-      orderId: await this.commands.create(request.auth.account.id, key, {
-        listingId: idInput(input.listingId),
-        version: positiveInteger(input.version),
-        shipping: shipping
-          ? {
-              recipient: textInput(shipping.recipient, 100),
-              contact: textInput(shipping.contact, 100),
-              address: textInput(shipping.address, 500)
-            }
-          : undefined
-      })
+      orderId: await this.commands.create(request.auth.account.id, key, createOrderInput(body))
+    }
+  }
+
+  @Post('checkouts')
+  @HttpCode(200)
+  async checkout(
+    @Req() request: AuthRequest,
+    @Headers('idempotency-key') header: string | string[] | undefined,
+    @Body() body: unknown
+  ) {
+    const key = idempotencyKey(header)
+    const input = objectInput(body, ['items'], ['items'])
+    if (!Array.isArray(input.items) || input.items.length < 2 || input.items.length > 5)
+      throw new DomainError('INVALID_INPUT')
+    const items = input.items.map(createOrderInput)
+    return this.commands.createCheckout(request.auth.account.id, key, items)
+  }
+
+  @Post('checkouts/:id')
+  @HttpCode(200)
+  async checkoutDetail(@Req() request: AuthRequest, @Param('id') rawId: string) {
+    const checkout = await this.client.checkout.findFirst({
+      where: { id: idInput(rawId), buyerId: request.auth.account.id },
+      include: { orders: { include: { snapshot: true }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] } }
+    })
+    if (!checkout) throw new DomainError('NOT_FOUND')
+    return {
+      id: checkout.id,
+      createdAt: checkout.createdAt,
+      items: checkout.orders.map((order) => ({
+        orderId: order.id,
+        listingId: order.listingId,
+        sellerId: order.sellerId,
+        status: order.status,
+        title: order.snapshot?.title,
+        price: order.snapshot && {
+          amount: order.snapshot.priceAmount.toFixed(), currency: order.snapshot.currency
+        }
+      }))
     }
   }
 
@@ -144,6 +181,7 @@ export class OrderController {
         listingId: order.listingId,
         buyerId: order.buyerId,
         sellerId: order.sellerId,
+        checkoutId: order.checkoutId,
         status: order.status,
         version: order.version,
         title: order.snapshot?.title,
@@ -165,13 +203,16 @@ export class OrderController {
   @HttpCode(200)
   async detail(@Req() request: AuthRequest, @Param('id') id: string) {
     const order = await this.participantOrder(idInput(id), request.auth.account.id)
+    const review = await this.client.sellerReview.findUnique({ where: { orderId: order.id } })
     return {
       id: order.id,
       listingId: order.listingId,
       buyerId: order.buyerId,
       sellerId: order.sellerId,
+      checkoutId: order.checkoutId,
       status: order.status,
       version: order.version,
+      review: review ? { rating: review.rating, createdAt: review.createdAt } : null,
       title: order.snapshot?.title,
       type: order.snapshot?.type,
       price: order.snapshot && {

@@ -26,7 +26,7 @@ export function useOrderCommand() {
       sessionStorage.removeItem(storageKey)
     }
   }, [storageKey])
-  async function run(path: string, body: unknown): Promise<{ orderId: string } | undefined> {
+  async function run<T extends object = { orderId: string }>(path: string, body: unknown): Promise<T | undefined> {
     if (busyRef.current) return
     const frozenBody = JSON.parse(JSON.stringify(body))
     if (
@@ -52,7 +52,7 @@ export function useOrderCommand() {
       // The in-memory command still protects retries during this page lifetime.
     }
     try {
-      const result = await authenticatedPost<{ orderId: string }>(
+      const result = await authenticatedPost<T>(
         command.path,
         command.body,
         command.key
@@ -80,7 +80,7 @@ export function useOrderCommand() {
       setBusy(false)
     }
   }
-  const retry = () =>
-    pending.current ? run(pending.current.path, pending.current.body) : Promise.resolve(undefined)
+  const retry = <T extends object = { orderId: string }>() =>
+    pending.current ? run<T>(pending.current.path, pending.current.body) : Promise.resolve(undefined)
   return { run, retry, busy, uncertain, error, retryPath }
 }

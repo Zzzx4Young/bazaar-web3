@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { URL } from 'node:url'
 
-export const V2_LISTING_COUNT = 100
+export const V2_LISTING_COUNT = 200
 export const V2_ORDER_COUNT = 60
-export const V2_SEED_PREFIX = 'v2-stress'
+export const V2_SEED_PREFIX = 'v2-stress-r2'
 
 const currencies = [
   'USD',
@@ -81,7 +81,7 @@ export function buildV2SeedPlan({ seed = V2_SEED_PREFIX } = {}) {
   const listings = Array.from({ length: V2_LISTING_COUNT }, (_, index) => {
     const type = index % 2 === 0 ? 'physical' : 'digital'
     const publicationStatus =
-      index < 70 ? 'published' : index < 80 ? 'withdrawn' : index < 90 ? 'draft' : 'archived'
+      index < 140 ? 'published' : index < 160 ? 'withdrawn' : index < 180 ? 'draft' : 'archived'
     const price = money(index)
     const title =
       index === 1
@@ -118,16 +118,26 @@ export function buildV2SeedPlan({ seed = V2_SEED_PREFIX } = {}) {
     }
   })
 
+  const cartCheckouts = [
+    { key: 'checkout1', buyerKey: 'buyer1', orderKeys: ['order1', 'order2', 'order3'] },
+    { key: 'checkout2', buyerKey: 'buyer2', orderKeys: ['order12', 'order13', 'order14'] },
+    { key: 'checkout3', buyerKey: 'buyer3', orderKeys: ['order21', 'order22', 'order23'] }
+  ]
+  const cartBuyerByOrder = new Map(cartCheckouts.flatMap((checkout) =>
+    checkout.orderKeys.map((orderKey) => [orderKey, checkout.buyerKey])))
+
   const orders = Array.from({ length: V2_ORDER_COUNT }, (_, index) => {
     const listing = listings[index]
     const baseStatus = orderStateSequence[index % orderStateSequence.length]
     return {
       key: `order${index + 1}`,
       listingKey: `listing${index + 1}`,
-      buyerKey: `buyer${(index % 6) + 1}`,
+      buyerKey: cartBuyerByOrder.get(`order${index + 1}`) ?? `buyer${(index % 6) + 1}`,
       // Keep one finite digital order unpaid so scheduled expiry has a real reservation to release.
       status:
-        index === 21
+        [31, 33, 35].includes(index)
+          ? 'completed'
+          : index === 21
           ? 'pending_payment'
           : listing.supplyMode === 'single' && listing.inventoryState === 'sold'
             ? 'completed'
@@ -142,6 +152,7 @@ export function buildV2SeedPlan({ seed = V2_SEED_PREFIX } = {}) {
     accounts,
     listings,
     orders,
+    cartCheckouts,
     // Counts are intentionally derived from the plan so tests can detect sequence drift.
     orderStates: Object.fromEntries(
       orderStateSequence.map((state) => [state, orders.filter((order) => order.status === state).length])
@@ -174,6 +185,13 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
     }
   })
   const listingByKey = new Map()
+  const checkoutByOrder = new Map()
+  for (const spec of plan.cartCheckouts) {
+    const buyer = accountByKey.get(spec.buyerKey)
+    assert.ok(buyer)
+    const checkout = await client.checkout.create({ data: { buyerId: buyer.id } })
+    for (const orderKey of spec.orderKeys) checkoutByOrder.set(orderKey, checkout.id)
+  }
 
   for (const spec of plan.listings) {
     const seller = accountByKey.get(spec.sellerKey)
@@ -213,6 +231,7 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
         listingId: listing.id,
         buyerId: buyer.id,
         sellerId: seller.id,
+        ...(checkoutByOrder.has(spec.key) ? { checkoutId: checkoutByOrder.get(spec.key) } : {}),
         status: spec.status,
         version: 2,
         ...(spec.status === 'expired' ? { createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) } : {}),
@@ -265,9 +284,9 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
     if (!['pending_payment', 'cancelled', 'expired'].includes(spec.status) && Number(listing.priceAmount) > 0)
       await client.settlementRecord.create({ data: { orderId: order.id, operation: 'payment', amount: listing.priceAmount, currency: listing.currency } })
     if (['pending_acceptance', 'issue', 'completed', 'refunded'].includes(spec.status)) {
-      await client.deliveryRecord.create({ data: { orderId: order.id, sellerId: seller.id, sequence: 1, kind: listing.type, reference: listing.type === 'digital' ? `https://example.com/v2/${spec.key}` : `V2-TRACK-${spec.key}`, carrier: listing.type === 'physical' ? 'V2 Carrier' : null, accessCode: listing.type === 'digital' ? `V2-${spec.key}` : null } })
+      await client.deliveryRecord.create({ data: { orderId: order.id, sellerId: seller.id, sequence: 1, kind: listing.type, reference: listing.type === 'digital' ? `https://example.com/v2/${spec.key}${spec.partialDelivery ? '/part-1' : ''}` : `V2-TRACK-${spec.key}${spec.partialDelivery ? '-PART-1' : ''}`, carrier: listing.type === 'physical' ? 'V2 Carrier' : null, accessCode: listing.type === 'digital' ? `V2-${spec.key}-PART-1` : null } })
       if (spec.partialDelivery)
-        await client.deliveryRecord.create({ data: { orderId: order.id, sellerId: seller.id, sequence: 2, kind: listing.type, reference: `https://example.com/v2/${spec.key}/part-2`, accessCode: 'PART-2' } })
+        await client.deliveryRecord.create({ data: { orderId: order.id, sellerId: seller.id, sequence: 2, kind: listing.type, reference: listing.type === 'digital' ? `https://example.com/v2/${spec.key}/part-2` : `V2-TRACK-${spec.key}-PART-2`, carrier: listing.type === 'physical' ? 'V2 Carrier' : null, accessCode: listing.type === 'digital' ? `V2-${spec.key}-PART-2` : null } })
     }
     if (['issue', 'refunded'].includes(spec.status)) {
       const issue = await client.issueRecord.create({ data: { orderId: order.id, buyerId: buyer.id, sourceStatus: 'pending_acceptance', description: `V2 dispute for ${spec.key}: long issue text with 🧪 and multilingual details.`, status: spec.status === 'refunded' ? 'resolved' : 'open', resolvedAt: spec.status === 'refunded' ? new Date() : null } })
@@ -277,6 +296,15 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
       await client.settlementRecord.create({ data: { orderId: order.id, operation: 'refund', amount: listing.priceAmount, currency: listing.currency } })
     if (spec.status === 'completed' && Number(listing.priceAmount) > 0)
       await client.settlementRecord.create({ data: { orderId: order.id, operation: 'release', amount: listing.priceAmount, currency: listing.currency } })
+    if (spec.status === 'completed')
+      await client.sellerReview.create({
+        data: {
+          orderId: order.id,
+          buyerId: buyer.id,
+          sellerId: seller.id,
+          rating: ((Number(listingSpec.sellerKey.slice(6)) - 1) % 5) + 1
+        }
+      })
     const transitions = spec.status === 'pending_payment' ? [['create', null, 'pending_payment']] : [['create', null, 'pending_payment'], [spec.status === 'cancelled' ? 'cancel' : spec.status === 'expired' ? 'expire' : 'pay', 'pending_payment', ['cancelled', 'expired'].includes(spec.status) ? spec.status : 'pending_delivery']]
     for (const [operation, fromState, toState] of transitions)
       await client.orderEvent.create({ data: { orderId: order.id, actorId: operation === 'expire' ? null : buyer.id, operation, fromState, toState, requestId: `${spec.requestId}-${operation}` } })
@@ -290,7 +318,8 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
       for (const [operation, fromState, toState, actorId] of [['issue', 'pending_acceptance', 'issue', buyer.id], ['request_refund', 'issue', 'issue', buyer.id], ['refund', 'issue', 'refunded', seller.id]])
         await client.orderEvent.create({ data: { orderId: order.id, actorId, operation, fromState, toState, requestId: `${spec.requestId}-${operation}` } })
   }
-  return { ...plan, createdAccounts, createdListings: listingByKey.size, createdOrders: plan.orders.length }
+  return { ...plan, createdAccounts, createdListings: listingByKey.size,
+    createdOrders: plan.orders.length, createdCheckouts: plan.cartCheckouts.length }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -302,7 +331,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await db.onModuleInit()
   try {
     const result = await seedV2(db.client, { password: process.env.V2_SEED_PASSWORD })
-    console.log(JSON.stringify({ seed: result.seed, accounts: result.createdAccounts, listings: result.createdListings, orders: result.createdOrders, orderStates: result.orderStates }))
+    console.log(JSON.stringify({ seed: result.seed, accounts: result.createdAccounts, listings: result.createdListings, orders: result.createdOrders, checkouts: result.createdCheckouts, orderStates: result.orderStates }))
   } finally {
     await db.onModuleDestroy()
   }

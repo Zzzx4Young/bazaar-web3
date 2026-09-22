@@ -19,7 +19,8 @@
     "myItems": "My Listings",
     "favorites": "Favorites",
     "notifications": "Notifications",
-    "adminDisputes": "Dispute review"
+    "adminDisputes": "Dispute review",
+    "cart": "Cart"
   },
   "adminDisputes": {
     "restricted": "Only administrators can review disputes.",
@@ -46,6 +47,43 @@
     "sellerOfferHint": "Describe redelivery or another solution",
     "balance": "Simulated balance",
     "adminResolved": "Administrator decision"
+  },
+  "orderReview": {
+    "title": "Review seller",
+    "rating": "Rating",
+    "submit": "Submit review",
+    "submitted": "Rated {rating} / 5",
+    "viewCheckout": "View items from this checkout"
+  },
+  "cartPage": {
+    "title": "Cart",
+    "signIn": "Sign in with a participant account first.",
+    "empty": "Your cart is empty.",
+    "remove": "Remove",
+    "shipping": "Shipping for physical items",
+    "recipient": "Recipient",
+    "contact": "Contact",
+    "address": "Address",
+    "minimum": "Add at least two different items to check out together.",
+    "error": "Checkout failed: {error}",
+    "retry": "Retry the same checkout",
+    "checkout": "Check out together"
+  },
+  "checkoutDetail": {
+    "signIn": "Sign in to view this checkout.",
+    "loading": "Loading checkout…",
+    "error": "Could not load checkout: {error}",
+    "title": "Orders in this checkout"
+  },
+  "commonCart": { "addToCart": "Add to cart" },
+  "sellerProfile": {
+    "loading": "Loading seller profile…",
+    "loadError": "Could not load seller profile: {error}",
+    "unavailable": "Seller profile is unavailable.",
+    "listingCount": "{count} public listings",
+    "noReviews": "No reviews yet",
+    "reputation": "Rating {rating} / 5 · {count} reviews",
+    "listings": "Listings"
   },
   "home": {
     "hero": {

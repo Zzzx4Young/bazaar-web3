@@ -21,6 +21,9 @@ model Account {
   eventActorRows       OrderEvent[]        @relation("eventActor")
   idempotencyActorRows IdempotencyRecord[] @relation("idempotencyActor")
   resolvedRefundRows   RefundRequest[]     @relation("refundResolver")
+  reviewBuyerRows      SellerReview[]      @relation("reviewBuyer")
+  reviewSellerRows     SellerReview[]      @relation("reviewSeller")
+  checkoutBuyerRows    Checkout[]          @relation("checkoutBuyer")
   credential           AccountCredential?
   sessions             Session[]
 }
@@ -85,6 +88,7 @@ model Order {
   listingId                 String                 @db.Uuid
   buyerId                   String                 @db.Uuid
   sellerId                  String                 @db.Uuid
+  checkoutId                String?                @db.Uuid
   status                    String                 @default("pending_payment")
   version                   Int                    @default(1)
   createdAt                 DateTime               @default(now()) @db.Timestamptz(6)
@@ -103,12 +107,26 @@ model Order {
 
   refundBuyerRows  RefundRequest[] @relation("refundBuyer")
   refundSellerRows RefundRequest[] @relation("refundSeller")
+  review             SellerReview?
+  checkout           Checkout? @relation(fields: [checkoutId, buyerId], references: [id, buyerId], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([id, buyerId])
   @@unique([id, sellerId])
   @@unique([id, listingId])
   @@index([buyerId, createdAt, id])
   @@index([sellerId, createdAt, id])
+  @@index([checkoutId])
+}
+
+model Checkout {
+  id              String    @id @default(uuid()) @db.Uuid
+  buyerId         String    @db.Uuid
+  createdAt       DateTime  @default(now()) @db.Timestamptz(6)
+  checkoutBuyer   Account   @relation("checkoutBuyer", fields: [buyerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  orders          Order[]
+
+  @@unique([id, buyerId])
+  @@index([buyerId, createdAt])
 }
 
 model OrderSnapshot {
@@ -226,6 +244,21 @@ model SettlementRecord {
   settlementSnapshot OrderSnapshot @relation("settlementSnapshot", fields: [orderId, amount, currency], references: [orderId, priceAmount, currency], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([orderId, operation])
+}
+
+model SellerReview {
+  id           String   @id @default(uuid()) @db.Uuid
+  orderId      String   @unique @db.Uuid
+  buyerId      String   @db.Uuid
+  sellerId     String   @db.Uuid
+  rating       Int      @db.SmallInt
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  orderBuyer   Order    @relation(fields: [orderId, buyerId], references: [id, buyerId], onDelete: Restrict, onUpdate: Restrict)
+  reviewBuyer  Account  @relation("reviewBuyer", fields: [buyerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  reviewSeller Account  @relation("reviewSeller", fields: [sellerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([sellerId, createdAt])
+  @@unique([orderId, buyerId])
 }
 
 model OrderEvent {

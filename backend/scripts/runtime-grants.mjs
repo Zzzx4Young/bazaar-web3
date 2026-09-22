@@ -10,12 +10,14 @@ export async function grantRuntime(client, schema, role) {
     'DeliveryRecord',
     'SettlementRecord',
     'OrderEvent',
-    'RateSnapshot'
+    'RateSnapshot',
+    'SellerReview'
   ]
   const mutable = [
     'Account',
     'Listing',
     'Order',
+    'Checkout',
     'PhysicalInventory',
     'DigitalInventory',
     'InventoryReservation',
