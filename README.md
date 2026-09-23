@@ -1,127 +1,61 @@
-# Bazaar Web3 — Internal Alpha Development
+# Bazaar Web3
 
-A C2C marketplace internal Alpha for physical secondhand goods and digital content.
-The Next.js frontend connects through a same-origin proxy to an independent
-NestJS/Fastify + Prisma/PostgreSQL backend. The Alpha implements pre-provisioned
-accounts, shared listings, private orders, simulated settlement, physical delivery,
-digital delivery and refund recovery. Wallets, blockchain and real settlement remain
-outside the current scope.
+面向实物二手商品和数字内容交易的内部 Alpha。前端为 Next.js 14，后端为
+NestJS/Fastify + Prisma，业务数据保存在 PostgreSQL；浏览器通过前端同源代理访问 API。
 
-Project status: I1—I8 and M1 Alpha release hardening are complete. Commit `113c1ee` passed both
-GitHub Actions jobs, including PostgreSQL integration, deployment images, and Chromium acceptance.
-See the [execution plan](docs/execution-plan.md),
-[deployment runbook](docs/api-deployment-runbook.md), and
-[stage report](docs/backend-stage-report.md) for the verified boundary.
+I1–I8、内部 Alpha 和 V2 业务数据验收已完成。提交 `c8bd3ab` 的
+[GitHub Actions](https://github.com/Zzzx4Young/bazaar-web3/actions/runs/35752730311)
+通过了前后端检查、PostgreSQL 集成测试、部署镜像及 Alpha/V2 Chromium 流程。
+V2 流程会生成 200 件商品、60 笔多状态订单，并保存桌面/手机截图、视频和 trace。
+这属于受控内测验收，尚无公开部署或生产容量结论。
 
-## Frontend development server
+## 功能与边界
 
-Requirements: Node.js **>=22.12.0**, npm **10.9.8**.
-Dependency versions are defined by [package.json](frontend/package.json) and its lockfile.
-
-```bash
-git clone https://github.com/Zzzx4Young/bazaar-web3.git
-cd bazaar-web3/frontend
-npm ci
-npm run dev
-```
-
-Open http://localhost:3000/zh-CN or http://localhost:3000/en.
-The root URL redirects to /zh-CN. This command starts the web process only. Current
-pages load listings, accounts and orders from the backend, so use the complete startup
-below for an operational Alpha. Browser GET requests for pages, React Server Components,
-scripts and icons are normal; business API requests use the POST-only Alpha contract.
-
-## Internal Alpha local start
-
-1. Run `bash infra/scripts/init-secrets.sh` from the repository root.
-2. Run `docker compose -f infra/compose.alpha.yaml up -d --build --wait`.
-3. Open `http://localhost:3000/zh-CN`. Provision test accounts through the private-file workflow in
-   [backend account provisioning](backend/README.md#预置账户与认证) when needed.
-
-The backend never migrates, seeds or cleans the database during startup. Do not use
-the temporary `postgres-test` service for data that must survive a container stop.
-
-## Current pages
-
-All routes below have a /zh-CN or /en prefix. Some business text is not yet translated.
-
-| Route suffix | Implemented capability |
+| 领域 | 当前能力 |
 |---|---|
-| / | Alpha introduction, fixed categories and server-backed product grids |
-| /explore | Server-backed listings with keyword, category, type, currency and supported sorting controls |
-| /listing/[id] | Server-backed detail and seller identity, local favorite preference and authenticated purchase |
-| /publish | Authenticated Alpha publication with placeholder media; no image upload or draft saving |
-| /me | Authenticated account, seller listing management and private buyer/seller orders |
-| /me/orders/[id] | Private order history and role/state-specific payment, delivery, acceptance, issue and refund actions |
-| /seller/[id] | Public seller identity derived from current server-backed listings |
-| /favorites | Local favorite IDs resolved against current server-backed listings |
-| /notifications | Explicit unavailable state; no synthetic notifications |
+| 账户 | 预置账户登录、会话轮换与撤销、CSRF 保护；买家、卖家和管理员角色 |
+| 商品 | 发布、编辑、下架、搜索、筛选、分页及多币种参考价排序 |
+| 交易 | 单件购买和 2–5 件跨卖家购物车；模拟付款、订单过期与库存释放 |
+| 履约 | 实物/数字交付、分段交付、验收、争议、卖家还价、管理员裁决与退款 |
+| 评价 | 完成订单后由买家评价卖家；公开卖家评分 |
+| 运维 | 追加迁移、受限数据库角色、只读观察视图、备份恢复演练和 CI 浏览器验收 |
 
-## Storage and limitations
+收藏 ID 只保存在浏览器，并通过后端确认商品仍公开；购物车按账户保存在当前浏览器会话。
+账户、商品、订单和评价均以 PostgreSQL 为准。付款与余额是模拟记录；
+公开注册、图片托管、通知、聊天、钱包、链上结算和真实支付尚未实现。
 
-Theme and favorite IDs remain browser preferences. Accounts, listings, orders and private
-histories are PostgreSQL facts; API failures show an error and never switch to sample or
-local business data. Unknown order-command results retain their payload and idempotency key
-for safe retry.
+## 本地启动
 
-Registration, image hosting, notifications, chat,
-wallets, blockchain settlement and external digital-link availability checks are not
-implemented. The Alpha uses simulated payment/settlement and pre-provisioned accounts.
-The [Demo data contract](docs/mock-data-spec.md) documents the superseded prototype only.
-
-## Development and verification
-
-Run in frontend/:
+需要 Node.js >=22.12、npm 10.9.8、Docker Engine/Compose。在仓库根目录执行：
 
 ```bash
-npm run typecheck
-npm run lint
-npm test
-npm run build
-npm run start
+bash infra/scripts/init-secrets.sh
+docker compose -f infra/compose.alpha.yaml up -d --build --wait
 ```
 
-Stop the development server before building: dev and build share .next output.
-Restart development after a build to avoid stale assets.
+打开 http://localhost:3000/zh-CN 或 http://localhost:3000/en。
+完整 Compose 首次启动会按 PostgreSQL → 角色初始化 → 迁移 → API → 前端运行；
+不会自动创建业务账户或测试商品。完整 Compose 的账户预置见
+[基础设施 README](infra/README.md#完整-alpha)；宿主机 V2 种子见[后端 README](backend/README.md#本机账户与-v2-数据)。
+不同 Compose 项目使用各自的数据库卷，
+现有 `infra/compose.yaml` 开发库数据不会自动出现在 `compose.alpha.yaml` 页面上。
+停止服务可运行 `docker compose -f infra/compose.alpha.yaml down`，默认保留数据卷。
 
-Historical Demo browser specs remain for traceability and are not Alpha acceptance. The
-active Alpha browser flow runs from `backend/` against an isolated PostgreSQL schema:
+## 验证与目录
 
 ```bash
-npx playwright install chromium
-cd ../backend
-node scripts/with-test-db.mjs node scripts/check-i5-browser.mjs
+cd frontend
+npm ci
+npm run check:frontend
+npm run test:e2e:v2
 ```
 
-Current [CI](.github/workflows/ci.yml) runs frontend/backend checks, PostgreSQL
-integration tests, and the real Alpha Chromium acceptance flow. A local passing
-test does not establish remote CI status until the workflow run is green.
+浏览器验收需要可用的 Docker、Chromium 和测试数据库，使用隔离数据并在结束后清理。
+后端检查及数据库测试入口见 [后端 README](backend/README.md)。
 
-It creates random accounts, a schema and a restricted runtime role, then cleans them
-after the run. It uses fictitious delivery data and does not open external delivery links.
+- [前端](frontend/README.md)：页面、浏览器状态与前端命令。
+- [后端](backend/README.md)：API、数据库角色、种子数据与测试。
+- [基础设施](infra/README.md)：Compose、Kubernetes 模板、备份和停止方式。
+- [接口契约](backend/openapi/alpha.json)：请求与响应字段。
 
-Other scripts: npm run format formats source; npm run screenshot creates manual
-screenshots under docs/screenshots and may start a server on port 3737.
-
-## Architecture and deployment status
-
-Current stack: Next.js 14 App Router, React 18, TypeScript, Tailwind CSS,
-Radix components, next-intl, React Hook Form and Zod.
-Authentication and filter state use Zustand; only theme and favorite IDs use browser storage.
-
-A standard Node runtime can serve a production build with npm run start.
-Public deployment is outside the approved internal Alpha scope. The repository
-Vercel configuration still needs review; do not assume a one-click deployment works.
-No deployment or configuration change is included in this storage-hardening work.
-
-## Documentation
-
-- [Current documentation index](docs/README.md)
-- [Alpha business specification](docs/server-alpha-spec.md)
-- [Execution plan and remaining hardening](docs/execution-plan.md)
-- [Frontend capabilities](docs/frontend-prototype-roadmap.md)
-- [Frontend stack and startup](docs/frontend-stack-recommendation.md)
-- [Change history](docs/CHANGELOG.md)
-- [Historical archive](docs/archive/README.md) — unverified research and frozen testnet drafts, not current specifications
-- [Contributing](CONTRIBUTING.md)
-- [License](LICENSE)
+`docs/` 是本地工作文档目录，已被 Git 忽略；其中的阶段记录不随本仓库提交发布。

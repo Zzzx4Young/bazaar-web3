@@ -1,35 +1,49 @@
-# Bazaar Web3 前端 Alpha
+# Bazaar 前端
 
-Next.js 14 + React 18 + TypeScript。Alpha 通过同源 `/api` 代理连接 NestJS 后端；真实账户、商品、订单和交付数据由后端提供。未登录页面仍保留明确标注的 Demo 展示组件。
+Next.js 14 + React 18 + TypeScript。页面通过同源 `/api` 代理访问独立后端；
+商品、账户、订单和评价来自 PostgreSQL。单独运行前端时，业务请求仍需后端服务。
+完整项目启动见 [根 README](../README.md)。
 
-收藏 ID 仍保存在当前浏览器的本地存储；导航徽章和收藏页统一通过
-`POST /api/listings/favorites/resolve` 确认仍公开的商品。失效或下架 ID 不计入数量，
-接口失败时收藏页显示错误，不展示未经确认的徽章数量。收藏尚未跨浏览器或账户同步。
+## 页面与浏览器状态
 
-要求 Node >=22.12.0、npm 10.9.8。在此目录执行：
+| 路由（前面加 `/zh-CN` 或 `/en`） | 能力 |
+|---|---|
+| `/`、`/explore`、`/listing/[id]` | 商品浏览、关键词与分类筛选、跨币种排序、分页和购买 |
+| `/login`、`/publish`、`/me` | 登录、发布、卖家商品管理和个人订单 |
+| `/cart`、`/me/checkouts/[id]` | 2–5 件跨卖家购物车与逐件订单状态 |
+| `/me/orders/[id]` | 付款、交付、验收、争议、退款和完成后评价 |
+| `/seller/[id]`、`/admin/disputes` | 卖家信誉及管理员争议处理 |
+| `/favorites`、`/notifications` | 当前公开商品的本地收藏；通知为明确的未开放状态 |
+
+收藏 ID 保存在浏览器本地存储，导航数量和收藏页都经
+`POST /api/listings/favorites/resolve` 确认；失效或下架商品不计入数量。
+购物车按账户保存在 `sessionStorage`，提交后由后端原子创建订单。
+接口失败时页面显示错误，不回退到演示商品或订单。浏览器 GET 页面与静态资源是正常请求；
+业务 API 使用 POST-only 契约。
+
+## 开发与验收
+
+需要 Node.js >=22.12、npm 10.9.8。在本目录执行：
 
 ```bash
 npm ci
 npm run dev
-# http://localhost:3000/zh-CN 或 /en
 ```
 
-开发时后端默认位于 `http://127.0.0.1:3001`；可用 `BACKEND_ORIGIN` 覆盖。生产运行使用 `npm run build` 后 `npm run start`，部署时需让后端 `APP_ORIGIN` 等于浏览器访问的完整前端 origin。
+默认打开 http://localhost:3000/zh-CN；后端默认位于 `http://127.0.0.1:3001`，
+可用 `BACKEND_ORIGIN` 覆盖。后端的 `APP_ORIGIN` 必须与浏览器访问的前端 origin 一致。
+生产构建使用 `npm run build` 后 `npm run start`；构建前先停止开发服务，避免共用 `.next` 输出。
 
-API 客户端为请求生成 `X-Request-Id`。失败时 `BackendError` 保留服务端的稳定错误码、HTTP 状态、`requestId` 和 `retryable`，供内测问题记录关联，不作为身份或幂等键。
+```bash
+npm run check:frontend
+npm run test:e2e:alpha
+npm run test:e2e:v2
+```
 
-完整静态与构建检查使用 `npm run check:frontend`。`npm run test:e2e:alpha` 是真实 Alpha
-Chromium 验收入口，会从 `backend/` 运行隔离数据库流程，并在 `e2e-results/` 输出
-trace、截图和视频。命令会启动并停止专用
-`postgres-test`。旧 Demo 浏览器回归保留为 `npm run test:e2e:demo`。
+浏览器验收会启动并停止专用 `postgres-test`，需要 Docker、Chromium 和仓库测试密码文件。
+V2 在隔离数据库生成 200 件商品、60 笔多状态订单，覆盖移动/桌面布局、筛选排序、
+购物车、争议裁决及 observer 数据核对；截图、视频和 trace 写入 `e2e-results-v2/`。
+历史 Demo 用例由 `npm run test:e2e:demo` 单独运行，不作为 Alpha 验收。
 
-V2 压力验收使用 `npm run test:e2e:v2`：自动生成 100 条商品和 60 条多状态订单，验证关键词、分类、
-跨币种排序、分页、长文本、争议退款和 observer 数据一致性，并在 `e2e-results-v2/` 输出 trace、
-截图和视频。
-
-- [文档入口](../docs/README.md)
-- [当前范围与后续规划](../docs/frontend-prototype-roadmap.md)
-- [技术栈和架构](../docs/frontend-stack-recommendation.md)
-- [历史 Demo 数据格式](../docs/mock-data-spec.md)
-
-Alpha 订单动作使用幂等键；结果未知时只能复用原请求重试。真实钱包、链上结算、注册、图片托管和通知系统仍不在范围内。旧本地订单 E2E 属于 Demo 范围，不作为后端 Alpha 验收证据。
+客户端错误保留服务端错误码、HTTP 状态和 `requestId`，方便内测定位；
+订单命令在结果未知时复用原请求和幂等键。接口字段见[后端 OpenAPI](../backend/openapi/alpha.json)。
