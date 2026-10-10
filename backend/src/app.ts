@@ -17,6 +17,7 @@ import { DisputeController } from './orders/dispute.controller.js'
 import { BalanceController } from './orders/balance.controller.js'
 import { SellerReviewController } from './reviews/seller-review.controller.js'
 import { RequestAdmission } from './common/request-admission.js'
+import { requestPolicy } from './common/request-policy.js'
 import {
   defaultRequestLogSink,
   type RequestLogSink,
@@ -44,7 +45,7 @@ export async function createApp(
         : defaultRequestLogSink
       : dependencies.logRequest
   const adapter = new FastifyAdapter({
-    bodyLimit: 1048576,
+    bodyLimit: requestPolicy.maxBodyBytes,
     requestIdHeader: false,
     trustProxy: config.trustedProxyCidrs
   })

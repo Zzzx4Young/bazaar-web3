@@ -1,4 +1,8 @@
-export const requestPolicy = Object.freeze({ defaultMaxInFlight: 200, maxInFlightLimit: 10000 })
+export const requestPolicy = Object.freeze({
+  defaultMaxInFlight: 200,
+  maxInFlightLimit: 10000,
+  maxBodyBytes: 1024 * 1024
+})
 
 export function readMaxInFlightRequests(env: NodeJS.ProcessEnv): number {
   const raw = env.API_MAX_IN_FLIGHT
