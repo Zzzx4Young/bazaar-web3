@@ -23,6 +23,7 @@ import { capacityAuthPolicy } from './capacity-auth-policy.mjs'
 import { capacityOutageWrites } from './capacity-outage-writes.mjs'
 import { capacityDatabaseFault, capacityDatabaseFaultPolicy } from './capacity-database-fault.mjs'
 import { verifyCapacityReplication } from './capacity-replication.mjs'
+import { capacityExpiry, capacityExpiryPolicy } from './capacity-expiry.mjs'
 
 // This command accepts only the explicit ephemeral test DB via sandbox/testUrl.
 const policy = readCapacityPolicy(process.env)
@@ -35,6 +36,9 @@ const profilingEnabled = process.env.CAPACITY_PROFILE === '1'
 const databaseFaultMode = policy.databaseFault !== 'none'
 const gatewayFaultMode = policy.databaseFault === 'gateway-kill'
 const authMode = process.env.CAPACITY_AUTH === '1'
+const expiryMode = process.env.CAPACITY_EXPIRY === '1'
+assert.ok(!expiryMode || (writeMode && !databaseFaultMode && policy.seconds >= capacityExpiryPolicy.minimumSeconds),
+  'Expiry profile requires business writes, no database fault, and at least two normal expiry intervals')
 assert.ok(!authMode || (writeMode && !databaseFaultMode), 'Authentication profile requires business writes and no simultaneous database fault')
 const databaseFault = databaseFaultMode ? capacityDatabaseFault(policy.databaseFault) : undefined
 assert.ok(
@@ -59,6 +63,7 @@ let db,
   gateway,
   gatewayProbes,
   authLoad,
+  expiryLoad,
   stopResources,
   healthTimer,
   roleCreated = false
@@ -256,6 +261,7 @@ async function load(port, users, listings, onTick, writes) {
     peakActive = 0,
     dropped = 0
   const started = performance.now()
+  expiryLoad?.start(started)
   const planned = policy.rate * policy.seconds
   const promises = new Set()
   async function send(index, scheduled) {
@@ -494,6 +500,12 @@ try {
     await authLoad.prepare(port)
     console.log(JSON.stringify({ event: 'capacity_auth_prepared', ...authLoad.summary() }))
   }
+  if (expiryMode) {
+    stage = 'HTTP expiry fixture preparation'
+    expiryLoad = capacityExpiry({ client: db.client, buyer: users[0], sellerId: seller.id,
+      create: (payload, user, key) => post(port, '/api/orders', payload, user, key) })
+    await expiryLoad.prepare()
+  }
   stage = 'HTTP preflight'
   let checking = false
   const healthStarted = performance.now()
@@ -608,6 +620,7 @@ try {
     () => !gatewayFaultMode && (databaseFault?.expectedFailure('HTTP_503', Date.now()) ?? false)
   )
   stage = 'measured load'
+  if (expiryLoad) await expiryLoad.arm()
   const result = await load(
     port,
     users,
@@ -656,6 +669,7 @@ try {
     completed: [...gateway.stats.completed]
   }
   await Promise.all(actions)
+  await expiryLoad?.stop()
   if (databaseFaultMode) {
     const deadline = Date.now() + capacityDatabaseFaultPolicy.controlTimeoutMs
     while (!faultControlFinished && Date.now() < deadline) await sleep(50)
@@ -667,7 +681,16 @@ try {
   healthTimer = undefined
   const resources = await stopResources()
   stopResources = undefined
-  let persistedWrites, writeCompetition, authentication
+  let persistedWrites, writeCompetition, authentication, expiration
+  if (expiryLoad) {
+    stage = 'background expiry audit'
+    try { expiration = await expiryLoad.audit(policy.seconds) }
+    catch {
+      expiration = { verified: false }
+      result.errors.expiry_audit = 1
+      result.errorCount++
+    }
+  }
   if (authLoad) {
     stage = 'authentication audit'
     try { authentication = await authLoad.audit(db.client, policy.seconds) }
@@ -733,11 +756,12 @@ try {
       apiEndpoints: runtimeUrls.map((url, apiIndex) => ({ apiIndex, address: url.host })) },
     databaseFault: databaseFault?.report,
     dataset: {
-      accounts: users.length + 1,
-      sessions: authLoad ? await db.client.session.count() : users.length,
+      accounts: await db.client.account.count(),
+      sessions: await db.client.session.count(),
       initialSessionFixtures: authLoad ? users.length : undefined,
-      listings: listings.length,
-      orders: users.length
+      listings: await db.client.listing.count(),
+      orders: await db.client.order.count(),
+      baselineOrders: users.length
     },
     host: {
       platform: platform(),
@@ -761,7 +785,8 @@ try {
     healthTransitions,
     resources,
     result,
-    authentication
+    authentication,
+    expiration
   }
   await mkdir('.tmp', { recursive: true })
   report.persistedWrites = persistedWrites
@@ -778,6 +803,7 @@ try {
   if (databaseFaultMode)
     report.scope = `80% reads and 20% independent create/replay/cancel/replay arrivals with real ${policy.databaseFault}; post-load drain separately counted; no API restart or password login load`
   if (authMode) report.scope = `398 reads,100 business commands,1 password login/rotation,1 session read per500 scheduled arrivals/s;32 real password actors,968 seeded-session actors; authentication probes outside measured load; synthetic loopback proxy identities${faultMode ? '; API SIGKILL and replacement' : ''}`
+  if (expiryMode) report.scope += '; HTTP-created isolated aged orders processed by normal API expiry workers; preparation and observer queries outside scheduled HTTP arrivals'
   const workload = databaseFaultMode
     ? gatewayFaultMode
       ? 'database-gateway-failover'
@@ -792,7 +818,7 @@ try {
         ? 'api-failover'
         : 'read-baseline'
   const suffix = `${policy.databaseTopology === 'synchronous-ha' ? '-ha' : ''}${policy.secondDatabaseAddress ? '-dual-ingress' : ''}${writeMode && faultMode ? '-api-failover' : ''}${policy.poolMax === readCapacityPolicy({}).poolMax ? '' : `-pool${policy.poolMax}`}${policy.seconds === readCapacityPolicy({}).seconds ? '' : `-${policy.seconds}s`}`
-  const reportFile = `.tmp/capacity-${workload}${authMode ? '-auth' : ''}${suffix}${profilingEnabled ? '-profile' : ''}.json`
+  const reportFile = `.tmp/capacity-${workload}${authMode ? '-auth' : ''}${expiryMode ? '-expiry' : ''}${suffix}${profilingEnabled ? '-profile' : ''}.json`
   const reportText = JSON.stringify(report, null, 2) + '\n'
   await writeFile(reportFile, reportText, { mode: 0o600 })
   console.log(
@@ -840,6 +866,7 @@ try {
   console.error(`Capacity check failed at ${stage}: ${reason.slice(0, 500)}`)
   process.exitCode = 1
 } finally {
+  await expiryLoad?.stop()
   gatewayProbes?.close()
   clearInterval(healthTimer)
   if (stopResources) await stopResources()

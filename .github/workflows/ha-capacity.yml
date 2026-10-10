@@ -1,0 +1,99 @@
+name: HA and capacity acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Isolated acceptance profile (not production failure-domain proof)
+        type: choice
+        required: true
+        default: auth-120
+        options:
+          - auth-120
+          - auth-600
+          - auth-expiry-120
+          - auth-expiry-600
+          - database-gateway-120
+          - http-database-joint
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ha-capacity-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      PRISMA_HIDE_UPDATE_MESSAGE: '1'
+      CAPACITY_POOL_MAX: '10'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22.23.1'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Pin npm and install locked dependencies
+        run: |
+          npm install --global npm@10.9.8
+          npm ci
+      - name: Build and verify backend
+        run: npm run check:backend
+      - name: Build isolated HA image
+        working-directory: .
+        run: docker build -t bazaar-ha-patroni:4.1.5-pg17.11 infra/ha
+      - name: Two-minute real authentication mix
+        if: inputs.profile == 'auth-120'
+        run: npm run test:capacity:ha
+        env:
+          CAPACITY_AUTH: '1'
+          CAPACITY_SECONDS: '120'
+      - name: Ten-minute real authentication mix
+        if: inputs.profile == 'auth-600'
+        run: npm run test:capacity:ha
+        env:
+          CAPACITY_AUTH: '1'
+          CAPACITY_SECONDS: '600'
+      - name: Two-minute authentication and background expiry mix
+        if: inputs.profile == 'auth-expiry-120'
+        run: npm run test:capacity:ha
+        env:
+          CAPACITY_AUTH: '1'
+          CAPACITY_EXPIRY: '1'
+          CAPACITY_SECONDS: '120'
+      - name: Ten-minute authentication and background expiry mix
+        if: inputs.profile == 'auth-expiry-600'
+        run: npm run test:capacity:ha
+        env:
+          CAPACITY_AUTH: '1'
+          CAPACITY_EXPIRY: '1'
+          CAPACITY_SECONDS: '600'
+      - name: Database gateway fault under load
+        if: inputs.profile == 'database-gateway-120'
+        run: npm run test:capacity:ha
+        env:
+          CAPACITY_SECONDS: '120'
+          CAPACITY_DATABASE_FAULT: gateway-kill
+      - name: HTTP ingress and synchronous database joint fault
+        if: inputs.profile == 'http-database-joint'
+        run: npm run test:postgres-ha:http
+      - name: Retain acceptance evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ha-capacity-${{ inputs.profile }}-${{ github.run_id }}
+          path: |
+            backend/.tmp/capacity-clock-preflight.json
+            backend/.tmp/capacity-*.json
+            backend/.tmp/postgres-ha-capacity-run.json
+            backend/.tmp/postgres-ha-http-ingress-report.json
+            backend/.tmp/postgres-ha-http-ingress-run.json
+          if-no-files-found: warn
+          retention-days: 14
