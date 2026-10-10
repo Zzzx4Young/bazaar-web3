@@ -16,6 +16,7 @@ import { haDataNodes, checkProcessFreeze } from './ha-auto-process-freeze.mjs'
 import { monotonicNow } from './capacity-monotonic.mjs'
 import { checkGatewayFailure } from './ha-auto-gateway-failure.mjs'
 import { capacitySetupAfterClockPreflight } from './capacity-clock-preflight.mjs'
+import { httpIngressEnvironment, cleanupHttpIngress } from './http-ingress-environment.mjs'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const project = `bazaar-ha-auto-${randomUUID().replaceAll('-', '')}`
@@ -26,9 +27,12 @@ const runtimeRole = 'bazaar_ha_runtime'
 const capacityMode = process.argv[2] === '--capacity'
 const processFreezeMode = process.argv[2] === '--process-freeze'
 const gatewayFailureMode = process.argv[2] === '--gateway-failure'
+const httpIngressMode = process.argv[2] === '--http-ingress'
+let httpIngress, httpIngressStarted = false, httpIngressProject, httpApiEndpoints, httpSourceHashes
+let httpIngressCleaned = true
 let capacityChildExitCode, capacityReport, processFreezeReport, gatewayFailureReport, clockPreflight
 assert.ok(
-  process.argv.length === 2 || (process.argv.length === 3 && (capacityMode || processFreezeMode || gatewayFailureMode)),
+  process.argv.length === 2 || (process.argv.length === 3 && (capacityMode || processFreezeMode || gatewayFailureMode || httpIngressMode)),
   'Unknown HA check argument'
 )
 const policy = {
@@ -150,9 +154,14 @@ async function post(api, path, payload = {}, session, key, timeout = policy.requ
     },
     body: JSON.stringify(payload)
   })
+  let value
+  try { value = await response.json() } catch (error) {
+    if (!httpIngressMode || response.status < 500) throw error
+    value = null
+  }
   return {
     status: response.status,
-    value: await response.json(),
+    value,
     cookie: response.headers.get('set-cookie')?.split(';')[0]
   }
 }
@@ -475,7 +484,28 @@ try {
     stage = 'two API business writes'
     const secondRuntimeUrl = new URL(runtimeUrl)
     secondRuntimeUrl.host = secondWriter
-    const apis = [await startApi(runtimeUrl), await startApi(secondRuntimeUrl)]
+    let apis = [await startApi(runtimeUrl), await startApi(secondRuntimeUrl)]
+    if (httpIngressMode) {
+      const files = ['scripts/check-postgres-ha-auto.mjs', 'scripts/http-ingress-environment.mjs',
+        '../infra/http/haproxy.cfg', '../infra/compose.http-validation.yaml']
+      httpSourceHashes = Object.fromEntries(await Promise.all(files.map(async file =>
+        [file, createHash('sha256').update(await readFile(file)).digest('hex')])))
+      httpApiEndpoints = [...apis]
+      httpIngressProject = `bazaar-http-${randomUUID().replaceAll('-', '')}`
+      const reservations = [createServer(), createServer()]
+      await Promise.all(reservations.map(async server => {
+        server.listen(0, '127.0.0.1'); await once(server, 'listening')
+      }))
+      const ports = reservations.map(server => server.address().port)
+      await Promise.all(reservations.map(server => new Promise(resolve => server.close(resolve))))
+      httpIngress = await httpIngressEnvironment({ project: httpIngressProject, origin,
+        apiPorts: apis.map(api => Number(new URL(api).port)), ingressPorts: ports })
+      httpIngressStarted = true
+      await httpIngress.compose('up', '-d')
+      apis = ports.map(port => `http://127.0.0.1:${port}`)
+      for (const api of apis) await until(async () => (await post(api, '/api/health/ready')).status === 200)
+      console.log('HA HTTP: two proxy processes route to original two API processes and independent database gateways')
+    }
     const login = await post(apis[0], '/api/auth/login', { loginName: 'ha-buyer', password })
     assert.equal(login.status, 200)
     const session = { cookie: login.cookie, csrfToken: login.value.csrfToken }
@@ -563,6 +593,10 @@ try {
     } else {
       stage = 'automatic primary failover'
       const started = performance.now()
+      if (httpIngressMode) {
+        await httpIngress.compose('kill', '-s', 'SIGKILL', 'ingress1')
+        await assert.rejects(post(apis[0], '/api/health/ready'), error => error instanceof TypeError)
+      }
       await compose('kill', '-s', 'SIGKILL', initialPrimary)
       const newPrimary = await until(async () => {
         const state = await topology()
@@ -584,6 +618,10 @@ try {
       )
       const recoveryMs = performance.now() - started
       assert.ok(recoveryMs <= policy.rtoMs)
+      if (httpIngressMode) {
+        await httpIngress.compose('up', '-d', 'ingress1')
+        await until(async () => (await post(apis[0], '/api/health/ready')).status === 200)
+      }
       // All rows were checked before cancellation; only the intentional cancellation may now differ.
       const after = await businessState(database.client, ids)
       assert.deepEqual(
@@ -776,8 +814,15 @@ try {
           503,
           'Unavailable database must return 503 after DCS demotion'
         )
-        assert.equal(response.value.code, 'DATABASE_UNAVAILABLE')
-        assert.equal(response.value.retryable, true)
+        // A proxy with no ready backend returns its own503 before the API can
+        // supply JSON. Retain the original direct API error-contract gate too.
+        const backendResponse = httpIngressMode && response.value === null
+          ? await post(httpApiEndpoints[quorumProbes % httpApiEndpoints.length],
+            '/api/orders', input(quorumListing), session, quorumKey)
+          : response
+        assert.equal(backendResponse.status, 503)
+        assert.equal(backendResponse.value.code, 'DATABASE_UNAVAILABLE')
+        assert.equal(backendResponse.value.retryable, true)
         quorumStatuses[response.status] = (quorumStatuses[response.status] ?? 0) + 1
         quorumProbes++
         await sleep(policy.pollMs)
@@ -869,6 +914,9 @@ try {
         databaseEndpointUnchanged: true,
         independentDatabaseGateways: true,
         originalSessionVerified: true,
+        ...(httpIngressMode ? { httpIngress: { project: httpIngressProject,
+          originalApiEndpoints: httpApiEndpoints, proxyEndpoints: apis,
+          jointPrimaryAndHttpProxyFailure: true, sourceHashes: httpSourceHashes } } : {}),
         initialPrimary,
         newPrimary,
         failoverToVerifiedWriteMs: recoveryMs,
@@ -898,7 +946,7 @@ try {
         ]
       }
       await writeFile(
-        new URL('../.tmp/postgres-ha-auto-report.json', import.meta.url),
+        new URL(httpIngressMode ? '../.tmp/postgres-ha-http-ingress-report.json' : '../.tmp/postgres-ha-auto-report.json', import.meta.url),
         JSON.stringify(report, null, 2) + '\n',
         { mode: 0o600 }
       )
@@ -947,6 +995,14 @@ try {
   }
   process.exitCode = 1
 } finally {
+  if (httpIngressStarted) {
+    httpIngressCleaned = await cleanupHttpIngress(httpIngress)
+    if (!httpIngressCleaned) {
+      console.error(`HTTP ingress cleanup failed; isolated project retained: ${httpIngressProject}`)
+      process.exitCode = 1
+    }
+  }
+  if (httpIngress && !httpIngressStarted) await httpIngress.dispose()
   await Promise.all(
     children.map(async (child) => {
       if (child.exitCode !== null || child.signalCode !== null) return
@@ -971,6 +1027,24 @@ try {
     }
   }
   if (cleaned && directory) await rm(directory, { recursive: true, force: true })
+  if (httpIngressMode) {
+    let report
+    try {
+      const content = await readFile(new URL('../.tmp/postgres-ha-http-ingress-report.json', import.meta.url))
+      const value = JSON.parse(content)
+      assert.equal(value.httpIngress.project, httpIngressProject)
+      for (const [file, hash] of Object.entries(httpSourceHashes))
+        assert.equal(createHash('sha256').update(await readFile(file)).digest('hex'), hash)
+      report = { file: '.tmp/postgres-ha-http-ingress-report.json',
+        sha256: createHash('sha256').update(content).digest('hex') }
+    } catch { process.exitCode = 1 }
+    await writeFile(new URL('../.tmp/postgres-ha-http-ingress-run.json', import.meta.url),
+      JSON.stringify({ completedAt: new Date().toISOString(), project, httpIngressProject,
+        exitCode: process.exitCode ?? 0, cleaned: cleaned && httpIngressCleaned,
+        databaseCleaned: cleaned, httpIngressCleaned, report,
+        passed: !process.exitCode && cleaned && httpIngressCleaned && !!report },
+      null, 2) + '\n', { mode: 0o600 })
+  }
   if (processFreezeMode) {
     let report
     try {

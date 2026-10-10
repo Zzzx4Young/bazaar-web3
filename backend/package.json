@@ -29,7 +29,10 @@
     "test:postgres-ha:auto": "npm run build && node scripts/check-postgres-ha-auto.mjs",
     "test:postgres-ha:freeze": "npm run build && node scripts/check-postgres-ha-auto.mjs --process-freeze",
     "test:postgres-ha:gateway": "npm run build && node scripts/check-postgres-ha-auto.mjs --gateway-failure",
+    "test:postgres-ha:http": "npm run build && node scripts/check-postgres-ha-auto.mjs --http-ingress",
     "test:watchdog:required": "node scripts/check-watchdog-required.mjs",
+    "test:http-ingress:transport": "node scripts/check-http-ingress.mjs",
+    "test:http-ingress:business": "npm run build && node scripts/with-test-db.mjs node scripts/check-http-ingress-business.mjs",
     "test:capacity:ha": "npm run build && node scripts/check-postgres-ha-auto.mjs --capacity",
     "test:capacity:writes": "npm run build && CAPACITY_WRITES=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
     "test:capacity:writes:failover": "npm run build && CAPACITY_WRITES=1 CAPACITY_FAULT=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs"
