@@ -1,0 +1,82 @@
+# Isolated LOCAL verification only. No production TLS, fencing or redundant HTTP ingress.
+x-etcd: &etcd
+  networks: [dcs]
+  image: quay.io/coreos/etcd:v3.7.2@sha256:e9afa62b1e914f02db62e5c46a7a140d8cdf026f2ed888cab4e5a142ec4d06fd
+  restart: 'no'
+  healthcheck:
+    test: [CMD, etcdctl, '--endpoints=http://127.0.0.1:2379', endpoint, health]
+    interval: 1s
+    timeout: 3s
+    retries: 60
+x-pg: &pg
+  networks:
+    default: { gw_priority: 1 }
+    dcs: { gw_priority: 0 }
+  image: bazaar-ha-patroni:4.1.5-pg17.11
+  restart: 'no'
+  shm_size: 128mb
+  secrets: [ha_admin_password, ha_replication_password, ha_rest_password]
+  ports: ['127.0.0.1::5432', '127.0.0.1::8008']
+  depends_on:
+    etcd1: { condition: service_healthy }
+    etcd2: { condition: service_healthy }
+    etcd3: { condition: service_healthy }
+  healthcheck:
+    test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U bazaar_ha_admin -d postgres']
+    interval: 1s
+    timeout: 3s
+    retries: 120
+services:
+  etcd1:
+    <<: *etcd
+    command: [etcd, --name=etcd1, --data-dir=/etcd-data, '--listen-client-urls=http://0.0.0.0:2379', '--advertise-client-urls=http://etcd1:2379', '--listen-peer-urls=http://0.0.0.0:2380', '--initial-advertise-peer-urls=http://etcd1:2380', '--initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380']
+    volumes: [etcd1-data:/etcd-data]
+  etcd2:
+    <<: *etcd
+    command: [etcd, --name=etcd2, --data-dir=/etcd-data, '--listen-client-urls=http://0.0.0.0:2379', '--advertise-client-urls=http://etcd2:2379', '--listen-peer-urls=http://0.0.0.0:2380', '--initial-advertise-peer-urls=http://etcd2:2380', '--initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380']
+    volumes: [etcd2-data:/etcd-data]
+  etcd3:
+    <<: *etcd
+    command: [etcd, --name=etcd3, --data-dir=/etcd-data, '--listen-client-urls=http://0.0.0.0:2379', '--advertise-client-urls=http://etcd3:2379', '--listen-peer-urls=http://0.0.0.0:2380', '--initial-advertise-peer-urls=http://etcd3:2380', '--initial-cluster=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380']
+    volumes: [etcd3-data:/etcd-data]
+  pg1:
+    <<: *pg
+    environment: { HA_NODE_NAME: pg1, HA_LOCAL_VALIDATION: '1', HA_WATCHDOG_MODE: 'off' }
+    volumes: [pg1-data:/var/lib/postgresql/data]
+  pg2:
+    <<: *pg
+    environment: { HA_NODE_NAME: pg2, HA_LOCAL_VALIDATION: '1', HA_WATCHDOG_MODE: 'off' }
+    volumes: [pg2-data:/var/lib/postgresql/data]
+  pg3:
+    <<: *pg
+    environment: { HA_NODE_NAME: pg3, HA_LOCAL_VALIDATION: '1', HA_WATCHDOG_MODE: 'off' }
+    volumes: [pg3-data:/var/lib/postgresql/data]
+  writer: &writer
+    image: haproxy:3.2-bookworm@sha256:baecd003ae5c2376e58d04a5b2ffc7d82d30e9bebe2869f76222b819f719dee3
+    restart: 'no'
+    volumes: ['./ha/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro']
+    ports: ['127.0.0.1:${HA_WRITER_PORT:?Set isolated writer port}:5432']
+    depends_on:
+      pg1: { condition: service_healthy }
+      pg2: { condition: service_healthy }
+      pg3: { condition: service_healthy }
+  writer2:
+    <<: *writer
+    ports: ['127.0.0.1:${HA_WRITER2_PORT:?Set isolated second writer port}:5432']
+volumes:
+  etcd1-data:
+  etcd2-data:
+  etcd3-data:
+  pg1-data:
+  pg2-data:
+  pg3-data:
+networks:
+  default:
+  dcs:
+secrets:
+  ha_admin_password:
+    file: ${HA_ADMIN_PASSWORD_FILE:?Set the isolated admin secret path}
+  ha_replication_password:
+    file: ${HA_REPLICATION_PASSWORD_FILE:?Set the isolated replication secret path}
+  ha_rest_password:
+    file: ${HA_REST_PASSWORD_FILE:?Set the isolated REST secret path}

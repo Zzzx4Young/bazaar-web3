@@ -1,0 +1,51 @@
+# Local validation only: each run supplies a unique project and private secrets.
+services:
+  primary:
+    image: postgres:17.11-bookworm
+    restart: 'no'
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: bazaar_ha_admin
+      POSTGRES_DB: bazaar_ha_validation
+      POSTGRES_PASSWORD_FILE: /run/secrets/ha_admin_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --data-checksums
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command: [postgres, -c, wal_level=replica, -c, max_wal_senders=5, -c, max_replication_slots=5, -c, wal_log_hints=on, -c, max_slot_wal_keep_size=256MB]
+    volumes:
+      - primary-data:/var/lib/postgresql/data
+      - ./scripts/ha-primary-init.sh:/docker-entrypoint-initdb.d/ha-primary-init.sh:ro
+    ports: ['127.0.0.1::5432']
+    secrets: [ha_admin_password]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U bazaar_ha_admin -d bazaar_ha_validation']
+      interval: 1s
+      timeout: 3s
+      retries: 60
+  standby:
+    image: postgres:17.11-bookworm
+    restart: 'no'
+    shm_size: 128mb
+    depends_on:
+      primary:
+        condition: service_healthy
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+    entrypoint: [bash, /opt/ha-standby.sh]
+    volumes:
+      - standby-data:/var/lib/postgresql/data
+      - ./scripts/ha-standby.sh:/opt/ha-standby.sh:ro
+    ports: ['127.0.0.1::5432']
+    secrets: [ha_replication_password]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U bazaar_ha_admin -d bazaar_ha_validation']
+      interval: 1s
+      timeout: 3s
+      retries: 60
+volumes:
+  primary-data:
+  standby-data:
+secrets:
+  ha_admin_password:
+    file: ${HA_ADMIN_PASSWORD_FILE:?Set the isolated HA admin secret path}
+  ha_replication_password:
+    file: ${HA_REPLICATION_PASSWORD_FILE:?Set the isolated HA replication secret path}

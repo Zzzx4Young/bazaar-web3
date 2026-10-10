@@ -22,7 +22,17 @@
     "test:deployment": "npm run build && node scripts/with-test-db.mjs node scripts/check-deployment-images.mjs",
     "test:backup-restore": "npm run build && node scripts/with-backup-restore.mjs",
     "test": "npm run build && node --test tests/*.test.mjs",
-    "test:db": "npm run build && node --test tests/*.integration.mjs"
+    "test:db": "npm run build && node --test --test-concurrency=1 tests/*.integration.mjs",
+    "test:capacity": "npm run build && node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
+    "test:capacity:failover": "npm run build && CAPACITY_FAULT=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
+    "test:postgres-ha": "npm run build && node scripts/check-postgres-ha.mjs",
+    "test:postgres-ha:auto": "npm run build && node scripts/check-postgres-ha-auto.mjs",
+    "test:postgres-ha:freeze": "npm run build && node scripts/check-postgres-ha-auto.mjs --process-freeze",
+    "test:postgres-ha:gateway": "npm run build && node scripts/check-postgres-ha-auto.mjs --gateway-failure",
+    "test:watchdog:required": "node scripts/check-watchdog-required.mjs",
+    "test:capacity:ha": "npm run build && node scripts/check-postgres-ha-auto.mjs --capacity",
+    "test:capacity:writes": "npm run build && CAPACITY_WRITES=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
+    "test:capacity:writes:failover": "npm run build && CAPACITY_WRITES=1 CAPACITY_FAULT=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs"
   },
   "dependencies": {
     "@nestjs/common": "12.0.1",
