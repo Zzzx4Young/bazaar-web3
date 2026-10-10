@@ -28,6 +28,23 @@ V2 流程会生成 200 件商品、60 笔多状态订单，并保存桌面/手�
 
 需要 Node.js >=22.12、npm 10.9.8、Docker Engine/Compose。在仓库根目录执行：
 
+已有宿主机开发环境（`backend/.env`、`backend/.tmp/i7-migrate.env` 和两端依赖已准备好）时，
+用一条命令复用持久开发库并启动前后端：
+
+```bash
+./start.sh
+```
+
+脚本会初始化缺失的本地数据库密码、启动 `compose.yaml` 的 `postgres`、构建后端、
+部署迁移，再启动后端和前端并检查健康接口、探索页与商品搜索。
+保持终端打开；按 Ctrl+C 停止应用进程，数据库仍保持运行。若 3000 或 3001 端口已有服务，
+脚本不会替换它们。脚本不会重置数据库或自动生成商品。
+Docker 需当前用户可访问，或已配置无交互的 `sudo docker`。
+若宿主机提供 `HTTP_PROXY` 或 `HTTPS_PROXY`，脚本会让后端 Node 进程使用这些代理；
+此能力需要 Node.js >=22.21。价格排序首次请求会刷新一小时有效的汇率快照。
+
+需要独立的完整容器环境时，使用另一套数据库卷：
+
 ```bash
 bash infra/scripts/init-secrets.sh
 docker compose -f infra/compose.alpha.yaml up -d --build --wait

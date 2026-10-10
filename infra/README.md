@@ -12,6 +12,8 @@ API 部署模板和单实例 Kubernetes PostgreSQL 模板。所有命令从仓�
 | `compose.yaml` 的 `postgres` | 宿主机开发 API 与 V2 本机种子 | `bazaar-infra` 项目的持久卷，127.0.0.1:5432 |
 | `compose.yaml` 的 `postgres-test` | 数据库集成与浏览器验收 | 独立 1 GiB tmpfs，127.0.0.1:55432；停止即清空 |
 | `compose.validation.yaml` | 迁移、重启及备份恢复演练 | `bazaar-validation` 项目的持久卷，127.0.0.1:55433 |
+| `compose.ha-validation.yaml` | 主备同步复制与人工提升演练 | 脚本生成独立项目、主备持久卷和回环动态端口；结束后清理 |
+| `compose.ha-auto.yaml` | 三 PostgreSQL、三 etcd、Patroni 和两个固定写入入口的自动切换验收 | 独立随机项目、六个持久卷、两个固定代理端口和其余回环动态端口；结束后清理 |
 
 这些项目的卷彼此独立；同名 `bazaar_dev` 不表示共享数据。日常使用只启动所需入口。
 `postgres-test` 的临时存储不能用于验证重启持久性。
@@ -93,6 +95,34 @@ mkdir -p infra/backups
 (umask 077; set -o noclobber; docker compose -f infra/compose.yaml exec -T postgres \
   pg_dump -U bazaar_admin -d bazaar_dev -Fc > "infra/backups/bazaar-dev-$(date -u +%Y%m%dT%H%M%SZ).dump")
 ```
+
+## 主备复制与切换演练
+
+在仓库根目录执行：
+
+```bash
+cd backend
+npm run test:postgres-ha
+```
+
+脚本通过 `sudo -n docker compose` 操作独立的 PostgreSQL 17.11 主备项目，需要本机
+Docker 权限。它生成私有凭据、动态回环端口和两个持久卷，验证同步复制、旧主库停止、
+备库提升及真实订单、库存和会话保留；结束时清理本轮环境，开发库不参与。
+报告保存到已忽略的 `backend/.tmp/postgres-ha-report.json`。
+不要直接用该 Compose 文件替换开发或生产数据库：它没有自动选主、稳定写入入口或
+旧主库重新加入机制。实测范围与后续验收见[容量与可用性验收](../backend/CAPACITY.md)。
+已确认的零丢失、60 秒恢复目标及自动切换实施矩阵见[数据库自动切换验收](HA.md)。
+自动切换脚本入口为 `npm run test:postgres-ha:auto`，首次需要按该文档构建 Patroni
+验证镜像。它已通过本机主库故障、旧主库重新加入、无备库保护和仲裁失去多数后的
+降级及恢复测试，并在独立仲裁网络隔离中直接验证旧主库在租约到期前转为只读。
+同步主备混合负载及 API 故障下的五分钟负载已通过，每 API 连接池为 10；
+入口为 `npm run test:capacity:ha`，完整参数、默认池 5 的失败及优化证据见[容量验收](../backend/CAPACITY.md)。
+持续 500 请求/秒的本机主库 SIGKILL 已通过当前实现两分钟实测：29.287 秒恢复写入，
+6000 笔故障模型订单核对无丢失；故障响应与恢复回放分开统计，退出及清理回执已保存。
+全部备库失联带负载在当前实现上已通过：60000 个请求零丢弃，23.611 秒恢复写入，
+确认停止窗口内新请求零成功确认，6000 笔订单及关联数据核对通过；故障响应和恢复
+回放分别计数。命令及子进程退出码零，专用清理回执已保存；详见容量文档。
+更广的网络分区、进程冻结、生产 fencing、入口冗余和长期稳定性仍待验收。
 
 ## Kubernetes 单实例内测模板
 
