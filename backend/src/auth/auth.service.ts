@@ -3,6 +3,10 @@ import { type Account, type PrismaClient } from '../generated/prisma/client.js'
 import { type AppConfig } from '../config.js'
 import { DomainError } from '../common/domain-error.js'
 import { dummyHash, normalizeLogin, validatePassword, verifyPassword } from './password.js'
+import {
+  loginIpLimit, loginNameLimit, loginWindowSeconds, maxConcurrentHashesPerInstance,
+  sessionMaxAgeSeconds
+} from './auth-policy.js'
 
 const digest = (value: string) => createHash('sha256').update(value).digest('hex')
 export const csrfToken = (token: string) => digest(`csrf:${token}`)
@@ -13,7 +17,6 @@ export interface Authenticated {
 }
 
 export class AuthService {
-  private readonly buckets = new Map<string, { count: number; end: number }>()
   private activeHashes = 0
 
   constructor(
@@ -21,17 +24,22 @@ export class AuthService {
     readonly config: AppConfig
   ) {}
 
-  private consume(key: string, limit: number) {
-    const now = Date.now()
-    for (const [name, bucket] of this.buckets) if (bucket.end <= now) this.buckets.delete(name)
-    const bucket = this.buckets.get(key)
-    if (bucket) {
-      if (bucket.count >= limit) throw new DomainError('RATE_LIMITED')
-      bucket.count++
-    } else {
-      if (this.buckets.size >= 10000) throw new DomainError('RATE_LIMITED')
-      this.buckets.set(key, { count: 1, end: now + 60000 })
-    }
+  private async consume(key: string, limit: number) {
+    // The database row lock serializes attempts from all API instances. Store only
+    // a digest of the IP or normalized login name, never the raw identifier.
+    const rows = await this.client.$queryRaw<{ count: number }[]>`
+      INSERT INTO "AuthRateBucket" ("key", "count", "windowEnd")
+      VALUES (${digest(key)}, 1, statement_timestamp() + ${loginWindowSeconds} * interval '1 second')
+      ON CONFLICT ("key") DO UPDATE SET
+        "count" = CASE WHEN "AuthRateBucket"."windowEnd" <= statement_timestamp()
+          THEN 1 ELSE "AuthRateBucket"."count" + 1 END,
+        "windowEnd" = CASE WHEN "AuthRateBucket"."windowEnd" <= statement_timestamp()
+          THEN statement_timestamp() + ${loginWindowSeconds} * interval '1 second'
+          ELSE "AuthRateBucket"."windowEnd" END
+      WHERE "AuthRateBucket"."windowEnd" <= statement_timestamp()
+        OR "AuthRateBucket"."count" < ${limit}
+      RETURNING "count"`
+    if (rows.length !== 1) throw new DomainError('RATE_LIMITED')
   }
 
   token(cookie: string | undefined) {
@@ -45,7 +53,7 @@ export class AuthService {
   }
 
   cookie(token: string, clear = false) {
-    return `bazaar_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${clear ? 0 : 43200}${this.config.secureCookie ? '; Secure' : ''}`
+    return `bazaar_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${clear ? 0 : sessionMaxAgeSeconds}${this.config.secureCookie ? '; Secure' : ''}`
   }
 
   view(auth: Authenticated) {
@@ -81,11 +89,11 @@ export class AuthService {
   }
 
   async login(loginName: string, password: string, ip: string, cookie?: string) {
-    this.consume(`ip:${ip}`, 10)
+    await this.consume(`ip:${ip}`, loginIpLimit)
     const normalized = normalizeLogin(loginName)
     validatePassword(password)
-    this.consume(`login:${normalized}`, 5)
-    if (this.activeHashes >= 2) throw new DomainError('RATE_LIMITED')
+    await this.consume(`login:${normalized}`, loginNameLimit)
+    if (this.activeHashes >= maxConcurrentHashesPerInstance) throw new DomainError('RATE_LIMITED')
     this.activeHashes++
     try {
       const account = await this.client.account.findUnique({
@@ -117,7 +125,7 @@ export class AuthService {
             data: { revokedAt: now }
           })
         await tx.session.create({
-          data: { tokenHash, accountId: account.id, expiresAt: new Date(now.getTime() + 43200000) }
+          data: { tokenHash, accountId: account.id, expiresAt: new Date(now.getTime() + sessionMaxAgeSeconds * 1000) }
         })
       })
       return { token, tokenHash, account }

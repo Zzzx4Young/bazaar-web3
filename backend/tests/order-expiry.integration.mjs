@@ -8,12 +8,56 @@ let db
 before(async () => { db = await sandbox() })
 after(async () => { await db?.close() })
 
+test('expiry scan has a status and age index after migrations', async () => {
+  const indexes = await db.client.$queryRaw`
+    SELECT indexdef FROM pg_indexes
+    WHERE schemaname = current_schema() AND tablename = 'Order'
+      AND indexname = 'Order_status_createdAt_id_idx'
+  `
+  assert.equal(indexes.length, 1)
+  assert.match(indexes[0].indexdef, /\(status, "createdAt", id\)/)
+})
+
+test('one inconsistent order does not block later valid expiry candidates', async () => {
+  const isolated = await sandbox()
+  try {
+    const inconsistent = await fixture(isolated)
+    const bad = await isolated.client.order.create({
+      data: {
+        listingId: inconsistent.listing.id,
+        buyerId: inconsistent.buyer,
+        sellerId: inconsistent.seller
+      }
+    })
+    const valid = await fixture(isolated)
+    const goodId = await isolated.market.create(valid.buyer, randomUUID(), valid.input)
+    const cutoff = new Date(Date.now() + 60 * 60 * 1000)
+    const first = await isolated.market.expirePendingPaymentOrders(cutoff, { limit: 1 })
+    assert.deepEqual(first.failed, [bad.id])
+    assert.deepEqual(first.expired, [])
+    assert.equal(first.scanned, 1)
+    assert.equal(first.nextCursor, bad.id)
+    const second = await isolated.market.expirePendingPaymentOrders(cutoff, {
+      limit: 1, after: first.nextCursor
+    })
+    assert.deepEqual(second.expired, [goodId])
+    assert.deepEqual(second.failed, [])
+    assert.equal((await isolated.client.order.findUniqueOrThrow({ where: { id: bad.id } })).status, 'pending_payment')
+    assert.equal((await isolated.client.order.findUniqueOrThrow({ where: { id: goodId } })).status, 'expired')
+  } finally {
+    await isolated.close()
+  }
+})
+
 test('pending payment expiry releases physical inventory and records a system event', async () => {
   const f = await fixture(db)
   const orderId = await db.market.create(f.buyer, randomUUID(), f.input)
 
   const result = await db.market.expirePendingPaymentOrders(new Date(Date.now() + 60 * 60 * 1000))
-  assert.deepEqual(result, { expired: [orderId], scanned: 1 })
+  assert.deepEqual(result.expired, [orderId])
+  assert.deepEqual(result.failed, [])
+  assert.equal(result.scanned, 1)
+  assert.equal(result.nextCursor, orderId)
   assert.equal((await db.client.order.findUniqueOrThrow({ where: { id: orderId } })).status, 'expired')
   assert.deepEqual(
     await db.client.physicalInventory.findUniqueOrThrow({ where: { listingId: f.listing.id } })
@@ -25,6 +69,47 @@ test('pending payment expiry releases physical inventory and records a system ev
   assert.equal(event.toState, 'expired')
   assert.equal(event.actorId, null)
   assert.equal(await db.client.idempotencyRecord.count({ where: { operation: 'expire' } }), 0)
+})
+
+test('scheduled batches advance past inconsistent and already expired orders', async () => {
+  const isolated = await sandbox()
+  let stop
+  try {
+    const inconsistent = await fixture(isolated)
+    const bad = await isolated.client.order.create({
+      data: {
+        listingId: inconsistent.listing.id,
+        buyerId: inconsistent.buyer,
+        sellerId: inconsistent.seller
+      }
+    })
+    const goodIds = []
+    for (let i = 0; i < 2; i++) {
+      const valid = await fixture(isolated)
+      goodIds.push(await isolated.market.create(valid.buyer, randomUUID(), valid.input))
+    }
+    let failures = 0
+    stop = startOrderExpiry(isolated.client, {
+      ageMs: 1, intervalMs: 10, batchSize: 1, onError: () => { failures++ }
+    })
+    const deadline = Date.now() + 3000
+    let expired = 0
+    while (expired < goodIds.length && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      expired = await isolated.client.order.count({
+        where: { id: { in: goodIds }, status: 'expired' }
+      })
+    }
+    assert.equal(expired, goodIds.length)
+    assert.ok(failures > 0)
+    assert.equal((await isolated.client.order.findUniqueOrThrow({ where: { id: bad.id } })).status, 'pending_payment')
+    assert.equal(await isolated.client.orderEvent.count({
+      where: { orderId: { in: goodIds }, operation: 'expire' }
+    }), goodIds.length)
+  } finally {
+    stop?.()
+    await isolated.close()
+  }
 })
 
 test('expiry releases a single digital entitlement and skips fresh orders', async () => {

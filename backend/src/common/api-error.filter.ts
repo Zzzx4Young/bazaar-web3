@@ -2,6 +2,7 @@ import { Catch, HttpException, type ArgumentsHost, type ExceptionFilter } from '
 import { type FastifyReply, type FastifyRequest } from 'fastify'
 import { mapApplicationError } from './domain-error.js'
 import { RequestTelemetry } from './request-telemetry.js'
+import { loginWindowSeconds } from '../auth/auth-policy.js'
 
 @Catch()
 export class ApiErrorFilter implements ExceptionFilter {
@@ -30,7 +31,7 @@ export class ApiErrorFilter implements ExceptionFilter {
     const reply = http.getResponse<FastifyReply>()
     this.telemetry.setError(request, result.code)
     reply.header('Cache-Control', 'no-store')
-    if (result.status === 429) reply.header('Retry-After', '60')
+    if (result.status === 429) reply.header('Retry-After', String(loginWindowSeconds))
     reply
       .status(result.status)
       .send({ code: result.code, retryable: result.retryable, requestId: request.id })

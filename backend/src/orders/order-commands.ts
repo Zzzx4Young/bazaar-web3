@@ -1,9 +1,14 @@
+import { cartMinItems, cartMaxItems } from './cart-policy.js'
 import { type PrismaClient, type Order } from '../generated/prisma/client.js'
 import { DomainError } from '../common/domain-error.js'
 import { transact, type TransactionOptions, type Transaction } from '../database/transaction.js'
 import { idempotent } from './order-idempotency.js'
 import { lockListing } from '../listings/listing-lock.js'
 import { requireActiveAccount } from '../accounts/require-active-account.js'
+import { idInput } from '../common/input.js'
+import { maxOrderExpiryBatchSize, orderExpiryBatchSize } from './order-expiry-policy.js'
+
+export type OrderExpiryCursor = string
 
 export interface CreateOrderInput {
   listingId: string
@@ -143,7 +148,7 @@ export class OrderCommands {
     items: CreateOrderInput[],
     options: TransactionOptions = {}
   ) {
-    if (items.length < 2 || items.length > 5 ||
+    if (items.length < cartMinItems || items.length > cartMaxItems ||
       new Set(items.map((item) => item.listingId)).size !== items.length)
       throw new DomainError('INVALID_INPUT')
     return transact(this.client, async (tx, attempt) => {
@@ -547,70 +552,91 @@ export class OrderCommands {
     }, options)
   }
 
-  async expirePendingPaymentOrders(before: Date, options: { limit?: number } = {}) {
-    if (Number.isNaN(before.getTime()) ||
-      !Number.isInteger(options.limit ?? 100) ||
-      (options.limit ?? 100) < 1 ||
-      (options.limit ?? 100) > 1000)
+  async expirePendingPaymentOrders(
+    before: Date,
+    options: { limit?: number; after?: OrderExpiryCursor } = {}
+  ) {
+    const limit = options.limit ?? orderExpiryBatchSize
+    const after = options.after
+    if (!(before instanceof Date) || !Number.isFinite(before.getTime()) ||
+      !Number.isInteger(limit) || limit < 1 || limit > maxOrderExpiryBatchSize)
       throw new DomainError('INVALID_INPUT')
+    if (after !== undefined) idInput(after)
     const candidates = await this.client.order.findMany({
       where: { status: 'pending_payment', createdAt: { lt: before } },
       select: { id: true },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-      take: options.limit ?? 100
+      ...(after ? { cursor: { id: after }, skip: 1 } : {}),
+      take: limit
     })
     const expired: string[] = []
+    const failed: string[] = []
     for (const candidate of candidates) {
-      const didExpire = await transact(this.client, async (tx) => {
-        const hint = await tx.order.findUnique({ where: { id: candidate.id } })
-        if (!hint) return false
-        const listing = await lockListing(tx, hint.listingId)
-        await tx.$queryRaw`SELECT "id" FROM "Order" WHERE "id" = ${candidate.id}::uuid FOR UPDATE`
-        const order = await tx.order.findUniqueOrThrow({ where: { id: candidate.id } })
-        if (order.status !== 'pending_payment' || order.createdAt >= before) return false
-        if (listing.type === 'physical') {
-          const inventory = await tx.physicalInventory.findUniqueOrThrow({
-            where: { listingId: listing.id }
-          })
-          if (inventory.availability !== 'reserved' || inventory.activeOrderId !== order.id)
-            throw new DomainError('INVENTORY_CONFLICT')
-          await tx.inventoryReservation.update({
-            where: { orderId: order.id },
-            data: { state: 'expired', closedAt: new Date() }
-          })
-          await tx.physicalInventory.update({
-            where: { listingId: listing.id },
-            data: { availability: 'available', activeOrderId: null, version: { increment: 1 } }
-          })
-        } else {
-          const inventory = await tx.digitalInventory.findUnique({ where: { listingId: listing.id } })
-          if (inventory) {
-            if (inventory.availability !== 'reserved' || inventory.activeOrderId !== order.id)
+      let didExpire: boolean
+      try {
+        didExpire = await transact(this.client, async (tx) => {
+          const hint = await tx.order.findUnique({ where: { id: candidate.id } })
+          if (!hint) return false
+          const listing = await lockListing(tx, hint.listingId)
+          await tx.$queryRaw`SELECT "id" FROM "Order" WHERE "id" = ${candidate.id}::uuid FOR UPDATE`
+          const order = await tx.order.findUniqueOrThrow({ where: { id: candidate.id } })
+          if (order.status !== 'pending_payment' || order.createdAt >= before) return false
+          if (listing.type === 'physical') {
+            const inventory = await tx.physicalInventory.findUnique({
+              where: { listingId: listing.id }
+            })
+            if (!inventory || inventory.availability !== 'reserved' || inventory.activeOrderId !== order.id)
               throw new DomainError('INVENTORY_CONFLICT')
-            await tx.digitalInventory.update({
+            const reservation = await tx.inventoryReservation.updateMany({
+              where: { orderId: order.id, state: 'active' },
+              data: { state: 'expired', closedAt: new Date() }
+            })
+            if (reservation.count !== 1) throw new DomainError('INVENTORY_CONFLICT')
+            await tx.physicalInventory.update({
               where: { listingId: listing.id },
               data: { availability: 'available', activeOrderId: null, version: { increment: 1 } }
             })
+          } else {
+            const inventory = await tx.digitalInventory.findUnique({ where: { listingId: listing.id } })
+            if (inventory) {
+              if (inventory.availability !== 'reserved' || inventory.activeOrderId !== order.id)
+                throw new DomainError('INVENTORY_CONFLICT')
+              await tx.digitalInventory.update({
+                where: { listingId: listing.id },
+                data: { availability: 'available', activeOrderId: null, version: { increment: 1 } }
+              })
+            }
           }
+          await tx.order.update({
+            where: { id: order.id },
+            data: { status: 'expired', version: { increment: 1 } }
+          })
+          await tx.orderEvent.create({
+            data: {
+              orderId: order.id,
+              actorId: null,
+              operation: 'expire',
+              fromState: 'pending_payment',
+              toState: 'expired',
+              requestId: `system-expire-${order.id}`
+            }
+          })
+          return true
+        })
+      } catch (error) {
+        if (error instanceof DomainError && error.code === 'INVENTORY_CONFLICT') {
+          failed.push(candidate.id)
+          continue
         }
-        await tx.order.update({
-          where: { id: order.id },
-          data: { status: 'expired', version: { increment: 1 } }
-        })
-        await tx.orderEvent.create({
-          data: {
-            orderId: order.id,
-            actorId: null,
-            operation: 'expire',
-            fromState: 'pending_payment',
-            toState: 'expired',
-            requestId: `system-expire-${order.id}`
-          }
-        })
-        return true
-      })
+        throw error
+      }
       if (didExpire) expired.push(candidate.id)
     }
-    return { expired, scanned: candidates.length }
+    return {
+      expired,
+      failed,
+      scanned: candidates.length,
+      nextCursor: candidates.at(-1)?.id ?? null
+    }
   }
 }

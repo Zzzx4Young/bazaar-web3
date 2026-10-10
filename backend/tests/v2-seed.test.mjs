@@ -11,6 +11,11 @@ test('V2 seed plan covers dense listings, orders, currencies, and edge states', 
   const plan = buildV2SeedPlan({ seed: 'test-v2' })
 
   assert.equal(plan.listings.length, V2_LISTING_COUNT)
+  const categoryType = {
+    electronics: 'physical', secondhand_fashion: 'physical',
+    digital_assets: 'digital', software_source: 'digital', game_items: 'digital'
+  }
+  assert.ok(plan.listings.every((listing) => categoryType[listing.category] === listing.type))
   assert.equal(plan.orders.length, V2_ORDER_COUNT)
   assert.ok(plan.accounts.length >= 12)
   assert.ok(plan.listings.some((listing) => listing.title.length > 100))

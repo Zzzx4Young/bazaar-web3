@@ -26,7 +26,10 @@ const currencies = [
   'USDC',
   'SOL'
 ]
-const categories = ['electronics', 'digital_assets', 'software_source', 'game_items', 'secondhand_fashion']
+const categories = {
+  physical: ['electronics', 'secondhand_fashion'],
+  digital: ['digital_assets', 'software_source', 'game_items']
+}
 const orderStateSequence = [
   'pending_payment',
   'pending_delivery',
@@ -80,6 +83,7 @@ export function buildV2SeedPlan({ seed = V2_SEED_PREFIX } = {}) {
 
   const listings = Array.from({ length: V2_LISTING_COUNT }, (_, index) => {
     const type = index % 2 === 0 ? 'physical' : 'digital'
+    const category = categories[type][Math.floor(index / 2) % categories[type].length]
     const publicationStatus =
       index < 140 ? 'published' : index < 160 ? 'withdrawn' : index < 180 ? 'draft' : 'archived'
     const price = money(index)
@@ -88,14 +92,14 @@ export function buildV2SeedPlan({ seed = V2_SEED_PREFIX } = {}) {
         ? `超长中文标题 ${'边界测试'.repeat(30)} / ${'Unicode 🚀 '.repeat(12)}`
         : index === 2
           ? 'Zero price free sample — 免费体验 — Бесплатно — 無料'
-          : `V2 ${type} listing ${String(index + 1).padStart(3, '0')} · ${categories[index % categories.length]}`
+          : `V2 ${type} listing ${String(index + 1).padStart(3, '0')} · ${category}`
     return {
       key: `listing${index + 1}`,
       sellerKey: `seller${(index % 6) + 1}`,
       type,
       title,
       description: `V2 seeded description ${index + 1}. Markdown **bold**, emoji 🧪, and edge text: <>&/\\`,
-      category: categories[index % categories.length],
+      category,
       price,
       supplyMode: type === 'digital' ? (index % 4 === 1 ? 'single' : 'unlimited') : null,
       publicationStatus,

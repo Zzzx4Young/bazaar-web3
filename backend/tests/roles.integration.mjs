@@ -8,6 +8,7 @@ import { ListingCommands } from '../dist/listings/listing-commands.js'
 import { createApp } from '../dist/app.js'
 import { readConfig } from '../dist/config.js'
 import { hashPassword } from '../dist/auth/password.js'
+import { pruneExpiredAuthRateBuckets } from '../dist/auth/auth-rate-cleanup.js'
 
 const permissionDenied = (error) =>
   (error.meta?.code ?? error.meta?.driverAdapterError?.cause?.originalCode) === '42501'
@@ -81,6 +82,12 @@ test('C1: migration owner and restricted runtime support transactions without DD
         payload: {}
       })
       assert.equal(logout.statusCode, 204)
+      assert.equal(await app.client.authRateBucket.count(), 2)
+      await app.client.authRateBucket.updateMany({
+        data: { windowEnd: new Date(Date.now() - 1000) }
+      })
+      assert.equal(await pruneExpiredAuthRateBuckets(app.client), 2)
+      assert.equal(await app.client.authRateBucket.count(), 0)
     } finally {
       await http.close()
     }

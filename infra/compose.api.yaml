@@ -25,6 +25,12 @@ services:
       APP_ORIGIN: ${APP_ORIGIN:?Set APP_ORIGIN to the exact frontend origin}
       HOST: 0.0.0.0
       PORT: 3001
+      TRUSTED_PROXY_CIDRS: ${TRUSTED_PROXY_CIDRS:-}
+      DB_POOL_MAX: ${DB_POOL_MAX:-5}
+      API_MAX_IN_FLIGHT: ${API_MAX_IN_FLIGHT:-200}
+      DB_CONNECT_TIMEOUT_MS: ${DB_CONNECT_TIMEOUT_MS:-3000}
+      DB_IDLE_TIMEOUT_MS: ${DB_IDLE_TIMEOUT_MS:-10000}
+      DB_STATEMENT_TIMEOUT_MS: ${DB_STATEMENT_TIMEOUT_MS:-3000}
     secrets: [runtime_database_url]
     ports:
       - 127.0.0.1:${API_PORT:-3001}:3001

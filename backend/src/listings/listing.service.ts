@@ -1,11 +1,14 @@
 import { Prisma, type PrismaClient } from '../generated/prisma/client.js'
 import { requireActiveAccount } from '../accounts/require-active-account.js'
 import { DomainError } from '../common/domain-error.js'
+import { paginationPolicy } from '../common/pagination-policy.js'
 import { idInput, objectInput, positiveInteger, textInput } from '../common/input.js'
 import { transact } from '../database/transaction.js'
 import { currencyCodes, currencyInput, priceInput } from '../pricing/currencies.js'
 import { RatesService } from '../pricing/rates.service.js'
 import { ListingCommands } from './listing-commands.js'
+import { categoryInput } from './categories.js'
+import { favoritesMaxIds } from './favorites-policy.js'
 
 const include = {
   listingSeller: { select: { id: true, displayName: true } },
@@ -13,6 +16,8 @@ const include = {
   digitalInventoryRows: { select: { availability: true } }
 } satisfies Prisma.ListingInclude
 type ListingRow = Prisma.ListingGetPayload<{ include: typeof include }>
+const homeFeaturedLimit = 10
+const homeTypeLimit = 5
 
 export class ListingService {
   constructor(
@@ -52,9 +57,50 @@ export class ListingService {
     return this.view(listing)
   }
 
+  async home() {
+    // Each branch is bounded and can use an index; a single request supplies all home sections.
+    const rows = await this.client.$queryRaw<{ section: string; id: string }[]>`
+      SELECT 'featured' AS section, id, "createdAt" FROM (
+        SELECT l.id, l."createdAt" FROM "Listing" l
+        WHERE l."publicationStatus" = 'published' AND l."currency" IN (${Prisma.join(currencyCodes)})
+        ORDER BY l."createdAt" DESC, l.id DESC LIMIT ${homeFeaturedLimit}
+      ) featured
+      UNION ALL
+      SELECT 'digital' AS section, id, "createdAt" FROM (
+        SELECT l.id, l."createdAt" FROM "Listing" l
+        WHERE l."publicationStatus" = 'published' AND l."type" = 'digital'
+          AND l."currency" IN (${Prisma.join(currencyCodes)})
+        ORDER BY l."createdAt" DESC, l.id DESC LIMIT ${homeTypeLimit}
+      ) digital
+      UNION ALL
+      SELECT 'physical' AS section, id, "createdAt" FROM (
+        SELECT l.id, l."createdAt" FROM "Listing" l
+        WHERE l."publicationStatus" = 'published' AND l."type" = 'physical'
+          AND l."currency" IN (${Prisma.join(currencyCodes)})
+        ORDER BY l."createdAt" DESC, l.id DESC LIMIT ${homeTypeLimit}
+      ) physical
+      ORDER BY section, "createdAt" DESC, id DESC`
+    const listings = await this.client.listing.findMany({
+      where: {
+        id: { in: [...new Set(rows.map((row) => row.id))] },
+        publicationStatus: 'published',
+        currency: { in: currencyCodes }
+      },
+      include
+    })
+    const byId = new Map(listings.map((listing) => [listing.id, listing]))
+    const section = (name: string) => rows
+      .filter((row) => row.section === name)
+      .flatMap((row) => {
+        const listing = byId.get(row.id)
+        return listing ? [this.view(listing)] : []
+      })
+    return { featured: section('featured'), digital: section('digital'), physical: section('physical') }
+  }
+
   async resolveFavorites(body: unknown) {
     const input = objectInput(body, ['ids'])
-    if (!Array.isArray(input.ids) || input.ids.length > 100 ||
+    if (!Array.isArray(input.ids) || input.ids.length > favoritesMaxIds ||
       input.ids.some((id) => typeof id !== 'string'))
       throw new DomainError('INVALID_INPUT')
     const ids = [...new Set(input.ids.map((id) => idInput(id)))]
@@ -90,7 +136,7 @@ export class ListingService {
       type,
       title: textInput(input.title, 100),
       description: textInput(input.description, 5000),
-      category: textInput(input.category, 50),
+      category: categoryInput(input.category, type),
       priceAmount: priceInput(price.amount, currency),
       currency,
       licenseDescription: type === 'digital' ? textInput(input.licenseDescription, 2000) : null,
@@ -175,8 +221,8 @@ export class ListingService {
         throw new DomainError('INVALID_INPUT')
       return positiveInteger(Number(value), max)
     }
-    const page = pageNumber(input.page, 1, 1000),
-      limit = pageNumber(input.limit, 20, 50)
+    const page = pageNumber(input.page, paginationPolicy.firstPage, paginationPolicy.maxPage),
+      limit = pageNumber(input.limit, paginationPolicy.defaultLimit, paginationPolicy.maxLimit)
     const sort = input.sort ?? 'newest'
     if (typeof sort !== 'string' || !['newest', 'price_asc', 'price_desc'].includes(sort))
       throw new DomainError('INVALID_INPUT')
@@ -224,31 +270,48 @@ export class ListingService {
         : sort === 'price_asc'
           ? Prisma.sql`${price} ASC, l.id ASC`
           : Prisma.sql`${price} DESC, l.id DESC`
-    return this.client.$transaction(
-      async (tx) => {
-        const rows = await tx.$queryRaw<{ id: string; usd: string | null }[]>`
-        SELECT l.id, (${price})::text AS usd FROM "Listing" l
-        WHERE ${Prisma.join(clauses, ' AND ')} ORDER BY ${order} LIMIT ${limit + 1} OFFSET ${(page - 1) * limit}`
-        const [{ total }] = await tx.$queryRaw<{ total: bigint }[]>`
-          SELECT COUNT(*)::bigint AS total FROM "Listing" l
-          WHERE ${Prisma.join(clauses, ' AND ')}
-        `
-        const selected = rows.slice(0, limit)
-        const listings = await tx.listing.findMany({
-          where: { id: { in: selected.map((row) => row.id) } },
-          include
-        })
-        const byId = new Map(listings.map((listing) => [listing.id, listing]))
-        return {
-          items: selected.map((row) => this.view(byId.get(row.id)!, row.usd)),
-          page,
-          limit,
-          total: Number(total),
-          hasMore: rows.length > limit,
-          quote: quote ? this.rates.view(quote) : null
-        }
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead }
-    )
+    type JsonItem = Omit<ReturnType<typeof this.view>, 'createdAt' | 'updatedAt'> & {
+      createdAt: string
+      updatedAt: string
+    }
+    // One statement keeps page, count and joined data on one MVCC snapshot.
+    // NOT MATERIALIZED lets the page use its ordering index instead of copying
+    // the complete catalog. Money stays numeric in SQL and text in JSON.
+    const [result] = await this.client.$queryRaw<{ total: bigint; items: JsonItem[] }[]>`
+      WITH filtered AS NOT MATERIALIZED (
+        SELECT l.* FROM "Listing" l WHERE ${Prisma.join(clauses, ' AND ')}
+      ), selected AS (
+        SELECT l.*, (${price})::text AS usd FROM filtered l
+        ORDER BY ${order} LIMIT ${limit + 1} OFFSET ${(page - 1) * limit}
+      )
+      SELECT (SELECT count(*)::bigint FROM filtered) AS total,
+        coalesce((SELECT jsonb_agg(jsonb_build_object(
+          'id', l.id,
+          'seller', jsonb_build_object('id', a.id, 'displayName', a."displayName"),
+          'type', l.type, 'title', l.title, 'description', l.description,
+          'category', l.category,
+          'price', jsonb_build_object('amount', l."priceAmount"::text, 'currency', l.currency),
+          'priceUsd', l.usd, 'publicationStatus', l."publicationStatus",
+          'availability', CASE WHEN l.type = 'digital' THEN coalesce(di.availability, 'unlimited')
+            ELSE coalesce(pi.availability, 'unavailable') END,
+          'version', l.version, 'licenseDescription', l."licenseDescription",
+          'contentVersion', l."contentVersion", 'createdAt', l."createdAt", 'updatedAt', l."updatedAt"
+        ) ORDER BY ${order}) FROM selected l
+          JOIN "Account" a ON a.id = l."sellerId"
+          LEFT JOIN "PhysicalInventory" pi ON pi."listingId" = l.id
+          LEFT JOIN "DigitalInventory" di ON di."listingId" = l.id), '[]'::jsonb) AS items`
+    return {
+      items: result.items.slice(0, limit).map(item => ({
+        ...item,
+        price: { ...item.price, amount: new Prisma.Decimal(item.price.amount).toFixed() },
+        createdAt: new Date(item.createdAt),
+        updatedAt: new Date(item.updatedAt)
+      })),
+      page,
+      limit,
+      total: Number(result.total),
+      hasMore: result.items.length > limit,
+      quote: quote ? this.rates.view(quote) : null
+    }
   }
 }

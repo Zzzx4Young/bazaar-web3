@@ -60,7 +60,7 @@ test('I4 HTTP: participant privacy, query pagination and command replay', async 
       type: 'physical',
       title: 'Private order fixture',
       description: 'Public description',
-      category: 'test',
+      category: 'electronics',
       price: { amount: '12.50', currency: 'USD' }
     })
     assert.equal(listing.statusCode, 201)
@@ -209,7 +209,7 @@ test('I4 HTTP: participant privacy, query pagination and command replay', async 
       type: 'digital',
       title: 'Digital fixture',
       description: 'Public digital description',
-      category: 'test',
+      category: 'digital_assets',
       price: { amount: '1', currency: 'USD' },
       licenseDescription: 'Fixture license',
       contentVersion: '1'

@@ -15,6 +15,13 @@ export class ListingController {
   }
 
   @Public()
+  @Post('listings/home')
+  @HttpCode(200)
+  home() {
+    return this.listings.home()
+  }
+
+  @Public()
   @Post('listings/search')
   @HttpCode(200)
   list(@Body() query: unknown) {

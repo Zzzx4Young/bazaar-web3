@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from '../generated/prisma/client.js'
 
 import { DomainError } from '../common/domain-error.js'
+import { transactionPolicy } from './transaction-policy.js'
 
 export type Transaction = Prisma.TransactionClient
 export type Checkpoint = (stage: string, tx: Transaction, attempt: number) => Promise<void>
@@ -33,15 +34,15 @@ export async function transact<T>(
   work: (tx: Transaction, attempt: number) => Promise<T>,
   options: TransactionOptions = {}
 ): Promise<T> {
-  const attempts = options.maxAttempts ?? 3
-  const timeout = options.lockTimeoutMs ?? 2000
+  const attempts = options.maxAttempts ?? transactionPolicy.defaultAttempts
+  const timeout = options.lockTimeoutMs ?? transactionPolicy.defaultLockTimeoutMs
   if (
     !Number.isInteger(attempts) ||
     attempts < 1 ||
-    attempts > 5 ||
+    attempts > transactionPolicy.maxAttempts ||
     !Number.isInteger(timeout) ||
     timeout < 1 ||
-    timeout > 2000
+    timeout > transactionPolicy.maxLockTimeoutMs
   ) {
     throw new Error('Invalid transaction limits')
   }
@@ -55,14 +56,14 @@ export async function transact<T>(
         },
         {
           isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
-          maxWait: 3000,
-          timeout: 10000
+          maxWait: transactionPolicy.maxWaitMs,
+          timeout: transactionPolicy.timeoutMs
         }
       )
     } catch (error) {
       if (!retryable(error)) throw error
       if (attempt >= attempts) throw new DomainError('RETRY_EXHAUSTED')
-      await new Promise((resolve) => setTimeout(resolve, attempt * 10))
+      await new Promise((resolve) => setTimeout(resolve, attempt * transactionPolicy.retryBackoffMs))
     }
   }
 }

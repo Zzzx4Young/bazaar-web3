@@ -17,7 +17,7 @@ export class HealthController {
   @Post('ready')
   async ready() {
     try {
-      const latencyMs = await this.database.ping()
+      const latencyMs = await this.database.ping(true)
       return { status: 'ok', database: { status: 'ok', latencyMs } }
     } catch {
       throw new ServiceUnavailableException('Database unavailable')

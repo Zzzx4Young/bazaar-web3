@@ -1,12 +1,13 @@
 import { type PrismaClient, type RateSnapshot } from '../generated/prisma/client.js'
 import { DomainError } from '../common/domain-error.js'
 import { currencyCodes } from './currencies.js'
+import { rateSnapshotTtlMs, rateProviderTimeoutMs, rateProviderMaxResponseBytes } from './rates-policy.js'
 
 export type RateLoader = () => Promise<unknown>
 
 export async function fetchCoinbase(): Promise<unknown> {
   const response = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=USD', {
-    signal: AbortSignal.timeout(3000),
+    signal: AbortSignal.timeout(rateProviderTimeoutMs),
     redirect: 'error',
     headers: { Accept: 'application/json' }
   })
@@ -19,7 +20,7 @@ export async function fetchCoinbase(): Promise<unknown> {
       const { done, value } = await reader.read()
       if (done) break
       length += value.length
-      if (length > 131072) throw new Error('Rate response too large')
+      if (length > rateProviderMaxResponseBytes) throw new Error('Rate response too large')
       chunks.push(value)
     }
     return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown
@@ -107,7 +108,7 @@ export class RatesService {
           provider: 'Coinbase',
           rates,
           fetchedAt,
-          expiresAt: new Date(fetchedAt.getTime() + 60 * 60 * 1000)
+          expiresAt: new Date(fetchedAt.getTime() + rateSnapshotTtlMs)
         }
       })
     } catch {

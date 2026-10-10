@@ -1,3 +1,4 @@
+import { cartMinItems, cartMaxItems } from './cart-policy.js'
 import {
   Body,
   Controller,
@@ -11,6 +12,7 @@ import {
 } from '@nestjs/common'
 import { type AuthRequest } from '../auth/auth.guard.js'
 import { DomainError } from '../common/domain-error.js'
+import { paginationPolicy } from '../common/pagination-policy.js'
 import { idInput, objectInput, positiveInteger, textInput } from '../common/input.js'
 import { DatabaseService } from '../database/database.service.js'
 import { OrderCommands, type ActionInput, type OrderAction } from './order-commands.js'
@@ -79,8 +81,8 @@ export class OrderController {
   private page(query: Record<string, unknown>) {
     const input = objectInput(query, ['page', 'limit'], [])
     return {
-      page: queryInteger(input.page, 1, 1000),
-      limit: queryInteger(input.limit, 20, 50)
+      page: queryInteger(input.page, paginationPolicy.firstPage, paginationPolicy.maxPage),
+      limit: queryInteger(input.limit, paginationPolicy.defaultLimit, paginationPolicy.maxLimit)
     }
   }
 
@@ -106,7 +108,7 @@ export class OrderController {
   ) {
     const key = idempotencyKey(header)
     const input = objectInput(body, ['items'], ['items'])
-    if (!Array.isArray(input.items) || input.items.length < 2 || input.items.length > 5)
+    if (!Array.isArray(input.items) || input.items.length < cartMinItems || input.items.length > cartMaxItems)
       throw new DomainError('INVALID_INPUT')
     const items = input.items.map(createOrderInput)
     return this.commands.createCheckout(request.auth.account.id, key, items)
@@ -140,8 +142,8 @@ export class OrderController {
   @HttpCode(200)
   async list(@Req() request: AuthRequest, @Query() query: Record<string, unknown>) {
     const input = objectInput(query, ['role', 'status', 'page', 'limit'], [])
-    const page = queryInteger(input.page, 1, 1000)
-    const limit = queryInteger(input.limit, 20, 50)
+    const page = queryInteger(input.page, paginationPolicy.firstPage, paginationPolicy.maxPage)
+    const limit = queryInteger(input.limit, paginationPolicy.defaultLimit, paginationPolicy.maxLimit)
     if (input.role !== undefined && input.role !== 'buyer' && input.role !== 'seller')
       throw new DomainError('INVALID_INPUT')
     if (
@@ -168,6 +170,7 @@ export class OrderController {
         : {}),
       ...(input.status === undefined ? {} : { status: input.status })
     }
+    const total = await this.client.order.count({ where })
     const rows = await this.client.order.findMany({
       where,
       include: { snapshot: true },
@@ -193,6 +196,7 @@ export class OrderController {
         createdAt: order.createdAt,
         updatedAt: order.updatedAt
       })),
+      total,
       page,
       limit,
       hasMore: rows.length > limit

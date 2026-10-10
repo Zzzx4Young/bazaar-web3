@@ -16,6 +16,7 @@ import { OrderController } from './orders/order.controller.js'
 import { DisputeController } from './orders/dispute.controller.js'
 import { BalanceController } from './orders/balance.controller.js'
 import { SellerReviewController } from './reviews/seller-review.controller.js'
+import { RequestAdmission } from './common/request-admission.js'
 import {
   defaultRequestLogSink,
   type RequestLogSink,
@@ -30,32 +31,63 @@ export async function createApp(
   logger: false | undefined = undefined,
   dependencies: { loadRates?: RateLoader; logRequest?: RequestLogSink | false } = {}
 ) {
-  const database = new DatabaseService(config.databaseUrl)
+  const database = new DatabaseService(config.databaseUrl, config.databasePool)
   const auth = new AuthService(database.client, config)
   const rates = new RatesService(database.client, dependencies.loadRates)
   const listings = new ListingService(database.client, rates)
   const telemetry = new RequestTelemetry()
+  const admission = new RequestAdmission(config.maxInFlightRequests)
   const requestLogSink =
     dependencies.logRequest === undefined
       ? logger === false
         ? false
         : defaultRequestLogSink
       : dependencies.logRequest
-  const adapter = new FastifyAdapter({ bodyLimit: 1048576, requestIdHeader: false })
+  const adapter = new FastifyAdapter({
+    bodyLimit: 1048576,
+    requestIdHeader: false,
+    trustProxy: config.trustedProxyCidrs
+  })
   const instance = adapter.getInstance()
   instance.addHook('onRequest', (request, reply, done) => {
     telemetry.start(request, reply)
     done()
   })
   instance.addHook('onResponse', (request, reply, done) => {
+    admission.release(request)
     telemetry.finish(request, reply, requestLogSink)
     done()
+  })
+  instance.addHook('preHandler', (request, reply, done) => {
+    const live =
+      request.method === 'POST' &&
+      new URL(request.url, 'http://localhost').pathname === '/api/health/live'
+    if (live || admission.acquire(request)) {
+      done()
+      return
+    }
+    telemetry.setError(request, 'OVERLOADED')
+    reply
+      .header('Cache-Control', 'no-store')
+      .status(503)
+      .send({ code: 'OVERLOADED', retryable: true, requestId: request.id })
+  })
+  instance.addHook('onSend', (request, _reply, payload, done) => {
+    admission.release(request)
+    done(null, payload)
   })
   const app = await NestFactory.create<NestFastifyApplication>(
     {
       module: AppModule,
-      controllers: [HealthController, AuthController, ListingController, OrderController,
-        DisputeController, BalanceController, SellerReviewController],
+      controllers: [
+        HealthController,
+        AuthController,
+        ListingController,
+        OrderController,
+        DisputeController,
+        BalanceController,
+        SellerReviewController
+      ],
       providers: [
         { provide: DatabaseService, useValue: database },
         { provide: AuthService, useValue: auth },

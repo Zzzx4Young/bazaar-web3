@@ -47,6 +47,14 @@ model Session {
   @@index([expiresAt])
 }
 
+model AuthRateBucket {
+  key       String   @id @db.Char(64)
+  count     Int
+  windowEnd DateTime @db.Timestamptz(6)
+
+  @@index([windowEnd])
+}
+
 model RateSnapshot {
   id        String   @id @default(uuid()) @db.Uuid
   provider  String
@@ -80,6 +88,7 @@ model Listing {
   @@unique([id, sellerId])
   @@unique([id, type])
   @@index([publicationStatus, createdAt, id])
+  @@index([publicationStatus, type, createdAt, id])
   @@index([sellerId, createdAt, id])
 }
 
@@ -115,6 +124,7 @@ model Order {
   @@unique([id, listingId])
   @@index([buyerId, createdAt, id])
   @@index([sellerId, createdAt, id])
+  @@index([status, createdAt, id])
   @@index([checkoutId])
 }
 

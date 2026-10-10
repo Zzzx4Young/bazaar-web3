@@ -27,7 +27,7 @@ const listing = (currency = 'USD', amount = '2') => ({
   type: 'physical',
   title: 'Virtual listing',
   description: 'Virtual description',
-  category: 'test',
+  category: 'electronics',
   price: { amount, currency }
 })
 
@@ -74,6 +74,7 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
       {
         ...listing('ETH', '0.001'),
         type: 'digital',
+        category: 'digital_assets',
         licenseDescription: 'Nonexclusive',
         contentVersion: 'v1'
       }
@@ -103,6 +104,15 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     assert.equal(resolvedFavorites.statusCode, 200, resolvedFavorites.body)
     assert.deepEqual(resolvedFavorites.json().items.map((item) => item.id), [created[3].id, created[0].id])
     assert.equal(resolvedFavorites.json().total, 2)
+    for (const [length, expectedStatus] of [[100, 200], [101, 400]]) {
+      const batch = await app.inject({
+        method: 'POST', url: '/api/listings/favorites/resolve',
+        headers: { origin, 'content-type': 'application/json' },
+        payload: { ids: Array.from({ length }, () => created[0].id) }
+      })
+      assert.equal(batch.statusCode, expectedStatus, batch.body)
+      if (expectedStatus === 200) assert.equal(batch.json().total, 1)
+    }
     assert.equal((await app.inject({
       method: 'POST', url: '/api/listings/favorites/resolve',
       headers: { origin, 'content-type': 'application/json' },
@@ -111,6 +121,9 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     assert.equal(list.body.includes('loginName'), false)
     assert.equal(list.body.includes('passwordHash'), false)
     for (const payload of [
+      { ...listing(), category: 'digital_assets' },
+      { ...listing(), category: 'unknown' },
+      { ...listing(), type: 'digital', category: 'electronics', licenseDescription: 'x', contentVersion: 'v1' },
       { ...listing(), sellerId: randomUUID() },
       listing('TEST'),
       listing('USD', 2),
@@ -165,7 +178,7 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     const filteredSort = await app.inject({
       method: 'POST', url: '/api/listings/search',
       headers: { origin, 'content-type': 'application/json' },
-      payload: { sort: 'price_desc', category: 'test', limit: '2' }
+      payload: { sort: 'price_desc', category: 'electronics', limit: '2' }
     })
     assert.equal(filteredSort.statusCode, 200, filteredSort.body)
     assert.equal(filteredSort.json().quote.id, quote.id)

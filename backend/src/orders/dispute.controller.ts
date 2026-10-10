@@ -1,7 +1,8 @@
-import { Body, Controller, Headers, HttpCode, Inject, Param, Post, Req } from '@nestjs/common'
+import { Body, Controller, Headers, HttpCode, Inject, Param, Post, Query, Req } from '@nestjs/common'
 import { type AuthRequest } from '../auth/auth.guard.js'
 import { DomainError } from '../common/domain-error.js'
-import { idInput, objectInput } from '../common/input.js'
+import { paginationPolicy } from '../common/pagination-policy.js'
+import { idInput, objectInput, positiveInteger } from '../common/input.js'
 import { DatabaseService } from '../database/database.service.js'
 import { OrderCommands } from './order-commands.js'
 
@@ -21,15 +22,28 @@ export class DisputeController {
 
   @Post()
   @HttpCode(200)
-  async list(@Req() request: AuthRequest) {
+  async list(@Req() request: AuthRequest, @Query() query: Record<string, unknown>) {
     this.requireAdmin(request)
+    const input = objectInput(query, ['page', 'limit'], [])
+    const parse = (value: unknown, fallback: number, max: number) => {
+      if (value === undefined) return fallback
+      if (typeof value !== 'string' || !/^[1-9][0-9]{0,3}$/.test(value))
+        throw new DomainError('INVALID_INPUT')
+      return positiveInteger(Number(value), max)
+    }
+    const page = parse(input.page, paginationPolicy.firstPage, paginationPolicy.maxPage)
+    const limit = parse(input.limit, paginationPolicy.defaultLimit, paginationPolicy.maxLimit)
+    const where = { status: 'issue' as const, refundBuyerRows: { some: { status: 'pending' as const } } }
+    const total = await this.client.order.count({ where })
     const orders = await this.client.order.findMany({
-      where: { status: 'issue', refundBuyerRows: { some: { status: 'pending' } } },
+      where,
       include: { snapshot: true, eventOrderRows: { where: { operation: 'counteroffer' } } },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-      take: 50
+      skip: (page - 1) * limit,
+      take: limit
     })
     return {
+      page, limit, total, hasMore: page * limit < total,
       items: orders.map((order) => ({
         id: order.id,
         title: order.snapshot?.title,

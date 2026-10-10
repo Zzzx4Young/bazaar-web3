@@ -33,6 +33,12 @@ export async function idempotent(
     const resource = await tx.order.findUniqueOrThrow({ where: { id: previous.resourceId } })
     if (!allowAdminReplay && resource.buyerId !== actorId && resource.sellerId !== actorId)
       throw new DomainError('FORBIDDEN')
+    // A conflict followed only by SELECTs can commit without waiting for a
+    // synchronous standby. Generate WAL for the validated original result so a
+    // successful replay also crosses the remote_apply commit barrier.
+    await tx.$executeRaw`
+      UPDATE "IdempotencyRecord" SET "requestHash" = "requestHash"
+      WHERE "actorId" = ${actorId}::uuid AND "operation" = ${operation} AND "key" = ${key}`
     return previous.resourceId
   }
   const resourceId = await work()

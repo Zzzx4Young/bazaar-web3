@@ -3,7 +3,7 @@
   "info": {
     "title": "Bazaar internal Alpha API",
     "version": "0.1.0",
-    "description": "Implemented internal Alpha contract. Pre-provisioned accounts only; simulated settlement. No uploads, registration, wallet or real payments. Every response returns X-Request-Id; errors contain code, retryable and the same requestId. Private/auth responses no-store."
+    "description": "Implemented internal Alpha contract. Pre-provisioned accounts only; simulated settlement. No uploads, registration, wallet or real payments. Every response returns X-Request-Id; errors contain code, retryable and the same requestId. Private/auth responses no-store. Admission saturation returns 503 OVERLOADED with retryable=true and Cache-Control: no-store before authentication/database work; POST /health/live is exempt. Write retries must preserve the original payload and idempotency key."
   },
   "servers": [
     {
@@ -3524,6 +3524,31 @@
         }
       }
     },
+    "/listings/home": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "post": {
+        "operationId": "homeListings",
+        "summary": "Bounded newest listings for the home page and each listing type",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/HomeListings" } } },
+            "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          },
+          "500": {
+            "description": "HTTP 500; see error code contract",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
+            "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          },
+          "503": {
+            "description": "HTTP 503; see error code contract",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
+            "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          }
+        }
+      }
+    },
     "/listings/search": {
       "parameters": [
         {
@@ -3749,6 +3774,10 @@
       "post": {
         "operationId": "listAdminDisputes",
         "summary": "Admin-only list of pending dispute decisions",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 } }
+        ],
         "security": [{ "session": [], "csrf": [] }],
         "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Empty" } } } },
         "responses": {
@@ -4121,6 +4150,7 @@
     "schemas": {
       "Error": {
         "type": "object",
+        "description": "Database connectivity or pool availability failures return HTTP 503 with code DATABASE_UNAVAILABLE and retryable=true. Retry writes with the original body and idempotency key; a failed response does not prove the transaction was rolled back. Driver messages and connection details are never returned.",
         "additionalProperties": false,
         "required": [
           "code",
@@ -4147,8 +4177,8 @@
         "properties": { "items": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["currency", "amount", "mode"], "properties": { "currency": { "type": "string" }, "amount": { "type": "string" }, "mode": { "type": "string", "enum": ["simulated"] } } } } }
       },
       "AdminDisputePage": {
-        "type": "object", "additionalProperties": false, "required": ["items"],
-        "properties": { "items": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["id", "status", "hasCounteroffer"], "properties": { "id": { "type": "string", "format": "uuid" }, "title": { "type": "string" }, "status": { "$ref": "#/components/schemas/OrderStatus" }, "currency": { "type": "string" }, "amount": { "type": "string" }, "hasCounteroffer": { "type": "boolean" } } } } }
+        "type": "object", "additionalProperties": false, "required": ["items", "page", "limit", "total", "hasMore"],
+        "properties": { "page": { "type": "integer", "minimum": 1 }, "limit": { "type": "integer", "minimum": 1, "maximum": 50 }, "total": { "type": "integer", "minimum": 0 }, "hasMore": { "type": "boolean" }, "items": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["id", "status", "hasCounteroffer"], "properties": { "id": { "type": "string", "format": "uuid" }, "title": { "type": "string" }, "status": { "$ref": "#/components/schemas/OrderStatus" }, "currency": { "type": "string" }, "amount": { "type": "string" }, "hasCounteroffer": { "type": "boolean" } } } } }
       },
       "AdminDispute": {
         "type": "object", "additionalProperties": false,
@@ -4434,8 +4464,7 @@
           },
           "category": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 50
+            "enum": ["electronics", "secondhand_fashion"]
           },
           "price": {
             "$ref": "#/components/schemas/Price"
@@ -4473,8 +4502,7 @@
           },
           "category": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 50
+            "enum": ["digital_assets", "software_source", "game_items"]
           },
           "price": {
             "$ref": "#/components/schemas/Price"
@@ -4528,6 +4556,16 @@
           }
         },
         "minProperties": 2
+      },
+      "HomeListings": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["featured", "digital", "physical"],
+        "properties": {
+          "featured": { "type": "array", "maxItems": 10, "items": { "$ref": "#/components/schemas/Listing" } },
+          "digital": { "type": "array", "maxItems": 5, "items": { "$ref": "#/components/schemas/Listing" } },
+          "physical": { "type": "array", "maxItems": 5, "items": { "$ref": "#/components/schemas/Listing" } }
+        }
       },
       "ListingPage": {
         "type": "object",
@@ -5320,6 +5358,7 @@
         "additionalProperties": false,
         "required": [
           "items",
+          "total",
           "page",
           "limit",
           "hasMore"
@@ -5331,6 +5370,7 @@
               "$ref": "#/components/schemas/OrderSummary"
             }
           },
+          "total": { "type": "integer", "minimum": 0 },
           "page": {
             "type": "integer",
             "minimum": 1

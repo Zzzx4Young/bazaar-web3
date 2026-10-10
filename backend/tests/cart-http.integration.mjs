@@ -47,7 +47,7 @@ test('HTTP cart enforces ownership, atomic validation, and published response co
   }
   const listing = async (actor, type, currency) => {
     const result = await post(actor, '/listings', {
-      type, title: `${actor} ${type}`, description: 'Cart fixture', category: 'electronics',
+      type, title: `${actor} ${type}`, description: 'Cart fixture', category: type === 'digital' ? 'digital_assets' : 'electronics',
       price: { amount: '12.50', currency },
       ...(type === 'digital' ? { licenseDescription: 'Review license', contentVersion: 'v1' } : {})
     })

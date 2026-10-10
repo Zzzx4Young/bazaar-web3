@@ -10,6 +10,25 @@ if (!url || new URL(url).pathname !== '/bazaar_test') {
   throw new Error('TEST_DATABASE_URL must explicitly target bazaar_test')
 }
 
+test('configured pool bounds concurrent connections and enforces SQL timeout with recovery', async () => {
+  const app = await createApp(readConfig({ DATABASE_URL: url, DB_POOL_MAX: '2',
+    DB_STATEMENT_TIMEOUT_MS: '250' }), false)
+  try {
+    const client = app.get(DatabaseService).client
+    const settings = await client.$queryRaw`SELECT current_setting('statement_timeout') AS timeout`
+    assert.equal(settings[0].timeout, '250ms')
+    const results = await Promise.all(Array.from({ length: 8 }, () =>
+      client.$queryRaw`SELECT pg_backend_pid() AS pid FROM pg_sleep(0.05)`))
+    assert.equal(new Set(results.map((rows) => rows[0].pid)).size, 2)
+    await assert.rejects(client.$queryRaw`SELECT 1 AS value FROM pg_sleep(1)`, (error) =>
+      error.meta?.code === '57014' ||
+      error.meta?.driverAdapterError?.cause?.originalCode === '57014')
+    assert.equal((await client.$queryRaw`SELECT 1 AS value`)[0].value, 1)
+  } finally {
+    await app.close()
+  }
+})
+
 test('real PostgreSQL readiness, failure mapping, and reconnection', async (context) => {
   const config = readConfig({ DATABASE_URL: url })
   for (let run = 0; run < 2; run++) {
@@ -49,5 +68,28 @@ test('real PostgreSQL readiness, failure mapping, and reconnection', async (cont
     } finally {
       await app.close()
     }
+  }
+})
+
+// Session setting only, on this application's single connection; no cluster-wide changes.
+test('readiness rejects a readable but read-only PostgreSQL session and recovers', async () => {
+  const config = readConfig({ DATABASE_URL: url, DB_POOL_MAX: '1' })
+  const app = await createApp(config, false)
+  const database = app.get(DatabaseService)
+  const probe = (path) => app.inject({ method: 'POST', url: `/api/health/${path}`,
+    headers: { origin: config.appOrigin, 'content-type': 'application/json' }, payload: {} })
+  try {
+    assert.equal((await probe('ready')).statusCode, 200)
+    await database.client.$executeRaw`SET default_transaction_read_only = on`
+    assert.equal((await database.client.$queryRaw`SELECT 1 AS value`)[0].value, 1)
+    assert.equal((await probe('live')).statusCode, 200)
+    const blocked = await probe('ready')
+    assert.equal(blocked.statusCode, 503)
+    assert.equal(blocked.body.includes('postgresql://'), false)
+    await database.client.$executeRaw`SET default_transaction_read_only = off`
+    assert.equal((await probe('ready')).statusCode, 200)
+  } finally {
+    await database.client.$executeRaw`SET default_transaction_read_only = off`
+    await app.close()
   }
 })

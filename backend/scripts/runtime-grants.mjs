@@ -24,7 +24,8 @@ export async function grantRuntime(client, schema, role) {
     'IssueRecord',
     'RefundRequest',
     'IdempotencyRecord',
-    'Session'
+    'Session',
+    'AuthRateBucket'
   ]
   await client.$transaction(async (tx) => {
     const roles = await tx.$queryRaw`
@@ -40,7 +41,8 @@ export async function grantRuntime(client, schema, role) {
     await tx.$executeRawUnsafe(`GRANT USAGE ON SCHEMA "${schema}" TO "${role}"`)
     await tx.$executeRawUnsafe(`REVOKE ALL ON ALL TABLES IN SCHEMA "${schema}" FROM "${role}"`)
     for (const table of [...immutable, ...mutable]) {
-      const permissions = mutable.includes(table) ? 'SELECT, INSERT, UPDATE' : 'SELECT, INSERT'
+      const permissions = table === 'AuthRateBucket' ? 'SELECT, INSERT, UPDATE, DELETE'
+        : mutable.includes(table) ? 'SELECT, INSERT, UPDATE' : 'SELECT, INSERT'
       await tx.$executeRawUnsafe(`GRANT ${permissions} ON "${schema}"."${table}" TO "${role}"`)
     }
     await tx.$executeRawUnsafe(`GRANT SELECT ON "${schema}"."AccountCredential" TO "${role}"`)

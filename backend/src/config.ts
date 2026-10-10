@@ -1,4 +1,11 @@
 import { readFileSync } from 'node:fs'
+import { isIP } from 'node:net'
+import { readMaxInFlightRequests } from './common/request-policy.js'
+import {
+  readDatabasePoolConfig,
+  validateDatabaseUrlOptions,
+  type DatabasePoolConfig
+} from './database/database-policy.js'
 
 export interface AppConfig {
   databaseUrl: string
@@ -6,6 +13,28 @@ export interface AppConfig {
   port: number
   appOrigin: string
   secureCookie: boolean
+  trustedProxyCidrs: false | string[]
+  databasePool: DatabasePoolConfig
+  maxInFlightRequests: number
+}
+
+function readTrustedProxies(value: string | undefined): false | string[] {
+  if (!value?.trim()) return false
+  const entries = value.split(',').map((entry) => entry.trim())
+  for (const entry of entries) {
+    const [address, prefix, ...extra] = entry.split('/')
+    const family = isIP(address ?? '')
+    const maxPrefix = family === 4 ? 32 : 128
+    if (
+      !family ||
+      extra.length ||
+      (prefix !== undefined &&
+        (!/^\d+$/.test(prefix) || Number(prefix) < 1 || Number(prefix) > maxPrefix))
+    ) {
+      throw new Error('TRUSTED_PROXY_CIDRS must contain explicit IP addresses or non-global CIDRs')
+    }
+  }
+  return [...new Set(entries)]
 }
 
 export function readDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string {
@@ -28,6 +57,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   let url: URL
   try {
     url = new URL(readDatabaseUrl(env))
+    validateDatabaseUrlOptions(url)
     if (
       !['postgres:', 'postgresql:'].includes(url.protocol) ||
       !url.hostname ||
@@ -62,6 +92,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     host: env.HOST ?? '127.0.0.1',
     port,
     appOrigin: origin.origin,
-    secureCookie: origin.protocol === 'https:'
+    secureCookie: origin.protocol === 'https:',
+    trustedProxyCidrs: readTrustedProxies(env.TRUSTED_PROXY_CIDRS),
+    databasePool: readDatabasePoolConfig(env),
+    maxInFlightRequests: readMaxInFlightRequests(env)
   }
 }

@@ -1,3 +1,5 @@
+import { isDatabaseUnavailable } from '../database/database-errors.js'
+
 export class DomainError extends Error {
   constructor(readonly code: string) {
     super(code)
@@ -10,7 +12,7 @@ export interface ErrorResult {
   retryable: boolean
 }
 
-// Only allowlisted domain codes cross the API boundary; never expose driver messages or SQL.
+// Only allowlisted public codes cross the API boundary; never expose driver messages or SQL.
 export function mapApplicationError(error: unknown): ErrorResult {
   if (error instanceof DomainError) {
     if (error.code === 'FX_UNAVAILABLE') return { status: 503, code: error.code, retryable: true }
@@ -58,6 +60,9 @@ export function mapApplicationError(error: unknown): ErrorResult {
     ['P2002', 'P2003'].includes(String(error.code))
   ) {
     return { status: 409, code: 'CONFLICT', retryable: false }
+  }
+  if (!(error instanceof DomainError) && isDatabaseUnavailable(error)) {
+    return { status: 503, code: 'DATABASE_UNAVAILABLE', retryable: true }
   }
   return { status: 500, code: 'INTERNAL_ERROR', retryable: false }
 }
