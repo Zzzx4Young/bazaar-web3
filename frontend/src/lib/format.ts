@@ -8,13 +8,6 @@ const CURRENCY_SYMBOL: Partial<Record<Currency, string>> = {
   SOL: '◎'
 }
 
-const FIAT_RATE: Partial<Record<Currency, number>> = {
-  CNY: 1,
-  USDT: 7.2,
-  ETH: 3400,
-  SOL: 150
-}
-
 export function formatPrice(amount: number | string, currency: Currency): string {
   if (typeof amount === 'number' && !Number.isFinite(amount)) return `— ${currency}`
   if (typeof amount === 'string' && amount.trim().toLowerCase() === 'nan') return `— ${currency}`
@@ -27,11 +20,6 @@ export function formatPrice(amount: number | string, currency: Currency): string
       ? amount
       : amount.toLocaleString('zh-CN', { maximumFractionDigits: 2 })
   return `${symbol ?? currency}${formatted}`
-}
-
-export function fiatEstimate(amount: number, currency: Currency): number {
-  const usdRate = currency === 'CNY' ? 0.14 : currency === 'USDT' ? 1 : 3400
-  return Math.round(amount * usdRate)
 }
 
 export function formatDate(iso: string): string {

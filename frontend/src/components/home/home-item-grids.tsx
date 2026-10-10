@@ -2,10 +2,17 @@
 
 import { useTranslations } from 'next-intl'
 import { ItemGrid } from './item-grid'
-import { useBackendListings } from '@/hooks/use-backend-listings'
+import { useApiResource } from '@/hooks/use-api-resource'
+import { toItem, type BackendListing } from '@/lib/backend-api'
+
+interface HomeListings {
+  featured: BackendListing[]
+  digital: BackendListing[]
+  physical: BackendListing[]
+}
 
 export function HomeItemGrids() {
-  const backend = useBackendListings(new URLSearchParams({ sort: 'newest', limit: '20' }))
+  const backend = useApiResource<HomeListings>('/listings/home')
   const t = useTranslations('home')
   if (backend.loading) return <p role="status">{t('loading')}</p>
   if (backend.error)
@@ -14,13 +21,13 @@ export function HomeItemGrids() {
         {t('loadError')}：{backend.error}
       </p>
     )
-  const items = backend.items
-  const digital = items.filter((item) => item.category === 'digital').slice(0, 5)
-  const physical = items.filter((item) => item.category === 'physical').slice(0, 5)
-  if (items.length === 0) return <ItemGrid items={[]} />
+  const featured = backend.data?.featured.map(toItem) ?? []
+  const digital = backend.data?.digital.map(toItem) ?? []
+  const physical = backend.data?.physical.map(toItem) ?? []
+  if (featured.length === 0) return <ItemGrid items={[]} />
   return (
     <>
-      <ItemGrid items={items.slice(0, 10)} title={t('featured')} />
+      <ItemGrid items={featured} title={t('featured')} />
       {digital.length > 0 && <ItemGrid items={digital} title={t('digital')} />}
       {physical.length > 0 && <ItemGrid items={physical} title={t('physical')} />}
     </>

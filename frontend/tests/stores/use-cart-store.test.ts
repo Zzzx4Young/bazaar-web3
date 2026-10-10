@@ -1,6 +1,7 @@
 import { beforeEach, expect, test } from 'vitest'
 import { useCartStore } from '@/stores/use-cart-store'
 import type { Item } from '@/types'
+import { cartMaxItems } from '@/lib/cart-policy'
 
 const item = (id: string): Item => ({
   id,
@@ -20,6 +21,12 @@ const item = (id: string): Item => ({
 })
 
 beforeEach(() => useCartStore.setState({ ownerId: null, items: [] }))
+
+test('cart rejects additions beyond the checkout contract limit', () => {
+  for (let i = 0; i < cartMaxItems + 1; i++) useCartStore.getState().add('buyer', item(String(i)))
+  expect(useCartStore.getState().items).toHaveLength(cartMaxItems)
+  expect(useCartStore.getState().items.some((line) => line.listingId === String(cartMaxItems))).toBe(false)
+})
 
 test('cart keeps one line per listing and never exposes a previous account cart', () => {
   const cart = useCartStore.getState()

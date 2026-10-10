@@ -27,6 +27,10 @@ it('keeps refunded and unpublished listings unavailable in the UI', () => {
   expect(toItem({ ...listing, availability: 'available', publicationStatus: 'archived' }).status).toBe('locked')
   expect(toItem({ ...listing, availability: 'sold' }).status).toBe('sold')
   expect(toItem({ ...listing, availability: 'available' }).status).toBe('active')
+  expect(toItem(listing).price.fiatEstimate).toBeUndefined()
+  expect(toItem({ ...listing, priceUsd: '13.27' }).price.fiatEstimate).toBe(13.27)
+  expect(toItem(listing)).not.toHaveProperty('viewCount')
+  expect(toItem(listing)).not.toHaveProperty('favoriteCount')
 })
 
 describe('backend request correlation', () => {

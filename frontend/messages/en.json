@@ -64,7 +64,7 @@
     "recipient": "Recipient",
     "contact": "Contact",
     "address": "Address",
-    "minimum": "Add at least two different items to check out together.",
+    "minimum": "Add at least {min} different items to check out together.",
     "error": "Checkout failed: {error}",
     "retry": "Retry the same checkout",
     "checkout": "Check out together"
@@ -75,7 +75,7 @@
     "error": "Could not load checkout: {error}",
     "title": "Orders in this checkout"
   },
-  "commonCart": { "addToCart": "Add to cart" },
+  "commonCart": { "addToCart": "Add to cart", "inCart": "In cart", "alreadyInCart": "This item is already in your cart", "added": "Added to cart", "full": "Your cart can hold up to {max} items" },
   "sellerProfile": {
     "loading": "Loading seller profile…",
     "loadError": "Could not load seller profile: {error}",

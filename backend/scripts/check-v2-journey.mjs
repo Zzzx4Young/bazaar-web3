@@ -160,7 +160,9 @@ try {
   await waitText(buyerPage, '共 140 件商品')
   await buyerPage.getByRole('combobox').first().click()
   await buyerPage.getByRole('option', { name: '数字资产' }).click()
-  await waitText(buyerPage, '共 28 件商品')
+  const digitalAssetCount = buildV2SeedPlan().listings.filter((listing) =>
+    listing.publicationStatus === 'published' && listing.category === 'digital_assets').length
+  await waitText(buyerPage, `共 ${digitalAssetCount} 件商品`)
   await buyerPage.getByRole('button', { name: '重置筛选' }).click()
   await waitText(buyerPage, '共 140 件商品')
   await buyerPage.getByTestId('sort-trigger').click()
@@ -216,9 +218,9 @@ try {
   await buyerPage.screenshot({ path: resolve(resultsDirectory, 'seller-reputation-mobile.png'), fullPage: true })
 
   for (const [availability, expectedStatus] of [
-    ['refund_hold', 'LOCKED'],
-    ['reserved', 'LOCKED'],
-    ['sold', 'SOLD']
+    ['refund_hold', '暂不可购买'],
+    ['reserved', '暂不可购买'],
+    ['sold', '已售出']
   ]) {
     const inventory = await db.client.physicalInventory.findFirst({
       where: { availability, inventoryListing: { publicationStatus: 'published' } },
@@ -235,28 +237,28 @@ try {
   stage = 'buyer dispute lifecycle'
   await login(buyerPage, buyer.loginName, password)
   await buyerPage.goto(`${origin}/zh-CN/me/orders/${target.id}`)
-  await buyerPage.getByTestId('acceptance-order-status').getByText('DELIVERED').waitFor()
+  await buyerPage.getByTestId('acceptance-order-status').getByText('待验收').waitFor()
   const balanceBefore = await buyerPage.getByTestId('simulated-balance').textContent()
   await buyerPage.getByLabel('问题描述').fill('V2 physical delivery dispute with a long multilingual explanation 🧪')
-  await buyerPage.getByRole('button', { name: 'issue' }).click()
-  await buyerPage.getByTestId('acceptance-order-status').getByText('ISSUE').waitFor()
-  await buyerPage.getByRole('button', { name: 'request-refund' }).click()
+  await buyerPage.getByRole('button', { name: '报告问题' }).click()
+  await buyerPage.getByTestId('acceptance-order-status').getByText('争议处理中').waitFor()
+  await buyerPage.getByRole('button', { name: '申请退款' }).click()
 
   stage = 'seller counteroffer and admin resolution'
   await login(sellerPage, seller.loginName, password)
   await sellerPage.goto(`${origin}/zh-CN/me/orders/${target.id}`)
   await waitText(sellerPage, 'V2 physical delivery dispute')
   await sellerPage.getByLabel('卖家方案').fill('V2 seller offers a replacement and tracked return')
-  await sellerPage.getByRole('button', { name: 'counteroffer' }).click()
+  await sellerPage.getByRole('button', { name: '提出解决方案' }).click()
   await waitText(sellerPage, 'V2 seller offers a replacement and tracked return')
   await login(adminPage, adminAccount.loginName, password)
   await adminPage.goto(`${origin}/zh-CN/admin/disputes`)
   await adminPage.locator(`main a[href$="/admin/disputes/${target.id}"]`).click()
   await waitText(adminPage, 'V2 seller offers a replacement and tracked return')
   await adminPage.getByRole('button', { name: '裁决退款给买家' }).click()
-  await adminPage.getByTestId('admin-dispute-status').getByText('refunded', { exact: false }).waitFor()
-  await sellerPage.getByTestId('acceptance-order-status').getByText('REFUNDED').waitFor()
-  await buyerPage.getByTestId('acceptance-order-status').getByText('REFUNDED').waitFor({ timeout: 15000 })
+  await adminPage.getByTestId('admin-dispute-status').getByText('已退款', { exact: false }).waitFor()
+  await sellerPage.getByTestId('acceptance-order-status').getByText('已退款').waitFor()
+  await buyerPage.getByTestId('acceptance-order-status').getByText('已退款').waitFor({ timeout: 20000 })
   await buyerPage.getByTestId('simulated-balance').evaluate((element, before) => new Promise((resolveWait, reject) => {
     const deadline = Date.now() + 15000
     const check = () => {
@@ -323,7 +325,7 @@ try {
     db.client.listing.findFirstOrThrow({ where: { title: spec.title } })))
   for (const listing of cartListings) {
     await buyerPage.goto(`${origin}/zh-CN/listing/${listing.id}`)
-    await buyerPage.getByTestId('acceptance-listing-status').getByText('ACTIVE').waitFor()
+    await buyerPage.getByTestId('acceptance-listing-status').getByText('在售').waitFor()
     await buyerPage.getByRole('button', { name: '加入购物车' }).click()
   }
   await buyerPage.goto(`${origin}/zh-CN/cart`)

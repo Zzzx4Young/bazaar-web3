@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { backendPost, toItem, type BackendListing } from '@/lib/backend-api'
+import { subscribeResolvedFavorites } from '@/lib/resolved-favorites'
 import { useFavoriteStore } from '@/stores/use-favorite-store'
 import type { Item } from '@/types'
 
@@ -13,7 +13,10 @@ export function useResolvedFavorites(): Result {
   const ids = [...new Set(favorites.filter((id) => typeof id === 'string' && uuid.test(id)))]
   const key = ids.join(',')
   const [state, setState] = useState<Result & { key: string }>({
-    key: '', items: [], loading: true, error: null
+    key: '',
+    items: [],
+    loading: true,
+    error: null
   })
 
   useEffect(() => {
@@ -23,26 +26,32 @@ export function useResolvedFavorites(): Result {
       return
     }
     setState({ key, items: [], loading: true, error: null })
-    const batches = Array.from({ length: Math.ceil(ids.length / 100) }, (_, index) =>
-      ids.slice(index * 100, (index + 1) * 100)
-    )
-    Promise.all(batches.map((batch) =>
-      backendPost<{ items: BackendListing[]; total: number }>('/listings/favorites/resolve', { ids: batch })
-    ))
-      .then((pages) => {
-        if (!cancelled) setState({
-          key, items: pages.flatMap((page) => page.items.map(toItem)), loading: false, error: null
-        })
+    const resolution = subscribeResolvedFavorites(ids)
+    resolution.promise
+      .then((items) => {
+        if (!cancelled)
+          setState({
+            key,
+            items,
+            loading: false,
+            error: null
+          })
       })
       .catch((error) => {
-        if (!cancelled) setState({
-          key, items: [], loading: false,
-          error: error instanceof Error ? error.message : 'NETWORK_ERROR'
-        })
+        if (!cancelled)
+          setState({
+            key,
+            items: [],
+            loading: false,
+            error: error instanceof Error ? error.message : 'NETWORK_ERROR'
+          })
       })
-    return () => { cancelled = true }
-  // The stable key represents the ordered, deduplicated IDs.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true
+      resolution.release()
+    }
+    // The stable key represents the ordered, deduplicated IDs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
   if (state.key !== key) return { items: [], loading: true, error: null }

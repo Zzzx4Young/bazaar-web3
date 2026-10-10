@@ -1,7 +1,9 @@
 'use client'
 
+import { cartMaxItems } from '@/lib/cart-policy'
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { transactionLabel } from '@/lib/transaction-copy'
 import { Link } from '@/i18n/routing'
 import { Heart, Share2, MessageCircle } from 'lucide-react'
 import { notFound } from 'next/navigation'
@@ -17,6 +19,7 @@ import { useFavoriteStore } from '@/stores/use-favorite-store'
 import { useBackendListing } from '@/hooks/use-backend-listing'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { useCartStore } from '@/stores/use-cart-store'
+import { toast } from 'sonner'
 
 interface Props {
   params: { id: string }
@@ -25,10 +28,13 @@ interface Props {
 export default function ListingDetailPage({ params }: Props) {
   const t = useTranslations('common')
   const tCart = useTranslations('commonCart')
+  const locale = useLocale()
   const backend = useBackendListing(params.id)
   const { toggle, isFavorite, error } = useFavoriteStore()
   const account = useAuthStore((state) => state.view?.account)
   const addToCart = useCartStore((state) => state.add)
+  const cartOwnerId = useCartStore((state) => state.ownerId)
+  const cartItems = useCartStore((state) => state.items)
   const [cartReady, setCartReady] = useState(false)
   useEffect(() => {
     void Promise.resolve(useCartStore.persist.rehydrate()).then(() => setCartReady(true))
@@ -49,6 +55,8 @@ export default function ListingDetailPage({ params }: Props) {
   }
   const seller = { id: item.sellerId, displayName: item.sellerDisplayName ?? 'Alpha 卖家' }
   const favorited = isFavorite(item.id)
+  const currentCart = cartOwnerId === account?.id ? cartItems : []
+  const alreadyInCart = currentCart.some((line) => line.listingId === item.id)
 
   return (
     <div className="space-y-6">
@@ -82,7 +90,7 @@ export default function ListingDetailPage({ params }: Props) {
           <div>
             <div className="flex flex-wrap gap-2">
               <Badge data-testid="acceptance-listing-status" variant="outline">
-                {item.status === 'active' ? 'ACTIVE' : item.status.toUpperCase()}
+                {transactionLabel(item.status, locale)}
               </Badge>
               <Badge variant={item.category === 'digital' ? 'secondary' : 'outline'}>
                 {item.category === 'digital' ? '数字资产' : '实物二手'}
@@ -120,44 +128,54 @@ export default function ListingDetailPage({ params }: Props) {
                   ≈ ${item.price.fiatEstimate.toLocaleString()} USD
                 </div>
               )}
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-                <Button
-                  className="w-full"
-                  size="lg"
-                  disabled={item.status !== 'active'}
-                  onClick={() => setBuyOpen(true)}
-                >
-                  立即购买
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  size="lg"
-                  disabled={!cartReady || item.status !== 'active' || !account ||
-                    account.role !== 'participant' || account.id === item.sellerId}
-                  onClick={() => account && addToCart(account.id, item)}
-                >
-                  {tCart('addToCart')}
-                </Button>
-                <Button variant="outline" className="w-full" size="lg" disabled>
-                  <MessageCircle className="mr-1 h-4 w-4" />
-                  联系卖家（未开放）
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  size="lg"
-                  onClick={() => toggle(item.id)}
-                >
-                  <Heart
-                    className={`mr-1 h-4 w-4 ${favorited ? 'fill-red-500 text-red-500' : ''}`}
-                  />
-                  {favorited ? '已收藏' : '收藏'}
-                </Button>
-                <Button variant="outline" className="w-full" size="lg" disabled>
-                  <Share2 className="mr-1 h-4 w-4" />
-                  {t('shareUnavailable')}
-                </Button>
+              <div className="mt-4 space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    disabled={item.status !== 'active'}
+                    onClick={() => setBuyOpen(true)}
+                  >
+                    立即购买
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                    disabled={!cartReady || item.status !== 'active' || !account ||
+                      account.role !== 'participant' || account.id === item.sellerId}
+                    onClick={() => {
+                      if (!account) return
+                      if (alreadyInCart) return toast.info(tCart('alreadyInCart'))
+                      if (currentCart.length >= cartMaxItems) return toast.error(tCart('full', { max: cartMaxItems }))
+                      addToCart(account.id, item)
+                      toast.success(tCart('added'))
+                    }}
+                  >
+                    {alreadyInCart ? tCart('inCart') : tCart('addToCart')}
+                  </Button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  <Button variant="outline" className="w-full" size="lg" disabled>
+                    <MessageCircle className="mr-1 h-4 w-4" />
+                    联系卖家（未开放）
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                    onClick={() => toggle(item.id)}
+                  >
+                    <Heart
+                      className={`mr-1 h-4 w-4 ${favorited ? 'fill-red-500 text-red-500' : ''}`}
+                    />
+                    {favorited ? '已收藏' : '收藏'}
+                  </Button>
+                  <Button variant="outline" className="w-full" size="lg" disabled>
+                    <Share2 className="mr-1 h-4 w-4" />
+                    {t('shareUnavailable')}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

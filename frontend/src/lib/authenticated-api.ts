@@ -9,7 +9,12 @@ function redirectToLogin() {
   if (!window.location.pathname.startsWith(`/${locale}/login`)) window.location.replace(target)
 }
 
-export async function authenticatedPost<T>(path: string, body: unknown = {}, key?: string) {
+export async function authenticatedPost<T>(
+  path: string,
+  body: unknown = {},
+  key?: string,
+  signal?: AbortSignal
+) {
   const view = useAuthStore.getState().view
   if (!view) {
     redirectToLogin()
@@ -18,6 +23,7 @@ export async function authenticatedPost<T>(path: string, body: unknown = {}, key
   try {
     return await backendRequest<T>(path, {
       method: 'POST',
+      signal,
       body: JSON.stringify(body),
       headers: {
         'X-CSRF-Token': view.csrfToken,
@@ -25,7 +31,11 @@ export async function authenticatedPost<T>(path: string, body: unknown = {}, key
       }
     })
   } catch (error) {
-    if (error instanceof BackendError && (error.status === 401 || error.status === 403)) {
+    if (
+      error instanceof BackendError &&
+      (error.status === 401 || error.status === 403) &&
+      useAuthStore.getState().view?.csrfToken === view.csrfToken
+    ) {
       useAuthStore.getState().invalidate(view.csrfToken)
       redirectToLogin()
     }

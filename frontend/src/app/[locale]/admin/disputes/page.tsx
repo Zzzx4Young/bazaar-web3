@@ -5,6 +5,9 @@ import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { useAuthStore } from '@/stores/use-auth-store'
+import { useStoredPage } from '@/hooks/use-stored-page'
+import { RecordPagination } from '@/components/ui/record-pagination'
+import { paginationPolicy } from '@/lib/pagination'
 
 interface DisputeSummary {
   id: string
@@ -19,7 +22,10 @@ export default function AdminDisputesPage() {
   const { locale } = useParams<{ locale: string }>()
   const t = useTranslations('adminDisputes')
   const role = useAuthStore((state) => state.view?.account.role)
-  const disputes = useApiResource<{ items: DisputeSummary[] }>('/admin/disputes', {}, true)
+  const accountId = useAuthStore((state) => state.view?.account.id)
+  const [page, setPage] = useStoredPage(`bazaar:disputes:${accountId ?? 'guest'}`)
+  const disputes = useApiResource<{ items: DisputeSummary[]; page: number; limit: number; total: number; hasMore: boolean }>(
+    `/admin/disputes?page=${page}&limit=${paginationPolicy.defaultLimit}`, {}, true)
   if (role !== 'admin') return <p role="alert">{t('restricted')}</p>
   if (disputes.loading) return <p role="status">{t('loading')}</p>
   if (disputes.error) return <p role="alert">{t('loadError', { error: disputes.error })}</p>
@@ -39,6 +45,8 @@ export default function AdminDisputesPage() {
           </p>
         </Link>
       ))}
+      {disputes.data && <RecordPagination page={page} limit={disputes.data.limit}
+        total={disputes.data.total} hasMore={disputes.data.hasMore} onPageChange={setPage} />}
     </div>
   )
 }

@@ -7,13 +7,14 @@ import { useAuthStore } from '@/stores/use-auth-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { getDevLoginCredentials } from '@/lib/dev-login'
 
 export default function LoginPage() {
   const t = useTranslations('nav')
   const router = useRouter()
   const auth = useAuthStore()
-  const [loginName, setLoginName] = useState('')
-  const [password, setPassword] = useState('')
+  const [loginName, setLoginName] = useState(() => getDevLoginCredentials()?.loginName ?? '')
+  const [password, setPassword] = useState(() => getDevLoginCredentials()?.password ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [returnTo, setReturnTo] = useState('/')
 

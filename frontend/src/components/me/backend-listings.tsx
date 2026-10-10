@@ -7,11 +7,20 @@ import { Input } from '@/components/ui/input'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { authenticatedPost } from '@/lib/authenticated-api'
 import { backendErrorMessage, type BackendListing, type ListingPage } from '@/lib/backend-api'
+import { useLocale } from 'next-intl'
+import { transactionLabel } from '@/lib/transaction-copy'
+import { useAuthStore } from '@/stores/use-auth-store'
+import { useStoredPage } from '@/hooks/use-stored-page'
+import { RecordPagination } from '@/components/ui/record-pagination'
+import { paginationPolicy } from '@/lib/pagination'
 
 export function BackendListings() {
+  const locale = useLocale()
+  const accountId = useAuthStore((state) => state.view?.account.id)
+  const [page, setPage] = useStoredPage(`bazaar:listings:${accountId ?? 'guest'}`)
   const resource = useApiResource<ListingPage>(
     '/me/listings',
-    { limit: '50', publicationStatus: 'published' },
+    { page: String(page), limit: String(paginationPolicy.defaultLimit), publicationStatus: 'published' },
     true
   )
   const [editing, setEditing] = useState<string | null>(null)
@@ -42,7 +51,7 @@ export function BackendListings() {
     }
   }
   const items = resource.data?.items ?? []
-  if (!items.length) return <p className="text-sm text-muted-foreground">暂无已发布商品。</p>
+  if (!items.length && page === 1) return <p className="text-sm text-muted-foreground">暂无已发布商品。</p>
   return (
     <div className="space-y-3">
       {error && (
@@ -74,14 +83,14 @@ export function BackendListings() {
             </div>
           ) : (
             <>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-medium">{listing.title}</h3>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="break-words font-medium">{listing.title}</h3>
                   <p className="text-sm text-muted-foreground">
                     {listing.price.amount} {listing.price.currency} · v{listing.version}
                   </p>
                 </div>
-                <span className="text-sm">{listing.publicationStatus}</span>
+                <span className="shrink-0 text-sm">{transactionLabel(listing.publicationStatus, locale)}</span>
               </div>
               <div className="mt-3 flex gap-2">
                 <Button
@@ -102,6 +111,9 @@ export function BackendListings() {
           )}
         </article>
       ))}
+      <RecordPagination page={page} limit={resource.data?.limit ?? 20}
+        total={resource.data?.total ?? 0} hasMore={resource.data?.hasMore ?? false}
+        onPageChange={setPage} />
     </div>
   )
 }

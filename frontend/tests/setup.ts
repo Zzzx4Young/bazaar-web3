@@ -2,10 +2,10 @@ import '@testing-library/jest-dom/vitest'
 
 // Mock next/image to render plain <img> in tests (jsdom can't process Next's Image optimizer)
 vi.mock('next/image', () => ({
-  default: ({ src, alt }: { src: string; alt: string }) => {
+  default: ({ src, alt, onError }: { src: string; alt: string; onError?: React.ReactEventHandler<HTMLImageElement> }) => {
     // eslint-disable-next-line @next/next/no-img-element
     const React = require('react')
-    return React.createElement('img', { src, alt })
+    return React.createElement('img', { src, alt, onError })
   }
 }))
 

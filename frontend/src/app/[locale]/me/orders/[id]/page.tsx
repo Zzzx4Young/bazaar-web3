@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Link } from '@/i18n/routing'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -16,20 +16,29 @@ import {
 import { OrderHistory, useOrderHistory } from '@/components/me/order-history'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { useOrderCommand } from '@/hooks/use-order-command'
-import { acceptanceOrderStatus, orderActions, type OrderDetail, type SimulatedBalance } from '@/lib/order-api'
+import { useVisiblePolling } from '@/hooks/use-visible-polling'
+import { orderRefreshIntervalMs } from '@/lib/refresh-policy'
+import { orderActions, type OrderDetail, type SimulatedBalance } from '@/lib/order-api'
+import {
+  transactionActionLabel,
+  transactionConsequence,
+  transactionLabel
+} from '@/lib/transaction-copy'
 import { useAuthStore } from '@/stores/use-auth-store'
 
 export default function OrderDetailPage() {
   const params = useParams<{ id: string }>()
   const tDispute = useTranslations('orderDispute')
   const tReview = useTranslations('orderReview')
+  const locale = useLocale()
   const auth = useAuthStore()
   const resource = useApiResource<OrderDetail>(`/orders/${encodeURIComponent(params.id)}`, {}, true)
   const command = useOrderCommand()
   const history = useOrderHistory(params.id)
   const balances = useApiResource<{ items: SimulatedBalance[] }>('/balances', {}, true)
-  const reloadOrder = resource.reload
   const reloadBalances = balances.reload
+  const reloadHistory = history.reload
+  const previousStatus = useRef<string>()
   const [description, setDescription] = useState('')
   const [rating, setRating] = useState('5')
   const [url, setUrl] = useState('')
@@ -39,13 +48,16 @@ export default function OrderDetailPage() {
   const [returnOutcome, setReturnOutcome] = useState<'not_sent' | 'returned' | 'not_required'>(
     'returned'
   )
+  useVisiblePolling(resource.poll, !!auth.view, orderRefreshIntervalMs)
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      reloadOrder()
+    const status = resource.data?.status
+    if (!status) return
+    if (previousStatus.current && previousStatus.current !== status) {
+      reloadHistory()
       reloadBalances()
-    }, 1000)
-    return () => window.clearInterval(timer)
-  }, [reloadOrder, reloadBalances])
+    }
+    previousStatus.current = status
+  }, [resource.data?.status, reloadBalances, reloadHistory])
   if (resource.loading) return <p role="status">正在加载订单…</p>
   if (resource.error || !resource.data)
     return (
@@ -82,13 +94,18 @@ export default function OrderDetailPage() {
       <div>
         <h1 className="text-2xl font-bold">{order.title}</h1>
         <p className="text-sm text-muted-foreground">
-          <span data-testid="acceptance-order-status">{acceptanceOrderStatus(order.status)}</span>
+          <span data-testid="acceptance-order-status">
+            {transactionLabel(order.status, locale)}
+          </span>
           {' · '}
-          <span>{order.status}</span> · {order.price.amount} {order.price.currency}
+          {order.price.amount} {order.price.currency}
         </p>
       </div>
       {order.checkoutId && (
-        <Link href={`/me/checkouts/${order.checkoutId}`} className="text-sm text-primary hover:underline">
+        <Link
+          href={`/me/checkouts/${order.checkoutId}`}
+          className="text-sm text-primary hover:underline"
+        >
           {tReview('viewCheckout')}
         </Link>
       )}
@@ -187,36 +204,50 @@ export default function OrderDetailPage() {
           </Button>
         </div>
       )}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {actions.map((action) => (
-          <Button
-            key={action}
-            disabled={command.busy || command.uncertain}
-            onClick={() => void act(action)}
-          >
-            {action}
-          </Button>
+          <div key={action} className="max-w-xs space-y-1">
+            <Button disabled={command.busy || command.uncertain} onClick={() => void act(action)}>
+              {transactionActionLabel(action, locale)}
+            </Button>
+            {transactionConsequence(action, locale) && (
+              <p className="text-xs text-muted-foreground">
+                {transactionConsequence(action, locale)}
+              </p>
+            )}
+          </div>
         ))}
       </div>
       {order.status === 'completed' && auth.view?.account.id === order.buyerId && (
         <div className="space-y-2 rounded-lg border p-3">
           <p className="font-medium">{tReview('title')}</p>
           {order.review ? (
-            <p data-testid="order-review">{tReview('submitted', { rating: order.review.rating })}</p>
+            <p data-testid="order-review">
+              {tReview('submitted', { rating: order.review.rating })}
+            </p>
           ) : (
             <div className="flex items-center gap-2">
               <Select value={rating} onValueChange={setRating}>
-                <SelectTrigger aria-label={tReview('rating')} className="w-32"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label={tReview('rating')} className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {[1, 2, 3, 4, 5].map((value) => (
-                    <SelectItem key={value} value={String(value)}>{value}</SelectItem>
+                    <SelectItem key={value} value={String(value)}>
+                      {value}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button disabled={command.busy || command.uncertain} onClick={async () => {
-                if (await command.run(`/orders/${order.id}/review`, { rating: Number(rating) }))
-                  resource.reload()
-              }}>{tReview('submit')}</Button>
+              <Button
+                disabled={command.busy || command.uncertain}
+                onClick={async () => {
+                  if (await command.run(`/orders/${order.id}/review`, { rating: Number(rating) }))
+                    resource.reload()
+                }}
+              >
+                {tReview('submit')}
+              </Button>
             </div>
           )}
         </div>
@@ -225,7 +256,9 @@ export default function OrderDetailPage() {
         <div data-testid="simulated-balance" className="rounded-lg border p-3 text-sm">
           <p className="font-medium">{tDispute('balance')}</p>
           {balances.data.items.map((item) => (
-            <p key={item.currency}>{item.amount} {item.currency}</p>
+            <p key={item.currency}>
+              {item.amount} {item.currency}
+            </p>
           ))}
         </div>
       )}

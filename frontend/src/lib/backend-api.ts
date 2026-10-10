@@ -34,7 +34,12 @@ export interface ListingPage {
   } | null
 }
 export interface AuthView {
-  account: { id: string; loginName: string; displayName: string; role: 'participant' | 'admin' | 'observer' }
+  account: {
+    id: string
+    loginName: string
+    displayName: string
+    role: 'participant' | 'admin' | 'observer'
+  }
   csrfToken: string
 }
 export class BackendError extends Error {
@@ -109,8 +114,8 @@ export function createListing(csrfToken: string, body: unknown) {
     body: JSON.stringify(body)
   })
 }
-export async function backendPost<T>(path: string, body: unknown = {}) {
-  return backendRequest<T>(path, { method: 'POST', body: JSON.stringify(body) })
+export async function backendPost<T>(path: string, body: unknown = {}, signal?: AbortSignal) {
+  return backendRequest<T>(path, { method: 'POST', body: JSON.stringify(body), signal })
 }
 export function toItem(listing: BackendListing): Item {
   return {
@@ -139,8 +144,6 @@ export function toItem(listing: BackendListing): Item {
             !['available', 'unlimited'].includes(listing.availability)
           ? 'locked'
           : 'active',
-    viewCount: 0,
-    favoriteCount: 0,
     createdAt: listing.createdAt,
     updatedAt: listing.updatedAt
   }

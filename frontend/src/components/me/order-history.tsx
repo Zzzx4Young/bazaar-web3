@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useApiResource } from '@/hooks/use-api-resource'
 import type { Delivery, Issue, OrderEvent, Page, Refund, Settlement } from '@/lib/order-api'
+import { transactionLabel } from '@/lib/transaction-copy'
 
 export function useOrderHistory(orderId: string) {
   const deliveries = useApiResource<Page<Delivery>>(`/orders/${orderId}/deliveries`, {}, true)
@@ -11,21 +11,6 @@ export function useOrderHistory(orderId: string) {
   const refunds = useApiResource<Page<Refund>>(`/orders/${orderId}/refunds`, {}, true)
   const settlements = useApiResource<Page<Settlement>>(`/orders/${orderId}/settlements`, {}, true)
   const events = useApiResource<Page<OrderEvent>>(`/orders/${orderId}/events`, {}, true)
-  const reloadDeliveries = deliveries.reload
-  const reloadIssues = issues.reload
-  const reloadRefunds = refunds.reload
-  const reloadSettlements = settlements.reload
-  const reloadEvents = events.reload
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      reloadDeliveries()
-      reloadIssues()
-      reloadRefunds()
-      reloadSettlements()
-      reloadEvents()
-    }, 1000)
-    return () => window.clearInterval(timer)
-  }, [reloadDeliveries, reloadIssues, reloadRefunds, reloadSettlements, reloadEvents])
   return {
     deliveries,
     issues,
@@ -44,6 +29,7 @@ export function useOrderHistory(orderId: string) {
 
 export function OrderHistory({ history }: { history: ReturnType<typeof useOrderHistory> }) {
   const tDispute = useTranslations('orderDispute')
+  const locale = useLocale()
   const error = [
     history.deliveries,
     history.issues,
@@ -86,7 +72,7 @@ export function OrderHistory({ history }: { history: ReturnType<typeof useOrderH
           <h2 className="font-medium">问题记录</h2>
           {history.issues.data.items.map((issue) => (
             <p key={issue.id}>
-              {issue.status} · {issue.description}
+              {transactionLabel(issue.status, locale)} · {issue.description}
             </p>
           ))}
         </section>
@@ -96,8 +82,8 @@ export function OrderHistory({ history }: { history: ReturnType<typeof useOrderH
           <h2 className="font-medium">退款记录</h2>
           {history.refunds.data.items.map((refund) => (
             <p key={refund.id}>
-              {refund.status}
-              {refund.returnOutcome ? ` · ${refund.returnOutcome}` : ''}
+              {transactionLabel(refund.status, locale)}
+              {refund.returnOutcome ? ` · ${transactionLabel(refund.returnOutcome, locale)}` : ''}
               {refund.resolvedBy ? ` · ${tDispute('adminResolved')}` : ''}
             </p>
           ))}
@@ -108,7 +94,7 @@ export function OrderHistory({ history }: { history: ReturnType<typeof useOrderH
           <h2 className="font-medium">模拟结算</h2>
           {history.settlements.data.items.map((settlement) => (
             <p key={settlement.id}>
-              {settlement.operation} · {settlement.price.amount} {settlement.price.currency}
+              {transactionLabel(settlement.operation, locale)} · {settlement.price.amount} {settlement.price.currency}
             </p>
           ))}
         </section>
@@ -118,7 +104,7 @@ export function OrderHistory({ history }: { history: ReturnType<typeof useOrderH
           <h2 className="font-medium">状态历史</h2>
           {history.events.data.items.map((event) => (
             <p key={event.id}>
-              {event.operation} · {event.fromState ?? 'created'} → {event.toState}
+              {transactionLabel(event.operation, locale)} · {transactionLabel(event.fromState, locale)} → {transactionLabel(event.toState, locale)}
               {event.note ? ` · ${event.note}` : ''}
             </p>
           ))}

@@ -3,6 +3,8 @@
 
 import { create } from 'zustand'
 import type { FilterState, SortBy, ItemCategory, PrimaryCategory, Currency, ItemCondition } from '@/types'
+import { marketplaceCategories } from '@/lib/categories'
+import { EXPLORE_PAGE_SIZE } from '@/lib/pagination'
 
 interface FilterStore extends FilterState {
   setCategory: (category?: PrimaryCategory) => void
@@ -19,7 +21,7 @@ interface FilterStore extends FilterState {
 const defaultState: FilterState = {
   sortBy: 'newest',
   page: 1,
-  pageSize: 10,
+  pageSize: EXPLORE_PAGE_SIZE,
   category: undefined,
   itemCategory: undefined,
   keyword: undefined,
@@ -31,9 +33,17 @@ const defaultState: FilterState = {
 
 export const useFilterStore = create<FilterStore>(set => ({
   ...defaultState,
-  setCategory: category => set(state => ({ ...state, category, page: 1 })),
+  setCategory: category => set(state => ({
+    ...state, category, page: 1,
+    itemCategory: category && state.itemCategory &&
+      marketplaceCategories.find((entry) => entry.id === category)?.itemCategory !== state.itemCategory
+      ? undefined : state.itemCategory
+  })),
   setItemCategory: itemCategory => set(state => ({
     ...state, itemCategory, page: 1,
+    category: state.category && itemCategory &&
+      marketplaceCategories.find((entry) => entry.id === state.category)?.itemCategory !== itemCategory
+      ? undefined : state.category,
     condition: itemCategory === 'physical' ? state.condition : undefined
   })),
   setPriceRange: (priceMin, priceMax) => set(state => ({ ...state, priceMin, priceMax, page: 1 })),

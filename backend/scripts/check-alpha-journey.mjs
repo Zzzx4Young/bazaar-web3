@@ -4,6 +4,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { spawn } from 'node:child_process'
 import { chromium } from '../../frontend/node_modules/playwright/index.mjs'
+import ts from 'typescript'
 import { sandbox, connect } from '../tests/helpers/database.mjs'
 import { createApp } from '../dist/app.js'
 import { readConfig } from '../dist/config.js'
@@ -40,6 +41,7 @@ let stage = 'setup'
 let runtimeRoleCreated = false
 let observerRoleCreated = false
 let observeSchemaCreated = false
+let slowReadRequestCount
 
 const waitForText = (page, text) =>
   page.getByText(text, { exact: false }).first().waitFor({ state: 'visible', timeout: 15000 })
@@ -67,7 +69,7 @@ async function publish(page, values) {
   await page.getByRole('button', { name: '立即发布' }).click()
   await waitForText(page, '商品发布成功')
   await page.waitForURL(/\/zh-CN\/listing\/[0-9a-f-]+$/)
-  await page.getByTestId('acceptance-listing-status').getByText('ACTIVE').waitFor()
+  await page.getByTestId('acceptance-listing-status').getByText('在售').waitFor()
   return new URL(page.url()).pathname.split('/').at(-1)
 }
 
@@ -183,6 +185,62 @@ try {
     fullPage: true
   })
 
+  stage = 'home catalog sections show both listing types from the API'
+  await sellerPage.goto(`${origin}/zh-CN`)
+  await sellerPage.getByRole('heading', { name: '💎 数字资产' }).locator('..')
+    .getByText('Alpha E2E Digital Delivery').waitFor({ state: 'visible' })
+  await sellerPage.getByRole('heading', { name: '📦 实物二手' }).locator('..')
+    .getByText('Alpha E2E Inventory Item').waitFor({ state: 'visible' })
+
+  stage = 'favorites page and navigation agree on persisted public listings'
+  await sellerPage.goto(`${origin}/zh-CN/listing/${digitalListingId}`)
+  await sellerPage.getByRole('button', { name: '收藏', exact: true }).click()
+  await sellerPage.getByLabel('1 收藏', { exact: true }).waitFor({ state: 'visible' })
+  await sellerPage.evaluate(() => {
+    const key = 'c2c:user:favorites'
+    const ids = JSON.parse(globalThis.localStorage.getItem(key) ?? '[]')
+    globalThis.localStorage.setItem(key, JSON.stringify([...ids, globalThis.crypto.randomUUID()]))
+  })
+  await sellerPage.goto(`${origin}/zh-CN/favorites`)
+  await sellerPage.getByRole('heading', { name: '我的收藏 (1)', exact: true }).waitFor({ state: 'visible' })
+  await sellerPage.getByLabel('1 收藏', { exact: true }).waitFor({ state: 'visible' })
+  assert.equal(await sellerPage.locator(`a[href="/zh-CN/listing/${digitalListingId}"]`).count(), 1)
+  await sellerPage.screenshot({ path: resolve(resultsDirectory, 'seller-favorites.png'), fullPage: true })
+
+  stage = 'explore reads persisted listings with both price sort directions'
+  await sellerPage.goto(`${origin}/zh-CN/explore`)
+  const searchResponse = sort => sellerPage.waitForResponse(response => {
+    if (!response.url().endsWith('/api/listings/search')) return false
+    const input = response.request().postDataJSON()
+    return input?.keyword === 'Alpha E2E' && input.sort === sort
+  })
+  const newestResponse = searchResponse('newest')
+  await sellerPage.getByLabel('关键词').fill('Alpha E2E')
+  assert.equal((await newestResponse).status(), 200)
+  for (const [sort, ids] of [
+    ['price_asc', [digitalListingId, physicalListingId]],
+    ['price_desc', [physicalListingId, digitalListingId]]
+  ]) {
+    const response = searchResponse(sort)
+    await sellerPage.getByTestId('sort-trigger').click()
+    await sellerPage.getByTestId(`sort-option-${sort}`).click()
+    const result = await response
+    assert.equal(result.status(), 200)
+    const data = await result.json()
+    assert.equal(data.total, 2)
+    assert.deepEqual(data.items.map(item => item.id), ids)
+    await sellerPage.locator(`a[href="/zh-CN/listing/${ids[0]}"]`).waitFor({ state: 'visible' })
+    await sellerPage.waitForFunction(expected => {
+      const actual = Array.from(globalThis.document.querySelectorAll('a[href^="/zh-CN/listing/"]'))
+        .map(link => new URL(link.href).pathname.split('/').at(-1))
+      return JSON.stringify(actual) === JSON.stringify(expected)
+    }, ids)
+    const visibleIds = await sellerPage.locator('a[href^="/zh-CN/listing/"]').evaluateAll(links =>
+      links.map(link => new URL(link.href).pathname.split('/').at(-1)))
+    assert.deepEqual(visibleIds, ids)
+    assert.equal(await sellerPage.getByRole('alert').count(), 0)
+  }
+
   stage = 'buyer login and physical inventory reservation'
   await login(buyerPage, alphaE2EAccounts.buyer, password)
   const beforeInventory = await observerRows(
@@ -219,16 +277,50 @@ try {
   await buyerPage.waitForURL(/\/me\/orders\/[0-9a-f-]+$/)
   const digitalOrderUrl = buyerPage.url()
   const digitalOrderId = new URL(digitalOrderUrl).pathname.split('/').at(-1)
-  await buyerPage.getByRole('button', { name: 'pay' }).click()
-  await buyerPage.getByTestId('acceptance-order-status').getByText('PAID_HELD').waitFor()
+  await buyerPage.getByRole('button', { name: '确认付款' }).click()
+  await buyerPage.getByTestId('acceptance-order-status').getByText('待交付').waitFor()
+
+  stage = 'slow real order read does not overlap periodic or focus refresh'
+  const refreshSource = await readFile(new URL('../../frontend/src/lib/refresh-policy.ts', import.meta.url), 'utf8')
+  const refreshModule = ts.transpileModule(refreshSource, {
+    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 }
+  }).outputText
+  const { orderRefreshIntervalMs } = await import(`data:text/javascript,${encodeURIComponent(refreshModule)}`)
+  const detailPattern = `**/api/orders/${digitalOrderId}`
+  let releaseRead
+  const heldRead = new Promise(resolveRead => { releaseRead = resolveRead })
+  slowReadRequestCount = 0
+  const holdDetail = async route => {
+    slowReadRequestCount++
+    const response = await route.fetch()
+    if (slowReadRequestCount === 1) await heldRead
+    await route.fulfill({ response })
+  }
+  await buyerPage.route(detailPattern, holdDetail)
+  try {
+    const readStarted = buyerPage.waitForRequest(request => request.url().endsWith(`/api/orders/${digitalOrderId}`))
+    await buyerPage.reload()
+    await readStarted
+    await buyerPage.evaluate(() => {
+      for (let index = 0; index < 5; index++) globalThis.window.dispatchEvent(new globalThis.Event('focus'))
+    })
+    // Hold the actual database response beyond one configured polling interval.
+    await new Promise(resolveWait => setTimeout(resolveWait, orderRefreshIntervalMs + 1000))
+    assert.equal(slowReadRequestCount, 1, 'Slow order reads must not overlap or restart')
+    releaseRead()
+    await buyerPage.getByTestId('acceptance-order-status').getByText('待交付').waitFor()
+  } finally {
+    releaseRead()
+    await buyerPage.unroute(detailPattern, holdDetail)
+  }
 
   stage = 'seller private delivery and buyer reveal'
   await sellerPage.goto(digitalOrderUrl)
   await sellerPage.getByLabel('交付链接').fill('https://example.com/alpha-e2e-private')
   await sellerPage.getByLabel('提取码').fill('ALPHA-PRIVATE-2026')
-  await sellerPage.getByRole('button', { name: 'deliver' }).click()
-  await buyerPage.getByTestId('acceptance-order-status').getByText('DELIVERED').waitFor({
-    timeout: 15000
+  await sellerPage.getByRole('button', { name: '提交交付' }).click()
+  await buyerPage.getByTestId('acceptance-order-status').getByText('待验收').waitFor({
+    timeout: 20000
   })
   const privateLink = buyerPage.getByRole('link', { name: '打开交付链接' })
   await privateLink.waitFor({ state: 'visible' })
@@ -241,14 +333,14 @@ try {
 
   stage = 'after-sales issue and refund'
   await buyerPage.getByLabel('问题描述').fill('Private payload did not match the promised version.')
-  await buyerPage.getByRole('button', { name: 'issue' }).click()
-  await buyerPage.getByTestId('acceptance-order-status').getByText('ISSUE').waitFor()
-  await buyerPage.getByRole('button', { name: 'request-refund' }).click()
+  await buyerPage.getByRole('button', { name: '报告问题' }).click()
+  await buyerPage.getByTestId('acceptance-order-status').getByText('争议处理中').waitFor()
+  await buyerPage.getByRole('button', { name: '申请退款' }).click()
   await waitForText(sellerPage, 'Private payload did not match the promised version.')
-  await sellerPage.getByRole('button', { name: 'refund' }).click()
-  await sellerPage.getByTestId('acceptance-order-status').getByText('REFUNDED').waitFor()
-  await buyerPage.getByTestId('acceptance-order-status').getByText('REFUNDED').waitFor({
-    timeout: 15000
+  await sellerPage.getByRole('button', { name: '退款' }).click()
+  await sellerPage.getByTestId('acceptance-order-status').getByText('已退款').waitFor()
+  await buyerPage.getByTestId('acceptance-order-status').getByText('已退款').waitFor({
+    timeout: 20000
   })
   await buyerPage.screenshot({
     path: resolve(resultsDirectory, 'buyer-refunded.png'),
@@ -293,6 +385,7 @@ try {
         physicalListingId,
         digitalListingId,
         digitalOrderId,
+        slowReadRequestCount,
         finalStatus: orders[0].status,
         inventory: reservedInventory[0],
         correlatedRequestIds: events.map((event) => event.request_id)

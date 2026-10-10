@@ -69,8 +69,9 @@ export interface Item {
   media: MediaItem[]
   // 元信息
   status: ItemStatus
-  viewCount: number
-  favoriteCount: number
+  // These metrics are absent until an API supplies measured values.
+  viewCount?: number
+  favoriteCount?: number
   createdAt: string // ISO
   updatedAt: string
 }

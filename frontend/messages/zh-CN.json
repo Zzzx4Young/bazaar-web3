@@ -64,7 +64,7 @@
     "recipient": "收件人",
     "contact": "联系方式",
     "address": "收货地址",
-    "minimum": "一次购买至少需要两件不同商品。",
+    "minimum": "一次购买至少需要 {min} 件不同商品。",
     "error": "下单失败：{error}",
     "retry": "重试原下单请求",
     "checkout": "一起下单"
@@ -75,7 +75,7 @@
     "error": "购买记录加载失败：{error}",
     "title": "本次购买的订单"
   },
-  "commonCart": { "addToCart": "加入购物车" },
+  "commonCart": { "addToCart": "加入购物车", "inCart": "已在购物车", "alreadyInCart": "该商品已在购物车中", "added": "已加入购物车", "full": "购物车最多可放 {max} 件商品" },
   "sellerProfile": {
     "loading": "正在加载卖家资料…",
     "loadError": "卖家资料加载失败：{error}",

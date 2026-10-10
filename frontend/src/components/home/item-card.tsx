@@ -15,21 +15,12 @@ interface ItemCardProps {
   seller?: Seller
 }
 
-/**
- * Mock-data projects: we use placehold.co URLs which look ugly against our
- * actual visual style. When the env var is set (default in this prototype),
- * ItemCard skips the network image and renders our category-themed
- * PlaceholderArt directly. To enable real images again, unset
- * NEXT_PUBLIC_USE_PLACEHOLDER or set it to "0".
- */
-const USE_PLACEHOLDER = process.env.NEXT_PUBLIC_USE_PLACEHOLDER !== '0'
-
 export function ItemCard({ item, seller }: ItemCardProps) {
   const cover = item.media[0]
-  const [imgFailed, setImgFailed] = useState(false)
+  const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null)
 
   // No cover media at all → jump straight to placeholder.
-  const showPlaceholder = USE_PLACEHOLDER || !cover || imgFailed
+  const showPlaceholder = !cover || failedCoverUrl === cover.url
 
   return (
     <Link href={`/listing/${item.id}`} className="block h-full transition hover:opacity-90">
@@ -47,7 +38,7 @@ export function ItemCard({ item, seller }: ItemCardProps) {
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
               className="object-cover"
-              onError={() => setImgFailed(true)}
+              onError={() => setFailedCoverUrl(cover!.url)}
               unoptimized
             />
           )}

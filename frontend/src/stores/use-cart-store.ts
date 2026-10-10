@@ -1,5 +1,6 @@
 'use client'
 
+import { cartMaxItems } from '@/lib/cart-policy'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import type { Item } from '@/types'
@@ -27,7 +28,7 @@ export const useCartStore = create<CartState>()(persist((set) => ({
   add: (ownerId, item) => set((state) => {
     if (!item.backendVersion || item.status !== 'active') return state
     const items = state.ownerId === ownerId ? state.items : []
-    if (items.some((line) => line.listingId === item.id) || items.length >= 5) return state
+    if (items.some((line) => line.listingId === item.id) || items.length >= cartMaxItems) return state
     return {
       ownerId,
       items: [...items, {

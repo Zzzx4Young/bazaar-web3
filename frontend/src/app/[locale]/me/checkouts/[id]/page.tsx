@@ -1,7 +1,8 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { transactionLabel } from '@/lib/transaction-copy'
 import { Link } from '@/i18n/routing'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { useAuthStore } from '@/stores/use-auth-store'
@@ -22,6 +23,7 @@ interface CheckoutDetail {
 export default function CheckoutDetailPage() {
   const { id } = useParams<{ id: string }>()
   const t = useTranslations('checkoutDetail')
+  const locale = useLocale()
   const account = useAuthStore((state) => state.view?.account)
   const resource = useApiResource<CheckoutDetail>(`/checkouts/${encodeURIComponent(id)}`, {}, true)
   if (!account) return <p role="alert">{t('signIn')}</p>
@@ -38,7 +40,7 @@ export default function CheckoutDetailPage() {
             {item.title}
           </Link>
           <p className="text-sm text-muted-foreground">
-            {item.price.amount} {item.price.currency} · {item.status}
+            {item.price.amount} {item.price.currency} · {transactionLabel(item.status, locale)}
           </p>
         </article>
       ))}

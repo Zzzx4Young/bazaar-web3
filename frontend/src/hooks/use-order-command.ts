@@ -4,83 +4,138 @@ import { BackendError, backendErrorMessage } from '@/lib/backend-api'
 import { authenticatedPost } from '@/lib/authenticated-api'
 import { useAuthStore } from '@/stores/use-auth-store'
 
-// The UI freezes both payload and key after an unknown outcome. Success callbacks
-// (including refresh failures) must never turn a committed action into a new request.
+type PendingCommand = { path: string; body: unknown; key: string }
+type CommandOwner = { accountId: string | undefined; pending: PendingCommand | null; busy: boolean }
+
+function storageKey(accountId: string) {
+  return `bazaar:alpha-pending-command:${accountId}`
+}
+
+function removeSaved(accountId: string) {
+  try {
+    sessionStorage.removeItem(storageKey(accountId))
+  } catch {
+    // Storage availability must not change the known HTTP outcome.
+  }
+}
+
+function restoreSaved(accountId: string): PendingCommand | null {
+  try {
+    const saved = sessionStorage.getItem(storageKey(accountId))
+    if (!saved) return null
+    const value: unknown = JSON.parse(saved)
+    if (
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      'path' in value &&
+      typeof value.path === 'string' &&
+      value.path.startsWith('/') &&
+      'key' in value &&
+      typeof value.key === 'string' &&
+      value.key.length > 0 &&
+      'body' in value
+    )
+      return { path: value.path, body: value.body, key: value.key }
+  } catch {
+    // A missing or invalid cache cannot supply a command to another account.
+  }
+  removeSaved(accountId)
+  return null
+}
+
+// Freeze payload and key after an unknown outcome. Every account transition
+// creates a new owner, so even A -> B -> A cannot accept an obsolete completion.
 export function useOrderCommand() {
   const accountId = useAuthStore((state) => state.view?.account.id)
-  const storageKey = `bazaar:alpha-pending-command:${accountId ?? 'anonymous'}`
-  const pending = useRef<{ path: string; body: unknown; key: string } | null>(null)
-  const busyRef = useRef(false)
+  const ownerRef = useRef<CommandOwner>({ accountId, pending: null, busy: false })
   const [busy, setBusy] = useState(false)
   const [uncertain, setUncertain] = useState(false)
   const [error, setError] = useState<string>()
   const [retryPath, setRetryPath] = useState<string>()
   useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem(storageKey)
-      if (!saved) return
-      pending.current = JSON.parse(saved)
-      setRetryPath(pending.current?.path)
-      setUncertain(true)
-    } catch {
-      sessionStorage.removeItem(storageKey)
+    function resetOwner(id: string | undefined) {
+      const pending = id ? restoreSaved(id) : null
+      ownerRef.current = { accountId: id, pending, busy: false }
+      setBusy(false)
+      setError(undefined)
+      setRetryPath(pending?.path)
+      setUncertain(pending !== null)
     }
-  }, [storageKey])
-  async function run<T extends object = { orderId: string }>(path: string, body: unknown): Promise<T | undefined> {
-    if (busyRef.current) return
+    resetOwner(useAuthStore.getState().view?.account.id)
+    const unsubscribe = useAuthStore.subscribe((state, previous) => {
+      const id = state.view?.account.id
+      if (id !== previous.view?.account.id) resetOwner(id)
+    })
+    return () => {
+      unsubscribe()
+      ownerRef.current = { accountId: undefined, pending: null, busy: false }
+    }
+  }, [])
+
+  async function run<T extends object = { orderId: string }>(
+    path: string,
+    body: unknown
+  ): Promise<T | undefined> {
+    const owner = ownerRef.current
+    if (
+      !accountId ||
+      owner.accountId !== accountId ||
+      useAuthStore.getState().view?.account.id !== accountId ||
+      owner.busy
+    )
+      return
+    const isCurrent = () =>
+      ownerRef.current === owner && useAuthStore.getState().view?.account.id === accountId
     const frozenBody = JSON.parse(JSON.stringify(body))
     if (
-      pending.current &&
-      (pending.current.path !== path ||
-        JSON.stringify(pending.current.body) !== JSON.stringify(frozenBody))
+      owner.pending &&
+      (owner.pending.path !== path ||
+        JSON.stringify(owner.pending.body) !== JSON.stringify(frozenBody))
     ) {
       setError('RETRY_PENDING_COMMAND')
       return
     }
-    busyRef.current = true
+    owner.busy = true
     setBusy(true)
     setError(undefined)
-    const command = pending.current ?? {
-      path,
-      body: frozenBody,
-      key: crypto.randomUUID()
-    }
-    pending.current = command
+    const command = owner.pending ?? { path, body: frozenBody, key: crypto.randomUUID() }
+    owner.pending = command
     try {
-      sessionStorage.setItem(storageKey, JSON.stringify(command))
+      sessionStorage.setItem(storageKey(accountId), JSON.stringify(command))
     } catch {
       // The in-memory command still protects retries during this page lifetime.
     }
     try {
-      const result = await authenticatedPost<T>(
-        command.path,
-        command.body,
-        command.key
-      )
-      pending.current = null
-      sessionStorage.removeItem(storageKey)
+      const result = await authenticatedPost<T>(command.path, command.body, command.key)
+      if (!isCurrent()) return
+      owner.pending = null
+      removeSaved(accountId)
       setRetryPath(undefined)
       setUncertain(false)
       return result
     } catch (failure) {
+      if (!isCurrent()) return
       const unknown = !(
         failure instanceof BackendError &&
         failure.status >= 400 &&
         failure.status < 500
       )
       if (!unknown) {
-        pending.current = null
-        sessionStorage.removeItem(storageKey)
+        owner.pending = null
+        removeSaved(accountId)
         setRetryPath(undefined)
       } else setRetryPath(command.path)
       setUncertain(unknown)
       setError(backendErrorMessage(failure))
     } finally {
-      busyRef.current = false
-      setBusy(false)
+      owner.busy = false
+      if (isCurrent()) setBusy(false)
     }
   }
-  const retry = <T extends object = { orderId: string }>() =>
-    pending.current ? run<T>(pending.current.path, pending.current.body) : Promise.resolve(undefined)
+  const retry = <T extends object = { orderId: string }>() => {
+    const pending = ownerRef.current.pending
+    return pending ? run<T>(pending.path, pending.body) : Promise.resolve(undefined)
+  }
   return { run, retry, busy, uncertain, error, retryPath }
 }

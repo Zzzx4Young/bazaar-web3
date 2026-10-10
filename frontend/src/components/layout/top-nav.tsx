@@ -17,6 +17,7 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { useAuthStore } from '@/stores/use-auth-store'
+import { getDevLoginCredentials } from '@/lib/dev-login'
 
 export function TopNav() {
   const t = useTranslations('nav')
@@ -81,7 +82,18 @@ export function TopNav() {
               {auth.view?.account.displayName} · {t('logout')}
             </Button>
           ) : (
-            <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const credentials = getDevLoginCredentials()
+                if (credentials) {
+                  setLoginName(credentials.loginName)
+                  setPassword(credentials.password)
+                }
+                setOpen(true)
+              }}
+            >
               {t('login')}
             </Button>
           )}

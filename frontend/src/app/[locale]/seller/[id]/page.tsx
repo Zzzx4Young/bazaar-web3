@@ -1,10 +1,15 @@
 'use client'
 
+import { useEffect } from 'react'
+
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { ItemGrid } from '@/components/home/item-grid'
 import { useBackendListings } from '@/hooks/use-backend-listings'
 import { useApiResource } from '@/hooks/use-api-resource'
+import { useStoredPage } from '@/hooks/use-stored-page'
+import { RecordPagination } from '@/components/ui/record-pagination'
+import { PUBLIC_LISTINGS_PAGE_SIZE } from '@/lib/pagination'
 import { useTranslations } from 'next-intl'
 
 interface SellerProfile {
@@ -15,8 +20,19 @@ interface SellerProfile {
 
 export default function SellerPage({ params }: { params: { id: string } }) {
   const t = useTranslations('sellerProfile')
-  const backend = useBackendListings(new URLSearchParams({ sort: 'newest', limit: '50', sellerId: params.id }))
+  const [page, setPage] = useStoredPage(`bazaar:seller:${params.id}`)
+  const backend = useBackendListings(new URLSearchParams({
+    sort: 'newest',
+    limit: String(PUBLIC_LISTINGS_PAGE_SIZE),
+    sellerId: params.id,
+    page: String(page)
+  }))
   const profile = useApiResource<SellerProfile>(`/sellers/${encodeURIComponent(params.id)}/profile`)
+  useEffect(() => {
+    if (backend.loading || backend.error) return
+    const lastPage = Math.max(1, Math.ceil(backend.total / PUBLIC_LISTINGS_PAGE_SIZE))
+    if (page > lastPage) setPage(lastPage)
+  }, [backend.loading, backend.error, backend.total, page, setPage])
   if (backend.loading || profile.loading) return <p role="status">{t('loading')}</p>
   if (backend.error || profile.error)
     return (
@@ -60,6 +76,15 @@ export default function SellerPage({ params }: { params: { id: string } }) {
         </CardContent>
       </Card>
       <ItemGrid items={sellerItems} title={t('listings')} />
+      {backend.total > PUBLIC_LISTINGS_PAGE_SIZE && (
+        <RecordPagination
+          page={page}
+          limit={PUBLIC_LISTINGS_PAGE_SIZE}
+          total={backend.total}
+          hasMore={backend.hasMore}
+          onPageChange={setPage}
+        />
+      )}
     </div>
   )
 }

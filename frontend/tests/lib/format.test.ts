@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatPrice, fiatEstimate, formatDate } from '@/lib/format'
+import { formatPrice, formatDate } from '@/lib/format'
 
 describe('formatPrice', () => {
   it('formats CNY with symbol prefix', () => {
@@ -30,24 +30,6 @@ describe('formatPrice', () => {
 
   it('respects maximumFractionDigits for fiat', () => {
     expect(formatPrice(100.456, 'CNY')).toMatch(/¥100\.46/)
-  })
-})
-
-describe('fiatEstimate', () => {
-  it('estimates CNY at 0.14 USD', () => {
-    expect(fiatEstimate(1000, 'CNY')).toBe(140)
-  })
-
-  it('estimates USDT at 1 USD', () => {
-    expect(fiatEstimate(100, 'USDT')).toBe(100)
-  })
-
-  it('estimates ETH at 3400 USD', () => {
-    expect(fiatEstimate(1, 'ETH')).toBe(3400)
-  })
-
-  it('rounds to integer', () => {
-    expect(fiatEstimate(7.7, 'CNY')).toBe(1)
   })
 })
 

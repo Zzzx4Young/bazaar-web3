@@ -2,6 +2,7 @@ export interface Page<T> {
   items: T[]
   page: number
   limit: number
+  total: number
   hasMore: boolean
 }
 export interface Money {
@@ -95,12 +96,6 @@ export interface SimulatedBalance {
   currency: string
   amount: string
   mode: 'simulated'
-}
-
-export function acceptanceOrderStatus(status: OrderDetail['status']) {
-  if (status === 'pending_delivery') return 'PAID_HELD'
-  if (status === 'pending_acceptance') return 'DELIVERED'
-  return status.toUpperCase()
 }
 
 export function orderActions(order: OrderDetail, accountId: string): OrderAction[] {

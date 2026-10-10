@@ -1,5 +1,6 @@
 'use client'
 
+import { cartMinItems, cartMaxItems } from '@/lib/cart-policy'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, useRouter } from '@/i18n/routing'
@@ -25,7 +26,7 @@ export default function CartPage() {
   const items = cart.ownerId === account?.id ? cart.items : []
   const hasPhysical = items.some((item) => item.type === 'physical')
   const checkout = async () => {
-    if (!account || items.length < 2) return
+    if (!account || items.length < cartMinItems || items.length > cartMaxItems) return
     const result = await command.run<CheckoutResult>('/checkouts', {
       items: items.map((item) => ({
         listingId: item.listingId,
@@ -68,7 +69,7 @@ export default function CartPage() {
               ))}
             </div>
           )}
-          {items.length === 1 && <p className="text-sm text-muted-foreground">{t('minimum')}</p>}
+          {items.length > 0 && items.length < cartMinItems && <p className="text-sm text-muted-foreground">{t('minimum', { min: cartMinItems })}</p>}
           {command.error && <p role="alert">{t('error', { error: command.error })}</p>}
           {command.uncertain && (
             <Button variant="outline" disabled={command.busy} onClick={async () => {
@@ -79,7 +80,7 @@ export default function CartPage() {
               }
             }}>{t('retry')}</Button>
           )}
-          <Button disabled={items.length < 2 || command.busy || command.uncertain ||
+          <Button disabled={items.length < cartMinItems || items.length > cartMaxItems || command.busy || command.uncertain ||
             (hasPhysical && Object.values(shipping).some((value) => !value.trim()))}
             onClick={() => void checkout()}>{t('checkout')}</Button>
         </>

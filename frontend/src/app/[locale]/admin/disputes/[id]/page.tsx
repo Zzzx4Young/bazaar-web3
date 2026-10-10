@@ -1,7 +1,8 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { transactionConsequence, transactionLabel } from '@/lib/transaction-copy'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useApiResource } from '@/hooks/use-api-resource'
@@ -23,6 +24,7 @@ interface DisputeDetail {
 export default function AdminDisputeDetailPage() {
   const { id } = useParams<{ id: string }>()
   const t = useTranslations('adminDisputes')
+  const locale = useLocale()
   const role = useAuthStore((state) => state.view?.account.role)
   const dispute = useApiResource<DisputeDetail>(`/admin/disputes/${encodeURIComponent(id)}`, {}, true)
   const command = useOrderCommand()
@@ -41,7 +43,7 @@ export default function AdminDisputeDetailPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <h1 className="break-words text-2xl font-bold">{item.title}</h1>
-      <p data-testid="admin-dispute-status">{item.status} · {item.price.amount} {item.price.currency}</p>
+      <p data-testid="admin-dispute-status">{transactionLabel(item.status, locale)} · {item.price.amount} {item.price.currency}</p>
       <section className="rounded-lg border p-4">
         <h2 className="font-medium">{t('buyerIssue')}</h2>
         <p className="break-words">{item.issue ?? t('noIssue')}</p>
@@ -70,6 +72,8 @@ export default function AdminDisputeDetailPage() {
               {t('release')}
             </Button>
           </div>
+          <p className="text-sm text-muted-foreground">{transactionConsequence('refund', locale)}</p>
+          <p className="text-sm text-muted-foreground">{transactionConsequence('release', locale)}</p>
         </div>
       )}
       {command.error && <p role="alert">{t('actionError', { error: command.error })}</p>}

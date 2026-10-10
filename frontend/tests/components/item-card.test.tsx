@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { ItemCard } from '@/components/home/item-card'
 import type { Item, Seller } from '@/types'
 
@@ -31,6 +31,18 @@ const baseSeller: Seller = {
 }
 
 describe('ItemCard', () => {
+  it('displays supplied media and falls back only for missing or failed images', () => {
+    const { rerender } = render(<ItemCard item={baseItem} />)
+    expect(screen.getByRole('img', { name: 'iPhone' })).toHaveAttribute('src', baseItem.media[0]!.url)
+    expect(screen.queryByTestId('placeholder-art')).not.toBeInTheDocument()
+    fireEvent.error(screen.getByRole('img', { name: 'iPhone' }))
+    expect(screen.getByTestId('placeholder-art')).toBeInTheDocument()
+    const replacement = { ...baseItem, media: [{ type: 'image' as const, url: 'https://placehold.co/new.png', alt: 'Replacement' }] }
+    rerender(<ItemCard item={replacement} />)
+    expect(screen.getByRole('img', { name: 'Replacement' })).toHaveAttribute('src', replacement.media[0]!.url)
+    rerender(<ItemCard item={{ ...baseItem, media: [] }} />)
+    expect(screen.getByTestId('placeholder-art')).toBeInTheDocument()
+  })
   it('renders the item title', () => {
     render(<ItemCard item={baseItem} />)
     expect(screen.getByText('iPhone 15 Pro 99新')).toBeInTheDocument()
