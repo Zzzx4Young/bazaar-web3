@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { DatabaseService } from '../dist/database/database.service.js'
+import { pendingPaymentAgeMs } from '../dist/orders/order-expiry-policy.js'
 import { assertLoopbackDatabaseUrl } from './v2-seed.mjs'
 
 const url = process.env.DATABASE_URL ?? readFileSync(process.env.DATABASE_URL_FILE, 'utf8').trim()
 assertLoopbackDatabaseUrl(url)
 const apply = process.argv.includes('--apply')
-const before = new Date(Date.now() - 30 * 60 * 1000)
+const before = new Date(Date.now() - pendingPaymentAgeMs)
 const db = new DatabaseService(url)
 
 function isLegacyUnreserved(order) {

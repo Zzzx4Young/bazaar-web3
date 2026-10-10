@@ -3722,7 +3722,7 @@
         "operationId": "createCheckout",
         "summary": "Atomically reserve two to five distinct listings as one cart checkout",
         "security": [{ "session": [], "csrf": [] }],
-        "parameters": [{ "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string", "minLength": 1, "maxLength": 100 } }],
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }],
         "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CheckoutCreate" } } } },
         "responses": {
           "200": { "description": "Atomic cart checkout created or replayed", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CheckoutCreateResult" } } } },
@@ -4265,7 +4265,7 @@
         "properties": {
           "loginName": {
             "type": "string",
-            "minLength": 1,
+            "minLength": 3,
             "maxLength": 100
           },
           "password": {
@@ -5546,7 +5546,7 @@
           "currency": { "$ref": "#/components/schemas/Currency" },
           "keyword": { "type": "string", "minLength": 1, "maxLength": 100 },
           "sort": { "type": "string", "enum": ["newest", "price_asc", "price_desc"] },
-          "quoteId": { "type": "string", "format": "uuid", "description": "Required for later price-sorted pages; expires after five minutes" },
+          "quoteId": { "type": "string", "format": "uuid", "description": "Required for later price-sorted pages; valid until the snapshot expiresAt (one-hour cache lifetime)" },
           "sellerId": { "type": "string", "format": "uuid" }
         }
       },

@@ -1,5 +1,6 @@
 import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
 import { DomainError } from '../common/domain-error.js'
+import { credentialInputPolicy } from './auth-policy.js'
 
 const options = { N: 131072, r: 8, p: 1, maxmem: 256 * 1024 * 1024 }
 const derive = (password: string, salt: Buffer) =>
@@ -12,9 +13,9 @@ export const dummyHash = `${prefix}$${'00'.repeat(16)}$${'00'.repeat(64)}`
 export function validatePassword(password: string) {
   if (
     typeof password !== 'string' ||
-    [...password].length < 15 ||
-    [...password].length > 128 ||
-    Buffer.byteLength(password) > 512
+    [...password].length < credentialInputPolicy.passwordMinLength ||
+    [...password].length > credentialInputPolicy.passwordMaxLength ||
+    Buffer.byteLength(password) > credentialInputPolicy.passwordMaxBytes
   )
     throw new DomainError('INVALID_INPUT')
 }
@@ -24,7 +25,7 @@ export function normalizeLogin(value: string) {
   const login = value.trim().toLowerCase()
   const handle = /^[a-z0-9][a-z0-9_-]{2,63}$/
   const email = /^[a-z0-9][a-z0-9._+-]{0,63}@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/
-  if (login.length > 100 || (!handle.test(login) && !email.test(login)))
+  if (login.length > credentialInputPolicy.loginMaxLength || (!handle.test(login) && !email.test(login)))
     throw new DomainError('INVALID_INPUT')
   return login
 }

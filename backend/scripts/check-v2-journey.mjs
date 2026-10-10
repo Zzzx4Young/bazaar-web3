@@ -70,7 +70,7 @@ try {
   db = await sandbox(base)
   admin = await connect(base)
   const password = `V2-E2E-${randomUUID()}`
-  const seeded = await seedV2(db.client, { password, seed: 'v2-e2e' })
+  const seeded = await seedV2(db.client, { password, seed: 'v2-e2e', fixtureRates: true })
   assert.equal(seeded.createdListings, 200)
   assert.equal(seeded.createdOrders, 60)
   const plan = buildV2SeedPlan({ seed: 'v2-e2e' })

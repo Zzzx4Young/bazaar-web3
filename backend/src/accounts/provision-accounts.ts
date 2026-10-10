@@ -1,6 +1,7 @@
 import { type PrismaClient } from '../generated/prisma/client.js'
 import { hashPassword, normalizeLogin } from '../auth/password.js'
 import { DomainError } from '../common/domain-error.js'
+import { accountProvisionPolicy } from './account-policy.js'
 
 interface SeedAccount {
   loginName: string
@@ -9,7 +10,7 @@ interface SeedAccount {
 }
 
 export async function provisionAccounts(client: PrismaClient, input: unknown) {
-  if (!Array.isArray(input) || input.length < 1 || input.length > 50)
+  if (!Array.isArray(input) || input.length < 1 || input.length > accountProvisionPolicy.maxBatchSize)
     throw new DomainError('INVALID_INPUT')
   const accounts: SeedAccount[] = []
   for (const item of input) {
@@ -19,7 +20,7 @@ export async function provisionAccounts(client: PrismaClient, input: unknown) {
       Object.keys(item).sort().join(',') !== 'displayName,loginName,password' ||
       typeof item.displayName !== 'string' ||
       !item.displayName.trim() ||
-      [...item.displayName].length > 80
+      [...item.displayName].length > accountProvisionPolicy.displayNameMaxLength
     )
       throw new DomainError('INVALID_INPUT')
     accounts.push({
@@ -39,7 +40,7 @@ export async function provisionAccounts(client: PrismaClient, input: unknown) {
         await tx.account.create({ data: { ...account, credential: { create: { passwordHash } } } })
       }
     },
-    { timeout: 10000 }
+    { timeout: accountProvisionPolicy.transactionTimeoutMs }
   )
   return prepared.length
 }

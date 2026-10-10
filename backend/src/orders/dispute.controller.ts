@@ -5,6 +5,7 @@ import { paginationPolicy } from '../common/pagination-policy.js'
 import { idInput, objectInput, positiveInteger } from '../common/input.js'
 import { DatabaseService } from '../database/database.service.js'
 import { OrderCommands } from './order-commands.js'
+import { idempotencyKey } from './idempotency-key.js'
 
 @Controller('admin/disputes')
 export class DisputeController {
@@ -96,8 +97,7 @@ export class DisputeController {
     @Body() body: unknown
   ) {
     this.requireAdmin(request)
-    if (typeof key !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(key))
-      throw new DomainError('INVALID_INPUT')
+    const validKey = idempotencyKey(key)
     const input = objectInput(body, ['outcome', 'returnOutcome'], ['outcome'])
     if (input.outcome !== 'refund' && input.outcome !== 'release')
       throw new DomainError('INVALID_INPUT')
@@ -109,7 +109,7 @@ export class DisputeController {
     return {
       orderId: await this.commands.resolveDispute(
         request.auth.account.id,
-        key,
+        validKey,
         idInput(id),
         {
           outcome: input.outcome,

@@ -4,7 +4,8 @@ import {
   buildV2SeedPlan,
   V2_LISTING_COUNT,
   V2_ORDER_COUNT,
-  assertLoopbackDatabaseUrl
+  assertLoopbackDatabaseUrl,
+  seedV2Rates
 } from '../scripts/v2-seed.mjs'
 
 test('V2 seed plan covers dense listings, orders, currencies, and edge states', () => {
@@ -47,6 +48,18 @@ test('V2 seed plan covers dense listings, orders, currencies, and edge states', 
     'pending_payment',
     'refunded'
   ])
+})
+
+test('ordinary development seeds never publish deterministic rate snapshots', async () => {
+  const writes = []
+  const client = { rateSnapshot: { create: async ({ data }) => { writes.push(data) } } }
+  await seedV2Rates(client)
+  assert.equal(writes.length, 0)
+  await seedV2Rates(client, { fixtureRates: true })
+  assert.equal(writes.length, 1)
+  assert.equal(writes[0].provider, 'V2 deterministic stress rates')
+  const { rateSnapshotTtlMs } = await import('../dist/pricing/rates-policy.js')
+  assert.equal(writes[0].expiresAt - writes[0].fetchedAt, rateSnapshotTtlMs)
 })
 
 test('V2 seed only accepts loopback PostgreSQL targets', () => {

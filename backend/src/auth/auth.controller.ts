@@ -4,10 +4,16 @@ import { type FastifyReply } from 'fastify'
 import { AuthService } from './auth.service.js'
 import { NoCsrf, Public, type AuthRequest } from './auth.guard.js'
 import { DomainError } from '../common/domain-error.js'
+import { credentialInputPolicy } from './auth-policy.js'
 
 class LoginInput {
-  @IsString() @Length(3, 100) loginName!: string
-  @IsString() @Length(15, 128) password!: string
+  @IsString()
+  @Length(credentialInputPolicy.loginMinLength, credentialInputPolicy.loginMaxLength)
+  loginName!: string
+
+  @IsString()
+  @Length(credentialInputPolicy.passwordMinLength, credentialInputPolicy.passwordMaxLength)
+  password!: string
 }
 
 @Controller('auth')

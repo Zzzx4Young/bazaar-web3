@@ -9,6 +9,7 @@ import { RatesService } from '../pricing/rates.service.js'
 import { ListingCommands } from './listing-commands.js'
 import { categoryInput } from './categories.js'
 import { favoritesMaxIds } from './favorites-policy.js'
+import { listingTextPolicy } from './listing-policy.js'
 
 const include = {
   listingSeller: { select: { id: true, displayName: true } },
@@ -134,13 +135,13 @@ export class ListingService {
     const data = {
       sellerId: actorId,
       type,
-      title: textInput(input.title, 100),
-      description: textInput(input.description, 5000),
+      title: textInput(input.title, listingTextPolicy.titleMaxLength),
+      description: textInput(input.description, listingTextPolicy.descriptionMaxLength),
       category: categoryInput(input.category, type),
       priceAmount: priceInput(price.amount, currency),
       currency,
-      licenseDescription: type === 'digital' ? textInput(input.licenseDescription, 2000) : null,
-      contentVersion: type === 'digital' ? textInput(input.contentVersion, 100) : null
+      licenseDescription: type === 'digital' ? textInput(input.licenseDescription, listingTextPolicy.licenseDescriptionMaxLength) : null,
+      contentVersion: type === 'digital' ? textInput(input.contentVersion, listingTextPolicy.contentVersionMaxLength) : null
     }
     if (type === 'physical' && ('licenseDescription' in input || 'contentVersion' in input))
       throw new DomainError('INVALID_INPUT')
@@ -174,7 +175,7 @@ export class ListingService {
       priceAmount?: string
       publicationStatus?: 'published' | 'withdrawn'
     } = {}
-    if ('title' in input) patch.title = textInput(input.title, 100)
+    if ('title' in input) patch.title = textInput(input.title, listingTextPolicy.titleMaxLength)
     if ('priceAmount' in input)
       patch.priceAmount = priceInput(input.priceAmount, currencyInput(listing.currency)).toFixed()
     if ('publicationStatus' in input) {
@@ -246,7 +247,7 @@ export class ListingService {
     if (input.currency !== undefined)
       clauses.push(Prisma.sql`l."currency" = ${currencyInput(input.currency)}`)
     if (input.keyword !== undefined) {
-      const keyword = textInput(input.keyword, 100)
+      const keyword = textInput(input.keyword, listingTextPolicy.keywordMaxLength)
       clauses.push(
         Prisma.sql`(l."title" ILIKE ${`%${keyword}%`} OR l."description" ILIKE ${`%${keyword}%`})`
       )

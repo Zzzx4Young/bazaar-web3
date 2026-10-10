@@ -21,70 +21,12 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { marketplaceCategories } from '@/lib/categories'
+import { publishSchema } from '@/lib/publish-schema'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { createListing } from '@/lib/backend-api'
 import type { ItemCategory, Currency } from '@/types'
 
-const schema = z
-  .object({
-    title: z.string().min(3, '标题至少 3 个字符').max(80, '标题最长 80 字符'),
-    description: z.string().min(10, '描述至少 10 个字符').max(2000, '描述最长 2000 字符'),
-    category: z.enum(['physical', 'digital']),
-    primaryCategory: z.enum([
-      'electronics',
-      'digital_assets',
-      'software_source',
-      'game_items',
-      'secondhand_fashion'
-    ]),
-    priceAmount: z
-      .string()
-      .trim()
-      .regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/, '请输入不使用指数格式的正数')
-      .refine((value) => /[1-9]/.test(value), '价格必须大于 0'),
-    priceCurrency: z.enum([
-      'USD',
-      'EUR',
-      'GBP',
-      'JPY',
-      'CNY',
-      'CAD',
-      'AUD',
-      'CHF',
-      'HKD',
-      'SGD',
-      'KRW',
-      'INR',
-      'AED',
-      'BRL',
-      'BTC',
-      'ETH',
-      'USDT',
-      'USDC',
-      'SOL'
-    ]),
-    // 数字字段
-    licenseDescription: z.string().optional(),
-    contentVersion: z.string().optional()
-  })
-  .superRefine((data, ctx) => {
-    const issue = (path: string, message: string) =>
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message })
-    if (
-      marketplaceCategories.find((category) => category.id === data.primaryCategory)
-        ?.itemCategory !== data.category
-    ) {
-      issue('primaryCategory', '请选择与商品类型匹配的分类')
-    }
-    if (data.category === 'digital') {
-      if (!data.licenseDescription || data.licenseDescription.trim().length < 3)
-        issue('licenseDescription', '请填写授权说明（至少 3 个字符）')
-      if (!data.contentVersion || data.contentVersion.trim().length < 1)
-        issue('contentVersion', '请填写内容版本')
-    }
-  })
-
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<typeof publishSchema>
 
 export function PublishForm() {
   const router = useRouter()
@@ -99,7 +41,7 @@ export function PublishForm() {
     setValue,
     formState: { errors }
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(publishSchema),
     defaultValues: {
       category: 'physical',
       primaryCategory: 'electronics',

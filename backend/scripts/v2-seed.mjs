@@ -168,7 +168,17 @@ function accountInput(account, password) {
   return { loginName: account.loginName, displayName: account.displayName, password }
 }
 
-export async function seedV2(client, { password = 'V2-Local-Test-Password-2026', seed = V2_SEED_PREFIX } = {}) {
+export async function seedV2Rates(client, { fixtureRates = false } = {}) {
+  if (!fixtureRates) return
+  const { rateSnapshotTtlMs } = await import('../dist/pricing/rates-policy.js')
+  const fetchedAt = new Date()
+  await client.rateSnapshot.create({ data: {
+    provider: 'V2 deterministic stress rates', rates: usdFactors, fetchedAt,
+    expiresAt: new Date(fetchedAt.getTime() + rateSnapshotTtlMs)
+  } })
+}
+
+export async function seedV2(client, { password = 'V2-Local-Test-Password-2026', seed = V2_SEED_PREFIX, fixtureRates = false } = {}) {
   const plan = buildV2SeedPlan({ seed })
   const { provisionAccounts } = await import('../dist/accounts/provision-accounts.js')
   const createdAccounts = await provisionAccounts(client, plan.accounts.map((account) => accountInput(account, password)))
@@ -180,14 +190,7 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
     assert.ok(account)
     await client.account.update({ where: { id: account.id }, data: { role } })
   }
-  await client.rateSnapshot.create({
-    data: {
-      provider: 'V2 deterministic stress rates',
-      rates: usdFactors,
-      fetchedAt: new Date(),
-      expiresAt: new Date(Date.now() + 60 * 60 * 1000)
-    }
-  })
+  await seedV2Rates(client, { fixtureRates })
   const listingByKey = new Map()
   const checkoutByOrder = new Map()
   for (const spec of plan.cartCheckouts) {

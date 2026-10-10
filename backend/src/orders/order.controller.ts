@@ -1,4 +1,6 @@
 import { cartMinItems, cartMaxItems } from './cart-policy.js'
+import { orderTextPolicy } from './order-text-policy.js'
+import { idempotencyKey } from './idempotency-key.js'
 import {
   Body,
   Controller,
@@ -29,12 +31,6 @@ const actions = new Map<string, OrderAction>([
   ['restore', 'restore']
 ])
 
-function idempotencyKey(value: string | string[] | undefined) {
-  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(value))
-    throw new DomainError('INVALID_INPUT')
-  return value
-}
-
 function queryInteger(value: unknown, fallback: number, max: number) {
   if (value === undefined) return fallback
   if (typeof value !== 'string' || !/^[1-9][0-9]*$/.test(value))
@@ -52,9 +48,9 @@ function createOrderInput(body: unknown) {
     listingId: idInput(input.listingId),
     version: positiveInteger(input.version),
     shipping: shipping ? {
-      recipient: textInput(shipping.recipient, 100),
-      contact: textInput(shipping.contact, 100),
-      address: textInput(shipping.address, 500)
+      recipient: textInput(shipping.recipient, orderTextPolicy.recipientMaxLength),
+      contact: textInput(shipping.contact, orderTextPolicy.contactMaxLength),
+      address: textInput(shipping.address, orderTextPolicy.addressMaxLength)
     } : undefined
   }
 }
@@ -426,11 +422,13 @@ export class OrderController {
       case 'deliver': {
         if (physical) {
           const input = objectInput(body, ['carrier', 'trackingNumber'])
-          actionInput.carrier = textInput(input.carrier, 100)
-          actionInput.reference = textInput(input.trackingNumber, 200)
+          actionInput.carrier = textInput(input.carrier, orderTextPolicy.carrierMaxLength)
+          actionInput.reference = textInput(
+            input.trackingNumber, orderTextPolicy.trackingNumberMaxLength
+          )
         } else {
           const input = objectInput(body, ['url', 'accessCode'], ['url'])
-          const reference = textInput(input.url, 2048)
+          const reference = textInput(input.url, orderTextPolicy.deliveryUrlMaxLength)
           let url: URL
           try {
             url = new URL(reference)
@@ -441,15 +439,19 @@ export class OrderController {
             throw new DomainError('INVALID_INPUT')
           actionInput.reference = reference
           if (input.accessCode !== undefined)
-            actionInput.accessCode = textInput(input.accessCode, 100)
+            actionInput.accessCode = textInput(input.accessCode, orderTextPolicy.accessCodeMaxLength)
         }
         break
       }
       case 'issue':
-        actionInput.description = textInput(objectInput(body, ['description']).description, 2000)
+        actionInput.description = textInput(
+          objectInput(body, ['description']).description, orderTextPolicy.issueDescriptionMaxLength
+        )
         break
       case 'counteroffer':
-        actionInput.description = textInput(objectInput(body, ['description']).description, 2000)
+        actionInput.description = textInput(
+          objectInput(body, ['description']).description, orderTextPolicy.issueDescriptionMaxLength
+        )
         break
       case 'accept':
         if (objectInput(body, ['confirmed']).confirmed !== true)
