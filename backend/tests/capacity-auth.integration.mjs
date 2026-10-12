@@ -52,6 +52,16 @@ test('capacity auth uses real scrypt passwords and audits real HTTP rotation and
     gateway = await capacityGateway(instances, { virtualClients: auth.virtualClients })
     const port = gateway.server.address().port
     await auth.prepare(port)
+    // Verify the gateway actually supplies distinct identities to the real
+    // shared database limiter, rather than all actors consuming loopback quota.
+    const expectedBuckets = [
+      ...auth.virtualClients.values()
+    ].map(ip => digest(`ip:${ip}`)).concat(
+      auth.schedule.actorIndexes.map(index => digest(`login:${users[index].loginName}`))
+    ).sort()
+    const preparedBuckets = await db.client.authRateBucket.findMany({ orderBy: { key: 'asc' } })
+    assert.deepEqual(preparedBuckets.map(bucket => bucket.key), expectedBuckets)
+    assert.ok(preparedBuckets.every(bucket => bucket.count === 1))
     // Functional subset only: eight scheduled auth arrivals, no wall-clock500rps claim.
     for (let index = 0; index < policy.rate * 4; index++) if (auth.schedule.at(index)) await auth.send(index, port)
     const evidence = await auth.audit(db.client, 4)
