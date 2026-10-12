@@ -29,7 +29,7 @@ test('a delayed write cannot silently start the next phase for the same buyer', 
   const workload = capacityWrites(() => new Promise(resolve => { finish = resolve }), [{ id: 'physical-1' }])
   const user = { id: 'buyer-1' }
   const pending = workload.send(0, user, 0)
-  await assert.rejects(workload.send(1, user, 0), { message: 'Write phase still in flight' })
+  await assert.rejects(workload.send(1, user, 0), { message: 'Write phase still in flight', code: 'WRITE_PHASE_IN_FLIGHT' })
   finish({ status: 200, value: { orderId: 'order-1' } })
   await pending
 })
@@ -65,4 +65,19 @@ test('client recovery is bounded and does not retry a domain conflict', async ()
   await assert.rejects(conflict.send(0, { id: 'buyer-1' }, 0), { code: 'HTTP_409' })
   assert.equal(calls, 1)
   assert.equal(conflict.recovery.retryAttempts, 0)
+})
+
+test('exhausted writes retain the public rejection cause and later phases still fail', async () => {
+  let calls = 0
+  const workload = capacityWrites(async () => {
+    calls++
+    return { status: 503, value: { code: 'OVERLOADED' }, apiIndex: 1 }
+  }, [{ id: 'physical-1' }])
+  const user = { id: 'buyer-1' }
+  await assert.rejects(workload.send(0, user, 0), {
+    code: 'HTTP_503', responseCode: 'OVERLOADED', apiIndex: 1
+  })
+  await assert.rejects(workload.send(1, user, 0), { code: 'WRITE_PREVIOUS_PHASE_FAILED' })
+  await assert.rejects(workload.send(4, user, 0), { code: 'WRITE_PREVIOUS_PHASE_FAILED' })
+  assert.equal(calls, 3, 'Failed predecessor must not start a new write or hide failures')
 })

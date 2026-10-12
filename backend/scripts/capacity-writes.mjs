@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
+import { capacityHttpError } from './capacity-diagnostics.mjs'
 
 export const capacityWritePolicy = { maxAttempts: 3, retryDelayMs: 50 }
 
@@ -31,6 +32,11 @@ export function capacityWrites(post, physicalListings) {
         recovery.failedRequests++
         const error = new Error('Write recovery exhausted')
         error.code = failure
+        if (response) {
+          const diagnostic = capacityHttpError(response, 'Write recovery exhausted')
+          error.responseCode = diagnostic.responseCode
+          error.apiIndex = diagnostic.apiIndex
+        }
         throw error
       }
       recovery.retryAttempts++
@@ -40,7 +46,17 @@ export function capacityWrites(post, physicalListings) {
   async function send(round, user, userIndex) {
     const phase = round % 4
     let state = buyers.get(user.id)
-    if (state?.busy) throw new Error('Write phase still in flight')
+    if (state?.busy) {
+      const error = new Error('Write phase still in flight')
+      error.code = 'WRITE_PHASE_IN_FLIGHT'
+      throw error
+    }
+    if ((phase === 0 && state && state.round !== round - 1) ||
+      (phase !== 0 && state?.round !== round - 1)) {
+      const error = new Error('Previous write phase did not complete successfully')
+      error.code = 'WRITE_PREVIOUS_PHASE_FAILED'
+      throw error
+    }
     if (phase === 0) {
       assert.ok(!state || state.round === round - 1)
       state = { listing: physicalListings[userIndex], createKey: randomUUID(), cancelKey: randomUUID(), round: round - 1 }
@@ -56,9 +72,7 @@ export function capacityWrites(post, physicalListings) {
       const path = create ? '/api/orders' : `/api/orders/${state.orderId}/actions/cancel`
       const response = await submit(path, payload, user, create ? state.createKey : state.cancelKey)
       if (response.status !== 200) {
-        const error = new Error('Write response failed')
-        error.code = `HTTP_${response.status}`
-        throw error
+        throw capacityHttpError(response, 'Write response failed')
       }
       if (phase === 0) {
         assert.equal(typeof response.value.orderId, 'string')

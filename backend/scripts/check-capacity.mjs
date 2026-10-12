@@ -24,6 +24,7 @@ import { capacityOutageWrites } from './capacity-outage-writes.mjs'
 import { capacityDatabaseFault, capacityDatabaseFaultPolicy } from './capacity-database-fault.mjs'
 import { verifyCapacityReplication } from './capacity-replication.mjs'
 import { capacityExpiry, capacityExpiryPolicy } from './capacity-expiry.mjs'
+import { capacityFailureSamples, capacityHttpError } from './capacity-diagnostics.mjs'
 
 // This command accepts only the explicit ephemeral test DB via sandbox/testUrl.
 const policy = readCapacityPolicy(process.env)
@@ -253,8 +254,8 @@ async function load(port, users, listings, onTick, writes) {
     errors = {},
     userRequests = new Map()
   const expectedErrors = {}
-  const failureSamples = [],
-    errorWindows = {}
+  const diagnostics = capacityFailureSamples()
+  const failureSamples = diagnostics.samples, errorWindows = {}
   let sent = 0,
     completed = 0,
     active = 0,
@@ -298,9 +299,7 @@ async function load(port, users, listings, onTick, writes) {
       }
       const response = await post(port, path, payload, user)
       if (response.status !== 200) {
-        const error = new Error('HTTP response failed')
-        error.code = `HTTP_${response.status}`
-        throw error
+        throw capacityHttpError(response, 'HTTP response failed')
       }
       if (kind < 5) assert.equal(response.value.items.length, 10)
       else if (kind < 7) assert.equal(response.value.id, listings[index % listings.length].id)
@@ -328,14 +327,7 @@ async function load(port, users, listings, onTick, writes) {
       const second = Math.floor((performance.now() - started) / 1000)
       const window = (errorWindows[second] ??= {})
       window[key] = (window[key] ?? 0) + 1
-      if (failureSamples.length < 20)
-        failureSamples.push({
-          index,
-          elapsedMs: performance.now() - started,
-          kind: label,
-          code: error.code,
-          name: error.name
-        })
+      diagnostics.record(key, { index, elapsedMs: performance.now() - started, kind: label, error })
     } finally {
       const end = performance.now()
       latency.push(end - begin)

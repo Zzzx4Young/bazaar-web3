@@ -4,13 +4,12 @@ import { performance } from 'node:perf_hooks'
 import { hashPassword } from '../dist/auth/password.js'
 import { sessionMaxAgeSeconds } from '../dist/auth/auth-policy.js'
 import { capacityAuthSchedule } from './capacity-auth-policy.mjs'
+import { capacityHttpError } from './capacity-diagnostics.mjs'
 
 const digest = value => createHash('sha256').update(value).digest('hex')
 function requireSuccess(response, status = 200) {
   if (response.status !== status) {
-    const error = new Error('Authentication HTTP response failed')
-    error.code = `HTTP_${response.status}`
-    throw error
+    throw capacityHttpError(response, 'Authentication HTTP response failed')
   }
 }
 
