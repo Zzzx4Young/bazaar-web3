@@ -89,6 +89,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ha-capacity-${{ inputs.profile }}-${{ github.run_id }}
+          include-hidden-files: true
           path: |
             backend/.tmp/capacity-clock-preflight.json
             backend/.tmp/capacity-*.json
