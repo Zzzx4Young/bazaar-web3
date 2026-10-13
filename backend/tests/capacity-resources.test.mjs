@@ -29,3 +29,21 @@ test('resource samples retain expected connection outages and reject SQL defects
     assert.ok(report.clock.sampleCount >= 2)
   }
 })
+
+test('resource samples expose each owned API process before a capacity failure', async () => {
+  const client = {
+    $queryRaw: async () => [{ total: 1, active: 0, syncWaiting: 0, lockWaiting: 0,
+      ioWaiting: 0, lwlockWaiting: 0, activeNoWait: 0 }]
+  }
+  const processHandle = { pid: process.pid, exitCode: null, signalCode: null }
+  const stop = await capacityResources([processHandle], client, 'fixture')
+  const report = await stop()
+  assert.equal(report.failedSamples, false)
+  assert.ok(report.samples.length >= 2)
+  for (const sample of report.samples) {
+    assert.equal(sample.apiProcesses.length, 1)
+    assert.equal(sample.apiProcesses[0].pid, process.pid)
+    assert.ok(sample.apiProcesses[0].rssBytes > 0)
+    assert.ok(Number.isFinite(sample.apiProcesses[0].cpuSeconds))
+  }
+})

@@ -26,6 +26,7 @@ export async function capacityResources(
     running = true
     try {
       clock.sample()
+      const apiProcesses = []
       for (const child of processes) {
         if (child.exitCode !== null || child.signalCode !== null) continue
         try {
@@ -45,6 +46,11 @@ export async function capacityResources(
           entry.peakRssBytes = Math.max(entry.peakRssBytes, rss)
           entry.lastCpuTicks = ticks
           api.set(child.pid, entry)
+          apiProcesses.push({
+            pid: child.pid,
+            rssBytes: rss,
+            cpuSeconds: (ticks - entry.firstCpuTicks) / ticksPerSecond
+          })
         } catch {
           /* A killed process can disappear between the two reads. */
         }
@@ -53,6 +59,9 @@ export async function capacityResources(
         SELECT count(*)::int AS total, count(*) FILTER (WHERE state = 'active')::int AS active,
           count(*) FILTER (WHERE wait_event = 'SyncRep')::int AS "syncWaiting",
           count(*) FILTER (WHERE wait_event_type = 'Lock')::int AS "lockWaiting",
+          count(*) FILTER (WHERE wait_event_type = 'IO')::int AS "ioWaiting",
+          count(*) FILTER (WHERE wait_event_type = 'LWLock')::int AS "lwlockWaiting",
+          count(*) FILTER (WHERE state = 'active' AND wait_event_type IS NULL)::int AS "activeNoWait",
           coalesce(max(extract(epoch FROM clock_timestamp() - xact_start) * 1000), 0)::float8 AS "oldestTransactionMs"
         FROM pg_stat_activity WHERE usename = ${role}`
       const replication =
@@ -71,6 +80,7 @@ export async function capacityResources(
         at: Date.now(),
         elapsedMs: Math.round(performance.now() - started),
         generatorRssBytes: process.memoryUsage().rss,
+        apiProcesses,
         ...connections[0],
         replication
       })
