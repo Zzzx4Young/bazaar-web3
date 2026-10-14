@@ -33,6 +33,19 @@ export interface ListingPage {
     sourceAsOf: string | null
   } | null
 }
+export const publishedListingsResolvePath = '/listings/favorites/resolve'
+export interface ListingResolution {
+  items: BackendListing[]
+  total: number
+}
+export function listingCanBePurchased(
+  listing: Pick<BackendListing, 'publicationStatus' | 'availability'>
+) {
+  return (
+    listing.publicationStatus === 'published' &&
+    (listing.availability === 'available' || listing.availability === 'unlimited')
+  )
+}
 export interface AuthView {
   account: {
     id: string
@@ -140,14 +153,16 @@ export function toItem(listing: BackendListing): Item {
     status:
       listing.availability === 'sold'
         ? 'sold'
-        : listing.publicationStatus !== 'published' ||
-            !['available', 'unlimited'].includes(listing.availability)
-          ? 'locked'
-          : 'active',
+        : listingCanBePurchased(listing)
+          ? 'active'
+          : 'locked',
     createdAt: listing.createdAt,
     updatedAt: listing.updatedAt
   }
 }
 export async function fetchListings(params: URLSearchParams = new URLSearchParams()) {
   return backendPost<ListingPage>('/listings/search', Object.fromEntries(params.entries()))
+}
+export function resolvePublishedListings(ids: string[], signal?: AbortSignal) {
+  return backendPost<ListingResolution>(publishedListingsResolvePath, { ids }, signal)
 }

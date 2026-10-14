@@ -59,6 +59,13 @@
     "title": "购物车",
     "signIn": "请先登录普通账户。",
     "empty": "购物车还是空的。",
+    "loading": "正在核对商品最新状态…",
+    "refresh": "重试核对",
+    "refreshError": "无法核对商品最新状态：{error}",
+    "unverifiedListing": "商品信息尚未核对",
+    "savedListing": "上次保存：{title}",
+    "listingChanged": "商品信息已变更，请移除后从详情页重新加入购物车。",
+    "listingUnavailable": "商品已不可购买，请从购物车移除。",
     "remove": "移除",
     "shipping": "实物商品收货信息",
     "recipient": "收件人",
@@ -75,7 +82,13 @@
     "error": "购买记录加载失败：{error}",
     "title": "本次购买的订单"
   },
-  "commonCart": { "addToCart": "加入购物车", "inCart": "已在购物车", "alreadyInCart": "该商品已在购物车中", "added": "已加入购物车", "full": "购物车最多可放 {max} 件商品" },
+  "commonCart": {
+    "addToCart": "加入购物车",
+    "inCart": "已在购物车",
+    "alreadyInCart": "该商品已在购物车中",
+    "added": "已加入购物车",
+    "full": "购物车最多可放 {max} 件商品"
+  },
   "sellerProfile": {
     "loading": "正在加载卖家资料…",
     "loadError": "卖家资料加载失败：{error}",

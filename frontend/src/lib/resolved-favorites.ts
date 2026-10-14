@@ -1,4 +1,4 @@
-import { backendPost, toItem, type BackendListing } from './backend-api'
+import { resolvePublishedListings, toItem, type BackendListing } from './backend-api'
 import { favoritesConcurrentBatches, favoritesMaxIds } from './favorites-policy'
 import type { Item } from '@/types'
 
@@ -18,11 +18,9 @@ async function resolve(ids: string[], controller: AbortController): Promise<Item
   async function worker() {
     while (next < batches.length && !controller.signal.aborted) {
       const index = next++
-      const page = await backendPost<{ items: BackendListing[]; total: number }>(
-        '/listings/favorites/resolve',
-        { ids: batches[index] },
-        controller.signal
-      )
+      const batch = batches[index]
+      if (!batch) break
+      const page = await resolvePublishedListings(batch, controller.signal)
       pages[index] = page.items
     }
   }

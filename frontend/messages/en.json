@@ -59,6 +59,13 @@
     "title": "Cart",
     "signIn": "Sign in with a participant account first.",
     "empty": "Your cart is empty.",
+    "loading": "Checking current listing details…",
+    "refresh": "Retry check",
+    "refreshError": "Could not check current listing details: {error}",
+    "unverifiedListing": "Listing details have not been checked",
+    "savedListing": "Saved previously: {title}",
+    "listingChanged": "This listing changed. Remove it and add it again from its detail page.",
+    "listingUnavailable": "This listing is no longer available. Remove it from your cart.",
     "remove": "Remove",
     "shipping": "Shipping for physical items",
     "recipient": "Recipient",
@@ -75,7 +82,13 @@
     "error": "Could not load checkout: {error}",
     "title": "Orders in this checkout"
   },
-  "commonCart": { "addToCart": "Add to cart", "inCart": "In cart", "alreadyInCart": "This item is already in your cart", "added": "Added to cart", "full": "Your cart can hold up to {max} items" },
+  "commonCart": {
+    "addToCart": "Add to cart",
+    "inCart": "In cart",
+    "alreadyInCart": "This item is already in your cart",
+    "added": "Added to cart",
+    "full": "Your cart can hold up to {max} items"
+  },
   "sellerProfile": {
     "loading": "Loading seller profile…",
     "loadError": "Could not load seller profile: {error}",
