@@ -28,3 +28,42 @@ export function capacityFailureSamples() {
     }
   }
 }
+
+export function capacityRequestTimeline() {
+  const windows = new Map()
+  function windowAt(elapsedMs) {
+    const second = Math.floor(elapsedMs / 1000)
+    if (!windows.has(second))
+      windows.set(second, { second, started: 0, completed: 0, failed: 0, peakActive: 0, kinds: {} })
+    return windows.get(second)
+  }
+  function kindAt(window, kind) {
+    if (!window.kinds[kind])
+      window.kinds[kind] = { started: 0, completed: 0, failed: 0, maxDurationMs: 0 }
+    return window.kinds[kind]
+  }
+  return {
+    start({ elapsedMs, kind, active }) {
+      const window = windowAt(elapsedMs)
+      window.started++
+      window.peakActive = Math.max(window.peakActive, active)
+      kindAt(window, kind).started++
+    },
+    finish({ elapsedMs, kind, durationMs, failed }) {
+      const window = windowAt(elapsedMs)
+      window.completed++
+      if (failed) window.failed++
+      const entry = kindAt(window, kind)
+      entry.completed++
+      if (failed) entry.failed++
+      entry.maxDurationMs = Math.max(entry.maxDurationMs, Math.round(durationMs))
+    },
+    report() {
+      let inFlight = 0
+      return [...windows.values()].sort((a, b) => a.second - b.second).map((window) => {
+        inFlight += window.started - window.completed
+        return { ...window, inFlightEnd: inFlight }
+      })
+    }
+  }
+}

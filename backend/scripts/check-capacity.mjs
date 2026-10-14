@@ -24,7 +24,7 @@ import { capacityOutageWrites } from './capacity-outage-writes.mjs'
 import { capacityDatabaseFault, capacityDatabaseFaultPolicy } from './capacity-database-fault.mjs'
 import { verifyCapacityReplication } from './capacity-replication.mjs'
 import { capacityExpiry, capacityExpiryPolicy } from './capacity-expiry.mjs'
-import { capacityFailureSamples, capacityHttpError } from './capacity-diagnostics.mjs'
+import { capacityFailureSamples, capacityHttpError, capacityRequestTimeline } from './capacity-diagnostics.mjs'
 
 // This command accepts only the explicit ephemeral test DB via sandbox/testUrl.
 const policy = readCapacityPolicy(process.env)
@@ -256,6 +256,7 @@ async function load(port, users, listings, onTick, writes) {
   const expectedErrors = {}
   const diagnostics = capacityFailureSamples()
   const failureSamples = diagnostics.samples, errorWindows = {}
+  const timeline = capacityRequestTimeline()
   let sent = 0,
     completed = 0,
     active = 0,
@@ -270,6 +271,18 @@ async function load(port, users, listings, onTick, writes) {
     userRequests.set(user.id, (userRequests.get(user.id) ?? 0) + 1)
     const kind = index % capacityBusinessMixPolicy.slots
     const authAction = authLoad?.schedule.at(index)
+    const label =
+      authAction ? `auth-${authAction.operation}` : writes && kind >= capacityBusinessMixPolicy.readSlots
+        ? 'write'
+        : kind < 5
+          ? 'search'
+          : kind < 7
+            ? 'detail'
+            : kind === 7
+              ? 'home'
+              : kind === 8
+                ? 'session'
+                : 'orders'
     const path =
       kind < 5
         ? '/api/listings/search'
@@ -285,6 +298,8 @@ async function load(port, users, listings, onTick, writes) {
     lag.push(begin - scheduled)
     active++
     peakActive = Math.max(peakActive, active)
+    timeline.start({ elapsedMs: begin - started, kind: label, active })
+    let failed = false
     try {
       if (authAction) { await authLoad.send(index, port); return }
       if (writes && kind >= capacityBusinessMixPolicy.readSlots) {
@@ -307,18 +322,7 @@ async function load(port, users, listings, onTick, writes) {
       else if (kind === 8) assert.equal(response.value.account.id, user.id)
       else assert.ok(response.value.items.length > 0)
     } catch (error) {
-      const label =
-        authAction ? `auth-${authAction.operation}` : writes && kind >= capacityBusinessMixPolicy.readSlots
-          ? 'write'
-          : kind < 5
-            ? 'search'
-            : kind < 7
-              ? 'detail'
-              : kind === 7
-                ? 'home'
-                : kind === 8
-                  ? 'session'
-                  : 'orders'
+      failed = true
       const key = `${label}:${error.code ?? (error.name === 'AssertionError' ? 'RESPONSE_CHECK_FAILED' : 'REQUEST_FAILED')}`
       const counts = databaseFault?.expectedFailure(error.code, Date.now(), monotonicNow())
         ? expectedErrors
@@ -332,6 +336,7 @@ async function load(port, users, listings, onTick, writes) {
       const end = performance.now()
       latency.push(end - begin)
       scheduledLatency.push(end - scheduled)
+      timeline.finish({ elapsedMs: end - started, kind: label, durationMs: end - begin, failed })
       active--
       completed++
     }
@@ -373,6 +378,7 @@ async function load(port, users, listings, onTick, writes) {
     successfulResponses: completed - errorCount - expectedErrorCount,
     failureSamples,
     errorWindows,
+    requestTimeline: timeline.report(),
     errorCount,
     latencyMs: {
       p50: quantile(latency, 0.5),
