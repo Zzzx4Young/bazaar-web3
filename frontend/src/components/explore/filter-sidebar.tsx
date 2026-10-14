@@ -12,6 +12,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { useCurrencies } from '@/hooks/use-currencies'
 import type { Category, FilterState, ItemCategory, Currency, PrimaryCategory } from '@/types'
 
 interface FilterSidebarProps {
@@ -34,6 +35,7 @@ export function FilterSidebar({
   onReset
 }: FilterSidebarProps) {
   const NONE = 'all'
+  const { currencies, loading: currenciesLoading, error: currenciesError, retry } = useCurrencies()
   return (
     <Card className="w-full lg:w-64">
       <CardHeader className="pb-3">
@@ -96,18 +98,28 @@ export function FilterSidebar({
           <Select
             value={filter.currency ?? NONE}
             onValueChange={(v) => onCurrency(v === NONE ? undefined : (v as Currency))}
+            disabled={currenciesLoading || !!currenciesError}
           >
             <SelectTrigger>
-              <SelectValue placeholder="全部" />
+              <SelectValue placeholder={currenciesLoading ? '加载币种中...' : '全部'} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={NONE}>全部</SelectItem>
-              <SelectItem value="CNY">CNY</SelectItem>
-              <SelectItem value="USDT">USDT</SelectItem>
-              <SelectItem value="ETH">ETH</SelectItem>
-              <SelectItem value="SOL">SOL</SelectItem>
+              {currencies.map(({ code }) => (
+                <SelectItem key={code} value={code}>
+                  {code}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+          {currenciesError && (
+            <div role="alert" className="text-destructive">
+              币种加载失败：{currenciesError}
+              <Button type="button" variant="link" size="sm" onClick={retry}>
+                重试
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* 重置 */}

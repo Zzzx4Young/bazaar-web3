@@ -1,7 +1,7 @@
 // 发布商品表单
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useRouter } from '@/i18n/routing'
 import { useForm } from 'react-hook-form'
@@ -24,6 +24,7 @@ import { marketplaceCategories } from '@/lib/categories'
 import { publishSchema } from '@/lib/publish-schema'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { createListing } from '@/lib/backend-api'
+import { useCurrencies } from '@/hooks/use-currencies'
 import type { ItemCategory, Currency } from '@/types'
 
 type FormValues = z.infer<typeof publishSchema>
@@ -33,12 +34,14 @@ export function PublishForm() {
   const auth = useAuthStore()
   const [saveError, setSaveError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const { currencies, loading: currenciesLoading, error: currenciesError, retry } = useCurrencies()
 
   const {
     register,
     handleSubmit,
     watch,
     setValue,
+    setError,
     formState: { errors }
   } = useForm<FormValues>({
     resolver: zodResolver(publishSchema),
@@ -50,6 +53,15 @@ export function PublishForm() {
   })
 
   const category = watch('category')
+  const priceCurrency = watch('priceCurrency')
+  const selectedPriceCurrency = currencies.find(({ code }) => code === priceCurrency)
+
+  useEffect(() => {
+    const fallbackCurrency = currencies[0]
+    if (fallbackCurrency && !currencies.some(({ code }) => code === priceCurrency)) {
+      setValue('priceCurrency', fallbackCurrency.code)
+    }
+  }, [currencies, priceCurrency, setValue])
 
   const onSubmit = async (data: FormValues) => {
     setSubmitting(true)
@@ -57,6 +69,18 @@ export function PublishForm() {
     try {
       if (auth.status !== 'authenticated' || !auth.view) {
         setSaveError('请先登录后再发布商品。')
+        return
+      }
+      const selectedCurrency = currencies.find(({ code }) => code === data.priceCurrency)
+      if (!selectedCurrency) {
+        setSaveError('币种列表尚未加载，请重试。')
+        return
+      }
+      if ((data.priceAmount.split('.')[1]?.length ?? 0) > selectedCurrency.scale) {
+        setError('priceAmount', {
+          type: 'validate',
+          message: `${selectedCurrency.code} 最多支持 ${selectedCurrency.scale} 位小数`
+        })
         return
       }
       const listing = await createListing(auth.view.csrfToken, {
@@ -164,25 +188,39 @@ export function PublishForm() {
               className="flex-1"
             />
             <Select
-              value={watch('priceCurrency')}
+              value={priceCurrency}
               onValueChange={(v) => setValue('priceCurrency', v as Currency)}
+              disabled={currenciesLoading || !!currenciesError}
             >
               <SelectTrigger className="w-32">
-                <SelectValue />
+                <SelectValue placeholder="加载币种中..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="CNY">CNY</SelectItem>
-                <SelectItem value="USDT">USDT</SelectItem>
-                <SelectItem value="USDC">USDC</SelectItem>
-                <SelectItem value="BTC">BTC</SelectItem>
-                <SelectItem value="ETH">ETH</SelectItem>
-                <SelectItem value="SOL">SOL</SelectItem>
+                {currencies.map(({ code }) => (
+                  <SelectItem key={code} value={code}>
+                    {code}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+          {selectedPriceCurrency && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {priceCurrency} 最多支持 {selectedPriceCurrency.scale} 位小数
+            </p>
+          )}
+          {currenciesError && (
+            <div role="alert" className="text-sm text-destructive">
+              币种加载失败：{currenciesError}
+              <Button type="button" variant="link" size="sm" onClick={retry}>
+                重试
+              </Button>
+            </div>
+          )}
           {errors.priceAmount && (
-            <p className="mt-1 text-xs text-destructive">{errors.priceAmount.message}</p>
+            <p role="alert" className="mt-1 text-xs text-destructive">
+              {errors.priceAmount.message}
+            </p>
           )}
         </CardContent>
       </Card>
@@ -224,7 +262,7 @@ export function PublishForm() {
         <Button type="button" variant="outline" onClick={() => router.back()}>
           取消
         </Button>
-        <Button type="submit" disabled={submitting}>
+        <Button type="submit" disabled={submitting || currenciesLoading || !!currenciesError}>
           {submitting ? '发布中...' : '立即发布'}
         </Button>
       </div>

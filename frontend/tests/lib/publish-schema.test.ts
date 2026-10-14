@@ -13,6 +13,11 @@ const digital = {
 }
 
 describe('publish form text contract', () => {
+  it('leaves supported-currency membership to the server catalog', () => {
+    expect(publishSchema.safeParse({ ...digital, priceCurrency: 'NZD' }).success).toBe(true)
+    expect(publishSchema.safeParse({ ...digital, priceCurrency: '' }).success).toBe(false)
+  })
+
   it('accepts maximum titles and descriptions, counting emoji as Unicode characters', () => {
     expect(
       publishSchema.safeParse({

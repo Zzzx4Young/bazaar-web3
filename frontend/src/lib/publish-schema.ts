@@ -31,27 +31,7 @@ export const publishSchema = z
       .trim()
       .regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/, '请输入不使用指数格式的正数')
       .refine((value) => /[1-9]/.test(value), '价格必须大于 0'),
-    priceCurrency: z.enum([
-      'USD',
-      'EUR',
-      'GBP',
-      'JPY',
-      'CNY',
-      'CAD',
-      'AUD',
-      'CHF',
-      'HKD',
-      'SGD',
-      'KRW',
-      'INR',
-      'AED',
-      'BRL',
-      'BTC',
-      'ETH',
-      'USDT',
-      'USDC',
-      'SOL'
-    ]),
+    priceCurrency: z.string().regex(/^[A-Z]{2,5}$/, '请选择有效币种'),
     // 数字字段
     licenseDescription: z.string().optional(),
     contentVersion: z.string().optional()

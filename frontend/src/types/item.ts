@@ -11,26 +11,8 @@ export type DigitalDeliveryType =
 
 export type ShippingMethod = 'delivery' | 'face_to_face'
 
-export type Currency =
-  | 'USD'
-  | 'EUR'
-  | 'GBP'
-  | 'JPY'
-  | 'CNY'
-  | 'CAD'
-  | 'AUD'
-  | 'CHF'
-  | 'HKD'
-  | 'SGD'
-  | 'KRW'
-  | 'INR'
-  | 'AED'
-  | 'BRL'
-  | 'BTC'
-  | 'ETH'
-  | 'USDT'
-  | 'USDC'
-  | 'SOL'
+// Supported codes are returned by /api/currencies; the backend owns membership.
+export type Currency = string
 
 export interface Price {
   amount: number
