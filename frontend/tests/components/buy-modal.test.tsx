@@ -29,17 +29,17 @@ beforeEach(() => {
 describe('BuyModal', () => {
   it('shows the backend order boundary and requires authentication', () => {
     render(<BuyModal item={item} open onOpenChange={vi.fn()} />)
-    expect(screen.getByText('订单将写入 Alpha 后端；付款仍为模拟动作。')).toBeInTheDocument()
-    expect(screen.getByRole('alert')).toHaveTextContent('请先登录')
-    expect(screen.getByRole('button', { name: '确认下单' })).toBeDisabled()
+    expect(screen.getByText('description')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('signIn')
+    expect(screen.getByRole('button', { name: 'confirm' })).toBeDisabled()
   })
 
   it('renders shipping fields only for physical listings', () => {
     render(<BuyModal item={item} open onOpenChange={vi.fn()} />)
-    expect(screen.getByLabelText('收件人')).toBeInTheDocument()
+    expect(screen.getByLabelText('recipient')).toBeInTheDocument()
     cleanup()
     const digital = { ...item, category: 'digital' as const }
     render(<BuyModal item={digital} open onOpenChange={vi.fn()} />)
-    expect(screen.queryByLabelText('收件人')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('recipient')).not.toBeInTheDocument()
   })
 })

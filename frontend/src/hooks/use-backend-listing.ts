@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { Item } from '@/types'
-import { backendPost, toItem, type BackendListing } from '@/lib/backend-api'
+import { fetchListingDetail, toItem } from '@/lib/backend-api'
 
 export function useBackendListing(id: string) {
   const [item, setItem] = useState<Item | null>(null)
@@ -11,7 +11,7 @@ export function useBackendListing(id: string) {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    backendPost<BackendListing>(`/listings/${encodeURIComponent(id)}/detail`)
+    fetchListingDetail(id)
       .then((value) => {
         if (!cancelled) setItem(toItem(value))
       })

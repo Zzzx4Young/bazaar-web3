@@ -55,6 +55,26 @@
     "submitted": "Rated {rating} / 5",
     "viewCheckout": "View items from this checkout"
   },
+  "buyModal": {
+    "title": "Confirm order",
+    "description": "The order will be saved to the Alpha backend; payment is still simulated.",
+    "loading": "Checking the latest price and availability…",
+    "changed": "This listing changed. Refresh the detail page and confirm again.",
+    "unavailable": "This listing is no longer available. Refresh the detail page.",
+    "refreshPage": "Refresh detail page",
+    "refreshError": "Could not check the latest listing state: {error}",
+    "retryCheck": "Retry check",
+    "recipient": "Recipient",
+    "contact": "Contact",
+    "address": "Address",
+    "signIn": "Sign in first.",
+    "orderError": "Order failed: {error}",
+    "uncertain": "The result is unknown. Retry the original request with the same idempotency key.",
+    "retryOrder": "Retry original request",
+    "cancel": "Cancel",
+    "confirm": "Confirm order",
+    "submitting": "Submitting…"
+  },
   "cartPage": {
     "title": "Cart",
     "signIn": "Sign in with a participant account first.",

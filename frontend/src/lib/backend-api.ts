@@ -166,3 +166,6 @@ export async function fetchListings(params: URLSearchParams = new URLSearchParam
 export function resolvePublishedListings(ids: string[], signal?: AbortSignal) {
   return backendPost<ListingResolution>(publishedListingsResolvePath, { ids }, signal)
 }
+export function fetchListingDetail(id: string, signal?: AbortSignal) {
+  return backendPost<BackendListing>(`/listings/${encodeURIComponent(id)}/detail`, {}, signal)
+}

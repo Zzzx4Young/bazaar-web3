@@ -55,6 +55,26 @@
     "submitted": "已评价：{rating} / 5",
     "viewCheckout": "查看同次购买的商品"
   },
+  "buyModal": {
+    "title": "确认下单",
+    "description": "订单将写入 Alpha 后端；付款仍为模拟动作。",
+    "loading": "正在核对商品最新价格和状态…",
+    "changed": "商品信息已变更，请刷新详情页后重新确认。",
+    "unavailable": "商品已不可购买，请刷新详情页。",
+    "refreshPage": "刷新详情页",
+    "refreshError": "无法核对商品最新状态：{error}",
+    "retryCheck": "重试核对",
+    "recipient": "收件人",
+    "contact": "联系方式",
+    "address": "收货地址",
+    "signIn": "请先登录。",
+    "orderError": "下单失败：{error}",
+    "uncertain": "请求结果未知，请重试原操作，系统会复用原请求和幂等键。",
+    "retryOrder": "重试原操作",
+    "cancel": "取消",
+    "confirm": "确认下单",
+    "submitting": "提交中…"
+  },
   "cartPage": {
     "title": "购物车",
     "signIn": "请先登录普通账户。",
