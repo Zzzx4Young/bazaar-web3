@@ -1,0 +1,122 @@
+[
+  {
+    "category": "electronics",
+    "position": 0,
+    "filename": "electronics-1.jpg",
+    "title": "File:Laptop image.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Laptop_image.jpg",
+    "author": "Darakshanehaluddin",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "bytes": 168919,
+    "sha256": "28b05ff5d6f1df8888c9bd019542574c7ef9071e968679c3f157fe29d80f81bf"
+  },
+  {
+    "category": "electronics",
+    "position": 1,
+    "filename": "electronics-2.jpg",
+    "title": "File:Circuit-board-1.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Circuit-board-1.jpg",
+    "author": "MartinThoma",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "bytes": 349858,
+    "sha256": "48cfeb20dfa557fefa8e41bf94646f41d4a09d20019b75a097e6c5f672d5b162"
+  },
+  {
+    "category": "secondhand_fashion",
+    "position": 0,
+    "filename": "secondhand_fashion-1.jpg",
+    "title": "File:Clothing Rack of Jeans.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Clothing_Rack_of_Jeans.jpg",
+    "author": "Peter Griffin",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "bytes": 154092,
+    "sha256": "01963da38adc988f7933b8e563a6459bd6244d7a70c4e13261a5d4af7f020573"
+  },
+  {
+    "category": "secondhand_fashion",
+    "position": 1,
+    "filename": "secondhand_fashion-2.jpg",
+    "title": "File:Pantalones jeans (versión 4).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Pantalones_jeans_(versi%C3%B3n_4).jpg",
+    "author": "El Nuevo Doge",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "bytes": 147405,
+    "sha256": "613ff23313f08589c945fb0ec6beb6898ccb56b80ed1dbe9a93445961f47a02d"
+  },
+  {
+    "category": "game_items",
+    "position": 0,
+    "filename": "game_items-1.jpg",
+    "title": "File:Game Controllers.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Game_Controllers.jpg",
+    "author": "Ted Mielczarek",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "bytes": 95511,
+    "sha256": "fb51da7572467258f291119aeb8bf0e05ceda280d7fe31497968a09f06cb6eb5"
+  },
+  {
+    "category": "game_items",
+    "position": 1,
+    "filename": "game_items-2.jpg",
+    "title": "File:Titans Sphere - 29838437925.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Titans_Sphere_-_29838437925.jpg",
+    "author": "phreakindee",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "bytes": 82277,
+    "sha256": "efca3ad81bc3dd6b59021a8d67ebcf6a24e33907fb98c39e445fa35bb1056462"
+  },
+  {
+    "category": "software_source",
+    "position": 0,
+    "filename": "software_source-1.jpg",
+    "title": "File:Programming.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Programming.jpg",
+    "author": "Lorenzo Cafaro",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "bytes": 360176,
+    "sha256": "90265949562dde49d359d74713afde34c7da9716fcf86640b0ec95dc7d73fe29"
+  },
+  {
+    "category": "software_source",
+    "position": 1,
+    "filename": "software_source-2.jpg",
+    "title": "File:Debug.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Debug.jpg",
+    "author": "Ricardo77x",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "bytes": 131312,
+    "sha256": "7ce0622a2e8b0ef6c081623dc2378e0cd344305df302d5caef5a8ae7b8251b86"
+  },
+  {
+    "category": "digital_assets",
+    "position": 0,
+    "filename": "digital_assets-1.jpg",
+    "title": "File:Abstract 01 (Unsplash).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Abstract_01_(Unsplash).jpg",
+    "author": "Denise Bossarte dbossarte",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "bytes": 64402,
+    "sha256": "985fbf36e9defb32ada8cdc1fe04fe6f354110380f1bb90d771a840a70760cff"
+  },
+  {
+    "category": "digital_assets",
+    "position": 1,
+    "filename": "digital_assets-2.jpg",
+    "title": "File:January by Roxana Radulescu 2016.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:January_by_Roxana_Radulescu_2016.jpg",
+    "author": "Emmafrost13",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "bytes": 315415,
+    "sha256": "e5997a7d7e3b69630b4c32ff9aec99be4558eb89bc10e53e574c9c0872e5ee3c"
+  }
+]
