@@ -5,6 +5,7 @@ const digital = {
   title: 'Valid title',
   description: 'Valid description',
   category: 'digital',
+  saleMode: 'repeatable',
   primaryCategory: 'digital_assets',
   priceAmount: '1',
   priceCurrency: 'USD',

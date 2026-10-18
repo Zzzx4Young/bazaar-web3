@@ -55,6 +55,10 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+      garage-hot:
+        condition: service_healthy
+      garage-cold:
+        condition: service_healthy
     environment:
       DATABASE_URL_FILE: /run/config/runtime_database_url
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
@@ -66,8 +70,16 @@ services:
       DB_CONNECT_TIMEOUT_MS: ${DB_CONNECT_TIMEOUT_MS:-3000}
       DB_IDLE_TIMEOUT_MS: ${DB_IDLE_TIMEOUT_MS:-10000}
       DB_STATEMENT_TIMEOUT_MS: ${DB_STATEMENT_TIMEOUT_MS:-3000}
+      GARAGE_HOT_ENDPOINT: http://garage-hot:3900
+      GARAGE_HOT_PUBLIC_ENDPOINT: ${GARAGE_HOT_PUBLIC_ENDPOINT:-http://localhost:3900}
+      GARAGE_COLD_ENDPOINT: http://garage-cold:3900
+      GARAGE_HOT_ACCESS_KEY_ID_FILE: /run/media-secrets/hot_access_key_id
+      GARAGE_HOT_SECRET_KEY_FILE: /run/media-secrets/hot_secret_key
+      GARAGE_COLD_ACCESS_KEY_ID_FILE: /run/media-secrets/cold_access_key_id
+      GARAGE_COLD_SECRET_KEY_FILE: /run/media-secrets/cold_secret_key
     volumes:
       - alpha-app-config:/run/config:ro
+      - ./.secrets/garage-app:/run/media-secrets:ro
     ports:
       - '127.0.0.1:${API_PORT:-3001}:3001'
     healthcheck:
@@ -93,10 +105,91 @@ services:
     ports:
       - '127.0.0.1:${FRONTEND_PORT:-3000}:3000'
 
+  garage-hot:
+    image: dxflrs/garage:v2.4.1@sha256:9c96caa2612d3411acc5b0e6701fb238dbfba33e533a6d7d3d811a4b12d0d020
+    command: ['/garage', 'server']
+    environment:
+      GARAGE_RPC_SECRET_FILE: /run/secrets/garage_rpc_secret
+    secrets:
+      - source: garage_hot_rpc_secret
+        target: garage_rpc_secret
+    volumes:
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - alpha-garage-hot-meta:/var/lib/garage/meta
+      - alpha-garage-hot-data:/var/lib/garage/data
+    ports:
+      - '127.0.0.1:${GARAGE_HOT_PORT:-3900}:3900'
+    healthcheck:
+      test: [CMD, /garage, health, -q]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+  garage-cold:
+    image: dxflrs/garage:v2.4.1@sha256:9c96caa2612d3411acc5b0e6701fb238dbfba33e533a6d7d3d811a4b12d0d020
+    command: ['/garage', 'server']
+    environment:
+      GARAGE_RPC_SECRET_FILE: /run/secrets/garage_rpc_secret
+    secrets:
+      - source: garage_cold_rpc_secret
+        target: garage_rpc_secret
+    volumes:
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - alpha-garage-cold-meta:/var/lib/garage/meta
+      - alpha-garage-cold-data:/var/lib/garage/data
+    # Loopback only: the host development API needs this endpoint.
+    ports:
+      - '127.0.0.1:${GARAGE_COLD_PORT:-3903}:3900'
+    healthcheck:
+      test: [CMD, /garage, health, -q]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+  archive-worker:
+    build:
+      context: ../backend
+      target: runtime
+    command: ['node', 'scripts/archive-order-media.mjs', '--loop']
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      garage-hot:
+        condition: service_healthy
+      garage-cold:
+        condition: service_healthy
+    environment:
+      DATABASE_URL_FILE: /run/config/runtime_database_url
+      GARAGE_HOT_ENDPOINT: http://garage-hot:3900
+      GARAGE_HOT_PUBLIC_ENDPOINT: ${GARAGE_HOT_PUBLIC_ENDPOINT:-http://localhost:3900}
+      GARAGE_COLD_ENDPOINT: http://garage-cold:3900
+      GARAGE_HOT_ACCESS_KEY_ID_FILE: /run/media-secrets/hot_access_key_id
+      GARAGE_HOT_SECRET_KEY_FILE: /run/media-secrets/hot_secret_key
+      GARAGE_COLD_ACCESS_KEY_ID_FILE: /run/media-secrets/cold_access_key_id
+      GARAGE_COLD_SECRET_KEY_FILE: /run/media-secrets/cold_secret_key
+      ORDER_IMAGE_ARCHIVE_AFTER_DAYS: ${ORDER_IMAGE_ARCHIVE_AFTER_DAYS:-90}
+      ORDER_IMAGE_ARCHIVE_SCAN_SECONDS: ${ORDER_IMAGE_ARCHIVE_SCAN_SECONDS:-60}
+    volumes:
+      - alpha-app-config:/run/config:ro
+      - ./.secrets/garage-app:/run/media-secrets:ro
+    restart: unless-stopped
+
 volumes:
   alpha-postgres-data:
   alpha-app-config:
+  alpha-garage-hot-meta:
+  alpha-garage-hot-data:
+  alpha-garage-cold-meta:
+  alpha-garage-cold-data:
 
 secrets:
   postgres_password:
     file: ./.secrets/postgres_password
+  garage_hot_rpc_secret:
+    file: ./.secrets/garage_hot_rpc_secret
+  garage_cold_rpc_secret:
+    file: ./.secrets/garage_cold_rpc_secret

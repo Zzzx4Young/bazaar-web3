@@ -50,6 +50,7 @@ fi
 bash infra/scripts/init-secrets.sh
 "${docker_cmd[@]}" compose -f infra/compose.yaml up -d --wait postgres
 npm --prefix backend run build
+node infra/scripts/bootstrap-garage.mjs
 (
   cd backend
   env -u DATABASE_URL -u DATABASE_URL_FILE DATABASE_RUNTIME_ROLE=bazaar_runtime \
@@ -58,6 +59,16 @@ npm --prefix backend run build
 
 backend_pid=''
 frontend_pid=''
+archive_pid=''
+media_env=(
+  GARAGE_HOT_ENDPOINT=http://127.0.0.1:3900
+  GARAGE_HOT_PUBLIC_ENDPOINT=http://localhost:3900
+  GARAGE_COLD_ENDPOINT=http://127.0.0.1:3903
+  GARAGE_HOT_ACCESS_KEY_ID_FILE="$repo_root/infra/.secrets/garage-app/hot_access_key_id"
+  GARAGE_HOT_SECRET_KEY_FILE="$repo_root/infra/.secrets/garage-app/hot_secret_key"
+  GARAGE_COLD_ACCESS_KEY_ID_FILE="$repo_root/infra/.secrets/garage-app/cold_access_key_id"
+  GARAGE_COLD_SECRET_KEY_FILE="$repo_root/infra/.secrets/garage-app/cold_secret_key"
+)
 proxy_env=()
 if [[ -n "${HTTPS_PROXY:-}${https_proxy:-}${HTTP_PROXY:-}${http_proxy:-}" ]]; then
   proxy_env=(NODE_USE_ENV_PROXY=1)
@@ -66,9 +77,11 @@ cleanup() {
   trap - EXIT INT TERM
   [[ -z "$frontend_pid" ]] || kill "$frontend_pid" 2>/dev/null || true
   [[ -z "$backend_pid" ]] || kill "$backend_pid" 2>/dev/null || true
+  [[ -z "$archive_pid" ]] || kill "$archive_pid" 2>/dev/null || true
   [[ -z "$frontend_pid" ]] || wait "$frontend_pid" 2>/dev/null || true
   [[ -z "$backend_pid" ]] || wait "$backend_pid" 2>/dev/null || true
-  echo 'Application services stopped; PostgreSQL remains running.'
+  [[ -z "$archive_pid" ]] || wait "$archive_pid" 2>/dev/null || true
+  echo 'Application services stopped; PostgreSQL and Garage remain running.'
 }
 trap cleanup EXIT
 trap 'exit 130' INT
@@ -76,10 +89,17 @@ trap 'exit 143' TERM
 
 (
   cd backend
-  exec env -u DATABASE_URL -u DATABASE_URL_FILE "${proxy_env[@]}" \
+  exec env -u DATABASE_URL -u DATABASE_URL_FILE "${proxy_env[@]}" "${media_env[@]}" \
     node --env-file-if-exists=.env dist/main.js
 ) &
 backend_pid=$!
+
+(
+  cd backend
+  exec env -u DATABASE_URL -u DATABASE_URL_FILE "${media_env[@]}" \
+    node --env-file-if-exists=.env scripts/archive-order-media.mjs --loop
+) &
+archive_pid=$!
 
 ready() {
   curl -fs -o /dev/null --connect-timeout 1 --max-time 3 \
@@ -89,6 +109,7 @@ ready() {
 for ((attempt = 0; attempt < 60; attempt++)); do
   if ready; then break; fi
   kill -0 "$backend_pid" 2>/dev/null || { echo 'Backend exited during startup.' >&2; exit 1; }
+  kill -0 "$archive_pid" 2>/dev/null || { echo 'Archive worker exited during startup.' >&2; exit 1; }
   sleep 1
 done
 ready || { echo 'Backend did not become ready within 60 seconds.' >&2; exit 1; }
@@ -108,6 +129,7 @@ for ((attempt = 0; attempt < 60; attempt++)); do
   sleep 1
 done
 page_ready || { echo 'Frontend did not become ready within 60 seconds.' >&2; exit 1; }
+kill -0 "$archive_pid" 2>/dev/null || { echo 'Archive worker exited during startup.' >&2; exit 1; }
 curl -fsS -o /dev/null --connect-timeout 1 --max-time 10 \
   -H 'Origin: http://localhost:3000' -H 'Content-Type: application/json' \
   -d '{"sort":"newest","limit":"10","page":"1"}' \
@@ -117,5 +139,5 @@ curl -fsS -o /dev/null --connect-timeout 1 --max-time 10 \
   }
 
 echo 'Bazaar ready: http://localhost:3000/zh-CN/explore'
-echo 'Press Ctrl+C to stop the frontend and backend. PostgreSQL will remain running.'
-wait -n "$backend_pid" "$frontend_pid"
+echo 'Press Ctrl+C to stop the frontend, backend and archive worker. PostgreSQL and Garage will remain running.'
+wait -n "$backend_pid" "$frontend_pid" "$archive_pid"

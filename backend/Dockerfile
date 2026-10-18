@@ -30,6 +30,7 @@ ENV NODE_ENV=production HOST=0.0.0.0 PORT=3001
 COPY --chown=node:node package.json ./
 COPY --chown=node:node --from=runtime-dependencies /app/node_modules ./node_modules
 COPY --chown=node:node --from=build /app/dist ./dist
+COPY --chown=node:node scripts/archive-order-media.mjs ./scripts/archive-order-media.mjs
 EXPOSE 3001
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=3 \
   CMD ["node", "-e", "fetch(`http://127.0.0.1:${process.env.PORT}/api/health/ready`,{method:'POST',headers:{origin:process.env.APP_ORIGIN,'content-type':'application/json'},body:'{}'}).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]

@@ -49,6 +49,7 @@ export interface Item {
   contentVersion?: string
   // 媒体
   media: MediaItem[]
+  illustrativeImage?: boolean
   // 元信息
   status: ItemStatus
   // These metrics are absent until an API supplies measured values.

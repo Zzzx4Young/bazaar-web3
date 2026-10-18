@@ -7,6 +7,7 @@ import { createApp } from '../dist/app.js'
 import { readConfig } from '../dist/config.js'
 import { provisionAccounts } from '../dist/accounts/provision-accounts.js'
 import { sandbox, shipping } from './helpers/database.mjs'
+import { fixtureMediaAsset } from './helpers/media.mjs'
 
 let db, app
 const origin = 'http://localhost:3000'
@@ -46,8 +47,13 @@ test('HTTP cart enforces ownership, atomic validation, and published response co
     assert.equal(check(value), true, JSON.stringify(check.errors))
   }
   const listing = async (actor, type, currency) => {
+    const account = await db.client.account.findUniqueOrThrow({
+      where: { loginName: `cart_${actor}` }
+    })
+    const media = await fixtureMediaAsset(db, account.id)
     const result = await post(actor, '/listings', {
-      type, title: `${actor} ${type}`, description: 'Cart fixture', category: type === 'digital' ? 'digital_assets' : 'electronics',
+      type, saleMode: type === 'digital' ? 'repeatable' : 'one_off', mediaIds: [media.id],
+      title: `${actor} ${type}`, description: 'Cart fixture', category: type === 'digital' ? 'digital_assets' : 'electronics',
       price: { amount: '12.50', currency },
       ...(type === 'digital' ? { licenseDescription: 'Review license', contentVersion: 'v1' } : {})
     })

@@ -5,6 +5,7 @@ import { createApp } from '../dist/app.js'
 import { readConfig } from '../dist/config.js'
 import { provisionAccounts } from '../dist/accounts/provision-accounts.js'
 import { sandbox, fixture, race } from './helpers/database.mjs'
+import { fixtureMediaAsset } from './helpers/media.mjs'
 
 let db
 before(async () => { db = await sandbox() })
@@ -62,11 +63,16 @@ test('listing API creates single digital stock and defaults other digital listin
     assert.equal(login.statusCode, 200, login.body)
     const headers = { origin, cookie: login.headers['set-cookie'].split(';')[0], 'x-csrf-token': login.json().csrfToken }
     const payload = {
-      type: 'digital', title: 'One license', description: 'One transferable license', category: 'software_source',
+      type: 'digital', saleMode: 'repeatable', title: 'One license', description: 'One transferable license', category: 'software_source',
       price: { amount: '15', currency: 'USD' }, licenseDescription: 'One use', contentVersion: 'v2'
     }
-    const create = (body) => app.inject({ method: 'POST', url: '/api/listings', headers, payload: body })
-    const single = await create({ ...payload, supplyMode: 'single' })
+    const sellerId = (await db.client.account.findUniqueOrThrow({ where: { loginName: name } })).id
+    const create = async (body) => {
+      const asset = await fixtureMediaAsset(db, sellerId)
+      return app.inject({ method: 'POST', url: '/api/listings', headers,
+        payload: { ...body, mediaIds: [asset.id] } })
+    }
+    const single = await create({ ...payload, saleMode: 'one_off', supplyMode: 'single' })
     assert.equal(single.statusCode, 201, single.body)
     assert.equal(single.json().availability, 'available')
     assert.equal(await db.client.digitalInventory.count({ where: { listingId: single.json().id } }), 1)
@@ -75,6 +81,9 @@ test('listing API creates single digital stock and defaults other digital listin
     assert.equal(unlimited.json().availability, 'unlimited')
     assert.equal(await db.client.digitalInventory.count({ where: { listingId: unlimited.json().id } }), 0)
     assert.equal((await create({ ...payload, supplyMode: 'many' })).statusCode, 400)
+    assert.equal((await create({ ...payload, saleMode: 'one_off' })).statusCode, 400)
+    assert.equal((await create({ ...payload, saleMode: 'repeatable', supplyMode: 'single' })).statusCode, 400)
+    assert.equal((await create({ ...payload, saleMode: undefined })).statusCode, 400)
     assert.equal((await create({ ...payload, type: 'physical', supplyMode: 'single' })).statusCode, 400)
   } finally {
     await app.close()

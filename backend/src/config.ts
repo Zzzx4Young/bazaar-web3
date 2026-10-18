@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { isIP } from 'node:net'
+import { type GarageStoreConfig } from './media/garage-object-store.js'
 import { readMaxInFlightRequests } from './common/request-policy.js'
 import {
   readDatabasePoolConfig,
@@ -16,6 +17,45 @@ export interface AppConfig {
   trustedProxyCidrs: false | string[]
   databasePool: DatabasePoolConfig
   maxInFlightRequests: number
+  mediaStore: GarageStoreConfig | null
+}
+
+function readMediaStoreConfig(env: NodeJS.ProcessEnv): GarageStoreConfig | null {
+  const names = [
+    'GARAGE_HOT_ENDPOINT', 'GARAGE_HOT_PUBLIC_ENDPOINT', 'GARAGE_COLD_ENDPOINT',
+    'GARAGE_HOT_ACCESS_KEY_ID_FILE', 'GARAGE_HOT_SECRET_KEY_FILE',
+    'GARAGE_COLD_ACCESS_KEY_ID_FILE', 'GARAGE_COLD_SECRET_KEY_FILE'
+  ] as const
+  if (names.every((name) => !env[name])) return null
+  if (names.some((name) => !env[name])) throw new Error('Incomplete Garage configuration')
+  const endpoint = (name: typeof names[number]) => {
+    const value = env[name]!
+    const url = new URL(value)
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password ||
+      url.pathname !== '/' || url.search || url.hash || url.origin !== value)
+      throw new Error(`Invalid ${name}`)
+    return value
+  }
+  const secret = (name: typeof names[number]) => {
+    const value = readFileSync(env[name]!, 'utf8').trim()
+    if (!value || /[\r\n]/.test(value)) throw new Error(`Invalid ${name}`)
+    return value
+  }
+  return {
+    hotEndpoint: endpoint('GARAGE_HOT_ENDPOINT'),
+    hotPublicEndpoint: endpoint('GARAGE_HOT_PUBLIC_ENDPOINT'),
+    coldEndpoint: endpoint('GARAGE_COLD_ENDPOINT'),
+    hotCredentials: {
+      accessKeyId: secret('GARAGE_HOT_ACCESS_KEY_ID_FILE'),
+      secretAccessKey: secret('GARAGE_HOT_SECRET_KEY_FILE')
+    },
+    coldCredentials: {
+      accessKeyId: secret('GARAGE_COLD_ACCESS_KEY_ID_FILE'),
+      secretAccessKey: secret('GARAGE_COLD_SECRET_KEY_FILE')
+    },
+    hotBucket: 'bazaar-hot',
+    coldBucket: 'bazaar-cold'
+  }
 }
 
 function readTrustedProxies(value: string | undefined): false | string[] {
@@ -95,6 +135,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     secureCookie: origin.protocol === 'https:',
     trustedProxyCidrs: readTrustedProxies(env.TRUSTED_PROXY_CIDRS),
     databasePool: readDatabasePoolConfig(env),
-    maxInFlightRequests: readMaxInFlightRequests(env)
+    maxInFlightRequests: readMaxInFlightRequests(env),
+    mediaStore: readMediaStoreConfig(env)
   }
 }

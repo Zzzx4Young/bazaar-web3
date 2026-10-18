@@ -16,6 +16,10 @@ import { OrderController } from './orders/order.controller.js'
 import { DisputeController } from './orders/dispute.controller.js'
 import { BalanceController } from './orders/balance.controller.js'
 import { SellerReviewController } from './reviews/seller-review.controller.js'
+import { MediaController } from './media/media.controller.js'
+import { MediaReadController } from './media/media-read.controller.js'
+import { MediaService } from './media/media.service.js'
+import { GarageObjectStore } from './media/garage-object-store.js'
 import { RequestAdmission } from './common/request-admission.js'
 import { requestPolicy } from './common/request-policy.js'
 import {
@@ -30,12 +34,16 @@ class AppModule {}
 export async function createApp(
   config: AppConfig,
   logger: false | undefined = undefined,
-  dependencies: { loadRates?: RateLoader; logRequest?: RequestLogSink | false } = {}
+  dependencies: { loadRates?: RateLoader; logRequest?: RequestLogSink | false; mediaStore?: GarageObjectStore } = {}
 ) {
   const database = new DatabaseService(config.databaseUrl, config.databasePool)
   const auth = new AuthService(database.client, config)
   const rates = new RatesService(database.client, dependencies.loadRates)
   const listings = new ListingService(database.client, rates)
+  const media = new MediaService(
+    database.client,
+    dependencies.mediaStore ?? (config.mediaStore ? new GarageObjectStore(config.mediaStore) : null)
+  )
   const telemetry = new RequestTelemetry()
   const admission = new RequestAdmission(config.maxInFlightRequests)
   const requestLogSink =
@@ -87,12 +95,15 @@ export async function createApp(
         OrderController,
         DisputeController,
         BalanceController,
-        SellerReviewController
+        SellerReviewController,
+        MediaController,
+        MediaReadController
       ],
       providers: [
         { provide: DatabaseService, useValue: database },
         { provide: AuthService, useValue: auth },
-        { provide: ListingService, useValue: listings }
+        { provide: ListingService, useValue: listings },
+        { provide: MediaService, useValue: media }
       ]
     },
     adapter,
@@ -102,7 +113,7 @@ export async function createApp(
   app.enableCors({
     origin: config.appOrigin,
     credentials: true,
-    methods: ['POST', 'OPTIONS'],
+    methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: [
       'Accept',
       'Content-Type',

@@ -3,6 +3,7 @@
 
 import useEmblaCarousel from 'embla-carousel-react'
 import Image from 'next/image'
+import { useLocale } from 'next-intl'
 import { useCallback, useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,9 +12,11 @@ import type { MediaItem } from '@/types'
 interface MediaCarouselProps {
   media: MediaItem[]
   alt: string
+  illustrative?: boolean
 }
 
-export function MediaCarousel({ media, alt }: MediaCarouselProps) {
+export function MediaCarousel({ media, alt, illustrative = false }: MediaCarouselProps) {
+  const locale = useLocale()
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'start' })
   const [selectedIndex, setSelectedIndex] = useState(0)
 
@@ -59,6 +62,11 @@ export function MediaCarousel({ media, alt }: MediaCarouselProps) {
             ))}
           </div>
         </div>
+        {illustrative && (
+          <span className="absolute bottom-3 left-3 rounded bg-black/75 px-2 py-1 text-xs font-medium text-white">
+            {locale === 'zh-CN' ? '示意图' : 'Illustration'}
+          </span>
+        )}
         {media.length > 1 && (
           <>
             <Button

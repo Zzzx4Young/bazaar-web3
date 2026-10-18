@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -11,6 +12,8 @@ import { readConfig } from '../dist/config.js'
 import { grantRuntime } from './runtime-grants.mjs'
 import { grantObserver } from './observer-grants.mjs'
 import { alphaE2EAccounts, seedAlphaE2E } from './alpha-e2e-seed.mjs'
+import { GarageObjectStore } from '../dist/media/garage-object-store.js'
+import { GetBucketCorsCommand, PutBucketCorsCommand, S3Client } from '@aws-sdk/client-s3'
 
 const base = new URL('postgresql://bazaar_test_admin@127.0.0.1:55432/bazaar_test')
 base.password = (
@@ -31,6 +34,24 @@ const runtimeRole = `ae_runtime_${suffix}`
 const observerRole = `ae_observer_${suffix}`
 const observeSchema = `ae_observe_${suffix}`
 const requestLogs = []
+const garageSecret = async (name) => (await readFile(new URL(
+  `../../infra/.secrets/garage-app/${name}`, import.meta.url), 'utf8')).trim()
+const hotCredentials = {
+  accessKeyId: await garageSecret('hot_access_key_id'),
+  secretAccessKey: await garageSecret('hot_secret_key')
+}
+const mediaStore = new GarageObjectStore({
+  hotEndpoint: 'http://127.0.0.1:3900', hotPublicEndpoint: 'http://localhost:3900',
+  coldEndpoint: 'http://127.0.0.1:3903', hotCredentials,
+  coldCredentials: {
+    accessKeyId: await garageSecret('cold_access_key_id'),
+    secretAccessKey: await garageSecret('cold_secret_key')
+  },
+  hotBucket: 'bazaar-hot', coldBucket: 'bazaar-cold'
+})
+const corsClient = new S3Client({ endpoint: 'http://127.0.0.1:3900', region: 'garage',
+  forcePathStyle: true, requestChecksumCalculation: 'WHEN_REQUIRED', credentials: hotCredentials })
+let originalCors
 let app
 let frontend
 let browser
@@ -62,6 +83,10 @@ async function publish(page, values) {
   await page.getByLabel('标题').fill(values.title)
   await page.getByLabel(/详细描述/).fill(values.description)
   await page.getByPlaceholder('0.00').fill(values.price)
+  await page.getByLabel('商品图片（1–8 张，每张不超过 5 MiB）').setInputFiles({
+    name: 'alpha.png', mimeType: 'image/png',
+    buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z2joAAAAASUVORK5CYII=', 'base64')
+  })
   if (values.type === 'digital') {
     await page.getByLabel('授权说明').fill(values.licenseDescription)
     await page.getByLabel('内容版本').fill(values.contentVersion)
@@ -78,6 +103,15 @@ async function observerRows(sql) {
 }
 
 try {
+  originalCors = (await corsClient.send(new GetBucketCorsCommand({
+    Bucket: 'bazaar-hot'
+  }))).CORSRules
+  if (!originalCors?.length) throw new Error('Garage hot CORS is unavailable')
+  await corsClient.send(new PutBucketCorsCommand({ Bucket: 'bazaar-hot',
+    CORSConfiguration: { CORSRules: originalCors.map((rule) => ({
+      ...rule, AllowedOrigins: [...new Set([...(rule.AllowedOrigins ?? []), origin])]
+    })) }
+  }))
   db = await sandbox(base)
   admin = await connect(base)
   const password = `Alpha-E2E-${randomUUID()}`
@@ -118,7 +152,7 @@ try {
   app = await createApp(
     readConfig({ DATABASE_URL: runtimeUrl.toString(), APP_ORIGIN: origin }),
     false,
-    { logRequest: (entry) => requestLogs.push(entry) }
+    { logRequest: (entry) => requestLogs.push(entry), mediaStore }
   )
   await app.listen(0, '127.0.0.1')
   const backendPort = app.getHttpServer().address().port
@@ -415,6 +449,11 @@ try {
   }
   await app?.close()
   await observer?.onModuleDestroy()
+  if (db) {
+    const assets = await db.client.mediaAsset.findMany({ select: { hotKey: true, uploadKey: true } })
+    for (const key of new Set(assets.flatMap((asset) => [asset.hotKey, asset.uploadKey]).filter(Boolean)))
+      await mediaStore.deleteHot(key)
+  }
   if (observeSchemaCreated && admin)
     await admin.client.$executeRawUnsafe(`DROP SCHEMA IF EXISTS "${observeSchema}" CASCADE`)
   await db?.close()
@@ -423,4 +462,9 @@ try {
   if (runtimeRoleCreated && admin)
     await admin.client.$executeRawUnsafe(`DROP ROLE IF EXISTS "${runtimeRole}"`)
   await admin?.onModuleDestroy()
+  if (originalCors)
+    await corsClient.send(new PutBucketCorsCommand({
+      Bucket: 'bazaar-hot', CORSConfiguration: { CORSRules: originalCors }
+    }))
+  corsClient.destroy()
 }

@@ -68,7 +68,7 @@ export class OrderController {
   private async participantOrder(id: string, accountId: string) {
     const order = await this.client.order.findFirst({
       where: { id, OR: [{ buyerId: accountId }, { sellerId: accountId }] },
-      include: { snapshot: true, shipping: true }
+      include: { snapshot: true, shipping: true, mediaRows: { orderBy: { position: 'asc' } } }
     })
     if (!order) throw new DomainError('NOT_FOUND')
     return order
@@ -227,7 +227,12 @@ export class OrderController {
         category: order.snapshot.category,
         price: { amount: order.snapshot.priceAmount.toFixed(), currency: order.snapshot.currency },
         licenseDescription: order.snapshot.licenseDescription,
-        contentVersion: order.snapshot.contentVersion
+        contentVersion: order.snapshot.contentVersion,
+        media: order.mediaRows.map((row) => ({
+          id: row.mediaId,
+          position: row.position,
+          url: `/api/orders/${order.id}/media/${row.mediaId}`
+        }))
       },
       shipping: order.shipping && {
         recipient: order.shipping.recipient,

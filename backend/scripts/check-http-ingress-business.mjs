@@ -9,6 +9,7 @@ import { sandbox, connect, testUrl, shipping } from '../tests/helpers/database.m
 import { provisionAccounts } from '../dist/accounts/provision-accounts.js'
 import { grantRuntime } from './runtime-grants.mjs'
 import { httpIngressEnvironment, cleanupHttpIngress } from './http-ingress-environment.mjs'
+import { fixtureMediaAsset } from '../tests/helpers/media.mjs'
 
 const origin = 'http://localhost:3000'
 const root = new URL('../../', import.meta.url).pathname
@@ -18,6 +19,7 @@ const policy = Object.freeze({ rtoMs: 60_000, readyMs: 15_000, pollMs: 100, requ
 const children = []
 const sourceFiles = ['infra/http/haproxy.cfg', 'infra/compose.http-validation.yaml',
   'backend/scripts/http-ingress-environment.mjs', 'backend/scripts/check-http-ingress-business.mjs',
+  'backend/tests/helpers/media.mjs',
   ...['main', 'app', 'config', 'auth/auth.service', 'orders/order-commands', 'orders/order-idempotency',
     'database/database.service', 'health/health.controller'].map(name => `backend/dist/${name}.js`)]
 const fingerprint = async () => Object.fromEntries(await Promise.all(sourceFiles.map(async name =>
@@ -115,11 +117,14 @@ try {
   report.ingressEndpoints = ports.map(endpoint => `127.0.0.1:${endpoint}`)
   stage = 'real authentication'
   const actors = {}
+  let sellerAccountId
   for (const loginName of ['seller', 'buyer', 'outsider']) {
     const login = await post(ports[0], '/auth/login', { loginName, password })
     assert.equal(login.status, 200)
     actors[loginName] = actor(login)
+    if (loginName === 'seller') sellerAccountId = login.value.account.id
   }
+  assert.ok(sellerAccountId)
   const priorBuyer = actors.buyer
   const rotated = await post(ports[1], '/auth/login', { loginName: 'buyer', password }, priorBuyer)
   assert.equal(rotated.status, 200)
@@ -132,9 +137,11 @@ try {
   report.observations.push({ check: 'real-password-rotation-across-both-ingresses', oldSessionStatus: 401, newSessionStatus: 200 })
   const ids = []
   async function createListing(index) {
-    const result = await post(ports[index % 2], '/listings', { type: 'physical',
+    // Ingress recovery is under test here; a ready media fixture isolates it from Garage.
+    const media = await fixtureMediaAsset(db, sellerAccountId)
+    const result = await post(ports[index % 2], '/listings', { type: 'physical', saleMode: 'one_off',
       category: 'electronics', title: `Ingress functional product ${index}`, description: 'Isolated real database product',
-      price: { amount: '12.50', currency: 'USD' } }, actors.seller)
+      price: { amount: '12.50', currency: 'USD' }, mediaIds: [media.id] }, actors.seller)
     assert.equal(result.status, 201)
     return { listingId: result.value.id, version: 1, shipping }
   }

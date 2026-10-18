@@ -5,6 +5,7 @@ import pg from 'pg'
 import { ListingService } from '../dist/listings/listing.service.js'
 import { RatesService } from '../dist/pricing/rates.service.js'
 import { sandbox } from './helpers/database.mjs'
+import { fixtureMediaAsset } from './helpers/media.mjs'
 
 test('search returns real detail fields and empty-page totals with one database round trip', async () => {
   const db = await sandbox()
@@ -39,6 +40,10 @@ test('search returns real detail fields and empty-page totals with one database 
       data: rows.filter((r) => r.type === 'physical').map((r) => ({ listingId: r.id }))
     })
     await db.client.digitalInventory.create({ data: { listingId: rows[1].id } })
+    const media = await fixtureMediaAsset(db, seller.id)
+    await db.client.listingMedia.create({
+      data: { listingId: rows[1].id, mediaId: media.id, position: 0 }
+    })
     const service = new ListingService(
       db.client,
       new RatesService(db.client, async () => {
@@ -70,6 +75,10 @@ test('search returns real detail fields and empty-page totals with one database 
       )
       roundTrips = 0
       const second = await service.list({ page: '2', limit: '2' })
+      assert.deepEqual(
+        [...page.items, ...second.items].find((item) => item.id === rows[1].id)?.media,
+        [{ id: media.id, position: 0, url: `/api/listings/${rows[1].id}/media/${media.id}` }]
+      )
       assert.deepEqual(
         JSON.parse(JSON.stringify(second.items)),
         JSON.parse(JSON.stringify(expected.slice(2)))

@@ -9,6 +9,7 @@ import { connect, testUrl } from './helpers/database.mjs'
 import { grantRuntime } from '../scripts/runtime-grants.mjs'
 import { readFile } from 'node:fs/promises'
 import Ajv from 'ajv'
+import { fixtureMediaAsset } from './helpers/media.mjs'
 
 test('I4 HTTP: participant privacy, query pagination and command replay', async () => {
   const db = await sandbox()
@@ -56,18 +57,31 @@ test('I4 HTTP: participant privacy, query pagination and command replay', async 
         'x-csrf-token': response.json().csrfToken
       }
     }
+    const seller = await db.client.account.findUniqueOrThrow({ where: { loginName: 'seller' } })
+    const media = await fixtureMediaAsset(db, seller.id)
     const listing = await post('/listings', accounts.seller, {
       type: 'physical',
+      saleMode: 'one_off', mediaIds: [media.id],
       title: 'Private order fixture',
       description: 'Public description',
       category: 'electronics',
       price: { amount: '12.50', currency: 'USD' }
     })
     assert.equal(listing.statusCode, 201)
+    assert.equal(listing.json().canEdit, true)
+    const ownBeforeOrder = await post('/me/listings', accounts.seller)
+    assert.equal(ownBeforeOrder.statusCode, 200)
+    assert.equal(ownBeforeOrder.json().items[0].canEdit, true)
     const payload = { listingId: listing.json().id, version: 1, shipping }
     const headers = { ...accounts.buyer, 'idempotency-key': randomUUID() }
     const created = await post('/orders', headers, payload)
     assert.equal(created.statusCode, 200, created.body)
+    const ownAfterOrder = await post('/me/listings', accounts.seller)
+    assert.equal(ownAfterOrder.statusCode, 200)
+    assert.equal(ownAfterOrder.json().items[0].canEdit, false)
+    assert.equal((await post(`/listings/${listing.json().id}/detail`, { origin })).json().canEdit, false)
+    assert.equal((await post(`/listings/${listing.json().id}/edit`, accounts.seller,
+      { version: 1, title: 'Too late' })).statusCode, 409)
     const id = created.json().orderId
     assert.deepEqual((await post('/orders', headers, payload)).json(), { orderId: id })
     assert.equal((await post('/orders', headers, { ...payload, version: 2 })).statusCode, 409)
@@ -207,6 +221,7 @@ test('I4 HTTP: participant privacy, query pagination and command replay', async 
     assert.deepEqual(competing.map((r) => r.statusCode).sort(), [200, 409])
     const digital = await post('/listings', accounts.seller, {
       type: 'digital',
+      saleMode: 'repeatable', mediaIds: [(await fixtureMediaAsset(db, seller.id)).id],
       title: 'Digital fixture',
       description: 'Public digital description',
       category: 'digital_assets',

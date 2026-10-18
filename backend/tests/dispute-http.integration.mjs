@@ -7,6 +7,7 @@ import { createApp } from '../dist/app.js'
 import { readConfig } from '../dist/config.js'
 import { provisionAccounts } from '../dist/accounts/provision-accounts.js'
 import { sandbox, shipping } from './helpers/database.mjs'
+import { fixtureMediaAsset } from './helpers/media.mjs'
 
 let db, app
 const origin = 'http://localhost:3000'
@@ -54,8 +55,11 @@ test('HTTP dispute flow enforces roles, hides private data, and updates simulate
     const check = ajv.compile({ $ref: `alpha#/components/schemas/${schema}` })
     assert.equal(check(value), true, JSON.stringify(check.errors))
   }
+  const seller = await db.client.account.findUniqueOrThrow({ where: { loginName: 'v2_seller' } })
+  const media = await fixtureMediaAsset(db, seller.id)
   const listing = await post('/listings', 'seller', {
-    type: 'physical', title: 'Dispute HTTP item', description: 'Dispute fixture',
+    type: 'physical', saleMode: 'one_off', mediaIds: [media.id],
+    title: 'Dispute HTTP item', description: 'Dispute fixture',
     category: 'electronics', price: { amount: '12.50', currency: 'USD' }
   })
   assert.equal(listing.statusCode, 201, listing.body)

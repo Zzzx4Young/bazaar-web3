@@ -16,11 +16,13 @@
     "start": "node --env-file-if-exists=.env dist/main.js",
     "dev": "npm run build && npm start",
     "db:psql": "node scripts/local-psql.mjs",
+    "archive:media": "node --env-file-if-exists=.env scripts/archive-order-media.mjs",
     "db:observer:grant": "node --env-file-if-exists=.tmp/i7-migrate.env scripts/apply-observer-grants.mjs",
     "db:observer:setup": "node scripts/setup-local-observer.mjs --confirm-local-create",
     "seed:v2": "npm run build && node --env-file-if-exists=.tmp/i7-migrate.env scripts/v2-seed.mjs",
     "test:deployment": "npm run build && node scripts/with-test-db.mjs node scripts/check-deployment-images.mjs",
     "test:backup-restore": "npm run build && node scripts/with-backup-restore.mjs",
+    "test:media:restore": "npm run build && node scripts/check-media-backup-restore.mjs",
     "test": "npm run build && node --test tests/*.test.mjs",
     "test:db": "npm run build && node --test --test-concurrency=1 tests/*.integration.mjs",
     "test:capacity": "npm run build && node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
@@ -38,6 +40,8 @@
     "test:capacity:writes:failover": "npm run build && CAPACITY_WRITES=1 CAPACITY_FAULT=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1152.0",
+    "@aws-sdk/s3-request-presigner": "3.1152.0",
     "@nestjs/common": "12.0.1",
     "@nestjs/core": "12.0.1",
     "@nestjs/platform-fastify": "12.0.1",

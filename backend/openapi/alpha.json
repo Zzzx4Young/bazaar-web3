@@ -3,7 +3,7 @@
   "info": {
     "title": "Bazaar internal Alpha API",
     "version": "0.1.0",
-    "description": "Implemented internal Alpha contract. Pre-provisioned accounts only; simulated settlement. No uploads, registration, wallet or real payments. Every response returns X-Request-Id; errors contain code, retryable and the same requestId. Private/auth responses no-store. Admission saturation returns 503 OVERLOADED with retryable=true and Cache-Control: no-store before authentication/database work; POST /health/live is exempt. Write retries must preserve the original payload and idempotency key."
+    "description": "Implemented internal Alpha contract. Pre-provisioned accounts only; simulated settlement and seller image uploads. No registration, wallet or real payments. Every response returns X-Request-Id; errors contain code, retryable and the same requestId. Private/auth responses no-store. Admission saturation returns 503 OVERLOADED with retryable=true and Cache-Control: no-store before authentication/database work; POST /health/live is exempt. Write retries must preserve the original payload and idempotency key."
   },
   "servers": [
     {
@@ -11,6 +11,61 @@
     }
   ],
   "paths": {
+    "/media/upload-intents": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "post": {
+        "operationId": "createMediaUploadIntent",
+        "summary": "Create a short-lived seller image upload URL",
+        "description": "Requires a session, Origin and CSRF token. Upload the exact declared bytes with the declared Content-Type to uploadUrl, then call complete before attaching assetId to a listing.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MediaUploadIntentInput" } } } },
+        "responses": { "201": { "description": "Upload URL", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MediaUploadIntent" } } } } }
+      }
+    },
+    "/media/{id}/complete": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RequestId" },
+        { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+      ],
+      "post": {
+        "operationId": "completeMediaUpload",
+        "summary": "Verify staged bytes and finalize an immutable image asset",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Verified asset; repeated calls return the same asset", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MediaAssetStatus" } } } } }
+      }
+    },
+    "/listings/{listingId}/media/{mediaId}": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RequestId" },
+        { "name": "listingId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+        { "name": "mediaId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+      ],
+      "get": {
+        "operationId": "readListingMedia",
+        "summary": "Read an image attached to a published listing",
+        "security": [],
+        "parameters": [
+          { "name": "listingId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "mediaId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": { "200": { "description": "Image bytes; Cache-Control: no-store", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "image/jpeg": { "schema": { "type": "string", "format": "binary" } }, "image/png": { "schema": { "type": "string", "format": "binary" } }, "image/webp": { "schema": { "type": "string", "format": "binary" } } } } }
+      }
+    },
+    "/orders/{orderId}/media/{mediaId}": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RequestId" },
+        { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+        { "name": "mediaId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+      ],
+      "get": {
+        "operationId": "readOrderMedia",
+        "summary": "Read an order snapshot image as buyer or seller",
+        "parameters": [
+          { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "mediaId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": { "200": { "description": "Image bytes; Cache-Control: no-store", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "image/jpeg": { "schema": { "type": "string", "format": "binary" } }, "image/png": { "schema": { "type": "string", "format": "binary" } }, "image/webp": { "schema": { "type": "string", "format": "binary" } } } } }
+      }
+    },
     "/auth/login": {
       "parameters": [
         {
@@ -4325,6 +4380,45 @@
           "digital"
         ]
       },
+      "SaleMode": {
+        "type": "string",
+        "enum": ["one_off", "repeatable"]
+      },
+      "ListingMedia": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "position", "url"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "position": { "type": "integer", "minimum": 0, "maximum": 7 },
+          "url": { "type": "string", "description": "Stable application GET path; order URLs require participant authorization." }
+        }
+      },
+      "MediaUploadIntentInput": {
+        "type": "object", "additionalProperties": false,
+        "required": ["contentType", "byteSize"],
+        "properties": {
+          "contentType": { "type": "string", "enum": ["image/jpeg", "image/png", "image/webp"] },
+          "byteSize": { "type": "integer", "minimum": 1, "maximum": 5242880 }
+        }
+      },
+      "MediaUploadIntent": {
+        "type": "object", "additionalProperties": false,
+        "required": ["assetId", "uploadUrl", "expiresIn"],
+        "properties": {
+          "assetId": { "type": "string", "format": "uuid" },
+          "uploadUrl": { "type": "string", "format": "uri" },
+          "expiresIn": { "type": "integer", "enum": [300] }
+        }
+      },
+      "MediaAssetStatus": {
+        "type": "object", "additionalProperties": false,
+        "required": ["assetId", "status", "sha256"],
+        "properties": {
+          "assetId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["ready"] },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      },
       "Listing": {
         "type": "object",
         "additionalProperties": false,
@@ -4332,6 +4426,9 @@
           "id",
           "seller",
           "type",
+          "saleMode",
+          "canEdit",
+          "media",
           "title",
           "description",
           "category",
@@ -4356,6 +4453,14 @@
           "type": {
             "$ref": "#/components/schemas/ListingType"
           },
+          "saleMode": {
+            "$ref": "#/components/schemas/SaleMode"
+          },
+          "canEdit": {
+            "type": "boolean",
+            "description": "Whether content edits are currently permitted; one-off listings lock after the first order."
+          },
+          "media": { "type": "array", "items": { "$ref": "#/components/schemas/ListingMedia" }, "maxItems": 8 },
           "title": {
             "type": "string",
             "minLength": 1,
@@ -4440,6 +4545,8 @@
         "additionalProperties": false,
         "required": [
           "type",
+          "saleMode",
+          "mediaIds",
           "title",
           "description",
           "category",
@@ -4452,6 +4559,11 @@
               "physical"
             ]
           },
+          "saleMode": {
+            "type": "string",
+            "enum": ["one_off"]
+          },
+          "mediaIds": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } },
           "title": {
             "type": "string",
             "minLength": 1,
@@ -4476,6 +4588,8 @@
         "additionalProperties": false,
         "required": [
           "type",
+          "saleMode",
+          "mediaIds",
           "title",
           "description",
           "category",
@@ -4490,6 +4604,10 @@
               "digital"
             ]
           },
+          "saleMode": {
+            "$ref": "#/components/schemas/SaleMode"
+          },
+          "mediaIds": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } },
           "title": {
             "type": "string",
             "minLength": 1,
@@ -4532,6 +4650,11 @@
           "version"
         ],
         "properties": {
+          "description": { "type": "string", "minLength": 1, "maxLength": 5000 },
+          "category": { "type": "string", "maxLength": 50 },
+          "licenseDescription": { "type": "string", "minLength": 1, "maxLength": 2000 },
+          "contentVersion": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "mediaIds": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } },
           "version": {
             "type": "integer",
             "minimum": 1,
@@ -4827,6 +4950,7 @@
           "price",
           "licenseDescription",
           "contentVersion"
+          ,"media"
         ],
         "properties": {
           "listingVersion": {
@@ -4865,7 +4989,8 @@
             "minLength": 1,
             "maxLength": 100,
             "nullable": true
-          }
+          },
+          "media": { "type": "array", "maxItems": 8, "items": { "$ref": "#/components/schemas/ListingMedia" } }
         }
       },
       "Empty": {

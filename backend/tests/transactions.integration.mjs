@@ -294,7 +294,9 @@ test('DB-08: withdrawal survives cancellation; edits and purchases serialize who
     )
   )
   for (const editFirst of [true, false]) {
-    const g = await fixture(db)
+    const g = await fixture(db, 'digital')
+    await db.client.listing.update({ where: { id: g.listing.id },
+      data: { saleMode: 'repeatable' } })
     const edit = (o) =>
       db.market.edit(g.seller, g.listing.id, 1, { priceAmount: '2.5', title: 'Version two' }, o)
     const buy = (o) => db.market.create(g.buyer, randomUUID(), g.input, o)

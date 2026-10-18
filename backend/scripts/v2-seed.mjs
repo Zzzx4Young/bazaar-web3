@@ -207,6 +207,8 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
       data: {
         sellerId: seller.id,
         type: spec.type,
+        saleMode: spec.type === 'digital' && spec.supplyMode === 'unlimited'
+          ? 'repeatable' : 'one_off',
         title: spec.title,
         description: spec.description,
         category: spec.category,

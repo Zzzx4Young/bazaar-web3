@@ -23,7 +23,7 @@ import {
 import { marketplaceCategories } from '@/lib/categories'
 import { publishSchema } from '@/lib/publish-schema'
 import { useAuthStore } from '@/stores/use-auth-store'
-import { createListing } from '@/lib/backend-api'
+import { createListing, uploadListingImage } from '@/lib/backend-api'
 import { useCurrencies } from '@/hooks/use-currencies'
 import type { ItemCategory, Currency } from '@/types'
 
@@ -34,6 +34,7 @@ export function PublishForm() {
   const auth = useAuthStore()
   const [saveError, setSaveError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [photos, setPhotos] = useState<File[]>([])
   const { currencies, loading: currenciesLoading, error: currenciesError, retry } = useCurrencies()
 
   const {
@@ -47,6 +48,7 @@ export function PublishForm() {
     resolver: zodResolver(publishSchema),
     defaultValues: {
       category: 'physical',
+      saleMode: 'one_off',
       primaryCategory: 'electronics',
       priceCurrency: 'CNY'
     }
@@ -83,14 +85,26 @@ export function PublishForm() {
         })
         return
       }
+      if (photos.length < 1 || photos.length > 8 || photos.some((photo) =>
+        !['image/jpeg', 'image/png', 'image/webp'].includes(photo.type) ||
+        photo.size < 1 || photo.size > 5 * 1024 * 1024)) {
+        setSaveError('请选择 1–8 张 JPEG、PNG 或 WebP 图片，每张不超过 5 MiB。')
+        return
+      }
+      const mediaIds: string[] = []
+      for (const photo of photos)
+        mediaIds.push(await uploadListingImage(auth.view.csrfToken, photo))
       const listing = await createListing(auth.view.csrfToken, {
         type: data.category,
+        saleMode: data.saleMode,
         title: data.title,
         description: data.description,
         category: data.primaryCategory,
         price: { amount: data.priceAmount, currency: data.priceCurrency },
+        mediaIds,
         ...(data.category === 'digital'
           ? {
+              supplyMode: data.saleMode === 'one_off' ? 'single' : 'unlimited',
               licenseDescription: data.licenseDescription,
               contentVersion: data.contentVersion
             }
@@ -118,6 +132,7 @@ export function PublishForm() {
             value={category}
             onValueChange={(v) => {
               setValue('category', v as ItemCategory)
+              setValue('saleMode', v === 'physical' ? 'one_off' : 'repeatable')
               setValue('primaryCategory', v === 'physical' ? 'electronics' : 'digital_assets')
             }}
           >
@@ -128,6 +143,21 @@ export function PublishForm() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {category === 'digital' && (
+        <div className="space-y-2">
+          <Label htmlFor="saleMode">销售方式</Label>
+          <select
+            id="saleMode"
+            className="flex h-10 w-full rounded-md border bg-background px-3 text-sm"
+            {...register('saleMode')}
+          >
+            <option value="repeatable">可重复销售</option>
+            <option value="one_off">仅售一次</option>
+          </select>
+          {errors.saleMode && <p className="text-sm text-destructive">{errors.saleMode.message}</p>}
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="primaryCategory">商品分类</Label>
@@ -173,6 +203,23 @@ export function PublishForm() {
               <p className="mt-1 text-xs text-destructive">{errors.description.message}</p>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* 商品图片 */}
+      <Card>
+        <CardContent className="space-y-2 p-4">
+          <Label htmlFor="listingPhotos">商品图片（1–8 张，每张不超过 5 MiB）</Label>
+          <Input
+            id="listingPhotos"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            onChange={(event) => setPhotos(Array.from(event.target.files ?? []))}
+          />
+          {photos.length > 0 && (
+            <p className="text-sm text-muted-foreground">已选择 {photos.length} 张：{photos.map((photo) => photo.name).join('、')}</p>
+          )}
         </CardContent>
       </Card>
 

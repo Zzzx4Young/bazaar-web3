@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { useLocale } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -16,6 +17,7 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ item, seller }: ItemCardProps) {
+  const locale = useLocale()
   const cover = item.media[0]
   const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null)
 
@@ -41,6 +43,11 @@ export function ItemCard({ item, seller }: ItemCardProps) {
               onError={() => setFailedCoverUrl(cover!.url)}
               unoptimized
             />
+          )}
+          {!showPlaceholder && item.illustrativeImage && (
+            <Badge className="absolute bottom-2 left-2 bg-black/75 text-white hover:bg-black/75">
+              {locale === 'zh-CN' ? '示意图' : 'Illustration'}
+            </Badge>
           )}
           {item.category === 'digital' && (
             <Badge

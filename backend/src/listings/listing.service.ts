@@ -10,11 +10,15 @@ import { ListingCommands } from './listing-commands.js'
 import { categoryInput } from './categories.js'
 import { favoritesMaxIds } from './favorites-policy.js'
 import { listingTextPolicy } from './listing-policy.js'
+import { mediaMaxItems } from '../media/media-policy.js'
+import { lockMediaAssets } from '../media/lock-media-assets.js'
 
 const include = {
   listingSeller: { select: { id: true, displayName: true } },
   inventoryListingRows: { select: { availability: true } },
-  digitalInventoryRows: { select: { availability: true } }
+  digitalInventoryRows: { select: { availability: true } },
+  mediaRows: { select: { mediaId: true, position: true }, orderBy: { position: 'asc' } },
+  _count: { select: { orderListingRows: true } }
 } satisfies Prisma.ListingInclude
 type ListingRow = Prisma.ListingGetPayload<{ include: typeof include }>
 const homeFeaturedLimit = 10
@@ -31,6 +35,8 @@ export class ListingService {
       id: listing.id,
       seller: listing.listingSeller,
       type: listing.type,
+      saleMode: listing.saleMode,
+      canEdit: listing.saleMode !== 'one_off' || listing._count.orderListingRows === 0,
       title: listing.title,
       description: listing.description,
       category: listing.category,
@@ -44,6 +50,11 @@ export class ListingService {
       version: listing.version,
       licenseDescription: listing.licenseDescription,
       contentVersion: listing.contentVersion,
+      media: listing.mediaRows.map((entry) => ({
+        id: entry.mediaId,
+        position: entry.position,
+        url: `/api/listings/${listing.id}/media/${entry.mediaId}`
+      })),
       createdAt: listing.createdAt,
       updatedAt: listing.updatedAt
     }
@@ -120,21 +131,35 @@ export class ListingService {
   async create(actorId: string, body: unknown) {
     const input = objectInput(
       body,
-      ['type', 'title', 'description', 'category', 'price', 'licenseDescription', 'contentVersion', 'supplyMode'],
-      ['type', 'title', 'description', 'category', 'price']
+      ['type', 'saleMode', 'title', 'description', 'category', 'price', 'licenseDescription', 'contentVersion', 'supplyMode', 'mediaIds'],
+      ['type', 'saleMode', 'title', 'description', 'category', 'price', 'mediaIds']
     )
     if (input.type !== 'physical' && input.type !== 'digital')
       throw new DomainError('INVALID_INPUT')
     const type = input.type as 'physical' | 'digital'
     const supplyMode = input.supplyMode ?? 'unlimited'
+    if (input.saleMode !== 'one_off' && input.saleMode !== 'repeatable')
+      throw new DomainError('INVALID_INPUT')
     if (type === 'physical' && 'supplyMode' in input) throw new DomainError('INVALID_INPUT')
     if (type === 'digital' && supplyMode !== 'single' && supplyMode !== 'unlimited')
       throw new DomainError('INVALID_INPUT')
+    if (type === 'physical' && input.saleMode !== 'one_off')
+      throw new DomainError('INVALID_INPUT')
+    if (type === 'digital' &&
+      ((supplyMode === 'single') !== (input.saleMode === 'one_off')))
+      throw new DomainError('INVALID_INPUT')
+    if (!Array.isArray(input.mediaIds) || input.mediaIds.length < 1 ||
+      input.mediaIds.length > mediaMaxItems ||
+      input.mediaIds.some((id) => typeof id !== 'string'))
+      throw new DomainError('INVALID_INPUT')
+    const mediaIds = input.mediaIds.map((id) => idInput(id))
+    if (new Set(mediaIds).size !== mediaIds.length) throw new DomainError('INVALID_INPUT')
     const price = objectInput(input.price, ['amount', 'currency'])
     const currency = currencyInput(price.currency)
     const data = {
       sellerId: actorId,
       type,
+      saleMode: input.saleMode as 'one_off' | 'repeatable',
       title: textInput(input.title, listingTextPolicy.titleMaxLength),
       description: textInput(input.description, listingTextPolicy.descriptionMaxLength),
       category: categoryInput(input.category, type),
@@ -147,7 +172,17 @@ export class ListingService {
       throw new DomainError('INVALID_INPUT')
     const id = await transact(this.client, async (tx) => {
       await requireActiveAccount(tx, actorId)
+      await lockMediaAssets(tx, mediaIds)
+      const assets = await tx.mediaAsset.findMany({ where: { id: { in: mediaIds } } })
+      if (assets.some((asset) => asset.sellerId !== actorId)) throw new DomainError('FORBIDDEN')
+      if (assets.length !== mediaIds.length || assets.some((asset) => asset.status !== 'ready'))
+        throw new DomainError('INVALID_INPUT')
+      if (await tx.listingMedia.count({ where: { mediaId: { in: mediaIds } } }))
+        throw new DomainError('LISTING_CONFLICT')
       const listing = await tx.listing.create({ data })
+      await tx.listingMedia.createMany({
+        data: mediaIds.map((mediaId, position) => ({ listingId: listing.id, mediaId, position }))
+      })
       if (type === 'physical')
         await tx.physicalInventory.create({ data: { listingId: listing.id } })
       if (type === 'digital' && supplyMode === 'single')
@@ -162,7 +197,8 @@ export class ListingService {
     idInput(id)
     const input = objectInput(
       body,
-      ['version', 'title', 'priceAmount', 'publicationStatus'],
+      ['version', 'title', 'description', 'category', 'priceAmount',
+        'licenseDescription', 'contentVersion', 'mediaIds', 'publicationStatus'],
       ['version']
     )
     const version = positiveInteger(input.version)
@@ -172,34 +208,45 @@ export class ListingService {
     if (listing.sellerId !== actorId) throw new DomainError('FORBIDDEN')
     const patch: {
       title?: string
+      description?: string
+      category?: string
       priceAmount?: string
+      licenseDescription?: string
+      contentVersion?: string
+      mediaIds?: string[]
       publicationStatus?: 'published' | 'withdrawn'
     } = {}
     if ('title' in input) patch.title = textInput(input.title, listingTextPolicy.titleMaxLength)
+    if ('description' in input)
+      patch.description = textInput(input.description, listingTextPolicy.descriptionMaxLength)
+    if ('category' in input) patch.category = categoryInput(input.category, listing.type as 'physical' | 'digital')
     if ('priceAmount' in input)
       patch.priceAmount = priceInput(input.priceAmount, currencyInput(listing.currency)).toFixed()
+    if ('licenseDescription' in input || 'contentVersion' in input) {
+      if (listing.type !== 'digital') throw new DomainError('INVALID_INPUT')
+      if ('licenseDescription' in input)
+        patch.licenseDescription = textInput(input.licenseDescription,
+          listingTextPolicy.licenseDescriptionMaxLength)
+      if ('contentVersion' in input)
+        patch.contentVersion = textInput(input.contentVersion,
+          listingTextPolicy.contentVersionMaxLength)
+    }
+    if ('mediaIds' in input) {
+      if (!Array.isArray(input.mediaIds) || input.mediaIds.length < 1 ||
+        input.mediaIds.length > mediaMaxItems ||
+        input.mediaIds.some((mediaId) => typeof mediaId !== 'string'))
+        throw new DomainError('INVALID_INPUT')
+      patch.mediaIds = input.mediaIds.map((mediaId) => idInput(mediaId))
+      if (new Set(patch.mediaIds).size !== patch.mediaIds.length)
+        throw new DomainError('INVALID_INPUT')
+    }
     if ('publicationStatus' in input) {
       if (input.publicationStatus !== 'published' && input.publicationStatus !== 'withdrawn')
         throw new DomainError('INVALID_INPUT')
       patch.publicationStatus = input.publicationStatus
     }
-    const updated = await new ListingCommands(this.client).edit(actorId, id, version, patch)
-    return this.view({
-      ...updated,
-      listingSeller: {
-        id: actorId,
-        displayName: (await this.client.account.findUniqueOrThrow({ where: { id: actorId } }))
-          .displayName
-      },
-      inventoryListingRows: await this.client.physicalInventory.findMany({
-        where: { listingId: id },
-        select: { availability: true }
-      }),
-      digitalInventoryRows: await this.client.digitalInventory.findMany({
-        where: { listingId: id },
-        select: { availability: true }
-      })
-    })
+    await new ListingCommands(this.client).edit(actorId, id, version, patch)
+    return this.view(await this.client.listing.findUniqueOrThrow({ where: { id }, include }))
   }
 
   async list(query: unknown, actorId?: string) {
@@ -289,14 +336,23 @@ export class ListingService {
         coalesce((SELECT jsonb_agg(jsonb_build_object(
           'id', l.id,
           'seller', jsonb_build_object('id', a.id, 'displayName', a."displayName"),
-          'type', l.type, 'title', l.title, 'description', l.description,
+          'type', l.type, 'saleMode', l."saleMode",
+          'canEdit', l."saleMode" <> 'one_off' OR NOT EXISTS (
+            SELECT 1 FROM "Order" o WHERE o."listingId" = l.id
+          ),
+          'title', l.title, 'description', l.description,
           'category', l.category,
           'price', jsonb_build_object('amount', l."priceAmount"::text, 'currency', l.currency),
           'priceUsd', l.usd, 'publicationStatus', l."publicationStatus",
           'availability', CASE WHEN l.type = 'digital' THEN coalesce(di.availability, 'unlimited')
             ELSE coalesce(pi.availability, 'unavailable') END,
           'version', l.version, 'licenseDescription', l."licenseDescription",
-          'contentVersion', l."contentVersion", 'createdAt', l."createdAt", 'updatedAt', l."updatedAt"
+          'contentVersion', l."contentVersion",
+          'media', coalesce((SELECT jsonb_agg(jsonb_build_object(
+            'id', lm."mediaId", 'position', lm.position,
+            'url', '/api/listings/' || l.id::text || '/media/' || lm."mediaId"::text
+          ) ORDER BY lm.position) FROM "ListingMedia" lm WHERE lm."listingId" = l.id), '[]'::jsonb),
+          'createdAt', l."createdAt", 'updatedAt', l."updatedAt"
         ) ORDER BY ${order}) FROM selected l
           JOIN "Account" a ON a.id = l."sellerId"
           LEFT JOIN "PhysicalInventory" pi ON pi."listingId" = l.id

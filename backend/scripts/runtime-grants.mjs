@@ -11,7 +11,8 @@ export async function grantRuntime(client, schema, role) {
     'SettlementRecord',
     'OrderEvent',
     'RateSnapshot',
-    'SellerReview'
+    'SellerReview',
+    'OrderMediaSnapshot'
   ]
   const mutable = [
     'Account',
@@ -25,7 +26,9 @@ export async function grantRuntime(client, schema, role) {
     'RefundRequest',
     'IdempotencyRecord',
     'Session',
-    'AuthRateBucket'
+    'AuthRateBucket',
+    'MediaAsset',
+    'ListingMedia'
   ]
   await client.$transaction(async (tx) => {
     const roles = await tx.$queryRaw`
@@ -41,8 +44,11 @@ export async function grantRuntime(client, schema, role) {
     await tx.$executeRawUnsafe(`GRANT USAGE ON SCHEMA "${schema}" TO "${role}"`)
     await tx.$executeRawUnsafe(`REVOKE ALL ON ALL TABLES IN SCHEMA "${schema}" FROM "${role}"`)
     for (const table of [...immutable, ...mutable]) {
-      const permissions = table === 'AuthRateBucket' ? 'SELECT, INSERT, UPDATE, DELETE'
-        : mutable.includes(table) ? 'SELECT, INSERT, UPDATE' : 'SELECT, INSERT'
+      const permissions = ['AuthRateBucket', 'ListingMedia'].includes(table)
+        ? 'SELECT, INSERT, UPDATE, DELETE'
+        : ['OrderMediaSnapshot', 'MediaAsset'].includes(table)
+          ? 'SELECT, INSERT, UPDATE'
+          : mutable.includes(table) ? 'SELECT, INSERT, UPDATE' : 'SELECT, INSERT'
       await tx.$executeRawUnsafe(`GRANT ${permissions} ON "${schema}"."${table}" TO "${role}"`)
     }
     await tx.$executeRawUnsafe(`GRANT SELECT ON "${schema}"."AccountCredential" TO "${role}"`)

@@ -31,7 +31,15 @@ services:
       DB_CONNECT_TIMEOUT_MS: ${DB_CONNECT_TIMEOUT_MS:-3000}
       DB_IDLE_TIMEOUT_MS: ${DB_IDLE_TIMEOUT_MS:-10000}
       DB_STATEMENT_TIMEOUT_MS: ${DB_STATEMENT_TIMEOUT_MS:-3000}
-    secrets: [runtime_database_url]
+      GARAGE_HOT_ENDPOINT: ${GARAGE_HOT_ENDPOINT:?Set GARAGE_HOT_ENDPOINT for the API network}
+      GARAGE_HOT_PUBLIC_ENDPOINT: ${GARAGE_HOT_PUBLIC_ENDPOINT:?Set a browser-reachable GARAGE_HOT_PUBLIC_ENDPOINT}
+      GARAGE_COLD_ENDPOINT: ${GARAGE_COLD_ENDPOINT:?Set GARAGE_COLD_ENDPOINT for the API network}
+      GARAGE_HOT_ACCESS_KEY_ID_FILE: /run/secrets/garage_hot_access_key_id
+      GARAGE_HOT_SECRET_KEY_FILE: /run/secrets/garage_hot_secret_key
+      GARAGE_COLD_ACCESS_KEY_ID_FILE: /run/secrets/garage_cold_access_key_id
+      GARAGE_COLD_SECRET_KEY_FILE: /run/secrets/garage_cold_secret_key
+    secrets: [runtime_database_url, garage_hot_access_key_id, garage_hot_secret_key,
+      garage_cold_access_key_id, garage_cold_secret_key]
     ports:
       - 127.0.0.1:${API_PORT:-3001}:3001
     read_only: true
@@ -56,8 +64,48 @@ services:
         max-size: 10m
         max-file: "3"
 
+  archive-worker:
+    image: ${BAZAAR_API_IMAGE:?Set BAZAAR_API_IMAGE to an immutable image reference}
+    command: [node, scripts/archive-order-media.mjs, --loop]
+    restart: unless-stopped
+    init: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL_FILE: /run/secrets/runtime_database_url
+      GARAGE_HOT_ENDPOINT: ${GARAGE_HOT_ENDPOINT:?Set GARAGE_HOT_ENDPOINT for the API network}
+      GARAGE_HOT_PUBLIC_ENDPOINT: ${GARAGE_HOT_PUBLIC_ENDPOINT:?Set a browser-reachable GARAGE_HOT_PUBLIC_ENDPOINT}
+      GARAGE_COLD_ENDPOINT: ${GARAGE_COLD_ENDPOINT:?Set GARAGE_COLD_ENDPOINT for the API network}
+      GARAGE_HOT_ACCESS_KEY_ID_FILE: /run/secrets/garage_hot_access_key_id
+      GARAGE_HOT_SECRET_KEY_FILE: /run/secrets/garage_hot_secret_key
+      GARAGE_COLD_ACCESS_KEY_ID_FILE: /run/secrets/garage_cold_access_key_id
+      GARAGE_COLD_SECRET_KEY_FILE: /run/secrets/garage_cold_secret_key
+      ORDER_IMAGE_ARCHIVE_AFTER_DAYS: ${ORDER_IMAGE_ARCHIVE_AFTER_DAYS:-90}
+      ORDER_IMAGE_ARCHIVE_SCAN_SECONDS: ${ORDER_IMAGE_ARCHIVE_SCAN_SECONDS:-60}
+    secrets: [runtime_database_url, garage_hot_access_key_id, garage_hot_secret_key,
+      garage_cold_access_key_id, garage_cold_secret_key]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
 secrets:
   migration_database_url:
     file: ${MIGRATION_DATABASE_URL_FILE:?Set MIGRATION_DATABASE_URL_FILE}
   runtime_database_url:
     file: ${RUNTIME_DATABASE_URL_FILE:?Set RUNTIME_DATABASE_URL_FILE}
+  garage_hot_access_key_id:
+    file: ${GARAGE_HOT_ACCESS_KEY_ID_FILE:?Set GARAGE_HOT_ACCESS_KEY_ID_FILE}
+  garage_hot_secret_key:
+    file: ${GARAGE_HOT_SECRET_KEY_FILE:?Set GARAGE_HOT_SECRET_KEY_FILE}
+  garage_cold_access_key_id:
+    file: ${GARAGE_COLD_ACCESS_KEY_ID_FILE:?Set GARAGE_COLD_ACCESS_KEY_ID_FILE}
+  garage_cold_secret_key:
+    file: ${GARAGE_COLD_SECRET_KEY_FILE:?Set GARAGE_COLD_SECRET_KEY_FILE}

@@ -24,6 +24,7 @@ model Account {
   reviewBuyerRows      SellerReview[]      @relation("reviewBuyer")
   reviewSellerRows     SellerReview[]      @relation("reviewSeller")
   checkoutBuyerRows    Checkout[]          @relation("checkoutBuyer")
+  mediaSellerRows      MediaAsset[]        @relation("mediaSeller")
   credential           AccountCredential?
   sessions             Session[]
 }
@@ -69,6 +70,7 @@ model Listing {
   id                   String              @id @default(uuid()) @db.Uuid
   sellerId             String              @db.Uuid
   type                 String
+  saleMode             String              @default("one_off")
   title                String
   description          String
   category             String
@@ -84,12 +86,45 @@ model Listing {
   orderListingRows     Order[]             @relation("orderListing")
   inventoryListingRows PhysicalInventory[] @relation("inventoryListing")
   digitalInventoryRows DigitalInventory[]  @relation("digitalInventoryListing")
+  mediaRows            ListingMedia[]
 
   @@unique([id, sellerId])
   @@unique([id, type])
   @@index([publicationStatus, createdAt, id])
   @@index([publicationStatus, type, createdAt, id])
   @@index([sellerId, createdAt, id])
+}
+
+model MediaAsset {
+  id               String         @id @default(uuid()) @db.Uuid
+  sellerId         String         @db.Uuid
+  uploadKey        String         @unique
+  hotKey           String?        @unique
+  coldKey          String?        @unique
+  status           String         @default("pending")
+  contentType      String
+  declaredBytes    Int
+  actualBytes      Int?
+  sha256           String?        @db.Char(64)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(6)
+  verifiedAt       DateTime?      @db.Timestamptz(6)
+  seller           Account        @relation("mediaSeller", fields: [sellerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  listingRows      ListingMedia[]
+  orderRows        OrderMediaSnapshot[]
+
+  @@index([sellerId, status, createdAt])
+}
+
+model ListingMedia {
+  listingId String     @db.Uuid
+  mediaId   String     @unique @db.Uuid
+  position  Int
+  listing   Listing    @relation(fields: [listingId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  media     MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([listingId, mediaId])
+  @@unique([listingId, position])
+  @@index([mediaId])
 }
 
 model Order {
@@ -102,9 +137,11 @@ model Order {
   version                   Int                    @default(1)
   createdAt                 DateTime               @default(now()) @db.Timestamptz(6)
   updatedAt                 DateTime               @updatedAt @db.Timestamptz(6)
+  completedAt               DateTime?              @db.Timestamptz(6)
   orderListing              Listing                @relation("orderListing", fields: [listingId, sellerId], references: [id, sellerId], onDelete: Restrict, onUpdate: Restrict)
   orderBuyer                Account                @relation("orderBuyer", fields: [buyerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   snapshot                  OrderSnapshot?         @relation("snapshotOrder")
+  mediaRows                 OrderMediaSnapshot[]
   shipping                  OrderShipping?         @relation("shippingOrder")
   inventoryOrderRows        PhysicalInventory[]    @relation("inventoryOrder")
   digitalInventoryOrderRows DigitalInventory[]     @relation("digitalInventoryOrder")
@@ -124,8 +161,27 @@ model Order {
   @@unique([id, listingId])
   @@index([buyerId, createdAt, id])
   @@index([sellerId, createdAt, id])
+  @@index([listingId])
   @@index([status, createdAt, id])
+  @@index([completedAt, id])
   @@index([checkoutId])
+}
+
+model OrderMediaSnapshot {
+  orderId     String     @db.Uuid
+  mediaId     String     @db.Uuid
+  position    Int
+  storageTier String     @default("hot")
+  archivedAt  DateTime?  @db.Timestamptz(6)
+  archiveClaimToken String? @db.Uuid
+  archiveClaimedUntil DateTime? @db.Timestamptz(6)
+  order       Order      @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  media       MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([orderId, mediaId])
+  @@unique([orderId, position])
+  @@index([storageTier, orderId])
+  @@index([mediaId, storageTier])
 }
 
 model Checkout {

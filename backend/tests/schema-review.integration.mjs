@@ -92,12 +92,12 @@ test('review R4: delivery, issues and refund approval reference the order partic
 })
 
 test('C1 service rejects over-scale amounts and unknown actions without side effects', async () => {
-  const f = await fixture(db),
-    id = await db.market.create(f.buyer, randomUUID(), f.input)
+  const f = await fixture(db)
   await assert.rejects(
     db.market.edit(f.seller, f.listing.id, 1, { priceAmount: '1.1234567890123456789' }),
     (e) => e.code === 'INVALID_AMOUNT'
   )
+  const id = await db.market.create(f.buyer, randomUUID(), f.input)
   await assert.rejects(
     db.market.act(f.buyer, randomUUID(), id, 'unknown_action'),
     (e) => e.code === 'INVALID_INPUT'

@@ -26,8 +26,14 @@ test('I3-C independent sessions publish and observe a backend listing', async ({
     await alicePage.locator('input[name="priceAmount"]').fill('12.50')
     await alicePage.getByText('选择成色').click()
     await alicePage.getByRole('option', { name: '全新' }).click()
+    await alicePage.getByLabel('商品图片（1–8 张，每张不超过 5 MiB）').setInputFiles({
+      name: 'listing.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z2joAAAAASUVORK5CYII=', 'base64')
+    })
     await alicePage.getByRole('button', { name: '立即发布' }).click()
     await expect(alicePage).toHaveURL(/\/listing\//)
+    await expect(alicePage.locator('img[src*="/api/listings/"]').first()).toBeVisible()
 
     await bobPage.goto('/zh-CN/explore')
     await login(bobPage, bob!)

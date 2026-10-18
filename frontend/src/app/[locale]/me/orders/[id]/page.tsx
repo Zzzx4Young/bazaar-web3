@@ -6,6 +6,7 @@ import { Link } from '@/i18n/routing'
 import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { MediaCarousel } from '@/components/listing/media-carousel'
 import {
   Select,
   SelectContent,
@@ -18,6 +19,7 @@ import { useApiResource } from '@/hooks/use-api-resource'
 import { useOrderCommand } from '@/hooks/use-order-command'
 import { useVisiblePolling } from '@/hooks/use-visible-polling'
 import { orderRefreshIntervalMs } from '@/lib/refresh-policy'
+import { hasIllustrativeImages } from '@/lib/listing-illustration'
 import { orderActions, type OrderDetail, type SimulatedBalance } from '@/lib/order-api'
 import {
   transactionActionLabel,
@@ -101,6 +103,13 @@ export default function OrderDetailPage() {
           {order.price.amount} {order.price.currency}
         </p>
       </div>
+      <MediaCarousel
+        media={(order.snapshot.media ?? []).map((entry) => ({
+          type: 'image', url: entry.url, alt: order.snapshot.title
+        }))}
+        alt={order.snapshot.title}
+        illustrative={hasIllustrativeImages(order.snapshot.description)}
+      />
       {order.checkoutId && (
         <Link
           href={`/me/checkouts/${order.checkoutId}`}

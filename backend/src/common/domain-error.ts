@@ -25,6 +25,8 @@ export function mapApplicationError(error: unknown): ErrorResult {
     if (error.code === 'RATE_LIMITED') return { status: 429, code: error.code, retryable: true }
     if (error.code === 'JSON_REQUIRED') return { status: 415, code: error.code, retryable: false }
     if (error.code === 'RETRY_EXHAUSTED') return { status: 503, code: error.code, retryable: true }
+    if (error.code === 'MEDIA_UNAVAILABLE') return { status: 503, code: error.code, retryable: true }
+    if (error.code === 'MEDIA_LIMIT_REACHED') return { status: 429, code: error.code, retryable: true }
     if (error.code === 'FORBIDDEN') return { status: 403, code: error.code, retryable: false }
     if (error.code === 'NOT_FOUND') return { status: 404, code: error.code, retryable: false }
     if (

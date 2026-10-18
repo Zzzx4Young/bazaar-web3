@@ -1,10 +1,13 @@
 import type { Item, ItemCategory, Currency } from '@/types'
+import { hasIllustrativeImages } from '@/lib/listing-illustration'
 
 const API_BASE = '/api'
 export interface BackendListing {
   id: string
   seller: { id: string; displayName: string }
   type: ItemCategory
+  saleMode: 'one_off' | 'repeatable'
+  canEdit: boolean
   title: string
   description: string
   category: string
@@ -15,6 +18,7 @@ export interface BackendListing {
   version: number
   licenseDescription: string | null
   contentVersion: string | null
+  media: { id: string; position: number; url: string }[]
   createdAt: string
   updatedAt: string
 }
@@ -127,6 +131,31 @@ export function createListing(csrfToken: string, body: unknown) {
     body: JSON.stringify(body)
   })
 }
+export async function uploadListingImage(csrfToken: string, file: File) {
+  const intent = await backendRequest<{ assetId: string; uploadUrl: string; expiresIn: number }>(
+    '/media/upload-intents', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ contentType: file.type, byteSize: file.size })
+    }
+  )
+  const uploaded = await fetch(intent.uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    credentials: 'omit',
+    body: file
+  })
+  if (!uploaded.ok) throw new BackendError('UPLOAD_FAILED', uploaded.status)
+  const completed = await backendRequest<{ assetId: string; status: string }>(
+    `/media/${encodeURIComponent(intent.assetId)}/complete`, {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({})
+    }
+  )
+  if (completed.status !== 'ready') throw new BackendError('UPLOAD_FAILED', 0)
+  return completed.assetId
+}
 export async function backendPost<T>(path: string, body: unknown = {}, signal?: AbortSignal) {
   return backendRequest<T>(path, { method: 'POST', body: JSON.stringify(body), signal })
 }
@@ -149,7 +178,10 @@ export function toItem(listing: BackendListing): Item {
       currency: listing.price.currency,
       fiatEstimate: listing.priceUsd ? Number(listing.priceUsd) : undefined
     },
-    media: [],
+    media: (listing.media ?? []).map((entry) => ({
+      type: 'image', url: entry.url, alt: listing.title
+    })),
+    illustrativeImage: hasIllustrativeImages(listing.description),
     status:
       listing.availability === 'sold'
         ? 'sold'

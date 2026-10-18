@@ -39,6 +39,7 @@ try {
     repositoryDirectory
   )
   databaseStarted = true
+  await run(process.execPath, ['infra/scripts/bootstrap-garage.mjs'], repositoryDirectory)
   await run('npm', ['run', 'build'], backendDirectory)
   await run(process.execPath, ['scripts/check-alpha-journey.mjs'], backendDirectory, {
     ...process.env,

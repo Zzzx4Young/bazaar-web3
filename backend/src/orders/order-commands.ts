@@ -98,6 +98,19 @@ export class OrderCommands {
         contentVersion: listing.contentVersion
       }
     })
+    const currentMedia = await tx.listingMedia.findMany({
+      where: { listingId: listing.id },
+      orderBy: { position: 'asc' },
+      select: { mediaId: true, position: true }
+    })
+    if (currentMedia.length)
+      await tx.orderMediaSnapshot.createMany({
+        data: currentMedia.map((media) => ({
+          orderId: order.id,
+          mediaId: media.mediaId,
+          position: media.position
+        }))
+      })
     if (listing.type === 'physical' && input.shipping)
       await tx.orderShipping.create({
         data: {
@@ -441,7 +454,11 @@ export class OrderCommands {
             if (action !== 'restore')
               await tx.order.update({
                 where: { id: orderId },
-                data: { status: next, version: { increment: 1 } }
+                data: {
+                  status: next,
+                  version: { increment: 1 },
+                  completedAt: next === 'completed' && !order.completedAt ? new Date() : undefined
+                }
               })
             await this.event(tx, order, actorId, action, key, order.status, next,
               action === 'counteroffer' ? input.description : undefined)
@@ -543,7 +560,11 @@ export class OrderCommands {
         }
         await tx.order.update({
           where: { id: orderId },
-          data: { status: next, version: { increment: 1 } }
+          data: {
+            status: next,
+            version: { increment: 1 },
+            completedAt: next === 'completed' && !order.completedAt ? new Date() : undefined
+          }
         })
         await this.event(tx, order, actorId, `resolve_${input.outcome}`, key, 'issue', next)
         await options.checkpoint?.('event', tx, attempt)

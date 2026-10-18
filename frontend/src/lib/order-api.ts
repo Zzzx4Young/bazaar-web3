@@ -49,6 +49,7 @@ export interface OrderDetail extends OrderSummary {
     price: Money
     licenseDescription: string | null
     contentVersion: string | null
+    media: { id: string; position: number; url: string }[]
   }
 }
 export interface Delivery {

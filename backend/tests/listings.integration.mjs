@@ -7,6 +7,7 @@ import { provisionAccounts } from '../dist/accounts/provision-accounts.js'
 import { currencyCodes } from '../dist/pricing/currencies.js'
 import { RatesService } from '../dist/pricing/rates.service.js'
 import { sandbox } from './helpers/database.mjs'
+import { fixtureMediaAsset } from './helpers/media.mjs'
 
 const origin = 'http://localhost:3000'
 const password = 'Virtual-listing-test-password'
@@ -25,6 +26,7 @@ const rateData = () => ({
 })
 const listing = (currency = 'USD', amount = '2') => ({
   type: 'physical',
+  saleMode: 'one_off',
   title: 'Virtual listing',
   description: 'Virtual description',
   category: 'electronics',
@@ -63,8 +65,12 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     })
     const alice = await login(app, 'alice'),
       bob = await login(app, 'bob')
-    const create = (payload) =>
-      app.inject({ method: 'POST', url: '/api/listings', headers: alice, payload })
+    const sellerId = (await db.client.account.findUniqueOrThrow({ where: { loginName: 'alice' } })).id
+    const create = async (payload) => {
+      const asset = await fixtureMediaAsset(db, sellerId)
+      return app.inject({ method: 'POST', url: '/api/listings', headers: alice,
+        payload: { ...payload, mediaIds: [asset.id] } })
+    }
     assert.equal((await app.inject({ method: 'POST', url: '/api/currencies', headers: { origin, 'content-type': 'application/json' }, payload: {} })).json().length, 19)
     const created = []
     for (const payload of [
@@ -74,6 +80,7 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
       {
         ...listing('ETH', '0.001'),
         type: 'digital',
+        saleMode: 'repeatable',
         category: 'digital_assets',
         licenseDescription: 'Nonexclusive',
         contentVersion: 'v1'

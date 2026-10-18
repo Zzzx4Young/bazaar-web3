@@ -19,6 +19,7 @@ export const publishSchema = z
         `描述最长 ${listingTextPolicy.descriptionMaxLength} 字符`
       ),
     category: z.enum(['physical', 'digital']),
+    saleMode: z.enum(['one_off', 'repeatable']),
     primaryCategory: z.enum([
       'electronics',
       'digital_assets',
@@ -60,4 +61,6 @@ export const publishSchema = z
       if ([...(data.contentVersion ?? '')].length > listingTextPolicy.contentVersionMaxLength)
         issue('contentVersion', `内容版本最长 ${listingTextPolicy.contentVersionMaxLength} 字符`)
     }
+    if (data.category === 'physical' && data.saleMode !== 'one_off')
+      issue('saleMode', '实物商品只能按单件销售')
   })

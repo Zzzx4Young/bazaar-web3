@@ -5,6 +5,7 @@ import { createApp } from '../dist/app.js'
 import { readConfig } from '../dist/config.js'
 import { provisionAccounts } from '../dist/accounts/provision-accounts.js'
 import { sandbox, shipping } from './helpers/database.mjs'
+import { fixtureMediaAsset } from './helpers/media.mjs'
 
 let db, app
 const origin = 'http://localhost:3000'
@@ -38,8 +39,11 @@ before(async () => {
 after(async () => { await app?.close(); await db?.close() })
 
 test('completed buyer review is immutable, scoped, and reflected in public reputation', async () => {
+  const seller = await db.client.account.findUniqueOrThrow({ where: { loginName: 'review_seller' } })
+  const media = await fixtureMediaAsset(db, seller.id)
   const listing = await post('seller', '/listings', {
-    type: 'physical', title: 'Reviewable item', description: 'Review fixture',
+    type: 'physical', saleMode: 'one_off', mediaIds: [media.id],
+    title: 'Reviewable item', description: 'Review fixture',
     category: 'electronics', price: { amount: '5.00', currency: 'USD' }
   })
   assert.equal(listing.statusCode, 201, listing.body)

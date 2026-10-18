@@ -83,7 +83,7 @@ export default function ListingDetailPage({ params }: Props) {
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* 左：媒体轮播 */}
-        <MediaCarousel media={item.media} alt={item.title} />
+        <MediaCarousel media={item.media} alt={item.title} illustrative={item.illustrativeImage} />
 
         {/* 右：价格 + 卖家 + 操作 */}
         <div className="space-y-4">
