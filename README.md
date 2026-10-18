@@ -3,11 +3,11 @@
 面向实物二手商品和数字内容交易的内部 Alpha。前端为 Next.js 14，后端为
 NestJS/Fastify + Prisma，业务数据保存在 PostgreSQL；浏览器通过前端同源代理访问 API。
 
-I1–I8、内部 Alpha 和 V2 业务数据验收已完成。提交 `c8bd3ab` 的
-[GitHub Actions](https://github.com/Zzzx4Young/bazaar-web3/actions/runs/35752730311)
-通过了前后端检查、PostgreSQL 集成测试、部署镜像及 Alpha/V2 Chromium 流程。
-V2 流程会生成 200 件商品、60 笔多状态订单，并保存桌面/手机截图、视频和 trace。
-这属于受控内测验收，尚无公开部署或生产容量结论。
+I1–I8、内部 Alpha 和 V2 的受控业务验收已完成；
+[CI 工作流](.github/workflows/ci.yml)包括前后端检查、PostgreSQL 集成测试、
+部署镜像及 Alpha/V2 Chromium 流程。每次提交是否通过，以对应提交的 Actions
+结果为准。V2 流程在隔离数据库生成 200 件商品、60 笔多状态订单，并保存浏览器
+验收产物。这些结果不证明陌生用户完整交易、公开部署或生产容量达标。
 
 ## 功能与边界
 
@@ -22,7 +22,7 @@ V2 流程会生成 200 件商品、60 笔多状态订单，并保存桌面/手�
 
 收藏 ID 只保存在浏览器，并通过后端确认商品仍公开；购物车按账户保存在当前浏览器会话。
 账户、商品、订单和评价均以 PostgreSQL 为准。付款与余额是模拟记录；
-公开注册、图片托管、通知、聊天、钱包、链上结算和真实支付尚未实现。
+商品图片使用本地 Garage 双实例；历史订单图片按完成时间归档。公开注册、通知、聊天、钱包、链上结算和真实支付尚未实现。
 
 ## 本地启动
 
@@ -35,8 +35,8 @@ V2 流程会生成 200 件商品、60 笔多状态订单，并保存桌面/手�
 ./start.sh
 ```
 
-脚本会初始化缺失的本地数据库密码、启动 `compose.yaml` 的 `postgres`、构建后端、
-部署迁移，再启动后端和前端并检查健康接口、探索页与商品搜索。
+脚本会初始化缺失的本地密码、启动 PostgreSQL 和两套 Garage、构建后端、
+部署迁移，再启动归档任务、后端和前端并检查健康接口、探索页与商品搜索。
 保持终端打开；按 Ctrl+C 停止应用进程，数据库仍保持运行。若 3000 或 3001 端口已有服务，
 脚本不会替换它们。脚本不会重置数据库或自动生成商品。
 Docker 需当前用户可访问，或已配置无交互的 `sudo docker`。
@@ -47,6 +47,7 @@ Docker 需当前用户可访问，或已配置无交互的 `sudo docker`。
 
 ```bash
 bash infra/scripts/init-secrets.sh
+node infra/scripts/bootstrap-garage.mjs
 docker compose -f infra/compose.alpha.yaml up -d --build --wait
 ```
 
@@ -74,5 +75,9 @@ npm run test:e2e:v2
 - [后端](backend/README.md)：API、数据库角色、种子数据与测试。
 - [基础设施](infra/README.md)：Compose、Kubernetes 模板、备份和停止方式。
 - [接口契约](backend/openapi/alpha.json)：请求与响应字段。
+- [贡献指南](CONTRIBUTING.md)：当前工程范围、代码约定与验收命令。
 
 `docs/` 是本地工作文档目录，已被 Git 忽略；其中的阶段记录不随本仓库提交发布。
+下一阶段优先补齐可信商品信息、交易待办和三角色真实数据走查；公开注册、真实支付
+及跨故障域高可用须单独确定产品规则与部署目标后验收。本机若保留 `docs/`，
+可从 `docs/README.md` 查阅产品闭环计划和历史证据。

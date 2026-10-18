@@ -22,11 +22,15 @@ API 部署模板和单实例 Kubernetes PostgreSQL 模板。所有命令从仓�
 
 ```bash
 bash infra/scripts/init-secrets.sh
+node infra/scripts/bootstrap-garage.mjs
 docker compose -f infra/compose.alpha.yaml up -d --build --wait
 docker compose -f infra/compose.alpha.yaml ps
 ```
 
-打开 http://localhost:3000/zh-CN。启动顺序是 PostgreSQL → bootstrap → migrate → API → 前端。
+Garage 引导脚本会先启动独立的 hot/cold 容器，配置各自 bucket、访问密钥与 hot PUT CORS，
+并将密钥写入已忽略的 `infra/.secrets/garage-app/`。完整启动顺序是 Garage 引导、
+PostgreSQL → 角色 bootstrap → migrate → API/归档任务 → 前端。
+打开 http://localhost:3000/zh-CN。
 首次运行不会创建业务账户或商品。可通过 `POSTGRES_PORT`、`API_PORT`、
 `FRONTEND_PORT` 改宿主端口；更改前端访问地址时同步设置准确的 `APP_ORIGIN`。
 
@@ -49,6 +53,14 @@ docker compose -f infra/compose.alpha.yaml down
 
 `down` 默认保留命名卷；数据与凭据卷仍属于该 Compose 项目。
 不要在需要保留数据时附加 `-v`。
+
+商品图片的隔离恢复演练先启动 `postgres-test`，再从 `backend/` 运行
+`npm run test:media:restore`。脚本创建独立的 hot/cold Garage 源容器和恢复容器，
+对测试 schema 执行 `pg_dump`/`pg_restore`，在停止源容器后备份两套 Garage 的
+`meta` 与 `data` 卷，恢复到新卷并分别读取 hot 与 cold 订单图片。结束时清理
+`bazaar-media-recovery` 测试容器、卷、临时归档和测试 schema；开发库与
+`bazaar-alpha` 的 Garage 卷不参与演练。正式备份还必须安全保存 RPC 密钥、
+S3 凭据和 PostgreSQL 凭据，并在独立故障域保管备份；此本机演练不证明跨主机高可用。
 
 ## 开发库与测试库
 
@@ -144,8 +156,12 @@ PVC 和 Secret 仍保留。该模板只包含单实例数据库，没有自动�
 
 ## 部署模板
 
-`compose.api.yaml` 仅编排一次性迁移任务和受限 API，不自带数据库。
-它使用独立的迁移/运行连接文件、不可变镜像引用和迁移成功依赖；
+`compose.api.yaml` 编排一次性迁移任务、受限 API 和订单图片归档任务，不自带数据库或对象存储。
+部署前需要准备独立的 hot/cold Garage S3 端点和 bucket（`bazaar-hot`、`bazaar-cold`）、
+四个凭据文件，并设置 `GARAGE_HOT_ENDPOINT`、浏览器可访问的
+`GARAGE_HOT_PUBLIC_ENDPOINT`、`GARAGE_COLD_ENDPOINT` 与对应的四个 `*_FILE` 路径。
+hot 端点需要允许前端来源执行带 `Content-Type` 的签名 PUT 请求；前端还需能访问 API 的图片读取路由。
+模板使用独立的迁移/运行连接文件、不可变镜像引用和迁移成功依赖；
 镜像构建、检查与回滚步骤位于本地 `docs/api-deployment-runbook.md`。
 `k8s/postgres/` 是已有集群的单实例数据库模板，需要预置 StorageClass、Secret 和访问策略；
 单副本没有复制或自动故障切换，仓库未验收远端 Kubernetes 部署。

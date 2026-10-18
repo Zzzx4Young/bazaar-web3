@@ -4,6 +4,19 @@
 模拟结算、交付、争议与退款、管理员裁决、卖家评价及审计。
 接口字段以 [OpenAPI](openapi/alpha.json) 为准；完整项目启动见[根 README](../README.md)。
 
+卖家图片由两个独立 Garage 实例保存：浏览器向 hot 实例上传，后端验证实际字节后
+允许关联商品；订单创建时保存图片引用，已完成订单在 `completedAt` 起默认 90 天后
+复制并校验至 cold 实例，历史订单仍通过鉴权 API 读取。`ORDER_IMAGE_ARCHIVE_AFTER_DAYS`
+可设置 1–3650 天，`ORDER_IMAGE_ARCHIVE_SCAN_SECONDS` 默认 60 秒。归档任务在
+`compose.alpha.yaml` 中作为 `archive-worker` 运行；宿主机 `./start.sh` 同样启动它。
+`npm run archive:media` 可对已配置 Garage 的环境执行一次扫描，追加 `-- --loop`
+持续运行。任务日志记录归档数、失败数、归档积压、数据库引用的热/冷对象数、
+过期上传、热副本回收与本轮扫描发现及回收的孤儿对象数；
+故障后重跑会保留 hot 引用直至 cold 校验成功。只有所有订单图片引用已切至 cold、
+商品不再引用该图片且经过 24 小时宽限期，任务才会再次校验 cold 内容并删除 hot 副本。
+本地两个 Garage 容器位于同一主机，不能作为
+跨故障域高可用或真实低频计费的验收依据。
+
 ## 运行配置
 
 需要 Node.js >=22.12、npm 10.9.8。完整 `infra/compose.alpha.yaml` 会按角色初始化、
