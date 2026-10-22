@@ -7,6 +7,11 @@ import { DatabaseService } from './database/database.service.js'
 import { HealthController } from './health/health.controller.js'
 import { AuthService } from './auth/auth.service.js'
 import { AuthController } from './auth/auth.controller.js'
+import { IdentityController } from './auth/identity.controller.js'
+import { EmailAuthService } from './auth/email-auth.service.js'
+import { GoogleAuthService } from './auth/google-auth.service.js'
+import { GoogleOidcClient, type GoogleClient } from './auth/google-client.js'
+import { type EmailSender } from './auth/email-code.js'
 import { AuthGuard } from './auth/auth.guard.js'
 import { ApiErrorFilter } from './common/api-error.filter.js'
 import { ListingController } from './listings/listing.controller.js'
@@ -34,10 +39,14 @@ class AppModule {}
 export async function createApp(
   config: AppConfig,
   logger: false | undefined = undefined,
-  dependencies: { loadRates?: RateLoader; logRequest?: RequestLogSink | false; mediaStore?: GarageObjectStore } = {}
+  dependencies: { loadRates?: RateLoader; logRequest?: RequestLogSink | false;
+    mediaStore?: GarageObjectStore; emailSender?: EmailSender; googleClient?: GoogleClient } = {}
 ) {
   const database = new DatabaseService(config.databaseUrl, config.databasePool)
   const auth = new AuthService(database.client, config)
+  const emailAuth = new EmailAuthService(database.client, config, auth, dependencies.emailSender ?? null)
+  const googleAuth = new GoogleAuthService(database.client, config, auth,
+    dependencies.googleClient ?? (config.googleOAuth ? new GoogleOidcClient(config.googleOAuth) : null))
   const rates = new RatesService(database.client, dependencies.loadRates)
   const listings = new ListingService(database.client, rates)
   const media = new MediaService(
@@ -91,6 +100,7 @@ export async function createApp(
       controllers: [
         HealthController,
         AuthController,
+        IdentityController,
         ListingController,
         OrderController,
         DisputeController,
@@ -102,6 +112,8 @@ export async function createApp(
       providers: [
         { provide: DatabaseService, useValue: database },
         { provide: AuthService, useValue: auth },
+        { provide: EmailAuthService, useValue: emailAuth },
+        { provide: GoogleAuthService, useValue: googleAuth },
         { provide: ListingService, useValue: listings },
         { provide: MediaService, useValue: media }
       ]

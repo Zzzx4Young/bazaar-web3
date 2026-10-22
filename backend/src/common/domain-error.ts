@@ -26,6 +26,10 @@ export function mapApplicationError(error: unknown): ErrorResult {
     if (error.code === 'JSON_REQUIRED') return { status: 415, code: error.code, retryable: false }
     if (error.code === 'RETRY_EXHAUSTED') return { status: 503, code: error.code, retryable: true }
     if (error.code === 'MEDIA_UNAVAILABLE') return { status: 503, code: error.code, retryable: true }
+    if (['EMAIL_UNAVAILABLE', 'GOOGLE_UNAVAILABLE'].includes(error.code))
+      return { status: 503, code: error.code, retryable: true }
+    if (error.code === 'GOOGLE_INVALID')
+      return { status: 401, code: error.code, retryable: false }
     if (error.code === 'MEDIA_LIMIT_REACHED') return { status: 429, code: error.code, retryable: true }
     if (error.code === 'FORBIDDEN') return { status: 403, code: error.code, retryable: false }
     if (error.code === 'NOT_FOUND') return { status: 404, code: error.code, retryable: false }
@@ -50,6 +54,7 @@ export function mapApplicationError(error: unknown): ErrorResult {
         'STATE_CONFLICT',
         'REFUND_REQUIRED',
         'RESTORE_CONFLICT'
+        , 'ACCOUNT_LINK_REQUIRED'
       ].includes(error.code)
     ) {
       return { status: 409, code: error.code, retryable: false }

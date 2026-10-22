@@ -16,6 +16,22 @@ export async function pruneExpiredAuthRateBuckets(
     )`
 }
 
+export async function pruneExpiredAuthChallenges(client: PrismaClient,
+  batchSize = rateBucketCleanupBatchSize) {
+  await client.$executeRaw`
+    DELETE FROM "EmailCodeChallenge" WHERE "key" IN (
+      SELECT "key" FROM "EmailCodeChallenge"
+      WHERE "expiresAt" < clock_timestamp() - interval '24 hours'
+      ORDER BY "expiresAt", "key" LIMIT ${batchSize} FOR UPDATE SKIP LOCKED
+    )`
+  await client.$executeRaw`
+    DELETE FROM "GoogleOAuthAttempt" WHERE "stateHash" IN (
+      SELECT "stateHash" FROM "GoogleOAuthAttempt"
+      WHERE "expiresAt" < clock_timestamp() - interval '24 hours'
+      ORDER BY "expiresAt", "stateHash" LIMIT ${batchSize} FOR UPDATE SKIP LOCKED
+    )`
+}
+
 export function startAuthRateCleanup(
   client: PrismaClient,
   options: { intervalMs?: number; onError?: () => void } = {}
@@ -30,6 +46,7 @@ export function startAuthRateCleanup(
     running = true
     try {
       await pruneExpiredAuthRateBuckets(client)
+      await pruneExpiredAuthChallenges(client)
     } catch {
       options.onError?.()
     } finally {

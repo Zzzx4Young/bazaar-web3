@@ -3,7 +3,7 @@
   "info": {
     "title": "Bazaar internal Alpha API",
     "version": "0.1.0",
-    "description": "Implemented internal Alpha contract. Pre-provisioned accounts only; simulated settlement and seller image uploads. No registration, wallet or real payments. Every response returns X-Request-Id; errors contain code, retryable and the same requestId. Private/auth responses no-store. Admission saturation returns 503 OVERLOADED with retryable=true and Cache-Control: no-store before authentication/database work; POST /health/live is exempt. Write retries must preserve the original payload and idempotency key."
+    "description": "Implemented Alpha contract. Provisioned password accounts and optional Google Gmail registration; email-code APIs are unavailable until a sender is installed. Simulated settlement and seller image uploads; no wallet or real payments. Every response returns X-Request-Id; errors contain code, retryable and the same requestId. Private/auth responses no-store. Admission saturation returns 503 OVERLOADED with retryable=true and Cache-Control: no-store before authentication/database work; POST /health/live is exempt. Write retries must preserve the original payload and idempotency key."
   },
   "servers": [
     {
@@ -65,6 +65,66 @@
         ],
         "responses": { "200": { "description": "Image bytes; Cache-Control: no-store", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "image/jpeg": { "schema": { "type": "string", "format": "binary" } }, "image/png": { "schema": { "type": "string", "format": "binary" } }, "image/webp": { "schema": { "type": "string", "format": "binary" } } } } }
       }
+    },
+    "/auth/methods": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "get": { "operationId": "authMethods", "summary": "Available sign-in methods", "security": [],
+        "responses": { "200": { "description": "Method availability", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } },
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "password": { "type": "boolean" }, "google": { "type": "boolean" }, "emailCode": { "type": "boolean" } } } } } } } }
+    },
+    "/auth/identities": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "get": { "operationId": "authIdentities", "summary": "Linked sign-in methods for the current account", "security": [{ "session": [] }],
+        "responses": { "200": { "description": "Linked methods", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } },
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "hasPassword": { "type": "boolean" }, "google": { "type": "boolean" }, "email": { "type": "boolean" } } } } } } } }
+    },
+    "/auth/google/start": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "post": { "operationId": "startGoogleLogin", "summary": "Begin Google OIDC sign-in or registration", "security": [],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": false, "properties": { "returnTo": { "type": "string", "maxLength": 255 } } } } } },
+        "responses": { "200": { "description": "Authorization URL and temporary state cookie", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } },
+          "content": { "application/json": { "schema": { "type": "object", "required": ["authorizationUrl"], "properties": { "authorizationUrl": { "type": "string", "format": "uri" } } } } } },
+          "503": { "description": "GOOGLE_UNAVAILABLE", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
+    },
+    "/auth/google/bind/start": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "post": { "operationId": "startGoogleBinding", "summary": "Begin explicit Google binding after account proof", "security": [{ "session": [], "csrf": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": false, "properties": { "password": { "type": "string", "writeOnly": true }, "returnTo": { "type": "string", "maxLength": 255 } } } } } },
+        "responses": { "200": { "description": "Authorization URL", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
+    },
+    "/auth/google/callback": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "get": { "operationId": "completeGoogleLogin", "summary": "Google OIDC callback; redirects to same-origin page", "security": [],
+        "parameters": [{ "name": "state", "in": "query", "required": true, "schema": { "type": "string" } }, { "name": "code", "in": "query", "required": true, "schema": { "type": "string" } }],
+        "responses": { "302": { "description": "Success or safe error redirect", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
+    },
+    "/auth/email/request": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "post": { "operationId": "requestEmailCode", "summary": "Request six-digit email sign-in code; disabled until sender configured", "security": [],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EmailCodeRequest" } } } },
+        "responses": { "202": { "description": "Accepted without account enumeration", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } },
+          "503": { "description": "EMAIL_UNAVAILABLE", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
+    },
+    "/auth/email/verify": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "post": { "operationId": "verifyEmailCode", "summary": "Register or sign in using a verified Gmail code", "security": [],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EmailCodeVerify" } } } },
+        "responses": { "200": { "description": "New session", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Session" } } } },
+          "503": { "description": "EMAIL_UNAVAILABLE", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
+    },
+    "/auth/email/bind/request": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "post": { "operationId": "requestEmailBinding", "summary": "Request email binding after account proof", "security": [{ "session": [], "csrf": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EmailCodeBindRequest" } } } },
+        "responses": { "202": { "description": "Accepted", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } },
+          "503": { "description": "EMAIL_UNAVAILABLE", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
+    },
+    "/auth/email/bind/verify": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "post": { "operationId": "verifyEmailBinding", "summary": "Enable email-code sign-in for current account", "security": [{ "session": [], "csrf": [] }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EmailCodeVerify" } } } },
+        "responses": { "200": { "description": "Binding complete; session rotated", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Session" } } } },
+          "503": { "description": "EMAIL_UNAVAILABLE", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
     },
     "/auth/login": {
       "parameters": [
@@ -4330,6 +4390,18 @@
             "writeOnly": true
           }
         }
+      },
+      "EmailCodeRequest": {
+        "type": "object", "additionalProperties": false, "required": ["email"],
+        "properties": { "email": { "type": "string", "format": "email", "maxLength": 100 }, "locale": { "type": "string", "enum": ["zh-CN", "en"] } }
+      },
+      "EmailCodeBindRequest": {
+        "type": "object", "additionalProperties": false, "required": ["email"],
+        "properties": { "email": { "type": "string", "format": "email", "maxLength": 100 }, "locale": { "type": "string", "enum": ["zh-CN", "en"] }, "password": { "type": "string", "writeOnly": true } }
+      },
+      "EmailCodeVerify": {
+        "type": "object", "additionalProperties": false, "required": ["email", "code"],
+        "properties": { "email": { "type": "string", "format": "email", "maxLength": 100 }, "code": { "type": "string", "pattern": "^[0-9]{6}$", "writeOnly": true } }
       },
       "Currency": {
         "type": "string",

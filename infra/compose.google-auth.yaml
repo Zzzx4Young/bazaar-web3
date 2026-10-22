@@ -1,0 +1,11 @@
+# Optional override for `compose.api.yaml`; configure the exact frontend APP_ORIGIN in the base file.
+services:
+  api:
+    environment:
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Set the Google web OAuth client ID}
+      GOOGLE_CLIENT_SECRET_FILE: /run/secrets/google_client_secret
+    secrets: [google_client_secret]
+
+secrets:
+  google_client_secret:
+    file: ${GOOGLE_CLIENT_SECRET_FILE:?Set a path to the Google client secret file}

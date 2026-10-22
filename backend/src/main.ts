@@ -3,11 +3,13 @@ import { readConfig } from './config.js'
 import { DatabaseService } from './database/database.service.js'
 import { startOrderExpiry } from './orders/order-expiry.js'
 import { startAuthRateCleanup } from './auth/auth-rate-cleanup.js'
+import { assertAuthRuntimeGrants } from './auth/auth-runtime-grants.js'
 
 async function main() {
   const config = readConfig()
   const app = await createApp(config)
   try {
+    await assertAuthRuntimeGrants(app.get(DatabaseService).client)
     await app.listen(config.port, config.host)
     const stopExpiry = startOrderExpiry(app.get(DatabaseService).client, {
       onError: () => console.error('Order expiry sweep failed')

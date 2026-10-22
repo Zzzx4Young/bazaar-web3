@@ -1,6 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { type Account, type PrismaClient } from '../generated/prisma/client.js'
 import { type AppConfig } from '../config.js'
+import { type Transaction } from '../database/transaction.js'
 import { DomainError } from '../common/domain-error.js'
 import { dummyHash, normalizeLogin, validatePassword, verifyPassword } from './password.js'
 import {
@@ -14,6 +15,7 @@ export interface Authenticated {
   token: string
   tokenHash: string
   account: Account
+  createdAt: Date
 }
 
 export class AuthService {
@@ -40,6 +42,10 @@ export class AuthService {
         OR "AuthRateBucket"."count" < ${limit}
       RETURNING "count"`
     if (rows.length !== 1) throw new DomainError('RATE_LIMITED')
+  }
+
+  async rateLimitGoogleStart(ip: string) {
+    await this.consume(`google-start-ip:${ip}`, loginIpLimit)
   }
 
   token(cookie: string | undefined) {
@@ -76,7 +82,24 @@ export class AuthService {
       session.account.status !== 'active'
     )
       throw new DomainError('UNAUTHENTICATED')
-    return { token, tokenHash, account: session.account }
+    return { token, tokenHash, account: session.account, createdAt: session.createdAt }
+  }
+
+  async issueSession(tx: Transaction, account: Account, cookie?: string): Promise<Authenticated> {
+    const token = randomBytes(32).toString('base64url')
+    const tokenHash = digest(token)
+    const now = new Date()
+    const old = this.token(cookie)
+    if (old)
+      await tx.session.updateMany({
+        where: { tokenHash: digest(old), revokedAt: null },
+        data: { revokedAt: now }
+      })
+    await tx.session.create({
+      data: { tokenHash, accountId: account.id,
+        expiresAt: new Date(now.getTime() + sessionMaxAgeSeconds * 1000) }
+    })
+    return { token, tokenHash, account, createdAt: now }
   }
 
   checkCsrf(auth: Authenticated, header: string | string[] | undefined) {
@@ -86,6 +109,19 @@ export class AuthService {
       !timingSafeEqual(Buffer.from(header, 'hex'), Buffer.from(csrfToken(auth.token), 'hex'))
     )
       throw new DomainError('CSRF_REJECTED')
+  }
+
+  async requireRecentAccountProof(auth: Authenticated, password: string | undefined, ip: string) {
+    if (auth.account.role !== 'participant') throw new DomainError('FORBIDDEN')
+    const credential = await this.client.accountCredential.findUnique({ where: { accountId: auth.account.id } })
+    if (!credential) {
+      if (Date.now() - auth.createdAt.getTime() > 300_000) throw new DomainError('INVALID_CREDENTIALS')
+      return
+    }
+    await this.consume(`ip:${ip}`, loginIpLimit)
+    await this.consume(`login:${auth.account.loginName}`, loginNameLimit)
+    if (!password || !(await verifyPassword(password, credential.passwordHash)))
+      throw new DomainError('INVALID_CREDENTIALS')
   }
 
   async login(loginName: string, password: string, ip: string, cookie?: string) {
@@ -103,11 +139,8 @@ export class AuthService {
       const correct = await verifyPassword(password, account?.credential?.passwordHash ?? dummyHash)
       if (!correct || !account || account.status !== 'active')
         throw new DomainError('INVALID_CREDENTIALS')
-      const token = randomBytes(32).toString('base64url')
-      const tokenHash = digest(token)
-      const old = this.token(cookie)
       // Recheck under a row lock so password reset/disable cannot race a newly issued session.
-      await this.client.$transaction(async (tx) => {
+      return await this.client.$transaction(async (tx) => {
         await tx.$queryRaw`SELECT "id" FROM "Account" WHERE "id" = ${account.id}::uuid FOR UPDATE`
         const current = await tx.account.findUniqueOrThrow({
           where: { id: account.id },
@@ -118,17 +151,8 @@ export class AuthService {
           current.credential?.passwordHash !== account.credential?.passwordHash
         )
           throw new DomainError('INVALID_CREDENTIALS')
-        const now = new Date()
-        if (old)
-          await tx.session.updateMany({
-            where: { tokenHash: digest(old), revokedAt: null },
-            data: { revokedAt: now }
-          })
-        await tx.session.create({
-          data: { tokenHash, accountId: account.id, expiresAt: new Date(now.getTime() + sessionMaxAgeSeconds * 1000) }
-        })
+        return this.issueSession(tx, current, cookie)
       })
-      return { token, tokenHash, account }
     } finally {
       this.activeHashes--
     }

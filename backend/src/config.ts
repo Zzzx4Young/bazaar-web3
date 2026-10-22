@@ -18,6 +18,18 @@ export interface AppConfig {
   databasePool: DatabasePoolConfig
   maxInFlightRequests: number
   mediaStore: GarageStoreConfig | null
+  googleOAuth: { clientId: string; clientSecret: string; redirectUri: string } | null
+  emailCodeKey: Buffer | null
+}
+
+function readSecret(env: NodeJS.ProcessEnv, valueName: string, fileName: string): string | null {
+  const direct = env[valueName]
+  const file = env[fileName]
+  if (direct && file) throw new Error(`Set only one of ${valueName} or ${fileName}`)
+  if (!direct && !file) return null
+  const value = file ? readFileSync(file, 'utf8').trim() : direct!
+  if (!value || /[\r\n]/.test(value)) throw new Error(`Invalid ${valueName}`)
+  return value
 }
 
 function readMediaStoreConfig(env: NodeJS.ProcessEnv): GarageStoreConfig | null {
@@ -127,6 +139,13 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   } catch {
     throw new Error('APP_ORIGIN must be an exact HTTPS origin or loopback HTTP origin')
   }
+  const googleClientId = env.GOOGLE_CLIENT_ID
+  const googleClientSecret = readSecret(env, 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CLIENT_SECRET_FILE')
+  if (Boolean(googleClientId) !== Boolean(googleClientSecret))
+    throw new Error('Google OAuth requires both client ID and client secret')
+  const emailSecret = readSecret(env, 'EMAIL_CODE_HMAC_KEY', 'EMAIL_CODE_HMAC_KEY_FILE')
+  if (emailSecret && Buffer.byteLength(emailSecret) < 32)
+    throw new Error('EMAIL_CODE_HMAC_KEY must contain at least 32 bytes')
   return {
     databaseUrl: url.toString(),
     host: env.HOST ?? '127.0.0.1',
@@ -136,6 +155,12 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     trustedProxyCidrs: readTrustedProxies(env.TRUSTED_PROXY_CIDRS),
     databasePool: readDatabasePoolConfig(env),
     maxInFlightRequests: readMaxInFlightRequests(env),
-    mediaStore: readMediaStoreConfig(env)
+    mediaStore: readMediaStoreConfig(env),
+    googleOAuth: googleClientId && googleClientSecret ? {
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
+      redirectUri: `${origin.origin}/api/auth/google/callback`
+    } : null,
+    emailCodeKey: emailSecret ? Buffer.from(emailSecret) : null
   }
 }

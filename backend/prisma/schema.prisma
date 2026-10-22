@@ -27,6 +27,52 @@ model Account {
   mediaSellerRows      MediaAsset[]        @relation("mediaSeller")
   credential           AccountCredential?
   sessions             Session[]
+  identities           AccountIdentity[]
+  googleAttempts       GoogleOAuthAttempt[]
+}
+
+model AccountIdentity {
+  id        String   @id @default(uuid()) @db.Uuid
+  accountId String   @db.Uuid
+  provider  String   @db.VarChar(16)
+  subject   String   @db.VarChar(100)
+  email     String   @db.VarChar(100)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([provider, subject])
+  @@unique([accountId, provider])
+}
+
+model EmailCodeChallenge {
+  key        String    @id @db.Char(64)
+  id         String    @default(uuid()) @db.Uuid
+  email      String    @db.VarChar(100)
+  purpose    String    @db.VarChar(16)
+  accountId  String?   @db.Uuid
+  codeHash   String    @db.Char(64)
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  expiresAt  DateTime  @db.Timestamptz(6)
+  consumedAt DateTime? @db.Timestamptz(6)
+
+  @@index([expiresAt])
+}
+
+model GoogleOAuthAttempt {
+  stateHash  String    @id @db.Char(64)
+  cookieHash String    @db.Char(64)
+  verifier   String    @db.VarChar(128)
+  nonce      String    @db.VarChar(128)
+  returnTo   String    @db.VarChar(255)
+  mode       String    @db.VarChar(16)
+  accountId  String?   @db.Uuid
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  expiresAt  DateTime  @db.Timestamptz(6)
+  consumedAt DateTime? @db.Timestamptz(6)
+  account    Account?  @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([expiresAt])
 }
 
 model AccountCredential {

@@ -34,6 +34,13 @@ npm start
 ```
 
 `npm start` 从 `.env` 读取运行连接，默认监听 `127.0.0.1:3001`。
+Google 登录需创建 Web OAuth 客户端，在服务端配置 `GOOGLE_CLIENT_ID` 和
+`GOOGLE_CLIENT_SECRET_FILE`，并把 `${APP_ORIGIN}/api/auth/google/callback` 注册为精确回调地址。
+宿主机 `./start.sh` 会读取 `backend/.env`；API-only Compose 部署可叠加
+`infra/compose.google-auth.yaml`，用 Docker secret 挂载客户端密钥。
+Google 身份以 `sub` 关联账号，不按邮箱自动合并；已有密码账号须登录并重新输入密码后才能绑定。
+邮箱验证码固定 6 位、5 分钟有效，服务端使用 PostgreSQL 和 HMAC-SHA256 保存校验状态；
+目前没有邮件发送实现，申请和校验接口均返回 `EMAIL_UNAVAILABLE`，不能用于真实注册或登录。
 若网络需要 HTTP(S) 代理访问 Coinbase，使用 Node.js >=22.21 并在启动 Node 进程前设置
 `NODE_USE_ENV_PROXY=1`，同时提供可信的 `HTTPS_PROXY` 和适当的 `NO_PROXY`。
 根目录的 `./start.sh` 会在检测到代理变量时自动为宿主机后端设置此开关。
