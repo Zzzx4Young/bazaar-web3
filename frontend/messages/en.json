@@ -11,7 +11,12 @@
     "me": "Profile",
     "login": "Sign in",
     "logout": "Sign out",
-    "loginHint": "Sign in with a provisioned Alpha account.",
+    "loginHint": "Sign in with your password account or Gmail.",
+    "googleSignIn": "Continue with Google",
+    "googleSignInFailed": "Google sign-in failed. Please try again.",
+    "googleUnavailable": "Google sign-in is not configured yet.",
+    "accountLinkRequired": "This email has an account. Sign in with its existing method, then link Google in your profile.",
+    "emailCodeUnavailable": "Email-code sign-up and sign-in are not available yet.",
     "loginName": "Login name",
     "password": "Password",
     "signingIn": "Signing in…",
@@ -21,6 +26,14 @@
     "notifications": "Notifications",
     "adminDisputes": "Dispute review",
     "cart": "Cart"
+  },
+  "identity": {
+    "title": "Sign-in methods",
+    "googleLinked": "Google account linked.",
+    "confirmPassword": "Confirm your current password",
+    "linkGoogle": "Link Google account",
+    "googleUnavailable": "Google sign-in is not configured yet.",
+    "emailUnavailable": "Email-code sign-in and linking are not available yet."
   },
   "adminDisputes": {
     "restricted": "Only administrators can review disputes.",

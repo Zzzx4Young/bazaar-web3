@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Link, usePathname } from '@/i18n/routing'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/layout/mode-toggle'
 import { FavoritesLink } from '@/components/layout/favorites-link'
@@ -18,9 +18,11 @@ import {
 } from '@/components/ui/dialog'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { getDevLoginCredentials } from '@/lib/dev-login'
+import { IdentityOptions } from '@/components/auth/identity-options'
 
 export function TopNav() {
   const t = useTranslations('nav')
+  const locale = useLocale()
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [loginName, setLoginName] = useState('')
@@ -153,6 +155,7 @@ export function TopNav() {
               {submitting ? t('signingIn') : t('login')}
             </Button>
           </form>
+          <IdentityOptions returnTo={typeof window === 'undefined' ? `/${locale}/me` : window.location.pathname} />
         </DialogContent>
       </Dialog>
     </header>

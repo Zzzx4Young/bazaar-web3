@@ -28,7 +28,7 @@ vi.mock('next/navigation', () => ({
 // next-intl mocks (toLocale)
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
-  useLocale: () => 'zh-CN'
+  useLocale: vi.fn(() => 'zh-CN')
 }))
 
 vi.mock('@/i18n/routing', () => ({

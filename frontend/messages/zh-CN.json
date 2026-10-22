@@ -11,7 +11,12 @@
     "me": "我的",
     "login": "登录",
     "logout": "退出登录",
-    "loginHint": "使用 Alpha 预置账户登录。",
+    "loginHint": "使用密码账户或 Google 邮箱登录。",
+    "googleSignIn": "使用 Google 登录或注册",
+    "googleSignInFailed": "Google 登录失败，请重试。",
+    "googleUnavailable": "Google 登录尚未配置。",
+    "accountLinkRequired": "该邮箱已有账号。请先用原方式登录，再到个人中心绑定 Google。",
+    "emailCodeUnavailable": "邮箱验证码注册和登录暂未开放。",
     "loginName": "登录名",
     "password": "密码",
     "signingIn": "登录中…",
@@ -21,6 +26,14 @@
     "notifications": "通知",
     "adminDisputes": "争议裁决",
     "cart": "购物车"
+  },
+  "identity": {
+    "title": "登录方式",
+    "googleLinked": "已绑定 Google 账号。",
+    "confirmPassword": "确认当前密码",
+    "linkGoogle": "绑定 Google 账号",
+    "googleUnavailable": "Google 登录尚未配置。",
+    "emailUnavailable": "邮箱验证码登录及绑定暂未开放。"
   },
   "adminDisputes": {
     "restricted": "仅管理员可查看争议。",

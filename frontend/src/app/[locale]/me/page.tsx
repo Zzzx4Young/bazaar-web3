@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/use-auth-store'
 import { BackendOrders } from '@/components/me/backend-orders'
 import { BackendListings } from '@/components/me/backend-listings'
 import { Card, CardContent } from '@/components/ui/card'
+import { IdentitySettings } from '@/components/me/identity-settings'
 
 export default function MePage() {
   const status = useAuthStore((state) => state.status)
@@ -28,6 +29,7 @@ export default function MePage() {
   return (
     <div className="space-y-6">
       <ProfileHeader />
+      <IdentitySettings />
       <BackendListings />
       <Tabs value={tab} onValueChange={(value) => setTab(value as 'buyer' | 'seller')}>
         <TabsList>

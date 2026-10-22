@@ -1,26 +1,30 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getDevLoginCredentials } from '@/lib/dev-login'
+import { IdentityOptions } from '@/components/auth/identity-options'
 
 export default function LoginPage() {
   const t = useTranslations('nav')
+  const locale = useLocale()
   const router = useRouter()
   const auth = useAuthStore()
   const [loginName, setLoginName] = useState(() => getDevLoginCredentials()?.loginName ?? '')
   const [password, setPassword] = useState(() => getDevLoginCredentials()?.password ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [returnTo, setReturnTo] = useState('/')
+  const [redirectError, setRedirectError] = useState<string | null>(null)
 
   useEffect(() => {
     const value = new URLSearchParams(window.location.search).get('returnTo')
     if (value?.startsWith('/')) setReturnTo(value)
+    setRedirectError(new URLSearchParams(window.location.search).get('authError'))
   }, [])
 
   return (
@@ -72,6 +76,10 @@ export default function LoginPage() {
           {submitting ? t('signingIn') : t('login')}
         </Button>
       </form>
+      {redirectError && <p role="alert" className="text-sm text-destructive">
+        {redirectError === 'ACCOUNT_LINK_REQUIRED' ? t('accountLinkRequired') : t('googleSignInFailed')}
+      </p>}
+      <IdentityOptions returnTo={returnTo === '/' ? `/${locale}/me` : returnTo} />
     </section>
   )
 }
