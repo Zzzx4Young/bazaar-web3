@@ -1,0 +1,6152 @@
+[
+  {
+    "id": "3dfba768-6988-45e1-bb3d-3af24583619f",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 001 · electronics",
+      "description": "V2 seeded description 1. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "0",
+      "currency": "USD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "c1cc209f-55f8-4655-af63-5f732c518ac0",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "游戏手柄按键图标素材包｜演示条目 01（数字下载）",
+      "description": "包含不同控制器与键鼠的输入提示图标；交付格式以清单为准。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "19",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "游戏手柄按键图标素材包｜演示条目 01（数字下载）",
+      "description": "包含不同控制器与键鼠的输入提示图标；交付格式以清单为准。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "19",
+      "currency": "USD",
+      "imageQuery": "game controller input icons"
+    }
+  },
+  {
+    "id": "ff892d65-0004-4db1-8a1c-823e83022d81",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "Zero price free sample — 免费体验 — Бесплатно — 無料",
+      "description": "V2 seeded description 3. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "34.76",
+      "currency": "GBP",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "e1e5e2e8-9692-4fb1-8f9c-beaf619cb4fe",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "像素地牢道具图标包｜演示条目 01（数字下载）",
+      "description": "适合像素风地牢游戏的道具图标素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "18",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "像素地牢道具图标包｜演示条目 01（数字下载）",
+      "description": "适合像素风地牢游戏的道具图标素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "18",
+      "currency": "USD",
+      "imageQuery": "pixel art game items"
+    }
+  },
+  {
+    "id": "b0d760c4-c3f6-47e3-8460-43be90e9b8c8",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 005 · secondhand_fashion",
+      "description": "V2 seeded description 5. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "69.51",
+      "currency": "CNY",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "02d712e9-3494-402d-9846-b8d9e7c7ac88",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "电商商品卡片 UI 模板｜演示条目 01（数字下载）",
+      "description": "商品列表与详情卡片布局素材；可用于界面原型。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "电商商品卡片 UI 模板｜演示条目 01（数字下载）",
+      "description": "商品列表与详情卡片布局素材；可用于界面原型。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "imageQuery": "ecommerce user interface design"
+    }
+  },
+  {
+    "id": "52af2b19-d5f4-48a3-b7a1-5846338d313e",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 007 · electronics",
+      "description": "V2 seeded description 7. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "104.26",
+      "currency": "AUD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "65f6f6ef-ecf8-46a0-abe4-d91049b9bbf7",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "待办清单 Web 应用源码｜演示条目 01（数字下载）",
+      "description": "包含任务列表、筛选和状态管理示例；部署环境需自行配置。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "49",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "待办清单 Web 应用源码｜演示条目 01（数字下载）",
+      "description": "包含任务列表、筛选和状态管理示例；部署环境需自行配置。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "49",
+      "currency": "USD",
+      "imageQuery": "task management app screenshot"
+    }
+  },
+  {
+    "id": "ef115688-778c-4293-aae2-23bfb81f855b",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 009 · electronics",
+      "description": "V2 seeded description 9. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "139.01",
+      "currency": "HKD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "fdece275-af5f-4dec-a32b-2048500b9419",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "社交媒体信息图素材｜演示条目 01（数字下载）",
+      "description": "适合图文账号展示社交媒体数据的图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "15",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "社交媒体信息图素材｜演示条目 01（数字下载）",
+      "description": "适合图文账号展示社交媒体数据的图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "15",
+      "currency": "USD",
+      "imageQuery": "social media infographic"
+    }
+  },
+  {
+    "id": "2b5f3232-6547-44ce-964a-f0cf5c3d3af1",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 011 · electronics",
+      "description": "V2 seeded description 11. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "110",
+      "currency": "KRW",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "db01224f-6523-4c6d-a597-78195832505d",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "像素风角色素材包｜演示条目 01（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "25",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "像素风角色素材包｜演示条目 01（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "25",
+      "currency": "USD",
+      "imageQuery": "pixel art character sprites"
+    }
+  },
+  {
+    "id": "25f86811-9c7b-4938-89b5-2fd000d4b66d",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 013 · electronics",
+      "description": "V2 seeded description 13. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "208.51",
+      "currency": "AED",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "72179090-89a9-4743-8235-aa74940a8e8f",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "奇幻地图地形素材｜演示条目 01（数字下载）",
+      "description": "草地、道路和建筑图块示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "奇幻地图地形素材｜演示条目 01（数字下载）",
+      "description": "草地、道路和建筑图块示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "imageQuery": "fantasy game map tiles"
+    }
+  },
+  {
+    "id": "98d6cd13-e3a6-4555-be2e-8ab8acd9b3b3",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 015 · secondhand_fashion",
+      "description": "V2 seeded description 15. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "0.00012345",
+      "currency": "BTC",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "7ce5c7ba-efdd-4b63-b2fd-ddeb00672eba",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "等距城市插画素材｜演示条目 01（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "35",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "等距城市插画素材｜演示条目 01（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "35",
+      "currency": "USD",
+      "imageQuery": "isometric city illustration"
+    }
+  },
+  {
+    "id": "224e551a-5a32-4629-a311-d66f0c4e0fd1",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 017 · electronics",
+      "description": "V2 seeded description 17. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "12.345678",
+      "currency": "USDT",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "cc7a2cfd-48d1-4538-8521-cc265ca21044",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "库存管理后台模板源码｜演示条目 01（数字下载）",
+      "description": "商品、库存与报表页面示例；不含真实业务数据。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "89",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "库存管理后台模板源码｜演示条目 01（数字下载）",
+      "description": "商品、库存与报表页面示例；不含真实业务数据。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "89",
+      "currency": "USD",
+      "imageQuery": "inventory dashboard screenshot"
+    }
+  },
+  {
+    "id": "70f54dbc-cff4-405e-850d-103aa677842c",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 019 · electronics",
+      "description": "V2 seeded description 19. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "312.76",
+      "currency": "SOL",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "7af75f2b-54f0-4ac5-81d7-b4105cb6f76b",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "信息图与统计图表素材｜演示条目 01（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "信息图与统计图表素材｜演示条目 01（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "imageQuery": "information graphics charts"
+    }
+  },
+  {
+    "id": "083f3e25-e0d3-401b-ae57-59d31ee9dcb1",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 021 · electronics",
+      "description": "V2 seeded description 21. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "347.51",
+      "currency": "EUR",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "d8f52fb3-9235-4849-a446-2fa99e3878bc",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "自然风景壁纸合集｜演示条目 01（数字下载）",
+      "description": "桌面与移动端分辨率壁纸文件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "12",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "自然风景壁纸合集｜演示条目 01（数字下载）",
+      "description": "桌面与移动端分辨率壁纸文件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "12",
+      "currency": "USD",
+      "imageQuery": "nature landscape wallpaper"
+    }
+  },
+  {
+    "id": "fb58d2c8-e657-422f-8b18-2760ee0d151b",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 023 · electronics",
+      "description": "V2 seeded description 23. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "122",
+      "currency": "JPY",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "9ec0840e-59f5-48c1-be66-a108cf7f2162",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "桌游骰子模型素材｜演示条目 01（数字下载）",
+      "description": "骰子造型与桌游界面配图素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "16",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "桌游骰子模型素材｜演示条目 01（数字下载）",
+      "description": "骰子造型与桌游界面配图素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "16",
+      "currency": "USD",
+      "imageQuery": "polyhedral dice"
+    }
+  },
+  {
+    "id": "528a529e-440f-43ae-b676-503f824ecc59",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 025 · secondhand_fashion",
+      "description": "V2 seeded description 25. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "417.01",
+      "currency": "CAD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "9b0f7e11-65de-4281-b699-53ddcc9e1a97",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "手绘植物装饰图案｜演示条目 01（数字下载）",
+      "description": "适合包装和网页配图的植物元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "18",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "手绘植物装饰图案｜演示条目 01（数字下载）",
+      "description": "适合包装和网页配图的植物元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "18",
+      "currency": "USD",
+      "imageQuery": "botanical illustration"
+    }
+  },
+  {
+    "id": "dbf28ef8-5900-44ec-8998-c2df3b4dabfe",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 027 · electronics",
+      "description": "V2 seeded description 27. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "451.76",
+      "currency": "CHF",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "ef99dcfe-097d-4a98-a6e0-be130dc4f10c",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "预约日历组件源码｜演示条目 01（数字下载）",
+      "description": "日期选择和预约时段的前端实现示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "55",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "预约日历组件源码｜演示条目 01（数字下载）",
+      "description": "日期选择和预约时段的前端实现示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "55",
+      "currency": "USD",
+      "imageQuery": "calendar application screenshot"
+    }
+  },
+  {
+    "id": "4210fd97-1a1c-481b-bf77-8a9719d4f383",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 029 · electronics",
+      "description": "V2 seeded description 29. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "486.51",
+      "currency": "SGD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "230a1754-35be-458f-b31c-562fd8a3c114",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "几何纹理背景素材｜演示条目 01（数字下载）",
+      "description": "重复纹理背景；适合网页和海报设计。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "14",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "几何纹理背景素材｜演示条目 01（数字下载）",
+      "description": "重复纹理背景；适合网页和海报设计。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "14",
+      "currency": "USD",
+      "imageQuery": "geometric abstract pattern"
+    }
+  },
+  {
+    "id": "dfe1d2c8-1e24-4179-bc7c-b6bdb55a1d30",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 031 · electronics",
+      "description": "V2 seeded description 31. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "521.26",
+      "currency": "INR",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "3f626037-60f6-44d1-8dd1-021a78863a1f",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "复古海报排版模板｜演示条目 01（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "27",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "复古海报排版模板｜演示条目 01（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "27",
+      "currency": "USD",
+      "imageQuery": "vintage poster typography"
+    }
+  },
+  {
+    "id": "64b23904-0ed1-4d29-947f-75d1abc1e0a5",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 033 · electronics",
+      "description": "V2 seeded description 33. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "556.01",
+      "currency": "BRL",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "a13903be-9d57-491b-9724-34a5d10fd394",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "低多边形宝箱模型｜演示条目 01（数字下载）",
+      "description": "适合游戏原型的宝箱模型示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "低多边形宝箱模型｜演示条目 01（数字下载）",
+      "description": "适合游戏原型的宝箱模型示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "imageQuery": "low poly treasure chest"
+    }
+  },
+  {
+    "id": "fb45a186-aae6-46bf-9ef5-503e7f1d1b74",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 035 · secondhand_fashion",
+      "description": "V2 seeded description 35. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "0.123456789012345678",
+      "currency": "ETH",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "71f44e91-371a-4e3c-947a-c6e068b0cd5a",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "网页仪表盘组件｜演示条目 01（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "39",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "网页仪表盘组件｜演示条目 01（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "39",
+      "currency": "USD",
+      "imageQuery": "dashboard user interface design"
+    }
+  },
+  {
+    "id": "dc42c5d8-ee71-4a3d-a841-5d41edd27368",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 037 · electronics",
+      "description": "V2 seeded description 37. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "12.345678",
+      "currency": "USDC",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "45267d09-ea43-4128-8a05-95724940af85",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "多语言文档站模板源码｜演示条目 01（数字下载）",
+      "description": "导航、搜索和文章页面布局示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "69",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "多语言文档站模板源码｜演示条目 01（数字下载）",
+      "description": "导航、搜索和文章页面布局示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "69",
+      "currency": "USD",
+      "imageQuery": "documentation website screenshot"
+    }
+  },
+  {
+    "id": "0f12f414-7309-4d27-b058-f890a416e80c",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 039 · electronics",
+      "description": "V2 seeded description 39. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "660.26",
+      "currency": "USD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "fffa4e51-3bcb-4f0f-8441-c4f5a191ded3",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "餐饮菜单版式模板｜演示条目 01（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "17",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "餐饮菜单版式模板｜演示条目 01（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "17",
+      "currency": "USD",
+      "imageQuery": "restaurant menu design"
+    }
+  },
+  {
+    "id": "b0dbdc38-f247-4849-afbc-8d7aab44f1de",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 041 · electronics",
+      "description": "V2 seeded description 41. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "695.01",
+      "currency": "GBP",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "cc2a25f0-fc58-43e3-8505-43accf349a54",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "旅行路线信息图模板｜演示条目 01（数字下载）",
+      "description": "线路与站点信息展示模板。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "21",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "旅行路线信息图模板｜演示条目 01（数字下载）",
+      "description": "线路与站点信息展示模板。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "21",
+      "currency": "USD",
+      "imageQuery": "travel map infographic"
+    }
+  },
+  {
+    "id": "ec0058db-7031-4903-9dc7-52d1cdbe7d9d",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 043 · electronics",
+      "description": "V2 seeded description 43. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "729.76",
+      "currency": "CNY",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "8282104e-d600-4ccc-910f-2592a41c1a77",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "角色状态图标合集｜演示条目 01（数字下载）",
+      "description": "生命、护盾和能量等状态图标。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "21",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "角色状态图标合集｜演示条目 01（数字下载）",
+      "description": "生命、护盾和能量等状态图标。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "21",
+      "currency": "USD",
+      "imageQuery": "game status icons"
+    }
+  },
+  {
+    "id": "7011a90c-a1ec-4774-bf8c-bb64cc2a8438",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 045 · secondhand_fashion",
+      "description": "V2 seeded description 45. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "764.51",
+      "currency": "AUD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "1dcf3473-e470-4ca8-b889-b2715353d547",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "抽象渐变背景合集｜演示条目 01（数字下载）",
+      "description": "用于页面横幅与演示封面的渐变素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "13",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "抽象渐变背景合集｜演示条目 01（数字下载）",
+      "description": "用于页面横幅与演示封面的渐变素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "13",
+      "currency": "USD",
+      "imageQuery": "abstract gradient background"
+    }
+  },
+  {
+    "id": "0fcc1787-214f-4350-babe-355bcd9bdaa2",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 047 · electronics",
+      "description": "V2 seeded description 47. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "799.26",
+      "currency": "HKD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "eec728db-6e78-49cb-8d75-0b0388057ad3",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "开源图表仪表盘源码｜演示条目 01（数字下载）",
+      "description": "常见统计卡片与图表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "79",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "开源图表仪表盘源码｜演示条目 01（数字下载）",
+      "description": "常见统计卡片与图表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "79",
+      "currency": "USD",
+      "imageQuery": "analytics dashboard screenshot"
+    }
+  },
+  {
+    "id": "dcb187bf-5075-4a6f-9380-84242871c6c0",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 049 · electronics",
+      "description": "V2 seeded description 49. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "148",
+      "currency": "KRW",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "27f53a4f-b22f-4a52-a335-6d1635295efb",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "多场景展示背景素材｜演示条目 01（数字下载）",
+      "description": "适合页面横幅与商品展示的不同背景图参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "28",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "多场景展示背景素材｜演示条目 01（数字下载）",
+      "description": "适合页面横幅与商品展示的不同背景图参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "28",
+      "currency": "USD",
+      "imageQuery": "versatile background images"
+    }
+  },
+  {
+    "id": "5c9fb8d7-9181-4cd4-848a-7a73c6e76f81",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 051 · electronics",
+      "description": "V2 seeded description 51. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "868.76",
+      "currency": "AED",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "7f8aa2c5-a3a6-4123-864d-b8556e2456c8",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "游戏手柄按键图标素材包｜演示条目 02（数字下载）",
+      "description": "包含不同控制器与键鼠的输入提示图标；交付格式以清单为准。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "游戏手柄按键图标素材包｜演示条目 02（数字下载）",
+      "description": "包含不同控制器与键鼠的输入提示图标；交付格式以清单为准。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "imageQuery": "game controller input icons"
+    }
+  },
+  {
+    "id": "b76e81c2-0ee9-446a-9425-a932485c9e72",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 053 · electronics",
+      "description": "V2 seeded description 53. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "0.00012345",
+      "currency": "BTC",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "011fa188-c87e-453e-88d1-3d730a3d9454",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "复古街机按钮素材｜演示条目 01（数字下载）",
+      "description": "街机风格菜单与按钮组件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "14",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "复古街机按钮素材｜演示条目 01（数字下载）",
+      "description": "街机风格菜单与按钮组件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "14",
+      "currency": "USD",
+      "imageQuery": "arcade game buttons"
+    }
+  },
+  {
+    "id": "ce74d33d-2777-4b08-ac50-edee38a49804",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 055 · secondhand_fashion",
+      "description": "V2 seeded description 55. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "12.345678",
+      "currency": "USDT",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "1854f3ee-b7b2-430c-a32b-8ac122a67d8b",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "电商商品卡片 UI 模板｜演示条目 02（数字下载）",
+      "description": "商品列表与详情卡片布局素材；可用于界面原型。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "32",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "电商商品卡片 UI 模板｜演示条目 02（数字下载）",
+      "description": "商品列表与详情卡片布局素材；可用于界面原型。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "32",
+      "currency": "USD",
+      "imageQuery": "ecommerce user interface design"
+    }
+  },
+  {
+    "id": "3a1c109f-05bf-4b53-b328-3647e9f68854",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 057 · electronics",
+      "description": "V2 seeded description 57. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "973.01",
+      "currency": "SOL",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "7d74a977-b2a2-44ce-8bb4-3ff87782164d",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "个人作品集网站源码｜演示条目 01（数字下载）",
+      "description": "响应式展示页面和项目详情示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "39",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "个人作品集网站源码｜演示条目 01（数字下载）",
+      "description": "响应式展示页面和项目详情示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "39",
+      "currency": "USD",
+      "imageQuery": "portfolio website screenshot"
+    }
+  },
+  {
+    "id": "47ebd419-40a6-4ab1-8fec-d702dbc710ac",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 059 · electronics",
+      "description": "V2 seeded description 59. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "1007.76",
+      "currency": "EUR",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "c8dda071-1ff6-4cd8-a97b-9cdcbd8ed95f",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "社交媒体信息图素材｜演示条目 02（数字下载）",
+      "description": "适合图文账号展示社交媒体数据的图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "18",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "社交媒体信息图素材｜演示条目 02（数字下载）",
+      "description": "适合图文账号展示社交媒体数据的图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "18",
+      "currency": "USD",
+      "imageQuery": "social media infographic"
+    }
+  },
+  {
+    "id": "87f4af77-f238-40d0-819f-00c777828ec2",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "USB-C 多口扩展坞（二手）｜测试库存 02",
+      "description": "适合为笔记本扩展显示器和常用外设接口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "USB-C 多口扩展坞（二手）｜测试库存 02",
+      "description": "适合为笔记本扩展显示器和常用外设接口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "imageQuery": "usb c docking station"
+    }
+  },
+  {
+    "id": "16281835-9483-4db2-b8d0-20979bf83c23",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "像素风角色素材包｜演示条目 02（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "28",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "像素风角色素材包｜演示条目 02（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "28",
+      "currency": "USD",
+      "imageQuery": "pixel art character sprites"
+    }
+  },
+  {
+    "id": "818612f7-90e9-49ea-b44b-c9592b64face",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面电脑显示器（二手）｜测试库存 02",
+      "description": "适合桌面办公与日常内容创作；尺寸和底座以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "166",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "桌面电脑显示器（二手）｜测试库存 02",
+      "description": "适合桌面办公与日常内容创作；尺寸和底座以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "166",
+      "currency": "USD",
+      "imageQuery": "computer monitor 27 inch"
+    }
+  },
+  {
+    "id": "4d7a352d-e72b-4ec6-a8c2-0aa08cafdc9d",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "森林场景背景素材｜演示条目 01（数字下载）",
+      "description": "横向卷轴游戏场景背景示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "19",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "森林场景背景素材｜演示条目 01（数字下载）",
+      "description": "横向卷轴游戏场景背景示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "19",
+      "currency": "USD",
+      "imageQuery": "game forest background"
+    }
+  },
+  {
+    "id": "1121387e-d070-4978-9167-36b43aec6760",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "针织围巾（二手）｜测试库存 01",
+      "description": "秋冬配饰；面料成分和尺寸以卖家标签为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "19",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "针织围巾（二手）｜测试库存 01",
+      "description": "秋冬配饰；面料成分和尺寸以卖家标签为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "19",
+      "currency": "USD",
+      "imageQuery": "knitted scarf"
+    }
+  },
+  {
+    "id": "819451d3-ff43-4d90-b5ca-a8b6dfbc09a5",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "等距城市插画素材｜演示条目 02（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "38",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "等距城市插画素材｜演示条目 02（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "38",
+      "currency": "USD",
+      "imageQuery": "isometric city illustration"
+    }
+  },
+  {
+    "id": "5314030f-550c-425e-bf04-a293d9a2e997",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "微单相机机身（二手）｜测试库存 02",
+      "description": "可更换镜头相机机身；镜头和存储卡另行确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "406",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "微单相机机身（二手）｜测试库存 02",
+      "description": "可更换镜头相机机身；镜头和存储卡另行确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "406",
+      "currency": "USD",
+      "imageQuery": "mirrorless digital camera"
+    }
+  },
+  {
+    "id": "36624191-70f9-4626-998a-86b20b47c7ee",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "商品目录前端模板源码｜演示条目 01（数字下载）",
+      "description": "商品网格、筛选和详情页交互示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "65",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "商品目录前端模板源码｜演示条目 01（数字下载）",
+      "description": "商品网格、筛选和详情页交互示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "65",
+      "currency": "USD",
+      "imageQuery": "online store website screenshot"
+    }
+  },
+  {
+    "id": "5b6901ef-322f-472c-abe5-03ec618c4e93",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "定焦相机镜头（二手）｜测试库存 02",
+      "description": "适合人像及日常街拍；购买前需确认卡口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "186",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "定焦相机镜头（二手）｜测试库存 02",
+      "description": "适合人像及日常街拍；购买前需确认卡口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "186",
+      "currency": "USD",
+      "imageQuery": "camera prime lens"
+    }
+  },
+  {
+    "id": "80e29a05-f2f0-43e5-9e14-a8fda83e24d2",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "信息图与统计图表素材｜演示条目 02（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "25",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "信息图与统计图表素材｜演示条目 02（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "25",
+      "currency": "USD",
+      "imageQuery": "information graphics charts"
+    }
+  },
+  {
+    "id": "44b9d101-7e19-445a-94f4-9f919ffb5d60",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面 USB 麦克风（二手）｜测试库存 02",
+      "description": "桌面收音设备；适合视频会议与个人录音。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "72",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "桌面 USB 麦克风（二手）｜测试库存 02",
+      "description": "桌面收音设备；适合视频会议与个人录音。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "72",
+      "currency": "USD",
+      "imageQuery": "usb microphone desk"
+    }
+  },
+  {
+    "id": "bfd3282d-1da8-4571-be4f-96b67255aedb",
+    "category": "digital_assets",
+    "publicationStatus": "withdrawn",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "自然风景壁纸合集｜演示条目 02（数字下载）",
+      "description": "桌面与移动端分辨率壁纸文件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "15",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "自然风景壁纸合集｜演示条目 02（数字下载）",
+      "description": "桌面与移动端分辨率壁纸文件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "15",
+      "currency": "USD",
+      "imageQuery": "nature landscape wallpaper"
+    }
+  },
+  {
+    "id": "2fe22315-d1a4-49d3-9f71-862fba8245db",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "电子阅读器（二手）｜测试库存 02",
+      "description": "电子墨水屏阅读设备；账号及数字内容不随设备转移。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "106",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "电子阅读器（二手）｜测试库存 02",
+      "description": "电子墨水屏阅读设备；账号及数字内容不随设备转移。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "106",
+      "currency": "USD",
+      "imageQuery": "ebook reader"
+    }
+  },
+  {
+    "id": "0792881e-147f-4ebb-b18c-c8e4530e856e",
+    "category": "game_items",
+    "publicationStatus": "withdrawn",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "太空飞船像素素材｜演示条目 01（数字下载）",
+      "description": "像素风飞船及特效元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "23",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "太空飞船像素素材｜演示条目 01（数字下载）",
+      "description": "像素风飞船及特效元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "23",
+      "currency": "USD",
+      "imageQuery": "pixel art spaceship"
+    }
+  },
+  {
+    "id": "07e2f17f-67d2-4cc4-8372-146cb3530720",
+    "category": "secondhand_fashion",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "宽松亚麻衬衫（二手）｜测试库存 01",
+      "description": "透气日常衬衫；尺码及色差以实物为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "宽松亚麻衬衫（二手）｜测试库存 01",
+      "description": "透气日常衬衫；尺码及色差以实物为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "imageQuery": "linen shirt"
+    }
+  },
+  {
+    "id": "6f61645d-459a-439e-8cf4-7ac2ba27e6b4",
+    "category": "digital_assets",
+    "publicationStatus": "withdrawn",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "手绘植物装饰图案｜演示条目 02（数字下载）",
+      "description": "适合包装和网页配图的植物元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "21",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "手绘植物装饰图案｜演示条目 02（数字下载）",
+      "description": "适合包装和网页配图的植物元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "21",
+      "currency": "USD",
+      "imageQuery": "botanical illustration"
+    }
+  },
+  {
+    "id": "a0dd9aa1-e845-4513-9892-34b321ca6879",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "运动相机（二手）｜测试库存 02",
+      "description": "便携拍摄设备；支架、电池和防水配件以清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "156",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "运动相机（二手）｜测试库存 02",
+      "description": "便携拍摄设备；支架、电池和防水配件以清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "156",
+      "currency": "USD",
+      "imageQuery": "action camera"
+    }
+  },
+  {
+    "id": "af6c533a-e061-4f41-9230-527c5b0a144b",
+    "category": "software_source",
+    "publicationStatus": "withdrawn",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "博客发布系统源码｜演示条目 01（数字下载）",
+      "description": "文章编辑、标签和列表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "59",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "博客发布系统源码｜演示条目 01（数字下载）",
+      "description": "文章编辑、标签和列表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "59",
+      "currency": "USD",
+      "imageQuery": "blog editor screenshot"
+    }
+  },
+  {
+    "id": "17b35f76-397b-489f-8c9d-7ea4f3bca48b",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "手持游戏控制器（二手）｜测试库存 02",
+      "description": "双摇杆控制器；购买前确认平台兼容性。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "手持游戏控制器（二手）｜测试库存 02",
+      "description": "双摇杆控制器；购买前确认平台兼容性。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "imageQuery": "video game controller"
+    }
+  },
+  {
+    "id": "7fbb52a8-d004-49be-a8df-fba131a8fdef",
+    "category": "digital_assets",
+    "publicationStatus": "withdrawn",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "几何纹理背景素材｜演示条目 02（数字下载）",
+      "description": "重复纹理背景；适合网页和海报设计。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "17",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "几何纹理背景素材｜演示条目 02（数字下载）",
+      "description": "重复纹理背景；适合网页和海报设计。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "17",
+      "currency": "USD",
+      "imageQuery": "geometric abstract pattern"
+    }
+  },
+  {
+    "id": "cbe88f9b-c2bd-4094-8dbd-b621d6732bcd",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "便携固态硬盘（二手）｜测试库存 02",
+      "description": "USB 外置存储设备；容量和健康度以实测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "76",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "便携固态硬盘（二手）｜测试库存 02",
+      "description": "USB 外置存储设备；容量和健康度以实测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "76",
+      "currency": "USD",
+      "imageQuery": "external solid state drive"
+    }
+  },
+  {
+    "id": "92eaaedd-3a93-4fac-8e7e-b36a1acdcb44",
+    "category": "digital_assets",
+    "publicationStatus": "draft",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "复古海报排版模板｜演示条目 02（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "30",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "复古海报排版模板｜演示条目 02（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "30",
+      "currency": "USD",
+      "imageQuery": "vintage poster typography"
+    }
+  },
+  {
+    "id": "a4f91b60-8201-449f-9acc-d32e460942f7",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "智能手表（二手）｜测试库存 02",
+      "description": "腕戴设备；配对前需确认可解除原账号绑定。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "126",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "智能手表（二手）｜测试库存 02",
+      "description": "腕戴设备；配对前需确认可解除原账号绑定。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "126",
+      "currency": "USD",
+      "imageQuery": "smart watch"
+    }
+  },
+  {
+    "id": "a5c95eea-907f-44b4-9356-5eb255502a08",
+    "category": "game_items",
+    "publicationStatus": "draft",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "卡牌边框界面素材｜演示条目 01（数字下载）",
+      "description": "卡牌边框与信息栏版式示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "17",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "卡牌边框界面素材｜演示条目 01（数字下载）",
+      "description": "卡牌边框与信息栏版式示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "17",
+      "currency": "USD",
+      "imageQuery": "fantasy card game design"
+    }
+  },
+  {
+    "id": "6edde539-e0c8-419e-8b4b-c705eeb80d7c",
+    "category": "secondhand_fashion",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "皮革腰带（二手）｜测试库存 01",
+      "description": "日常穿搭配件；长度和扣头磨损需确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "皮革腰带（二手）｜测试库存 01",
+      "description": "日常穿搭配件；长度和扣头磨损需确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "imageQuery": "leather belt"
+    }
+  },
+  {
+    "id": "074a5aaf-8808-4dc6-b3e0-f683c2b8e20a",
+    "category": "digital_assets",
+    "publicationStatus": "draft",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "网页仪表盘组件｜演示条目 02（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "42",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "网页仪表盘组件｜演示条目 02（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "42",
+      "currency": "USD",
+      "imageQuery": "dashboard user interface design"
+    }
+  },
+  {
+    "id": "907a6f79-cf71-4fa8-9f0b-b68d68b86d6a",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "平板电脑（二手）｜测试库存 02",
+      "description": "触控平板；容量、系统和电池状态请以卖家检测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "236",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "平板电脑（二手）｜测试库存 02",
+      "description": "触控平板；容量、系统和电池状态请以卖家检测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "236",
+      "currency": "USD",
+      "imageQuery": "tablet computer"
+    }
+  },
+  {
+    "id": "63d7921e-fcbf-4f79-a7bc-40bbcd27aa62",
+    "category": "software_source",
+    "publicationStatus": "draft",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "客服工单面板源码｜演示条目 01（数字下载）",
+      "description": "工单列表、详情和状态流转示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "75",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "客服工单面板源码｜演示条目 01（数字下载）",
+      "description": "工单列表、详情和状态流转示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "75",
+      "currency": "USD",
+      "imageQuery": "helpdesk dashboard screenshot"
+    }
+  },
+  {
+    "id": "a9a941f1-538a-4804-9562-9f4915144871",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "无反相机三脚架（二手）｜测试库存 02",
+      "description": "可折叠摄影支架；承重及云台接口购买前确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "46",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "无反相机三脚架（二手）｜测试库存 02",
+      "description": "可折叠摄影支架；承重及云台接口购买前确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "46",
+      "currency": "USD",
+      "imageQuery": "camera tripod"
+    }
+  },
+  {
+    "id": "e15b31df-90fd-4461-a59e-57f088d898d2",
+    "category": "digital_assets",
+    "publicationStatus": "draft",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "餐饮菜单版式模板｜演示条目 02（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "20",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "餐饮菜单版式模板｜演示条目 02（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "20",
+      "currency": "USD",
+      "imageQuery": "restaurant menu design"
+    }
+  },
+  {
+    "id": "99690324-e595-4019-b005-45d1d940ee66",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面补光灯（二手）｜测试库存 02",
+      "description": "适合视频会议、产品摄影与桌面补光。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "39",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "桌面补光灯（二手）｜测试库存 02",
+      "description": "适合视频会议、产品摄影与桌面补光。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "39",
+      "currency": "USD",
+      "imageQuery": "led ring light desk"
+    }
+  },
+  {
+    "id": "88fb7c1e-0ddc-4ac4-adb0-3d788e7c63ed",
+    "category": "digital_assets",
+    "publicationStatus": "archived",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "旅行路线信息图模板｜演示条目 02（数字下载）",
+      "description": "线路与站点信息展示模板。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "旅行路线信息图模板｜演示条目 02（数字下载）",
+      "description": "线路与站点信息展示模板。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "imageQuery": "travel map infographic"
+    }
+  },
+  {
+    "id": "baaa92b2-1ae9-4bc5-a593-d54e5343eca6",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "无线充电底座（二手）｜测试库存 02",
+      "description": "桌面充电配件；兼容标准和充电器另行核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "无线充电底座（二手）｜测试库存 02",
+      "description": "桌面充电配件；兼容标准和充电器另行核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "imageQuery": "wireless charging pad"
+    }
+  },
+  {
+    "id": "42efee80-8391-406d-b972-c27c983d7a53",
+    "category": "game_items",
+    "publicationStatus": "archived",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "回合制战斗界面素材｜演示条目 01（数字下载）",
+      "description": "角色头像、状态栏与操作区域版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "26",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "回合制战斗界面素材｜演示条目 01（数字下载）",
+      "description": "角色头像、状态栏与操作区域版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "26",
+      "currency": "USD",
+      "imageQuery": "role playing game interface"
+    }
+  },
+  {
+    "id": "9550e33a-af47-4f54-ac5c-2217016f3d4a",
+    "category": "secondhand_fashion",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "帆布双肩背包（二手）｜测试库存 01",
+      "description": "通勤背包；容量、拉链和背带状态请核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "43",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "帆布双肩背包（二手）｜测试库存 01",
+      "description": "通勤背包；容量、拉链和背带状态请核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "43",
+      "currency": "USD",
+      "imageQuery": "canvas backpack"
+    }
+  },
+  {
+    "id": "4326bd3d-2181-4e51-acf5-daa965c85f98",
+    "category": "digital_assets",
+    "publicationStatus": "archived",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "抽象渐变背景合集｜演示条目 02（数字下载）",
+      "description": "用于页面横幅与演示封面的渐变素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "16",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "抽象渐变背景合集｜演示条目 02（数字下载）",
+      "description": "用于页面横幅与演示封面的渐变素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "16",
+      "currency": "USD",
+      "imageQuery": "abstract gradient background"
+    }
+  },
+  {
+    "id": "6ebfb550-2082-4f13-aa05-501d7b773390",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面电脑音箱（二手）｜测试库存 02",
+      "description": "双声道桌面扬声器；连接方式以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "66",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "桌面电脑音箱（二手）｜测试库存 02",
+      "description": "双声道桌面扬声器；连接方式以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "66",
+      "currency": "USD",
+      "imageQuery": "computer speakers desk"
+    }
+  },
+  {
+    "id": "61a2f83e-aac0-4ca8-8709-62f929e376b2",
+    "category": "software_source",
+    "publicationStatus": "archived",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "学习进度看板源码｜演示条目 01（数字下载）",
+      "description": "课程目录与学习进度显示示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "学习进度看板源码｜演示条目 01（数字下载）",
+      "description": "课程目录与学习进度显示示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "imageQuery": "learning dashboard screenshot"
+    }
+  },
+  {
+    "id": "f6cb2f2a-1176-4092-8c29-e7fe538f443c",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "便携投影仪（二手）｜测试库存 02",
+      "description": "小型家用投影设备；亮度和接口需实物确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "196",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "便携投影仪（二手）｜测试库存 02",
+      "description": "小型家用投影设备；亮度和接口需实物确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "196",
+      "currency": "USD",
+      "imageQuery": "portable projector"
+    }
+  },
+  {
+    "id": "73cb6b91-d56f-4d50-b888-e4d95a048580",
+    "category": "digital_assets",
+    "publicationStatus": "archived",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "多场景展示背景素材｜演示条目 02（数字下载）",
+      "description": "适合页面横幅与商品展示的不同背景图参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "多场景展示背景素材｜演示条目 02（数字下载）",
+      "description": "适合页面横幅与商品展示的不同背景图参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "imageQuery": "versatile background images"
+    }
+  },
+  {
+    "id": "fe4e56a9-034b-4fa5-b979-4f61d8e94753",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 001 · electronics",
+      "description": "V2 seeded description 1. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "0",
+      "currency": "USD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "a4312679-6097-424c-b957-e135e762ecc0",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "超长中文标题 边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试边界测试 / Unicode 🚀 Unicode 🚀 Unicode 🚀 Unicode 🚀 Unicode 🚀 Unicode 🚀 Unicode 🚀 Unicode 🚀 Unicode 🚀 Unicode 🚀 Unicode 🚀 Unicode 🚀 ",
+      "description": "V2 seeded description 2. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "17.39",
+      "currency": "EUR",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "a539db8e-6239-4e17-a59a-fb12f55ed07d",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "Zero price free sample — 免费体验 — Бесплатно — 無料",
+      "description": "V2 seeded description 3. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "34.76",
+      "currency": "GBP",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "241ff572-88ef-4c02-9216-c547196534e9",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "像素地牢道具图标包｜演示条目 02（数字下载）",
+      "description": "适合像素风地牢游戏的道具图标素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "21",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "像素地牢道具图标包｜演示条目 02（数字下载）",
+      "description": "适合像素风地牢游戏的道具图标素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "21",
+      "currency": "USD",
+      "imageQuery": "pixel art game items"
+    }
+  },
+  {
+    "id": "20e5bdda-9689-4f98-8e32-46ab03676164",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 005 · secondhand_fashion",
+      "description": "V2 seeded description 5. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "69.51",
+      "currency": "CNY",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "2a6e4903-129d-42c2-b1bc-26bd6ba97245",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 006 · digital_assets",
+      "description": "V2 seeded description 6. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "86.89",
+      "currency": "CAD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "7242ae01-967c-4d3c-bbc6-e7b1d9855cd8",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 007 · electronics",
+      "description": "V2 seeded description 7. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "104.26",
+      "currency": "AUD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "b896896a-7fe0-4235-a0d1-c8e63b66e7e7",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "待办清单 Web 应用源码｜演示条目 02（数字下载）",
+      "description": "包含任务列表、筛选和状态管理示例；部署环境需自行配置。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "待办清单 Web 应用源码｜演示条目 02（数字下载）",
+      "description": "包含任务列表、筛选和状态管理示例；部署环境需自行配置。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "imageQuery": "task management app screenshot"
+    }
+  },
+  {
+    "id": "0dfb84c0-64d2-4b00-9431-80b0fbac73d2",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 009 · electronics",
+      "description": "V2 seeded description 9. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "139.01",
+      "currency": "HKD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "00071741-2d18-4bb4-8085-92ae5b7e8524",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 010 · digital_assets",
+      "description": "V2 seeded description 10. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "156.38",
+      "currency": "SGD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "ea9f3b8e-38cd-425f-8249-5367f81d8590",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 011 · electronics",
+      "description": "V2 seeded description 11. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "110",
+      "currency": "KRW",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "38f4670b-faa5-41eb-8ced-1383861a21c8",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "像素风角色素材包｜演示条目 03（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "像素风角色素材包｜演示条目 03（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "imageQuery": "pixel art character sprites"
+    }
+  },
+  {
+    "id": "c82d109b-ed37-4831-8704-17d733246f81",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 013 · electronics",
+      "description": "V2 seeded description 13. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "208.51",
+      "currency": "AED",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "0c80e350-83b2-4b43-bd16-530d481fed76",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 014 · game_items",
+      "description": "V2 seeded description 14. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "225.88",
+      "currency": "BRL",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "c8cd615b-2207-468c-b368-c229781224e9",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 015 · secondhand_fashion",
+      "description": "V2 seeded description 15. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "0.00012345",
+      "currency": "BTC",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "cd379def-6d85-48dc-bd67-913bca77eaef",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "等距城市插画素材｜演示条目 03（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "41",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "等距城市插画素材｜演示条目 03（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "41",
+      "currency": "USD",
+      "imageQuery": "isometric city illustration"
+    }
+  },
+  {
+    "id": "8d8a67ec-5d61-4011-97a3-ce9999fd90e0",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 017 · electronics",
+      "description": "V2 seeded description 17. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "12.345678",
+      "currency": "USDT",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "53a39cc5-13e8-49ce-800a-f5b520625141",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 018 · software_source",
+      "description": "V2 seeded description 18. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "12.345678",
+      "currency": "USDC",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "165505e7-aadd-4a1c-8889-bd39c007feaa",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 019 · electronics",
+      "description": "V2 seeded description 19. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "312.76",
+      "currency": "SOL",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "49e7a27e-a31c-46a9-bb43-5e6d3e364f33",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "信息图与统计图表素材｜演示条目 03（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "28",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "信息图与统计图表素材｜演示条目 03（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "28",
+      "currency": "USD",
+      "imageQuery": "information graphics charts"
+    }
+  },
+  {
+    "id": "44c2a39c-5246-4081-be90-28b5094ceba7",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 021 · electronics",
+      "description": "V2 seeded description 21. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "347.51",
+      "currency": "EUR",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "b12c3559-1fb7-4add-b279-1b0b9160416a",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 022 · digital_assets",
+      "description": "V2 seeded description 22. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "364.88",
+      "currency": "GBP",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "dd4f82f2-8a7f-4ce2-a987-68d6d01885ae",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 023 · electronics",
+      "description": "V2 seeded description 23. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "122",
+      "currency": "JPY",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "1082b4ce-aa72-4669-99c9-7f1649d46953",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "桌游骰子模型素材｜演示条目 02（数字下载）",
+      "description": "骰子造型与桌游界面配图素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "19",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "桌游骰子模型素材｜演示条目 02（数字下载）",
+      "description": "骰子造型与桌游界面配图素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "19",
+      "currency": "USD",
+      "imageQuery": "polyhedral dice"
+    }
+  },
+  {
+    "id": "e7d2003f-00e5-4905-96d9-3d9fdf4bff80",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 025 · secondhand_fashion",
+      "description": "V2 seeded description 25. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "417.01",
+      "currency": "CAD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "a713b2d6-b213-4523-9ae1-f60f9d775386",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 026 · digital_assets",
+      "description": "V2 seeded description 26. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "434.38",
+      "currency": "AUD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "d07d0da1-223e-48d5-ac5b-feb2076228bb",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 027 · electronics",
+      "description": "V2 seeded description 27. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "451.76",
+      "currency": "CHF",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "93f38c53-48c0-44c0-8d43-2865dd38cd62",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "预约日历组件源码｜演示条目 02（数字下载）",
+      "description": "日期选择和预约时段的前端实现示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "58",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "预约日历组件源码｜演示条目 02（数字下载）",
+      "description": "日期选择和预约时段的前端实现示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "58",
+      "currency": "USD",
+      "imageQuery": "calendar application screenshot"
+    }
+  },
+  {
+    "id": "68f441cf-9175-4185-97d9-907298ff1b1a",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 029 · electronics",
+      "description": "V2 seeded description 29. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "486.51",
+      "currency": "SGD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "a89a04a9-0968-4481-85d6-0d507668bd5c",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 030 · digital_assets",
+      "description": "V2 seeded description 30. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "129",
+      "currency": "KRW",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "02b13852-3e65-420f-9539-47459f57233b",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 031 · electronics",
+      "description": "V2 seeded description 31. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "521.26",
+      "currency": "INR",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "1f6f8e6d-2304-49a2-a26a-5e827f13c684",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "复古海报排版模板｜演示条目 03（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "33",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "复古海报排版模板｜演示条目 03（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "33",
+      "currency": "USD",
+      "imageQuery": "vintage poster typography"
+    }
+  },
+  {
+    "id": "69722c9c-ba27-435a-93e3-aefda28ad048",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 033 · electronics",
+      "description": "V2 seeded description 33. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "556.01",
+      "currency": "BRL",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "285b1ea9-e121-4520-98cd-4e5410384fb8",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 034 · game_items",
+      "description": "V2 seeded description 34. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "0.00012345",
+      "currency": "BTC",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "40aff82e-bcf0-49af-abda-652c1c154cd2",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 035 · secondhand_fashion",
+      "description": "V2 seeded description 35. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "0.123456789012345678",
+      "currency": "ETH",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "5de7a82f-04ff-43a7-95e4-90a785b844b8",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "网页仪表盘组件｜演示条目 03（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "45",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "网页仪表盘组件｜演示条目 03（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "45",
+      "currency": "USD",
+      "imageQuery": "dashboard user interface design"
+    }
+  },
+  {
+    "id": "4237f1e6-ef9d-4ca1-b598-e189800ffd1e",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 037 · electronics",
+      "description": "V2 seeded description 37. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "12.345678",
+      "currency": "USDC",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "0331bd7b-9870-413e-97df-c37545cf3b01",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 038 · software_source",
+      "description": "V2 seeded description 38. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "642.88",
+      "currency": "SOL",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "19afe91e-8b3a-4519-848d-9b6f459158eb",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 039 · electronics",
+      "description": "V2 seeded description 39. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "660.26",
+      "currency": "USD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "18793954-bd84-4d82-aede-df2fd5bc8bf2",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "餐饮菜单版式模板｜演示条目 03（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "23",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "餐饮菜单版式模板｜演示条目 03（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "23",
+      "currency": "USD",
+      "imageQuery": "restaurant menu design"
+    }
+  },
+  {
+    "id": "cf74be84-6c24-4b2d-bfde-a9d97bb48212",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 041 · electronics",
+      "description": "V2 seeded description 41. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "695.01",
+      "currency": "GBP",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "f69932f3-e840-4d0f-9fba-3196be33b3c8",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 042 · digital_assets",
+      "description": "V2 seeded description 42. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "141",
+      "currency": "JPY",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "ffb18ab5-dcf1-45e0-ae7f-543c98513e58",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 043 · electronics",
+      "description": "V2 seeded description 43. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "729.76",
+      "currency": "CNY",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "54f602b0-8198-4fe0-ae60-764d42c6409b",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "角色状态图标合集｜演示条目 02（数字下载）",
+      "description": "生命、护盾和能量等状态图标。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "角色状态图标合集｜演示条目 02（数字下载）",
+      "description": "生命、护盾和能量等状态图标。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "imageQuery": "game status icons"
+    }
+  },
+  {
+    "id": "a7e7c622-8507-45a4-86b3-c5a43550771e",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 045 · secondhand_fashion",
+      "description": "V2 seeded description 45. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "764.51",
+      "currency": "AUD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "ee251b76-b932-4570-8548-0d0a320f92bc",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 046 · digital_assets",
+      "description": "V2 seeded description 46. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "781.88",
+      "currency": "CHF",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "ba93beb7-583a-40d9-90e9-67a31b0ba095",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 047 · electronics",
+      "description": "V2 seeded description 47. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "799.26",
+      "currency": "HKD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "146eeed2-5b34-4ca7-a512-2aee0722204e",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "开源图表仪表盘源码｜演示条目 02（数字下载）",
+      "description": "常见统计卡片与图表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "82",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "开源图表仪表盘源码｜演示条目 02（数字下载）",
+      "description": "常见统计卡片与图表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "82",
+      "currency": "USD",
+      "imageQuery": "analytics dashboard screenshot"
+    }
+  },
+  {
+    "id": "9f697fa3-828f-40cb-8ea3-22ae38052832",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 049 · electronics",
+      "description": "V2 seeded description 49. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "148",
+      "currency": "KRW",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "2e9e2ed6-0851-4f5d-9eb2-d093c31a2cab",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 050 · digital_assets",
+      "description": "V2 seeded description 50. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "851.38",
+      "currency": "INR",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "d3de1d3e-5791-4995-9656-eba261af44e4",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 051 · electronics",
+      "description": "V2 seeded description 51. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "868.76",
+      "currency": "AED",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "d27e85b2-b5c6-4566-b484-04ecb5738041",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "游戏手柄按键图标素材包｜演示条目 04（数字下载）",
+      "description": "包含不同控制器与键鼠的输入提示图标；交付格式以清单为准。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "28",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "游戏手柄按键图标素材包｜演示条目 04（数字下载）",
+      "description": "包含不同控制器与键鼠的输入提示图标；交付格式以清单为准。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "28",
+      "currency": "USD",
+      "imageQuery": "game controller input icons"
+    }
+  },
+  {
+    "id": "abbfef8b-ee29-473a-b727-43503f73f303",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 053 · electronics",
+      "description": "V2 seeded description 53. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "0.00012345",
+      "currency": "BTC",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "b4048088-f94b-4a77-90c3-72ea30d6e921",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 054 · game_items",
+      "description": "V2 seeded description 54. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "0.123456789012345678",
+      "currency": "ETH",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "637dd88e-db12-4eab-a314-5596ca286517",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 055 · secondhand_fashion",
+      "description": "V2 seeded description 55. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "12.345678",
+      "currency": "USDT",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "043a37bf-eb1b-4bce-9eb7-cca71b900fd3",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "电商商品卡片 UI 模板｜演示条目 04（数字下载）",
+      "description": "商品列表与详情卡片布局素材；可用于界面原型。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "38",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "电商商品卡片 UI 模板｜演示条目 04（数字下载）",
+      "description": "商品列表与详情卡片布局素材；可用于界面原型。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "38",
+      "currency": "USD",
+      "imageQuery": "ecommerce user interface design"
+    }
+  },
+  {
+    "id": "77a00b6a-839e-45bc-974e-645cc6dc9058",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 057 · electronics",
+      "description": "V2 seeded description 57. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "973.01",
+      "currency": "SOL",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "fc79d567-44fc-4905-a8ea-1f3963512ae2",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 digital listing 058 · software_source",
+      "description": "V2 seeded description 58. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "990.38",
+      "currency": "USD",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "d43b79bd-eee9-462f-9639-9ba4d13cd5b0",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 1,
+    "locked": true,
+    "before": {
+      "title": "V2 physical listing 059 · electronics",
+      "description": "V2 seeded description 59. Markdown **bold**, emoji 🧪, and edge text: <>&/\\",
+      "priceAmount": "1007.76",
+      "currency": "EUR",
+      "version": 1
+    },
+    "product": null
+  },
+  {
+    "id": "88525f4b-6302-4115-8b12-1f11e4c6cde4",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "社交媒体信息图素材｜演示条目 04（数字下载）",
+      "description": "适合图文账号展示社交媒体数据的图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "社交媒体信息图素材｜演示条目 04（数字下载）",
+      "description": "适合图文账号展示社交媒体数据的图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "imageQuery": "social media infographic"
+    }
+  },
+  {
+    "id": "6b96e53e-875e-4cab-ac16-2d6cf0fbfa71",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "USB-C 多口扩展坞（二手）｜测试库存 04",
+      "description": "适合为笔记本扩展显示器和常用外设接口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "66",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "USB-C 多口扩展坞（二手）｜测试库存 04",
+      "description": "适合为笔记本扩展显示器和常用外设接口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "66",
+      "currency": "USD",
+      "imageQuery": "usb c docking station"
+    }
+  },
+  {
+    "id": "57f4ee86-c73c-4a06-81dd-72f77ed3255b",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "像素风角色素材包｜演示条目 04（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "34",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "像素风角色素材包｜演示条目 04（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "34",
+      "currency": "USD",
+      "imageQuery": "pixel art character sprites"
+    }
+  },
+  {
+    "id": "94dac291-cddf-4262-a46a-84209c828d26",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面电脑显示器（二手）｜测试库存 04",
+      "description": "适合桌面办公与日常内容创作；尺寸和底座以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "180",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "桌面电脑显示器（二手）｜测试库存 04",
+      "description": "适合桌面办公与日常内容创作；尺寸和底座以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "180",
+      "currency": "USD",
+      "imageQuery": "computer monitor 27 inch"
+    }
+  },
+  {
+    "id": "7e480ab5-d7c6-48cb-b073-8ec3bb9bc04d",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "森林场景背景素材｜演示条目 02（数字下载）",
+      "description": "横向卷轴游戏场景背景示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "森林场景背景素材｜演示条目 02（数字下载）",
+      "description": "横向卷轴游戏场景背景示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "imageQuery": "game forest background"
+    }
+  },
+  {
+    "id": "66d5f7b9-9e31-4bf0-88c1-de73698ba70d",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "针织围巾（二手）｜测试库存 02",
+      "description": "秋冬配饰；面料成分和尺寸以卖家标签为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "26",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "针织围巾（二手）｜测试库存 02",
+      "description": "秋冬配饰；面料成分和尺寸以卖家标签为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "26",
+      "currency": "USD",
+      "imageQuery": "knitted scarf"
+    }
+  },
+  {
+    "id": "9d0847a9-88a0-4728-a2cb-8ea15bb9e4a5",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "等距城市插画素材｜演示条目 04（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "44",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "等距城市插画素材｜演示条目 04（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "44",
+      "currency": "USD",
+      "imageQuery": "isometric city illustration"
+    }
+  },
+  {
+    "id": "fab9a4df-968c-40f1-b3ec-4093756af90f",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "微单相机机身（二手）｜测试库存 04",
+      "description": "可更换镜头相机机身；镜头和存储卡另行确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "420",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "微单相机机身（二手）｜测试库存 04",
+      "description": "可更换镜头相机机身；镜头和存储卡另行确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "420",
+      "currency": "USD",
+      "imageQuery": "mirrorless digital camera"
+    }
+  },
+  {
+    "id": "464a4c4f-2e64-445e-aaef-92f24e798cc8",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "商品目录前端模板源码｜演示条目 02（数字下载）",
+      "description": "商品网格、筛选和详情页交互示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "68",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "商品目录前端模板源码｜演示条目 02（数字下载）",
+      "description": "商品网格、筛选和详情页交互示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "68",
+      "currency": "USD",
+      "imageQuery": "online store website screenshot"
+    }
+  },
+  {
+    "id": "020810bc-4fbd-40c5-853a-14f367012f24",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "定焦相机镜头（二手）｜测试库存 04",
+      "description": "适合人像及日常街拍；购买前需确认卡口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "200",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "定焦相机镜头（二手）｜测试库存 04",
+      "description": "适合人像及日常街拍；购买前需确认卡口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "200",
+      "currency": "USD",
+      "imageQuery": "camera prime lens"
+    }
+  },
+  {
+    "id": "d29c1181-e3fb-4603-8d71-ebe8014b7251",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "信息图与统计图表素材｜演示条目 04（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "信息图与统计图表素材｜演示条目 04（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "imageQuery": "information graphics charts"
+    }
+  },
+  {
+    "id": "d410444d-2b55-4bef-92aa-d1bc5ef17123",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面 USB 麦克风（二手）｜测试库存 04",
+      "description": "桌面收音设备；适合视频会议与个人录音。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "86",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "桌面 USB 麦克风（二手）｜测试库存 04",
+      "description": "桌面收音设备；适合视频会议与个人录音。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "86",
+      "currency": "USD",
+      "imageQuery": "usb microphone desk"
+    }
+  },
+  {
+    "id": "3dcd3dea-ece0-46c9-90de-823b87195150",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "自然风景壁纸合集｜演示条目 04（数字下载）",
+      "description": "桌面与移动端分辨率壁纸文件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "21",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "自然风景壁纸合集｜演示条目 04（数字下载）",
+      "description": "桌面与移动端分辨率壁纸文件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "21",
+      "currency": "USD",
+      "imageQuery": "nature landscape wallpaper"
+    }
+  },
+  {
+    "id": "618e90b3-aa6e-4831-b2db-bbd7081080a9",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "电子阅读器（二手）｜测试库存 04",
+      "description": "电子墨水屏阅读设备；账号及数字内容不随设备转移。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "120",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "电子阅读器（二手）｜测试库存 04",
+      "description": "电子墨水屏阅读设备；账号及数字内容不随设备转移。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "120",
+      "currency": "USD",
+      "imageQuery": "ebook reader"
+    }
+  },
+  {
+    "id": "4fe8f6df-7e7c-49cc-b51e-4c5c83fca2a6",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "太空飞船像素素材｜演示条目 02（数字下载）",
+      "description": "像素风飞船及特效元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "26",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "太空飞船像素素材｜演示条目 02（数字下载）",
+      "description": "像素风飞船及特效元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "26",
+      "currency": "USD",
+      "imageQuery": "pixel art spaceship"
+    }
+  },
+  {
+    "id": "2f0b458d-a66e-435b-a171-ffe0d8982269",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "宽松亚麻衬衫（二手）｜测试库存 02",
+      "description": "透气日常衬衫；尺码及色差以实物为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "38",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "宽松亚麻衬衫（二手）｜测试库存 02",
+      "description": "透气日常衬衫；尺码及色差以实物为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "38",
+      "currency": "USD",
+      "imageQuery": "linen shirt"
+    }
+  },
+  {
+    "id": "6041331e-b019-43db-9e48-6c81604b6ea5",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "手绘植物装饰图案｜演示条目 04（数字下载）",
+      "description": "适合包装和网页配图的植物元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "27",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "手绘植物装饰图案｜演示条目 04（数字下载）",
+      "description": "适合包装和网页配图的植物元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "27",
+      "currency": "USD",
+      "imageQuery": "botanical illustration"
+    }
+  },
+  {
+    "id": "b8d44d1a-11f8-4638-a05f-9495efea2580",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "运动相机（二手）｜测试库存 04",
+      "description": "便携拍摄设备；支架、电池和防水配件以清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "170",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "运动相机（二手）｜测试库存 04",
+      "description": "便携拍摄设备；支架、电池和防水配件以清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "170",
+      "currency": "USD",
+      "imageQuery": "action camera"
+    }
+  },
+  {
+    "id": "fadbeb33-0f9e-4cc4-a6cf-73ef3124be0f",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "博客发布系统源码｜演示条目 02（数字下载）",
+      "description": "文章编辑、标签和列表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "62",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "博客发布系统源码｜演示条目 02（数字下载）",
+      "description": "文章编辑、标签和列表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "62",
+      "currency": "USD",
+      "imageQuery": "blog editor screenshot"
+    }
+  },
+  {
+    "id": "b45b1275-9ce0-4eab-b573-2873c093cee4",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "手持游戏控制器（二手）｜测试库存 04",
+      "description": "双摇杆控制器；购买前确认平台兼容性。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "66",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "手持游戏控制器（二手）｜测试库存 04",
+      "description": "双摇杆控制器；购买前确认平台兼容性。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "66",
+      "currency": "USD",
+      "imageQuery": "video game controller"
+    }
+  },
+  {
+    "id": "b0feb827-720d-4107-97a2-7edfc999e283",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "几何纹理背景素材｜演示条目 04（数字下载）",
+      "description": "重复纹理背景；适合网页和海报设计。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "23",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "几何纹理背景素材｜演示条目 04（数字下载）",
+      "description": "重复纹理背景；适合网页和海报设计。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "23",
+      "currency": "USD",
+      "imageQuery": "geometric abstract pattern"
+    }
+  },
+  {
+    "id": "8cb29a43-bd82-466e-8437-62edb3148757",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "便携固态硬盘（二手）｜测试库存 04",
+      "description": "USB 外置存储设备；容量和健康度以实测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "90",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "便携固态硬盘（二手）｜测试库存 04",
+      "description": "USB 外置存储设备；容量和健康度以实测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "90",
+      "currency": "USD",
+      "imageQuery": "external solid state drive"
+    }
+  },
+  {
+    "id": "d3bb8e33-c280-4db6-a8ff-5007d99f0fa4",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "复古海报排版模板｜演示条目 04（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "36",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "复古海报排版模板｜演示条目 04（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "36",
+      "currency": "USD",
+      "imageQuery": "vintage poster typography"
+    }
+  },
+  {
+    "id": "608aee22-d2f8-4b48-9b62-ce363cbee8a1",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "智能手表（二手）｜测试库存 04",
+      "description": "腕戴设备；配对前需确认可解除原账号绑定。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "140",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "智能手表（二手）｜测试库存 04",
+      "description": "腕戴设备；配对前需确认可解除原账号绑定。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "140",
+      "currency": "USD",
+      "imageQuery": "smart watch"
+    }
+  },
+  {
+    "id": "af706ed6-b882-41fb-9adc-4e5e0f55b82f",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "卡牌边框界面素材｜演示条目 02（数字下载）",
+      "description": "卡牌边框与信息栏版式示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "20",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "卡牌边框界面素材｜演示条目 02（数字下载）",
+      "description": "卡牌边框与信息栏版式示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "20",
+      "currency": "USD",
+      "imageQuery": "fantasy card game design"
+    }
+  },
+  {
+    "id": "4c04e0b9-79c7-4b66-90e6-65021bd5be01",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "皮革腰带（二手）｜测试库存 02",
+      "description": "日常穿搭配件；长度和扣头磨损需确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "皮革腰带（二手）｜测试库存 02",
+      "description": "日常穿搭配件；长度和扣头磨损需确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "imageQuery": "leather belt"
+    }
+  },
+  {
+    "id": "9160c119-ff8c-4d34-b53c-b396b4642fd0",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "网页仪表盘组件｜演示条目 04（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "48",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "网页仪表盘组件｜演示条目 04（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "48",
+      "currency": "USD",
+      "imageQuery": "dashboard user interface design"
+    }
+  },
+  {
+    "id": "6775afb7-eb42-4c01-a640-7edb06debfcf",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "平板电脑（二手）｜测试库存 04",
+      "description": "触控平板；容量、系统和电池状态请以卖家检测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "250",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "平板电脑（二手）｜测试库存 04",
+      "description": "触控平板；容量、系统和电池状态请以卖家检测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "250",
+      "currency": "USD",
+      "imageQuery": "tablet computer"
+    }
+  },
+  {
+    "id": "c968f31c-ab8c-4ed0-80fe-5e43249fb8b9",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "客服工单面板源码｜演示条目 02（数字下载）",
+      "description": "工单列表、详情和状态流转示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "78",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "客服工单面板源码｜演示条目 02（数字下载）",
+      "description": "工单列表、详情和状态流转示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "78",
+      "currency": "USD",
+      "imageQuery": "helpdesk dashboard screenshot"
+    }
+  },
+  {
+    "id": "b03d5794-7d98-470a-9fd3-74f6321df986",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "无反相机三脚架（二手）｜测试库存 04",
+      "description": "可折叠摄影支架；承重及云台接口购买前确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "60",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "无反相机三脚架（二手）｜测试库存 04",
+      "description": "可折叠摄影支架；承重及云台接口购买前确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "60",
+      "currency": "USD",
+      "imageQuery": "camera tripod"
+    }
+  },
+  {
+    "id": "47927aa8-aa07-405a-977e-2ace5e013916",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "餐饮菜单版式模板｜演示条目 04（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "26",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "餐饮菜单版式模板｜演示条目 04（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "26",
+      "currency": "USD",
+      "imageQuery": "restaurant menu design"
+    }
+  },
+  {
+    "id": "f24e728a-4c38-4134-b387-2c1f14d4d20a",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面补光灯（二手）｜测试库存 04",
+      "description": "适合视频会议、产品摄影与桌面补光。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "53",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "桌面补光灯（二手）｜测试库存 04",
+      "description": "适合视频会议、产品摄影与桌面补光。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "53",
+      "currency": "USD",
+      "imageQuery": "led ring light desk"
+    }
+  },
+  {
+    "id": "b1fa84f0-4b75-42c8-9a11-c9b42e60f714",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "旅行路线信息图模板｜演示条目 04（数字下载）",
+      "description": "线路与站点信息展示模板。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "30",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "旅行路线信息图模板｜演示条目 04（数字下载）",
+      "description": "线路与站点信息展示模板。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "30",
+      "currency": "USD",
+      "imageQuery": "travel map infographic"
+    }
+  },
+  {
+    "id": "6d54722d-d6d8-4aff-8c69-de4796d9f50c",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "无线充电底座（二手）｜测试库存 04",
+      "description": "桌面充电配件；兼容标准和充电器另行核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "45",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "无线充电底座（二手）｜测试库存 04",
+      "description": "桌面充电配件；兼容标准和充电器另行核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "45",
+      "currency": "USD",
+      "imageQuery": "wireless charging pad"
+    }
+  },
+  {
+    "id": "9b8b4672-a768-436f-b7be-0b51049a690f",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "回合制战斗界面素材｜演示条目 02（数字下载）",
+      "description": "角色头像、状态栏与操作区域版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "回合制战斗界面素材｜演示条目 02（数字下载）",
+      "description": "角色头像、状态栏与操作区域版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "imageQuery": "role playing game interface"
+    }
+  },
+  {
+    "id": "9e6b0b47-8560-4740-9d93-2a89ddda30fc",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "帆布双肩背包（二手）｜测试库存 02",
+      "description": "通勤背包；容量、拉链和背带状态请核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "50",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "帆布双肩背包（二手）｜测试库存 02",
+      "description": "通勤背包；容量、拉链和背带状态请核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "50",
+      "currency": "USD",
+      "imageQuery": "canvas backpack"
+    }
+  },
+  {
+    "id": "288fcaef-5c43-4215-96eb-c110c00ae3a4",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "抽象渐变背景合集｜演示条目 04（数字下载）",
+      "description": "用于页面横幅与演示封面的渐变素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "抽象渐变背景合集｜演示条目 04（数字下载）",
+      "description": "用于页面横幅与演示封面的渐变素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "imageQuery": "abstract gradient background"
+    }
+  },
+  {
+    "id": "8d2b1961-aaaa-4bf6-a976-5bd82afd5545",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面电脑音箱（二手）｜测试库存 04",
+      "description": "双声道桌面扬声器；连接方式以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "80",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "桌面电脑音箱（二手）｜测试库存 04",
+      "description": "双声道桌面扬声器；连接方式以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "80",
+      "currency": "USD",
+      "imageQuery": "computer speakers desk"
+    }
+  },
+  {
+    "id": "36489937-3771-4b07-a945-e0b689b4d3cf",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "学习进度看板源码｜演示条目 02（数字下载）",
+      "description": "课程目录与学习进度显示示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "55",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "学习进度看板源码｜演示条目 02（数字下载）",
+      "description": "课程目录与学习进度显示示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "55",
+      "currency": "USD",
+      "imageQuery": "learning dashboard screenshot"
+    }
+  },
+  {
+    "id": "043a971b-f011-4b48-a05a-80de5a5cb78a",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "便携投影仪（二手）｜测试库存 04",
+      "description": "小型家用投影设备；亮度和接口需实物确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "210",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "便携投影仪（二手）｜测试库存 04",
+      "description": "小型家用投影设备；亮度和接口需实物确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "210",
+      "currency": "USD",
+      "imageQuery": "portable projector"
+    }
+  },
+  {
+    "id": "7f47bc28-1943-4d6c-ae1f-811843957b5a",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "多场景展示背景素材｜演示条目 04（数字下载）",
+      "description": "适合页面横幅与商品展示的不同背景图参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "37",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "多场景展示背景素材｜演示条目 04（数字下载）",
+      "description": "适合页面横幅与商品展示的不同背景图参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "37",
+      "currency": "USD",
+      "imageQuery": "versatile background images"
+    }
+  },
+  {
+    "id": "730c6083-2594-4440-b7a8-d36d1a6a83d8",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "头戴式蓝牙降噪耳机（二手）｜测试库存 05",
+      "description": "蓝牙连接；头梁与耳罩完整，适合通勤及居家聆听。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "117",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "头戴式蓝牙降噪耳机（二手）｜测试库存 05",
+      "description": "蓝牙连接；头梁与耳罩完整，适合通勤及居家聆听。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "117",
+      "currency": "USD",
+      "imageQuery": "wireless over ear headphones"
+    }
+  },
+  {
+    "id": "3dca6a51-d38d-448a-8143-49f7dcf81495",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "游戏手柄按键图标素材包｜演示条目 05（数字下载）",
+      "description": "包含不同控制器与键鼠的输入提示图标；交付格式以清单为准。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "游戏手柄按键图标素材包｜演示条目 05（数字下载）",
+      "description": "包含不同控制器与键鼠的输入提示图标；交付格式以清单为准。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "31",
+      "currency": "USD",
+      "imageQuery": "game controller input icons"
+    }
+  },
+  {
+    "id": "1e04c275-677d-4748-9b62-c882808bcb47",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "便携式蓝牙音箱（二手）｜测试库存 05",
+      "description": "便携机身；适合书桌、旅行与小型聚会。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "77",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "便携式蓝牙音箱（二手）｜测试库存 05",
+      "description": "便携机身；适合书桌、旅行与小型聚会。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "77",
+      "currency": "USD",
+      "imageQuery": "portable bluetooth speaker"
+    }
+  },
+  {
+    "id": "9e43860a-36cf-4473-8b48-aa9cc145b356",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "像素地牢道具图标包｜演示条目 03（数字下载）",
+      "description": "适合像素风地牢游戏的道具图标素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "像素地牢道具图标包｜演示条目 03（数字下载）",
+      "description": "适合像素风地牢游戏的道具图标素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "imageQuery": "pixel art game items"
+    }
+  },
+  {
+    "id": "09b7dfd6-0134-4708-bdca-98f56566e5ae",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "棉质牛仔夹克（二手）｜测试库存 03",
+      "description": "日常休闲外套；肩宽、衣长和磨损处请核对实测。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "56",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "棉质牛仔夹克（二手）｜测试库存 03",
+      "description": "日常休闲外套；肩宽、衣长和磨损处请核对实测。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "56",
+      "currency": "USD",
+      "imageQuery": "denim jacket"
+    }
+  },
+  {
+    "id": "8fa6ceaf-8fe6-41dd-9c86-6564c7446773",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "电商商品卡片 UI 模板｜演示条目 05（数字下载）",
+      "description": "商品列表与详情卡片布局素材；可用于界面原型。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "41",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "电商商品卡片 UI 模板｜演示条目 05（数字下载）",
+      "description": "商品列表与详情卡片布局素材；可用于界面原型。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "41",
+      "currency": "USD",
+      "imageQuery": "ecommerce user interface design"
+    }
+  },
+  {
+    "id": "54057d8f-a851-4308-8e0a-502aa1c9cd62",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "机械键盘（二手）｜测试库存 05",
+      "description": "有线连接；独立键帽与标准键位布局。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "107",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "机械键盘（二手）｜测试库存 05",
+      "description": "有线连接；独立键帽与标准键位布局。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "107",
+      "currency": "USD",
+      "imageQuery": "mechanical keyboard"
+    }
+  },
+  {
+    "id": "84272d7c-4cb4-4776-959c-e7bb26980053",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "待办清单 Web 应用源码｜演示条目 03（数字下载）",
+      "description": "包含任务列表、筛选和状态管理示例；部署环境需自行配置。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "55",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "待办清单 Web 应用源码｜演示条目 03（数字下载）",
+      "description": "包含任务列表、筛选和状态管理示例；部署环境需自行配置。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "55",
+      "currency": "USD",
+      "imageQuery": "task management app screenshot"
+    }
+  },
+  {
+    "id": "49bff1da-cd8c-4542-8f48-2661d0509d0c",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "无线办公鼠标（二手）｜测试库存 05",
+      "description": "轻量化机身；适合笔记本和日常办公。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "57",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "无线办公鼠标（二手）｜测试库存 05",
+      "description": "轻量化机身；适合笔记本和日常办公。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "57",
+      "currency": "USD",
+      "imageQuery": "wireless computer mouse"
+    }
+  },
+  {
+    "id": "f3aa8b61-453e-45cc-b64d-5f064c89d2c1",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "社交媒体信息图素材｜演示条目 05（数字下载）",
+      "description": "适合图文账号展示社交媒体数据的图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "27",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "社交媒体信息图素材｜演示条目 05（数字下载）",
+      "description": "适合图文账号展示社交媒体数据的图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "27",
+      "currency": "USD",
+      "imageQuery": "social media infographic"
+    }
+  },
+  {
+    "id": "541f73eb-db81-4cff-817d-3fd6cfbaa8e1",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "USB-C 多口扩展坞（二手）｜测试库存 05",
+      "description": "适合为笔记本扩展显示器和常用外设接口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "73",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "USB-C 多口扩展坞（二手）｜测试库存 05",
+      "description": "适合为笔记本扩展显示器和常用外设接口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "73",
+      "currency": "USD",
+      "imageQuery": "usb c docking station"
+    }
+  },
+  {
+    "id": "f6fbf8b8-d0d4-415f-a8dc-2b223e90c5a8",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "像素风角色素材包｜演示条目 05（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "37",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "像素风角色素材包｜演示条目 05（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "37",
+      "currency": "USD",
+      "imageQuery": "pixel art character sprites"
+    }
+  },
+  {
+    "id": "3fc9603e-fc9b-47c2-ab6c-ce9fa78b2044",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面电脑显示器（二手）｜测试库存 05",
+      "description": "适合桌面办公与日常内容创作；尺寸和底座以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "187",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "桌面电脑显示器（二手）｜测试库存 05",
+      "description": "适合桌面办公与日常内容创作；尺寸和底座以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "187",
+      "currency": "USD",
+      "imageQuery": "computer monitor 27 inch"
+    }
+  },
+  {
+    "id": "34d806dd-3762-4833-8205-a866a2ccafe6",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "奇幻地图地形素材｜演示条目 03（数字下载）",
+      "description": "草地、道路和建筑图块示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "30",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "奇幻地图地形素材｜演示条目 03（数字下载）",
+      "description": "草地、道路和建筑图块示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "30",
+      "currency": "USD",
+      "imageQuery": "fantasy game map tiles"
+    }
+  },
+  {
+    "id": "a3bda326-f044-4010-8398-f6a83159490e",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "帆布托特包（二手）｜测试库存 03",
+      "description": "日常通勤手提包；尺寸与内袋以实物为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "38",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "帆布托特包（二手）｜测试库存 03",
+      "description": "日常通勤手提包；尺寸与内袋以实物为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "38",
+      "currency": "USD",
+      "imageQuery": "canvas tote bag"
+    }
+  },
+  {
+    "id": "baf04bab-7dc5-4493-94b7-ec589b09fa1c",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "等距城市插画素材｜演示条目 05（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "47",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "等距城市插画素材｜演示条目 05（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "47",
+      "currency": "USD",
+      "imageQuery": "isometric city illustration"
+    }
+  },
+  {
+    "id": "4cf04740-16e3-47d6-af2d-e3db2776d96c",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "微单相机机身（二手）｜测试库存 05",
+      "description": "可更换镜头相机机身；镜头和存储卡另行确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "427",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "微单相机机身（二手）｜测试库存 05",
+      "description": "可更换镜头相机机身；镜头和存储卡另行确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "427",
+      "currency": "USD",
+      "imageQuery": "mirrorless digital camera"
+    }
+  },
+  {
+    "id": "06aa7e62-51cf-47bb-9acd-9429d04b4a8a",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "库存管理后台模板源码｜演示条目 03（数字下载）",
+      "description": "商品、库存与报表页面示例；不含真实业务数据。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "95",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "库存管理后台模板源码｜演示条目 03（数字下载）",
+      "description": "商品、库存与报表页面示例；不含真实业务数据。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "95",
+      "currency": "USD",
+      "imageQuery": "inventory dashboard screenshot"
+    }
+  },
+  {
+    "id": "68f9d07a-dd08-4ca0-9a87-f3e1d34c8a21",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "定焦相机镜头（二手）｜测试库存 05",
+      "description": "适合人像及日常街拍；购买前需确认卡口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "207",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "定焦相机镜头（二手）｜测试库存 05",
+      "description": "适合人像及日常街拍；购买前需确认卡口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "207",
+      "currency": "USD",
+      "imageQuery": "camera prime lens"
+    }
+  },
+  {
+    "id": "6ef8a9c1-7ec9-497c-b208-3107fa94b108",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "信息图与统计图表素材｜演示条目 05（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "34",
+      "currency": "USD",
+      "version": 5
+    },
+    "product": {
+      "title": "信息图与统计图表素材｜演示条目 05（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "34",
+      "currency": "USD",
+      "imageQuery": "information graphics charts"
+    }
+  },
+  {
+    "id": "55793adf-1741-4a05-b39c-f7f82d15339a",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面 USB 麦克风（二手）｜测试库存 05",
+      "description": "桌面收音设备；适合视频会议与个人录音。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "93",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "桌面 USB 麦克风（二手）｜测试库存 05",
+      "description": "桌面收音设备；适合视频会议与个人录音。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "93",
+      "currency": "USD",
+      "imageQuery": "usb microphone desk"
+    }
+  },
+  {
+    "id": "578c1259-100c-4ed8-9d9f-3f9b4547ab53",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "自然风景壁纸合集｜演示条目 05（数字下载）",
+      "description": "桌面与移动端分辨率壁纸文件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "自然风景壁纸合集｜演示条目 05（数字下载）",
+      "description": "桌面与移动端分辨率壁纸文件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "24",
+      "currency": "USD",
+      "imageQuery": "nature landscape wallpaper"
+    }
+  },
+  {
+    "id": "1780998b-f2ce-472f-be13-ea6ba6a624d2",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "电子阅读器（二手）｜测试库存 05",
+      "description": "电子墨水屏阅读设备；账号及数字内容不随设备转移。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "127",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "电子阅读器（二手）｜测试库存 05",
+      "description": "电子墨水屏阅读设备；账号及数字内容不随设备转移。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "127",
+      "currency": "USD",
+      "imageQuery": "ebook reader"
+    }
+  },
+  {
+    "id": "3e6bac7a-6df7-470a-97e1-07b15956b226",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌游骰子模型素材｜演示条目 03（数字下载）",
+      "description": "骰子造型与桌游界面配图素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "桌游骰子模型素材｜演示条目 03（数字下载）",
+      "description": "骰子造型与桌游界面配图素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "22",
+      "currency": "USD",
+      "imageQuery": "polyhedral dice"
+    }
+  },
+  {
+    "id": "baf05e85-dee4-482e-8e97-ef78f9562d05",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "羊毛混纺针织衫（二手）｜测试库存 03",
+      "description": "秋冬叠穿单品；洗护和起球情况请确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "羊毛混纺针织衫（二手）｜测试库存 03",
+      "description": "秋冬叠穿单品；洗护和起球情况请确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "imageQuery": "wool sweater"
+    }
+  },
+  {
+    "id": "f5c4c241-3aab-4e93-987c-bc375a34927c",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "手绘植物装饰图案｜演示条目 05（数字下载）",
+      "description": "适合包装和网页配图的植物元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "30",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "手绘植物装饰图案｜演示条目 05（数字下载）",
+      "description": "适合包装和网页配图的植物元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "30",
+      "currency": "USD",
+      "imageQuery": "botanical illustration"
+    }
+  },
+  {
+    "id": "0aaa17aa-2af8-4be7-a2ca-ba83c01cbbaf",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "运动相机（二手）｜测试库存 05",
+      "description": "便携拍摄设备；支架、电池和防水配件以清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "177",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "运动相机（二手）｜测试库存 05",
+      "description": "便携拍摄设备；支架、电池和防水配件以清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "177",
+      "currency": "USD",
+      "imageQuery": "action camera"
+    }
+  },
+  {
+    "id": "dabdc347-636f-4c96-acef-5bdae2fb845b",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "预约日历组件源码｜演示条目 03（数字下载）",
+      "description": "日期选择和预约时段的前端实现示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "61",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "预约日历组件源码｜演示条目 03（数字下载）",
+      "description": "日期选择和预约时段的前端实现示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "61",
+      "currency": "USD",
+      "imageQuery": "calendar application screenshot"
+    }
+  },
+  {
+    "id": "cab313ed-b48a-4f8a-9d2d-39dc3858ba55",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "手持游戏控制器（二手）｜测试库存 05",
+      "description": "双摇杆控制器；购买前确认平台兼容性。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "73",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "手持游戏控制器（二手）｜测试库存 05",
+      "description": "双摇杆控制器；购买前确认平台兼容性。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "73",
+      "currency": "USD",
+      "imageQuery": "video game controller"
+    }
+  },
+  {
+    "id": "4cc90130-08b4-4fc4-be12-bb898ab662f6",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "几何纹理背景素材｜演示条目 05（数字下载）",
+      "description": "重复纹理背景；适合网页和海报设计。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "26",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "几何纹理背景素材｜演示条目 05（数字下载）",
+      "description": "重复纹理背景；适合网页和海报设计。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "26",
+      "currency": "USD",
+      "imageQuery": "geometric abstract pattern"
+    }
+  },
+  {
+    "id": "200db1da-f519-4cc2-b1ec-6f9d955db545",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "便携固态硬盘（二手）｜测试库存 05",
+      "description": "USB 外置存储设备；容量和健康度以实测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "97",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "便携固态硬盘（二手）｜测试库存 05",
+      "description": "USB 外置存储设备；容量和健康度以实测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "97",
+      "currency": "USD",
+      "imageQuery": "external solid state drive"
+    }
+  },
+  {
+    "id": "b0153ce2-12d2-461a-b899-7ea9873c2cf7",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "复古海报排版模板｜演示条目 05（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "39",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "复古海报排版模板｜演示条目 05（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "39",
+      "currency": "USD",
+      "imageQuery": "vintage poster typography"
+    }
+  },
+  {
+    "id": "03448cdd-f0fd-4259-942a-dfe168ddd047",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "智能手表（二手）｜测试库存 05",
+      "description": "腕戴设备；配对前需确认可解除原账号绑定。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "147",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "智能手表（二手）｜测试库存 05",
+      "description": "腕戴设备；配对前需确认可解除原账号绑定。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "147",
+      "currency": "USD",
+      "imageQuery": "smart watch"
+    }
+  },
+  {
+    "id": "0b180c67-dbdd-42bc-ad3f-a876cf0a62b3",
+    "category": "game_items",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "低多边形宝箱模型｜演示条目 03（数字下载）",
+      "description": "适合游戏原型的宝箱模型示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "35",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "低多边形宝箱模型｜演示条目 03（数字下载）",
+      "description": "适合游戏原型的宝箱模型示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "35",
+      "currency": "USD",
+      "imageQuery": "low poly treasure chest"
+    }
+  },
+  {
+    "id": "67786100-5573-4ab7-bc10-33f7fb40f576",
+    "category": "secondhand_fashion",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "真皮斜挎包（二手）｜测试库存 03",
+      "description": "小型随身包；皮面划痕及五金状态请核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "82",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "真皮斜挎包（二手）｜测试库存 03",
+      "description": "小型随身包；皮面划痕及五金状态请核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "82",
+      "currency": "USD",
+      "imageQuery": "leather crossbody bag"
+    }
+  },
+  {
+    "id": "eeecd38c-ade9-4279-bf26-4eb378f7e305",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "网页仪表盘组件｜演示条目 05（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "51",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "网页仪表盘组件｜演示条目 05（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "51",
+      "currency": "USD",
+      "imageQuery": "dashboard user interface design"
+    }
+  },
+  {
+    "id": "2a44b4f7-4931-4f3d-9912-b813ea44e6b7",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "平板电脑（二手）｜测试库存 05",
+      "description": "触控平板；容量、系统和电池状态请以卖家检测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "257",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "平板电脑（二手）｜测试库存 05",
+      "description": "触控平板；容量、系统和电池状态请以卖家检测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "257",
+      "currency": "USD",
+      "imageQuery": "tablet computer"
+    }
+  },
+  {
+    "id": "d4cc4cbd-289c-498b-8bd8-712c750e91b7",
+    "category": "software_source",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "多语言文档站模板源码｜演示条目 03（数字下载）",
+      "description": "导航、搜索和文章页面布局示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "75",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "多语言文档站模板源码｜演示条目 03（数字下载）",
+      "description": "导航、搜索和文章页面布局示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "75",
+      "currency": "USD",
+      "imageQuery": "documentation website screenshot"
+    }
+  },
+  {
+    "id": "b0a9e33a-c5d7-4fd6-bc0c-1571326efd1c",
+    "category": "electronics",
+    "publicationStatus": "published",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "无反相机三脚架（二手）｜测试库存 05",
+      "description": "可折叠摄影支架；承重及云台接口购买前确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "67",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "无反相机三脚架（二手）｜测试库存 05",
+      "description": "可折叠摄影支架；承重及云台接口购买前确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "67",
+      "currency": "USD",
+      "imageQuery": "camera tripod"
+    }
+  },
+  {
+    "id": "374f66f0-2d2e-492c-a2d2-5336d479901d",
+    "category": "digital_assets",
+    "publicationStatus": "published",
+    "saleMode": "repeatable",
+    "orderCount": 1,
+    "locked": false,
+    "before": {
+      "title": "餐饮菜单版式模板｜演示条目 05（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "餐饮菜单版式模板｜演示条目 05（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "imageQuery": "restaurant menu design"
+    }
+  },
+  {
+    "id": "ccd79eda-b248-4851-9b57-0fc6d03c053c",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面补光灯（二手）｜测试库存 05",
+      "description": "适合视频会议、产品摄影与桌面补光。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "60",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "桌面补光灯（二手）｜测试库存 05",
+      "description": "适合视频会议、产品摄影与桌面补光。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "60",
+      "currency": "USD",
+      "imageQuery": "led ring light desk"
+    }
+  },
+  {
+    "id": "fb608500-601e-44a0-a328-a92e31f065a3",
+    "category": "digital_assets",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "旅行路线信息图模板｜演示条目 05（数字下载）",
+      "description": "线路与站点信息展示模板。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "33",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "旅行路线信息图模板｜演示条目 05（数字下载）",
+      "description": "线路与站点信息展示模板。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "33",
+      "currency": "USD",
+      "imageQuery": "travel map infographic"
+    }
+  },
+  {
+    "id": "efa80200-befa-4f6e-9439-9aaa5d77e2d5",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "无线充电底座（二手）｜测试库存 05",
+      "description": "桌面充电配件；兼容标准和充电器另行核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "无线充电底座（二手）｜测试库存 05",
+      "description": "桌面充电配件；兼容标准和充电器另行核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "52",
+      "currency": "USD",
+      "imageQuery": "wireless charging pad"
+    }
+  },
+  {
+    "id": "9fd7f995-a92a-40f1-a6c8-8d575dcdd6c1",
+    "category": "game_items",
+    "publicationStatus": "withdrawn",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "角色状态图标合集｜演示条目 03（数字下载）",
+      "description": "生命、护盾和能量等状态图标。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "27",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "角色状态图标合集｜演示条目 03（数字下载）",
+      "description": "生命、护盾和能量等状态图标。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "27",
+      "currency": "USD",
+      "imageQuery": "game status icons"
+    }
+  },
+  {
+    "id": "426f4d29-4853-46cc-85e1-daad1649e29f",
+    "category": "secondhand_fashion",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "复古运动鞋（二手）｜测试库存 03",
+      "description": "二手休闲鞋；鞋码和鞋底磨损需实测确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "68",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "复古运动鞋（二手）｜测试库存 03",
+      "description": "二手休闲鞋；鞋码和鞋底磨损需实测确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "68",
+      "currency": "USD",
+      "imageQuery": "vintage sneakers"
+    }
+  },
+  {
+    "id": "bbf838cb-0871-454d-a0ef-2f677f1fbcd2",
+    "category": "digital_assets",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "抽象渐变背景合集｜演示条目 05（数字下载）",
+      "description": "用于页面横幅与演示封面的渐变素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "25",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "抽象渐变背景合集｜演示条目 05（数字下载）",
+      "description": "用于页面横幅与演示封面的渐变素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "25",
+      "currency": "USD",
+      "imageQuery": "abstract gradient background"
+    }
+  },
+  {
+    "id": "2ab49f8e-752f-4ca6-8b1b-867bbc63e6f7",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面电脑音箱（二手）｜测试库存 05",
+      "description": "双声道桌面扬声器；连接方式以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "87",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "桌面电脑音箱（二手）｜测试库存 05",
+      "description": "双声道桌面扬声器；连接方式以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "87",
+      "currency": "USD",
+      "imageQuery": "computer speakers desk"
+    }
+  },
+  {
+    "id": "b2d93a5b-dfd1-44cc-923d-c224ab402d24",
+    "category": "software_source",
+    "publicationStatus": "withdrawn",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "开源图表仪表盘源码｜演示条目 03（数字下载）",
+      "description": "常见统计卡片与图表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "85",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "开源图表仪表盘源码｜演示条目 03（数字下载）",
+      "description": "常见统计卡片与图表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "85",
+      "currency": "USD",
+      "imageQuery": "analytics dashboard screenshot"
+    }
+  },
+  {
+    "id": "fa37d4f9-3b67-48eb-819b-41447bb9e163",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "便携投影仪（二手）｜测试库存 05",
+      "description": "小型家用投影设备；亮度和接口需实物确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "217",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "便携投影仪（二手）｜测试库存 05",
+      "description": "小型家用投影设备；亮度和接口需实物确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "217",
+      "currency": "USD",
+      "imageQuery": "portable projector"
+    }
+  },
+  {
+    "id": "49ca74a7-ad20-40c6-bc5c-b2990b2b6a9e",
+    "category": "digital_assets",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "多场景展示背景素材｜演示条目 05（数字下载）",
+      "description": "适合页面横幅与商品展示的不同背景图参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "40",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "多场景展示背景素材｜演示条目 05（数字下载）",
+      "description": "适合页面横幅与商品展示的不同背景图参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "40",
+      "currency": "USD",
+      "imageQuery": "versatile background images"
+    }
+  },
+  {
+    "id": "15e839fa-9a62-4519-87f9-c5b6c07f7a70",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "头戴式蓝牙降噪耳机（二手）｜测试库存 06",
+      "description": "蓝牙连接；头梁与耳罩完整，适合通勤及居家聆听。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "124",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "头戴式蓝牙降噪耳机（二手）｜测试库存 06",
+      "description": "蓝牙连接；头梁与耳罩完整，适合通勤及居家聆听。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "124",
+      "currency": "USD",
+      "imageQuery": "wireless over ear headphones"
+    }
+  },
+  {
+    "id": "ced61b92-4ceb-4e67-b7bb-58bdff76a4c7",
+    "category": "digital_assets",
+    "publicationStatus": "withdrawn",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "游戏手柄按键图标素材包｜演示条目 06（数字下载）",
+      "description": "包含不同控制器与键鼠的输入提示图标；交付格式以清单为准。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "34",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "游戏手柄按键图标素材包｜演示条目 06（数字下载）",
+      "description": "包含不同控制器与键鼠的输入提示图标；交付格式以清单为准。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "34",
+      "currency": "USD",
+      "imageQuery": "game controller input icons"
+    }
+  },
+  {
+    "id": "b69167a7-3ccb-4be3-954a-4c5dd034cc8a",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "便携式蓝牙音箱（二手）｜测试库存 06",
+      "description": "便携机身；适合书桌、旅行与小型聚会。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "84",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "便携式蓝牙音箱（二手）｜测试库存 06",
+      "description": "便携机身；适合书桌、旅行与小型聚会。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "84",
+      "currency": "USD",
+      "imageQuery": "portable bluetooth speaker"
+    }
+  },
+  {
+    "id": "5ad04d7a-0734-462d-b1eb-68b6c505f6da",
+    "category": "game_items",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "复古街机按钮素材｜演示条目 03（数字下载）",
+      "description": "街机风格菜单与按钮组件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "20",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "复古街机按钮素材｜演示条目 03（数字下载）",
+      "description": "街机风格菜单与按钮组件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "20",
+      "currency": "USD",
+      "imageQuery": "arcade game buttons"
+    }
+  },
+  {
+    "id": "3d3a8bf0-d7c0-4a52-8b7a-5c1285b516e9",
+    "category": "secondhand_fashion",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "轻便风衣（二手）｜测试库存 03",
+      "description": "换季外套；面料、衣长与腰带配件请核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "77",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "轻便风衣（二手）｜测试库存 03",
+      "description": "换季外套；面料、衣长与腰带配件请核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "77",
+      "currency": "USD",
+      "imageQuery": "trench coat"
+    }
+  },
+  {
+    "id": "65ebaff1-5fc8-44e3-9820-bf2c2e039639",
+    "category": "digital_assets",
+    "publicationStatus": "withdrawn",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "电商商品卡片 UI 模板｜演示条目 06（数字下载）",
+      "description": "商品列表与详情卡片布局素材；可用于界面原型。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "44",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "电商商品卡片 UI 模板｜演示条目 06（数字下载）",
+      "description": "商品列表与详情卡片布局素材；可用于界面原型。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "44",
+      "currency": "USD",
+      "imageQuery": "ecommerce user interface design"
+    }
+  },
+  {
+    "id": "f286f0fb-dbdd-4b4d-aa61-96e38586e0ff",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "机械键盘（二手）｜测试库存 06",
+      "description": "有线连接；独立键帽与标准键位布局。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "114",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "机械键盘（二手）｜测试库存 06",
+      "description": "有线连接；独立键帽与标准键位布局。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "114",
+      "currency": "USD",
+      "imageQuery": "mechanical keyboard"
+    }
+  },
+  {
+    "id": "cf9cf10f-c378-4277-abd7-5c5a6b09317a",
+    "category": "software_source",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "个人作品集网站源码｜演示条目 03（数字下载）",
+      "description": "响应式展示页面和项目详情示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "45",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "个人作品集网站源码｜演示条目 03（数字下载）",
+      "description": "响应式展示页面和项目详情示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "45",
+      "currency": "USD",
+      "imageQuery": "portfolio website screenshot"
+    }
+  },
+  {
+    "id": "1712369c-99f5-4f95-a64e-b869ecd2e9a4",
+    "category": "electronics",
+    "publicationStatus": "withdrawn",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "无线办公鼠标（二手）｜测试库存 06",
+      "description": "轻量化机身；适合笔记本和日常办公。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "64",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "无线办公鼠标（二手）｜测试库存 06",
+      "description": "轻量化机身；适合笔记本和日常办公。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "64",
+      "currency": "USD",
+      "imageQuery": "wireless computer mouse"
+    }
+  },
+  {
+    "id": "a6aab991-39b7-4651-ac12-8858d65f8c48",
+    "category": "digital_assets",
+    "publicationStatus": "withdrawn",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "社交媒体信息图素材｜演示条目 06（数字下载）",
+      "description": "适合图文账号展示社交媒体数据的图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "30",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "社交媒体信息图素材｜演示条目 06（数字下载）",
+      "description": "适合图文账号展示社交媒体数据的图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "30",
+      "currency": "USD",
+      "imageQuery": "social media infographic"
+    }
+  },
+  {
+    "id": "662956b5-8e57-492d-9dc0-6b31b3d6b071",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "USB-C 多口扩展坞（二手）｜测试库存 06",
+      "description": "适合为笔记本扩展显示器和常用外设接口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "80",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "USB-C 多口扩展坞（二手）｜测试库存 06",
+      "description": "适合为笔记本扩展显示器和常用外设接口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "80",
+      "currency": "USD",
+      "imageQuery": "usb c docking station"
+    }
+  },
+  {
+    "id": "20033173-3252-4bbf-8c0d-cc3d149081b5",
+    "category": "digital_assets",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "像素风角色素材包｜演示条目 06（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "40",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "像素风角色素材包｜演示条目 06（数字下载）",
+      "description": "游戏角色帧素材；需按所附授权范围使用。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "40",
+      "currency": "USD",
+      "imageQuery": "pixel art character sprites"
+    }
+  },
+  {
+    "id": "34da04ec-7f31-44a6-bfe0-dee66af25a91",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面电脑显示器（二手）｜测试库存 06",
+      "description": "适合桌面办公与日常内容创作；尺寸和底座以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "194",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "桌面电脑显示器（二手）｜测试库存 06",
+      "description": "适合桌面办公与日常内容创作；尺寸和底座以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "194",
+      "currency": "USD",
+      "imageQuery": "computer monitor 27 inch"
+    }
+  },
+  {
+    "id": "96a5ebae-7701-4c74-b30e-4d28b0a05c71",
+    "category": "game_items",
+    "publicationStatus": "draft",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "森林场景背景素材｜演示条目 03（数字下载）",
+      "description": "横向卷轴游戏场景背景示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "25",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "森林场景背景素材｜演示条目 03（数字下载）",
+      "description": "横向卷轴游戏场景背景示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "25",
+      "currency": "USD",
+      "imageQuery": "game forest background"
+    }
+  },
+  {
+    "id": "6a8819f3-0938-4522-8ea7-6a21f1701888",
+    "category": "secondhand_fashion",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "针织围巾（二手）｜测试库存 03",
+      "description": "秋冬配饰；面料成分和尺寸以卖家标签为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "33",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "针织围巾（二手）｜测试库存 03",
+      "description": "秋冬配饰；面料成分和尺寸以卖家标签为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "33",
+      "currency": "USD",
+      "imageQuery": "knitted scarf"
+    }
+  },
+  {
+    "id": "f9c18e5f-5361-4a87-9527-9ba2285f7309",
+    "category": "digital_assets",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "等距城市插画素材｜演示条目 06（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "50",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "等距城市插画素材｜演示条目 06（数字下载）",
+      "description": "用于演示和视觉稿的等距建筑插画。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "50",
+      "currency": "USD",
+      "imageQuery": "isometric city illustration"
+    }
+  },
+  {
+    "id": "c7679d9a-024f-40c4-9038-5a86bf30a8cc",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "微单相机机身（二手）｜测试库存 06",
+      "description": "可更换镜头相机机身；镜头和存储卡另行确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "434",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "微单相机机身（二手）｜测试库存 06",
+      "description": "可更换镜头相机机身；镜头和存储卡另行确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "434",
+      "currency": "USD",
+      "imageQuery": "mirrorless digital camera"
+    }
+  },
+  {
+    "id": "248a58c7-f03a-4567-8121-427b8be326f2",
+    "category": "software_source",
+    "publicationStatus": "draft",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "商品目录前端模板源码｜演示条目 03（数字下载）",
+      "description": "商品网格、筛选和详情页交互示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "71",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "商品目录前端模板源码｜演示条目 03（数字下载）",
+      "description": "商品网格、筛选和详情页交互示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "71",
+      "currency": "USD",
+      "imageQuery": "online store website screenshot"
+    }
+  },
+  {
+    "id": "a2550492-f552-43d4-86bb-165d79917a14",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "定焦相机镜头（二手）｜测试库存 06",
+      "description": "适合人像及日常街拍；购买前需确认卡口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "214",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "定焦相机镜头（二手）｜测试库存 06",
+      "description": "适合人像及日常街拍；购买前需确认卡口。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "214",
+      "currency": "USD",
+      "imageQuery": "camera prime lens"
+    }
+  },
+  {
+    "id": "1e8e75cd-0dbb-45df-85bd-f5ffead90eab",
+    "category": "digital_assets",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "信息图与统计图表素材｜演示条目 06（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "37",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "信息图与统计图表素材｜演示条目 06（数字下载）",
+      "description": "包含多种主题的信息图和统计图表版式参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "37",
+      "currency": "USD",
+      "imageQuery": "information graphics charts"
+    }
+  },
+  {
+    "id": "914030ba-6007-400f-8589-ee451631c79c",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面 USB 麦克风（二手）｜测试库存 06",
+      "description": "桌面收音设备；适合视频会议与个人录音。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "100",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "桌面 USB 麦克风（二手）｜测试库存 06",
+      "description": "桌面收音设备；适合视频会议与个人录音。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "100",
+      "currency": "USD",
+      "imageQuery": "usb microphone desk"
+    }
+  },
+  {
+    "id": "0c8aef8b-6cf3-444f-95c0-ab282b9f32bd",
+    "category": "digital_assets",
+    "publicationStatus": "draft",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "自然风景壁纸合集｜演示条目 06（数字下载）",
+      "description": "桌面与移动端分辨率壁纸文件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "27",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "自然风景壁纸合集｜演示条目 06（数字下载）",
+      "description": "桌面与移动端分辨率壁纸文件。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "27",
+      "currency": "USD",
+      "imageQuery": "nature landscape wallpaper"
+    }
+  },
+  {
+    "id": "4cfbcf37-10a7-43f3-9f60-4f546d4efff6",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "电子阅读器（二手）｜测试库存 06",
+      "description": "电子墨水屏阅读设备；账号及数字内容不随设备转移。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "134",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "电子阅读器（二手）｜测试库存 06",
+      "description": "电子墨水屏阅读设备；账号及数字内容不随设备转移。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "134",
+      "currency": "USD",
+      "imageQuery": "ebook reader"
+    }
+  },
+  {
+    "id": "e6c0a37f-27d1-4696-b22e-ae58cd8f5075",
+    "category": "game_items",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "太空飞船像素素材｜演示条目 03（数字下载）",
+      "description": "像素风飞船及特效元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "太空飞船像素素材｜演示条目 03（数字下载）",
+      "description": "像素风飞船及特效元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "imageQuery": "pixel art spaceship"
+    }
+  },
+  {
+    "id": "4dbb402d-6e21-4e17-be3d-b58e0aaefa63",
+    "category": "secondhand_fashion",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "宽松亚麻衬衫（二手）｜测试库存 03",
+      "description": "透气日常衬衫；尺码及色差以实物为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "45",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "宽松亚麻衬衫（二手）｜测试库存 03",
+      "description": "透气日常衬衫；尺码及色差以实物为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "45",
+      "currency": "USD",
+      "imageQuery": "linen shirt"
+    }
+  },
+  {
+    "id": "377318c1-32b9-4580-8f72-96adc5c3b91d",
+    "category": "digital_assets",
+    "publicationStatus": "draft",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "手绘植物装饰图案｜演示条目 06（数字下载）",
+      "description": "适合包装和网页配图的植物元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "33",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "手绘植物装饰图案｜演示条目 06（数字下载）",
+      "description": "适合包装和网页配图的植物元素。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "33",
+      "currency": "USD",
+      "imageQuery": "botanical illustration"
+    }
+  },
+  {
+    "id": "ee748d57-bc25-469a-8e6b-1f10c69b60d9",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "运动相机（二手）｜测试库存 06",
+      "description": "便携拍摄设备；支架、电池和防水配件以清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "184",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "运动相机（二手）｜测试库存 06",
+      "description": "便携拍摄设备；支架、电池和防水配件以清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "184",
+      "currency": "USD",
+      "imageQuery": "action camera"
+    }
+  },
+  {
+    "id": "c6c71843-fa4a-4d0f-a70e-220c72663d98",
+    "category": "software_source",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "博客发布系统源码｜演示条目 03（数字下载）",
+      "description": "文章编辑、标签和列表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "65",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "博客发布系统源码｜演示条目 03（数字下载）",
+      "description": "文章编辑、标签和列表页面示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "65",
+      "currency": "USD",
+      "imageQuery": "blog editor screenshot"
+    }
+  },
+  {
+    "id": "8f0d40fa-948f-4818-a161-7831157e9f48",
+    "category": "electronics",
+    "publicationStatus": "draft",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "手持游戏控制器（二手）｜测试库存 06",
+      "description": "双摇杆控制器；购买前确认平台兼容性。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "80",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "手持游戏控制器（二手）｜测试库存 06",
+      "description": "双摇杆控制器；购买前确认平台兼容性。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "80",
+      "currency": "USD",
+      "imageQuery": "video game controller"
+    }
+  },
+  {
+    "id": "5d6ff8af-873a-4f0e-ac9b-81718e0e8fd6",
+    "category": "digital_assets",
+    "publicationStatus": "draft",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "几何纹理背景素材｜演示条目 06（数字下载）",
+      "description": "重复纹理背景；适合网页和海报设计。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "几何纹理背景素材｜演示条目 06（数字下载）",
+      "description": "重复纹理背景；适合网页和海报设计。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "29",
+      "currency": "USD",
+      "imageQuery": "geometric abstract pattern"
+    }
+  },
+  {
+    "id": "270d1d77-0431-416c-b73a-13e7bb2749bd",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "便携固态硬盘（二手）｜测试库存 06",
+      "description": "USB 外置存储设备；容量和健康度以实测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "104",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "便携固态硬盘（二手）｜测试库存 06",
+      "description": "USB 外置存储设备；容量和健康度以实测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "104",
+      "currency": "USD",
+      "imageQuery": "external solid state drive"
+    }
+  },
+  {
+    "id": "9399798a-c2bf-414b-b80c-64ebab74cc13",
+    "category": "digital_assets",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "复古海报排版模板｜演示条目 06（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "42",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "复古海报排版模板｜演示条目 06（数字下载）",
+      "description": "可编辑标题、留白和装饰版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "42",
+      "currency": "USD",
+      "imageQuery": "vintage poster typography"
+    }
+  },
+  {
+    "id": "dd0d8ca0-414f-4ed9-99a8-bfac65e63013",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "智能手表（二手）｜测试库存 06",
+      "description": "腕戴设备；配对前需确认可解除原账号绑定。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "154",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "智能手表（二手）｜测试库存 06",
+      "description": "腕戴设备；配对前需确认可解除原账号绑定。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "154",
+      "currency": "USD",
+      "imageQuery": "smart watch"
+    }
+  },
+  {
+    "id": "4fc021a6-2aa7-4769-90c4-78dd275c23d7",
+    "category": "game_items",
+    "publicationStatus": "archived",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "卡牌边框界面素材｜演示条目 03（数字下载）",
+      "description": "卡牌边框与信息栏版式示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "23",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "卡牌边框界面素材｜演示条目 03（数字下载）",
+      "description": "卡牌边框与信息栏版式示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "23",
+      "currency": "USD",
+      "imageQuery": "fantasy card game design"
+    }
+  },
+  {
+    "id": "14419d08-211f-44fb-93c0-c053f19125cf",
+    "category": "secondhand_fashion",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "皮革腰带（二手）｜测试库存 03",
+      "description": "日常穿搭配件；长度和扣头磨损需确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "36",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "皮革腰带（二手）｜测试库存 03",
+      "description": "日常穿搭配件；长度和扣头磨损需确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "36",
+      "currency": "USD",
+      "imageQuery": "leather belt"
+    }
+  },
+  {
+    "id": "409921ba-e34d-43c6-a4d2-f4e6c6561e2e",
+    "category": "digital_assets",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "网页仪表盘组件｜演示条目 06（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "54",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "网页仪表盘组件｜演示条目 06（数字下载）",
+      "description": "数据卡片、导航和筛选组件设计稿。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "54",
+      "currency": "USD",
+      "imageQuery": "dashboard user interface design"
+    }
+  },
+  {
+    "id": "fc05082b-ae65-4af5-ac10-84f9b82a451c",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "平板电脑（二手）｜测试库存 06",
+      "description": "触控平板；容量、系统和电池状态请以卖家检测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "264",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "平板电脑（二手）｜测试库存 06",
+      "description": "触控平板；容量、系统和电池状态请以卖家检测为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "264",
+      "currency": "USD",
+      "imageQuery": "tablet computer"
+    }
+  },
+  {
+    "id": "a374dc13-cb49-43ac-a07c-cad01ac67d8e",
+    "category": "software_source",
+    "publicationStatus": "archived",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "客服工单面板源码｜演示条目 03（数字下载）",
+      "description": "工单列表、详情和状态流转示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "81",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "客服工单面板源码｜演示条目 03（数字下载）",
+      "description": "工单列表、详情和状态流转示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "81",
+      "currency": "USD",
+      "imageQuery": "helpdesk dashboard screenshot"
+    }
+  },
+  {
+    "id": "a060417c-1c53-4b27-b2bc-16e24e32ec77",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "无反相机三脚架（二手）｜测试库存 06",
+      "description": "可折叠摄影支架；承重及云台接口购买前确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "74",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "无反相机三脚架（二手）｜测试库存 06",
+      "description": "可折叠摄影支架；承重及云台接口购买前确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "74",
+      "currency": "USD",
+      "imageQuery": "camera tripod"
+    }
+  },
+  {
+    "id": "d983bbea-24cf-49c4-8855-058ab6a4e09a",
+    "category": "digital_assets",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "餐饮菜单版式模板｜演示条目 06（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "32",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "餐饮菜单版式模板｜演示条目 06（数字下载）",
+      "description": "适合咖啡馆和简餐品牌的菜单版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "32",
+      "currency": "USD",
+      "imageQuery": "restaurant menu design"
+    }
+  },
+  {
+    "id": "14e9cb37-b7b1-4482-804c-c550a2e573d3",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面补光灯（二手）｜测试库存 06",
+      "description": "适合视频会议、产品摄影与桌面补光。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "67",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "桌面补光灯（二手）｜测试库存 06",
+      "description": "适合视频会议、产品摄影与桌面补光。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "67",
+      "currency": "USD",
+      "imageQuery": "led ring light desk"
+    }
+  },
+  {
+    "id": "3a65e492-9b4b-41d8-ad60-604ed1980de7",
+    "category": "digital_assets",
+    "publicationStatus": "archived",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "旅行路线信息图模板｜演示条目 06（数字下载）",
+      "description": "线路与站点信息展示模板。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "36",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "旅行路线信息图模板｜演示条目 06（数字下载）",
+      "description": "线路与站点信息展示模板。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "36",
+      "currency": "USD",
+      "imageQuery": "travel map infographic"
+    }
+  },
+  {
+    "id": "d4526f96-e17d-475e-a977-7ebbcf43ca73",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "无线充电底座（二手）｜测试库存 06",
+      "description": "桌面充电配件；兼容标准和充电器另行核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "59",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "无线充电底座（二手）｜测试库存 06",
+      "description": "桌面充电配件；兼容标准和充电器另行核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "59",
+      "currency": "USD",
+      "imageQuery": "wireless charging pad"
+    }
+  },
+  {
+    "id": "8560a646-af56-45e4-bdb2-d4634c914edb",
+    "category": "game_items",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "回合制战斗界面素材｜演示条目 03（数字下载）",
+      "description": "角色头像、状态栏与操作区域版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "32",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "回合制战斗界面素材｜演示条目 03（数字下载）",
+      "description": "角色头像、状态栏与操作区域版式。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "32",
+      "currency": "USD",
+      "imageQuery": "role playing game interface"
+    }
+  },
+  {
+    "id": "c5a3fcce-9588-46de-8762-583911f38832",
+    "category": "secondhand_fashion",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "帆布双肩背包（二手）｜测试库存 03",
+      "description": "通勤背包；容量、拉链和背带状态请核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "57",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "帆布双肩背包（二手）｜测试库存 03",
+      "description": "通勤背包；容量、拉链和背带状态请核对。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "57",
+      "currency": "USD",
+      "imageQuery": "canvas backpack"
+    }
+  },
+  {
+    "id": "d29e131a-4de5-48ec-b6ad-d16d2cef89f1",
+    "category": "digital_assets",
+    "publicationStatus": "archived",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "抽象渐变背景合集｜演示条目 06（数字下载）",
+      "description": "用于页面横幅与演示封面的渐变素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "28",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "抽象渐变背景合集｜演示条目 06（数字下载）",
+      "description": "用于页面横幅与演示封面的渐变素材。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "28",
+      "currency": "USD",
+      "imageQuery": "abstract gradient background"
+    }
+  },
+  {
+    "id": "07dae109-b7bb-4c52-98ac-db1c0c327ad0",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "桌面电脑音箱（二手）｜测试库存 06",
+      "description": "双声道桌面扬声器；连接方式以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "94",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "桌面电脑音箱（二手）｜测试库存 06",
+      "description": "双声道桌面扬声器；连接方式以卖家清单为准。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "94",
+      "currency": "USD",
+      "imageQuery": "computer speakers desk"
+    }
+  },
+  {
+    "id": "faa721c9-4754-435d-afed-f8343e035114",
+    "category": "software_source",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "学习进度看板源码｜演示条目 03（数字下载）",
+      "description": "课程目录与学习进度显示示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "58",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "学习进度看板源码｜演示条目 03（数字下载）",
+      "description": "课程目录与学习进度显示示例。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "58",
+      "currency": "USD",
+      "imageQuery": "learning dashboard screenshot"
+    }
+  },
+  {
+    "id": "927aa36b-e4d0-4964-8217-c076088e2e34",
+    "category": "electronics",
+    "publicationStatus": "archived",
+    "saleMode": "one_off",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "便携投影仪（二手）｜测试库存 06",
+      "description": "小型家用投影设备；亮度和接口需实物确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "224",
+      "currency": "USD",
+      "version": 3
+    },
+    "product": {
+      "title": "便携投影仪（二手）｜测试库存 06",
+      "description": "小型家用投影设备；亮度和接口需实物确认。展示用测试商品；具体成色、配件、尺寸及功能以卖家验货信息为准。图片为同类实拍示意，不代表本件商品实物。",
+      "priceAmount": "224",
+      "currency": "USD",
+      "imageQuery": "portable projector"
+    }
+  },
+  {
+    "id": "1f39ad6b-7ff3-4a17-94a9-1198f46aa297",
+    "category": "digital_assets",
+    "publicationStatus": "archived",
+    "saleMode": "repeatable",
+    "orderCount": 0,
+    "locked": false,
+    "before": {
+      "title": "多场景展示背景素材｜演示条目 06（数字下载）",
+      "description": "适合页面横幅与商品展示的不同背景图参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "43",
+      "currency": "USD",
+      "version": 4
+    },
+    "product": {
+      "title": "多场景展示背景素材｜演示条目 06（数字下载）",
+      "description": "适合页面横幅与商品展示的不同背景图参考。展示用测试商品；交付文件、格式、版本及授权范围以订单页面说明为准。图片仅作同类内容的视觉示意，不代表交付文件。",
+      "priceAmount": "43",
+      "currency": "USD",
+      "imageQuery": "versatile background images"
+    }
+  }
+]
