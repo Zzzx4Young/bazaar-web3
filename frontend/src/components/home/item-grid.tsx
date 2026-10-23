@@ -18,6 +18,7 @@ interface ItemGridProps {
 export function ItemGrid({ items, sellers, title, emptyVariant = 'noResults' }: ItemGridProps) {
   const t = useTranslations('emptyState')
   const tCommon = useTranslations('common')
+  const tExplore = useTranslations('explore')
 
   if (items.length === 0) {
     return (
@@ -35,9 +36,9 @@ export function ItemGrid({ items, sellers, title, emptyVariant = 'noResults' }: 
   }
 
   return (
-    <section className="space-y-3">
-      {title && <h2 className="text-lg font-semibold">{title}</h2>}
-      <div className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+    <section className="space-y-5">
+      {title && <div className="space-y-2"><span className="market-eyebrow">{tExplore('editorial.curated')}</span><h2 className="market-heading text-2xl sm:text-3xl">{title}</h2></div>}
+      <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-5 md:grid-cols-3 lg:gap-6">
         {items.map((item) => (
           <ItemCard key={item.id} item={item} seller={sellers?.get(item.sellerId)} />
         ))}

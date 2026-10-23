@@ -1,5 +1,4 @@
 import { setRequestLocale } from 'next-intl/server'
-import { AlphaHero } from '@/components/home/alpha-hero'
 import { CategoryTabs } from '@/components/home/category-tabs'
 import { HomeItemGrids } from '@/components/home/home-item-grids'
 import { TrustStrip } from '@/components/home/trust-strip'
@@ -15,16 +14,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const t = await getTranslations('home')
 
   return (
-    <div className="space-y-8">
-      <AlphaHero />
+    <div className="space-y-10">
+      <HomeItemGrids />
 
       <CategoryTabs categories={marketplaceCategories} />
 
-      <TrustStrip />
-
       <TrendingCategories />
 
-      <HomeItemGrids />
+      <TrustStrip />
 
       <div className="flex justify-center pt-4">
         <Button asChild variant="outline" size="lg">

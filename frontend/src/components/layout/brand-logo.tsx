@@ -1,30 +1,19 @@
 'use client'
 
 import { Link } from '@/i18n/routing'
-import { useTheme } from './theme-provider'
-import { cn } from '@/lib/utils'
 
 /**
- * Brand logo. Uses a gradient text fill in dark mode and a solid foreground
- * in light mode, so the mark stands out on both backgrounds without needing
- * a separate raster logo.
+ * The wordmark uses semantic colors so it keeps the same quiet identity in
+ * both the light and dark curated-market themes.
  */
 export function BrandLogo() {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
-
   return (
     <Link
       href="/"
       aria-label="Bazaar Web3 — go to home"
-      className={cn(
-        'font-extrabold tracking-tight text-lg',
-        isDark
-          ? 'bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-emerald-300 bg-clip-text text-transparent'
-          : 'text-foreground'
-      )}
+      className="inline-flex shrink-0 items-center gap-1.5 text-xl font-extrabold tracking-[-0.06em] text-foreground transition-colors hover:text-primary"
     >
-      Bazaar Web3
+      <span>Bazaar Web3</span><span className="text-primary" aria-hidden>✦</span>
     </Link>
   )
 }

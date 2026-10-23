@@ -10,6 +10,7 @@ import { useSearchParams } from 'next/navigation'
 import type { SortBy } from '@/types'
 import { useBackendListings } from '@/hooks/use-backend-listings'
 import { Pagination } from '@/components/explore/pagination'
+import { useTranslations } from 'next-intl'
 
 export default function ExplorePage() {
   return (
@@ -20,6 +21,7 @@ export default function ExplorePage() {
 }
 
 function ExploreContent() {
+  const t = useTranslations('explore')
   const searchParams = useSearchParams()
   const categoryParam = searchParams.get('category')
   const filter = useFilterStore()
@@ -39,7 +41,15 @@ function ExploreContent() {
     if (filter.currency) params.set('currency', filter.currency)
     if (filter.keyword?.trim()) params.set('keyword', filter.keyword.trim())
     return params
-  }, [filter.category, filter.currency, filter.itemCategory, filter.keyword, filter.page, filter.pageSize, filter.sortBy])
+  }, [
+    filter.category,
+    filter.currency,
+    filter.itemCategory,
+    filter.keyword,
+    filter.page,
+    filter.pageSize,
+    filter.sortBy
+  ])
   const backend = useBackendListings(backendParams)
   const totalPages = Math.max(1, Math.ceil(backend.total / filter.pageSize))
   useEffect(() => {
@@ -47,42 +57,51 @@ function ExploreContent() {
   }, [filter.page, setPage, totalPages])
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row">
-      <aside className="lg:sticky lg:top-4 lg:self-start">
-        <FilterSidebar
-          categories={marketplaceCategories}
-          filter={filter}
-          onKeyword={(v) => filter.setKeyword(v || undefined)}
-          onCategory={(v) => filter.setCategory(v)}
-          onItemCategory={(v) => filter.setItemCategory(v)}
-          onCurrency={(v) => filter.setCurrency(v)}
-          onReset={() => filter.reset()}
-        />
-      </aside>
-
-      <div className="flex-1 space-y-4">
-        {backend.error && (
-          <p role="alert" className="text-sm text-destructive">
-            商品加载失败：{backend.error}
-          </p>
-        )}
-        {backend.loading && <p role="status">正在从服务端加载商品…</p>}
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            共 <span className="font-semibold text-foreground">{backend.total}</span> 件商品
-          </div>
-          <SortDropdown value={filter.sortBy} onChange={(v: SortBy) => filter.setSortBy(v)} />
-        </div>
-
-        {!backend.loading && <ItemGrid items={backend.items} />}
-        {!backend.loading && backend.total > 0 && (
-          <Pagination
-            page={filter.page}
-            pageSize={filter.pageSize}
-            total={backend.total}
-            onPageChange={setPage}
+    <div className="space-y-8">
+      <header className="space-y-3 border-b border-border pb-7">
+        <p className="market-eyebrow">{t('editorial.collection')}</p>
+        <h1 className="market-heading text-4xl sm:text-5xl">{t('title')}</h1>
+        <p className="max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+          {t('subtitle')}
+        </p>
+      </header>
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <FilterSidebar
+            categories={marketplaceCategories}
+            filter={filter}
+            onKeyword={(v) => filter.setKeyword(v || undefined)}
+            onCategory={(v) => filter.setCategory(v)}
+            onItemCategory={(v) => filter.setItemCategory(v)}
+            onCurrency={(v) => filter.setCurrency(v)}
+            onReset={() => filter.reset()}
           />
-        )}
+        </aside>
+
+        <div className="min-w-0 flex-1 space-y-5">
+          {backend.error && (
+            <p role="alert" className="text-sm text-destructive">
+              商品加载失败：{backend.error}
+            </p>
+          )}
+          {backend.loading && <p role="status">正在从服务端加载商品…</p>}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+            <div className="text-sm text-muted-foreground">
+              共 <span className="font-semibold text-foreground">{backend.total}</span> 件商品
+            </div>
+            <SortDropdown value={filter.sortBy} onChange={(v: SortBy) => filter.setSortBy(v)} />
+          </div>
+
+          {!backend.loading && <ItemGrid items={backend.items} />}
+          {!backend.loading && backend.total > 0 && (
+            <Pagination
+              page={filter.page}
+              pageSize={filter.pageSize}
+              total={backend.total}
+              onPageChange={setPage}
+            />
+          )}
+        </div>
       </div>
     </div>
   )

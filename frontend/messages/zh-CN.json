@@ -140,17 +140,18 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "内部 Alpha · 共享服务端数据",
-      "title": "发布、发现并完成一笔可追踪的交易",
-      "body": "商品、订单和私有交付信息写入 PostgreSQL。付款与结算仍为模拟流程，不涉及真实资金。",
+      "eyebrow": "BAZAAR · 精选市集",
+      "title": "发现值得拥有的好东西",
+      "body": "从独立创作到日常好物，在这里遇见下一件心头好。",
       "explore": "探索商品",
-      "publish": "发布商品"
+      "publish": "发布商品",
+      "featured": "本周精选"
     },
     "loading": "正在从服务端加载商品…",
     "loadError": "商品服务暂时不可用",
-    "featured": "🔥 精选推荐",
-    "digital": "💎 数字资产",
-    "physical": "📦 实物二手",
+    "featured": "本周精选",
+    "digital": "数字资产",
+    "physical": "实物二手",
     "viewAll": "查看全部 →",
     "trust": {
       "title": "为什么选择 Bazaar Web3",
@@ -195,6 +196,13 @@
     }
   },
   "explore": {
+    "title": "探索商品",
+    "subtitle": "按你的兴趣，发现每一件独特的商品。",
+    "editorial": {
+      "collection": "BAZAAR / 精选藏品",
+      "curated": "BAZAAR / 精选",
+      "price": "BAZAAR / 价格"
+    },
     "sort": {
       "newest": "最新发布",
       "price_asc": "价格从低到高",
@@ -206,6 +214,7 @@
     "tagline": "内部 Alpha · 服务端持久化 · 模拟结算"
   },
   "common": {
+    "illustration": "示意图",
     "buy": "立即购买",
     "contact": "联系卖家",
     "favorite": "收藏",

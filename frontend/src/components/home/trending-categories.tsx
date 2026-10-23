@@ -8,9 +8,9 @@ export function TrendingCategories() {
   const t = useTranslations('home.trending')
 
   return (
-    <section aria-label={t('title')} className="space-y-3" data-testid="trending-categories">
+    <section aria-label={t('title')} className="space-y-5" data-testid="trending-categories">
       <div className="flex items-baseline justify-between">
-        <h2 className="flex items-center gap-2 text-lg font-semibold">
+        <h2 className="market-heading flex items-center gap-2 text-2xl sm:text-3xl">
           <Sparkles className="h-4 w-4 text-primary" aria-hidden />
           {t('title')}
         </h2>
@@ -23,10 +23,10 @@ export function TrendingCategories() {
           <Link
             key={cat.id}
             href={`/explore?category=${cat.id}`}
-            className="group flex flex-col items-center justify-center gap-2 rounded-lg border bg-card p-4 transition-colors hover:border-primary hover:bg-primary/5"
+            className="group flex flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-5 transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transform-none"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform group-hover:scale-110">
-              <span className="text-xl font-bold" aria-hidden>
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-primary transition-transform group-hover:scale-105 motion-reduce:transform-none">
+              <span className="font-display text-2xl font-semibold" aria-hidden>
                 {cat.label.slice(0, 1)}
               </span>
             </div>

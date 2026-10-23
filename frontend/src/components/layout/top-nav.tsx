@@ -56,10 +56,10 @@ export function TopNav() {
   ] as const
 
   return (
-    <header className="border-b">
-      <div className="container flex min-h-14 flex-wrap items-center justify-between gap-3 py-3">
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-card/95 backdrop-blur-xl">
+      <div className="container flex min-h-16 flex-wrap items-center gap-x-7 gap-y-2 py-3">
         <BrandLogo />
-        <nav className="flex flex-wrap items-center gap-3 text-sm">
+        <nav className="order-3 flex w-full min-w-0 items-center gap-5 overflow-x-auto pb-1 text-[13px] sm:order-none sm:w-auto sm:flex-1 sm:justify-center sm:pb-0" aria-label={t('home')}>
           {links.map((link) => {
             const active =
               pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))
@@ -69,8 +69,8 @@ export function TopNav() {
                 href={link.href}
                 className={
                   active
-                    ? 'font-medium text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'shrink-0 border-b-2 border-primary pb-1 font-semibold text-foreground'
+                    : 'shrink-0 border-b-2 border-transparent pb-1 text-muted-foreground transition-colors hover:text-foreground'
                 }
               >
                 {link.label}
@@ -79,12 +79,12 @@ export function TopNav() {
           })}
           <FavoritesLink />
           {auth.view?.account.role === 'admin' && (
-            <Link href="/admin/disputes" className="text-muted-foreground hover:text-foreground">
+            <Link href="/admin/disputes" className="shrink-0 border-b-2 border-transparent pb-1 text-muted-foreground hover:text-foreground">
               {t('adminDisputes')}
             </Link>
           )}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <ModeToggle />
           {auth.status === 'authenticated' ? (
             <Button

@@ -48,3 +48,8 @@ it('renders independent catalog sections returned by the home API', () => {
   expect(screen.getByText('digital: Digital')).toBeInTheDocument()
   expect(screen.getByText('physical: Physical')).toBeInTheDocument()
 })
+
+it('uses the featured listing from the home API in the editorial hero', () => {
+  render(<HomeItemGrids />)
+  expect(screen.getByRole('link', { name: 'Featured' })).toHaveAttribute('href', '/listing/Featured')
+})

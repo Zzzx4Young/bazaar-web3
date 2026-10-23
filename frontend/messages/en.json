@@ -140,17 +140,18 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Internal Alpha · Shared server data",
-      "title": "Publish, discover, and complete a traceable trade",
-      "body": "Listings, orders, and private delivery records are stored in PostgreSQL. Payment and settlement remain simulated with no real funds.",
+      "eyebrow": "BAZAAR · Curated market",
+      "title": "Find something worth keeping",
+      "body": "Independent creations and everyday finds, all in one place.",
       "explore": "Explore listings",
-      "publish": "Publish a listing"
+      "publish": "Publish a listing",
+      "featured": "Selected for you"
     },
     "loading": "Loading listings from the server…",
     "loadError": "The listing service is unavailable",
-    "featured": "🔥 Featured",
-    "digital": "💎 Digital Assets",
-    "physical": "📦 Physical Goods",
+    "featured": "Selected for you",
+    "digital": "Digital Assets",
+    "physical": "Physical Goods",
     "viewAll": "View all →",
     "trust": {
       "title": "Why Bazaar Web3",
@@ -195,6 +196,13 @@
     }
   },
   "explore": {
+    "title": "Explore products",
+    "subtitle": "Find something that fits your interests.",
+    "editorial": {
+      "collection": "BAZAAR / THE COLLECTION",
+      "curated": "BAZAAR / CURATED",
+      "price": "BAZAAR / PRICE"
+    },
     "sort": {
       "newest": "Newest",
       "price_asc": "Price: low to high",
@@ -206,6 +214,7 @@
     "tagline": "Internal Alpha · server persistence · simulated settlement"
   },
   "common": {
+    "illustration": "Illustration",
     "buy": "Buy now",
     "contact": "Contact seller",
     "favorite": "Favorite",

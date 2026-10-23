@@ -11,12 +11,12 @@ interface CategoryTabsProps {
 
 export function CategoryTabs({ categories }: CategoryTabsProps) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto border-y border-border py-4">
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="inline-flex h-auto w-max gap-1 bg-transparent p-0">
+        <TabsList className="inline-flex h-auto w-max gap-2 bg-transparent p-0">
           <TabsTrigger
             value="all"
-            className="rounded-full border bg-card px-4 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            className="rounded-full border border-border bg-card px-5 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             asChild
           >
             <Link href="/">全部</Link>
@@ -25,7 +25,7 @@ export function CategoryTabs({ categories }: CategoryTabsProps) {
             <TabsTrigger
               key={cat.id}
               value={cat.id}
-              className="rounded-full border bg-card px-4 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="rounded-full border border-border bg-card px-5 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               asChild
             >
               <Link href={`/explore?category=${cat.id}`}>{cat.label}</Link>

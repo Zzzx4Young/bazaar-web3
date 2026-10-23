@@ -44,22 +44,20 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body className="min-h-screen bg-background font-sans antialiased">
+      <body className="flex min-h-screen flex-col bg-background font-sans antialiased">
         <NextIntlClientProvider>
           <ThemeProvider>
             <AuthSession />
             <ThemeFaviconSync />
             <Toaster />
             <TopNav />
-            <div className="border-b bg-muted px-4 py-2 text-center text-xs text-muted-foreground">
+            <div className="border-b border-border/70 bg-secondary/50 px-4 py-2 text-center text-xs tracking-wide text-muted-foreground">
               {tDemo('notice')}
             </div>
-            <main className="container py-6">{children}</main>
-            <footer className="mt-12 border-t py-6">
-              <div className="container flex flex-col items-center justify-between gap-3 text-xs text-muted-foreground sm:flex-row">
-                <span>
-                  Bazaar Web3 · <FooterTagline />
-                </span>
+            <main className="container flex-1 py-7 sm:py-10">{children}</main>
+            <footer className="mt-16 border-t border-border/80 bg-card/70 py-8">
+              <div className="container flex flex-col items-center justify-between gap-4 text-xs text-muted-foreground sm:flex-row">
+                <span className="font-semibold tracking-[0.12em] text-foreground">BAZAAR <span className="text-primary">✦</span> <span className="ml-2 font-normal tracking-normal text-muted-foreground"><FooterTagline /></span></span>
                 <LanguageSwitcher />
               </div>
             </footer>

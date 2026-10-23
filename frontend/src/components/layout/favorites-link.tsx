@@ -21,8 +21,8 @@ export function FavoritesLink() {
     <Link
       href="/favorites"
       className={cn(
-        'inline-flex items-center gap-1.5',
-        isActive ? 'font-medium text-foreground' : 'text-muted-foreground hover:text-foreground'
+        'inline-flex shrink-0 items-center gap-1.5 border-b-2 pb-1 transition-colors',
+        isActive ? 'border-primary font-semibold text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
       )}
     >
       <Heart className="h-3.5 w-3.5" />

@@ -28,6 +28,7 @@ interface Props {
 export default function ListingDetailPage({ params }: Props) {
   const t = useTranslations('common')
   const tCart = useTranslations('commonCart')
+  const tExplore = useTranslations('explore')
   const locale = useLocale()
   const backend = useBackendListing(params.id)
   const { toggle, isFavorite, error } = useFavoriteStore()
@@ -59,14 +60,14 @@ export default function ListingDetailPage({ params }: Props) {
   const alreadyInCart = currentCart.some((line) => line.listingId === item.id)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {error && (
         <p role="alert" className="text-destructive">
           {error}
         </p>
       )}
       {/* 面包屑 */}
-      <nav className="text-sm text-muted-foreground">
+      <nav className="border-b border-border pb-5 text-sm text-muted-foreground">
         <Link href="/" className="hover:underline">
           首页
         </Link>
@@ -81,12 +82,12 @@ export default function ListingDetailPage({ params }: Props) {
         <span className="text-foreground">{item.title.slice(0, 20)}</span>
       </nav>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-8 md:grid-cols-2 lg:gap-12">
         {/* 左：媒体轮播 */}
         <MediaCarousel media={item.media} alt={item.title} illustrative={item.illustrativeImage} />
 
         {/* 右：价格 + 卖家 + 操作 */}
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
             <div className="flex flex-wrap gap-2">
               <Badge data-testid="acceptance-listing-status" variant="outline">
@@ -105,16 +106,17 @@ export default function ListingDetailPage({ params }: Props) {
                 </Badge>
               )}
             </div>
-            <h1 className="mt-3 text-2xl font-bold">{item.title}</h1>
+            <h1 className="market-heading mt-4 text-3xl leading-tight sm:text-4xl">{item.title}</h1>
             <div className="mt-2 text-xs text-muted-foreground">
               {formatDate(item.createdAt)}发布 · 数据来自 Alpha 服务端
             </div>
           </div>
 
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-5 sm:p-6">
+              <p className="market-eyebrow mb-3">{tExplore('editorial.price')}</p>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-primary">
+                <span className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                   {formatPrice(item.price.exactAmount ?? item.price.amount, item.price.currency)}
                 </span>
                 {item.originalPrice && item.originalPrice.amount > item.price.amount && (

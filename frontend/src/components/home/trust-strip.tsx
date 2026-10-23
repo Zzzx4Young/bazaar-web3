@@ -20,9 +20,9 @@ export function TrustStrip() {
       {ENTRIES.map(({ key, icon: Icon }) => (
         <div
           key={key}
-          className="flex items-start gap-3 rounded-lg border bg-card p-4"
+          className="flex items-start gap-3 border-l-2 border-primary/35 bg-card/70 p-4"
         >
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-secondary text-primary">
             <Icon className="h-5 w-5" aria-hidden />
           </div>
           <div className="min-w-0">
