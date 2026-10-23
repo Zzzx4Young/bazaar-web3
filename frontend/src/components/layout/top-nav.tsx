@@ -19,6 +19,22 @@ import {
 import { useAuthStore } from '@/stores/use-auth-store'
 import { getDevLoginCredentials } from '@/lib/dev-login'
 import { IdentityOptions } from '@/components/auth/identity-options'
+import { locales } from '@/i18n/locales'
+import { resolveSafeReturnTo } from '@/lib/safe-return-to'
+
+const loginPaths = new Set(['/login', ...locales.map(locale => `/${locale}/login`)])
+
+function emailReturnTo(locale: string) {
+  if (typeof window === 'undefined') return `/${locale}/me`
+  const { pathname, search, hash } = window.location
+  if (!loginPaths.has(pathname.replace(/\/$/, '')))
+    return `${pathname}${search}${hash}`
+
+  const target = new URLSearchParams(search).get('returnTo')
+  const safe = resolveSafeReturnTo(target ?? undefined)
+  const destinationPath = safe.split(/[?#]/, 1)[0] ?? ''
+  return loginPaths.has(destinationPath.replace(/\/$/, '')) ? '/me' : safe
+}
 
 export function TopNav() {
   const t = useTranslations('nav')
@@ -155,7 +171,9 @@ export function TopNav() {
               {submitting ? t('signingIn') : t('login')}
             </Button>
           </form>
-          <IdentityOptions returnTo={typeof window === 'undefined' ? `/${locale}/me` : window.location.pathname} />
+          <IdentityOptions returnTo={emailReturnTo(locale)}
+            googleReturnTo={typeof window === 'undefined' ? `/${locale}/me` : window.location.pathname}
+            onSuccess={() => setOpen(false)} />
         </DialogContent>
       </Dialog>
     </header>

@@ -17,6 +17,8 @@
     "test:e2e": "node scripts/run-alpha-e2e.mjs",
     "test:e2e:alpha": "node scripts/run-alpha-e2e.mjs",
     "test:e2e:v2": "node scripts/run-v2-e2e.mjs",
+    "test:e2e:email": "npm --prefix ../backend run build && node ../backend/scripts/with-test-db.mjs node scripts/check-email-code-browser.mjs",
+    "test:e2e:return-to": "node scripts/check-password-return-to-browser.mjs",
     "test:e2e:demo": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "screenshot": "node scripts/screenshot.mjs",

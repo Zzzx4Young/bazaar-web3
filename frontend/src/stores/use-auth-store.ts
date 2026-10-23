@@ -18,6 +18,7 @@ interface AuthState {
   error: string | null
   restore: () => Promise<void>
   signIn: (loginName: string, password: string) => Promise<boolean>
+  acceptView: (view: AuthView) => void
   signOut: () => Promise<void>
   invalidate: (token: string) => void
 }
@@ -67,6 +68,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
         set({ status: 'anonymous', view: null, error: backendErrorMessage(error) })
         return false
       }
+    },
+    acceptView: view => {
+      ++generation
+      set({ status: 'authenticated', view, error: null })
     },
     signOut: async () => {
       const current = ++generation

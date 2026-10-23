@@ -52,9 +52,15 @@ npm run dev
 npm run check:frontend
 npm run test:e2e:alpha
 npm run test:e2e:v2
+npm run test:e2e:return-to
 ```
 
-浏览器验收会启动并停止专用 `postgres-test`，需要 Docker、Chromium 和仓库测试密码文件。
+Alpha/V2 浏览器验收会启动并停止专用 `postgres-test`，需要 Docker、Chromium 和仓库测试密码文件。
+`test:e2e:return-to` 使用模拟登录响应核对密码和导航栏邮箱登录后的站内跳转，不需要数据库。
+邮箱验证码由后端发送器启用后，登录页才显示邮箱注册/登录入口；默认环境仍显示未开放。
+要验证完整的网页注册流程，先启动 `postgres-test`，再运行 `npm run test:e2e:email`。
+该测试使用隔离数据库和内存邮件发送器：验证码从发送器取得，数据库只用于核对
+HMAC 摘要、有效期、消费状态、身份关联和会话恢复；不会发送真实邮件或保留测试账户。
 V2 在隔离数据库生成 200 件商品、60 笔多状态订单，覆盖移动/桌面布局、筛选排序、
 购物车、争议裁决及 observer 数据核对；截图、视频和 trace 写入 `e2e-results-v2/`。
 历史 Demo 用例由 `npm run test:e2e:demo` 单独运行，不作为 Alpha 验收。

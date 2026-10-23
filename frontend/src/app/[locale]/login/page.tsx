@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getDevLoginCredentials } from '@/lib/dev-login'
 import { IdentityOptions } from '@/components/auth/identity-options'
+import { resolveSafeReturnTo } from '@/lib/safe-return-to'
 
 export default function LoginPage() {
   const t = useTranslations('nav')
@@ -42,7 +43,7 @@ export default function LoginPage() {
           setSubmitting(false)
           if (ok) {
             setPassword('')
-            router.replace(returnTo.replace(/^\/(zh-CN|en)/, '') || '/')
+            router.replace(resolveSafeReturnTo(returnTo, '/'))
           }
         }}
       >

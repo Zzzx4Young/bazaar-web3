@@ -173,6 +173,36 @@ test('Google callback preserves English locale on successful and failed sign-in'
   } finally { await app.close(); await db.close() }
 })
 
+test('Google callback Location stays on the configured origin for accepted return paths', async () => {
+  const db = await sandbox()
+  const googleClient = {
+    authorizeUrl: ({ state }) => `https://accounts.google.com/o/oauth2/v2/auth?state=${state}`,
+    exchange: async () => ({ sub: 'safe-redirect-user', email: 'safe@gmail.com', name: 'Safe' })
+  }
+  const config = readConfig({ DATABASE_URL: db.url.toString(), APP_ORIGIN: origin,
+    GOOGLE_CLIENT_ID: 'test-client', GOOGLE_CLIENT_SECRET: 'test-secret' })
+  const app = await createApp(config, false, { googleClient })
+  try {
+    for (const returnTo of ['/en/me?tab=profile', '/en//example.com',
+      '/en/%2F%2Fexample.com', '/en/../me']) {
+      const start = await post(app, 'google/start', { returnTo })
+      assert.equal(start.statusCode, 200, start.body)
+      const state = new URL(start.json().authorizationUrl).searchParams.get('state')
+      const callback = await app.inject({ method: 'GET',
+        url: `/api/auth/google/callback?state=${state}&code=ok`,
+        headers: { cookie: cookieOf(start, 'bazaar_google_state') } })
+      assert.equal(callback.statusCode, 302, callback.body)
+      assert.equal(callback.headers.location, `${origin}${returnTo}`)
+      assert.equal(new URL(callback.headers.location).origin, origin)
+    }
+    for (const returnTo of ['//example.com', 'https://example.com',
+      '/en/\\example.com', '/en/evil\npath']) {
+      const start = await post(app, 'google/start', { returnTo })
+      assert.equal(start.statusCode, 400, start.body)
+    }
+  } finally { await app.close(); await db.close() }
+})
+
 test('password account must reauthenticate before enabling email code login', async () => {
   const db = await sandbox()
   const sent = []
