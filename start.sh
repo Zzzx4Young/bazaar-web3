@@ -3,6 +3,8 @@ set -euo pipefail
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$repo_root"
+state_file="$repo_root/.tmp/bazaar-start.pid"
+state_lock="$state_file.lock"
 
 probe() {
   curl -s -o /dev/null --connect-timeout 1 --max-time 3 "$1"
@@ -22,11 +24,11 @@ if "$backend_up" && "$frontend_up"; then
   fi
 fi
 if "$backend_up" || "$frontend_up"; then
-  echo 'Port 3000 or 3001 is already in use. Stop the existing service before starting Bazaar.' >&2
+  echo 'Port 3000 or 3001 is already in use. Run ./stop.sh for a Bazaar instance started here, or inspect the port owner.' >&2
   exit 1
 fi
 
-for command in node npm curl docker; do
+for command in node npm curl docker flock; do
   command -v "$command" >/dev/null || { echo "Missing command: $command" >&2; exit 1; }
 done
 node -e 'const [major, minor] = process.versions.node.split(".").map(Number); if (major < 22 || (major === 22 && minor < 12)) process.exit(1)' || {
@@ -47,19 +49,61 @@ if ! docker info >/dev/null 2>&1; then
   fi
 fi
 
-bash infra/scripts/init-secrets.sh
-"${docker_cmd[@]}" compose -f infra/compose.yaml up -d --wait postgres
-npm --prefix backend run build
-node infra/scripts/bootstrap-garage.mjs
-(
-  cd backend
-  env -u DATABASE_URL -u DATABASE_URL_FILE DATABASE_RUNTIME_ROLE=bazaar_runtime \
-    node --env-file-if-exists=.tmp/i7-migrate.env scripts/deploy-migrations.mjs
-)
-
 backend_pid=''
 frontend_pid=''
 archive_pid=''
+startup_pid=''
+start_ticks=''
+cleanup() {
+  trap - EXIT INT TERM
+  [[ -z "$startup_pid" ]] || kill "$startup_pid" 2>/dev/null || true
+  [[ -z "$startup_pid" ]] || wait "$startup_pid" 2>/dev/null || true
+  [[ -z "$frontend_pid" ]] || kill "$frontend_pid" 2>/dev/null || true
+  [[ -z "$backend_pid" ]] || kill "$backend_pid" 2>/dev/null || true
+  [[ -z "$archive_pid" ]] || kill "$archive_pid" 2>/dev/null || true
+  [[ -z "$frontend_pid" ]] || wait "$frontend_pid" 2>/dev/null || true
+  [[ -z "$backend_pid" ]] || wait "$backend_pid" 2>/dev/null || true
+  [[ -z "$archive_pid" ]] || wait "$archive_pid" 2>/dev/null || true
+  (
+    flock -x 9
+    if [[ -f "$state_file" ]] && read -r recorded_pid recorded_start < "$state_file" &&
+      [[ "$recorded_pid" == "$$" && "$recorded_start" == "$start_ticks" ]]; then
+      rm -f "$state_file"
+    fi
+  ) 9>"$state_lock"
+  echo 'Application services stopped; PostgreSQL and Garage remain running.'
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+mkdir -p "$repo_root/.tmp"
+start_ticks="$(awk '{print $22}' "/proc/$$/stat")"
+(
+  flock -x 9
+  printf '%s %s\n' "$$" "$start_ticks" > "$state_file"
+) 9>"$state_lock"
+
+# Waiting on a child lets TERM interrupt bootstrap; cleanup then stops that step.
+run_startup_step() {
+  "$@" &
+  startup_pid=$!
+  local status=0
+  wait "$startup_pid" || status=$?
+  startup_pid=''
+  return "$status"
+}
+deploy_migrations() (
+  cd backend
+  exec env -u DATABASE_URL -u DATABASE_URL_FILE DATABASE_RUNTIME_ROLE=bazaar_runtime \
+    node --env-file-if-exists=.tmp/i7-migrate.env scripts/deploy-migrations.mjs
+)
+
+run_startup_step bash infra/scripts/init-secrets.sh
+run_startup_step "${docker_cmd[@]}" compose -f infra/compose.yaml up -d --wait postgres
+run_startup_step npm --prefix backend run build
+run_startup_step node infra/scripts/bootstrap-garage.mjs
+run_startup_step deploy_migrations
+
 media_env=(
   GARAGE_HOT_ENDPOINT=http://127.0.0.1:3900
   GARAGE_HOT_PUBLIC_ENDPOINT=http://localhost:3900
@@ -73,19 +117,6 @@ proxy_env=()
 if [[ -n "${HTTPS_PROXY:-}${https_proxy:-}${HTTP_PROXY:-}${http_proxy:-}" ]]; then
   proxy_env=(NODE_USE_ENV_PROXY=1)
 fi
-cleanup() {
-  trap - EXIT INT TERM
-  [[ -z "$frontend_pid" ]] || kill "$frontend_pid" 2>/dev/null || true
-  [[ -z "$backend_pid" ]] || kill "$backend_pid" 2>/dev/null || true
-  [[ -z "$archive_pid" ]] || kill "$archive_pid" 2>/dev/null || true
-  [[ -z "$frontend_pid" ]] || wait "$frontend_pid" 2>/dev/null || true
-  [[ -z "$backend_pid" ]] || wait "$backend_pid" 2>/dev/null || true
-  [[ -z "$archive_pid" ]] || wait "$archive_pid" 2>/dev/null || true
-  echo 'Application services stopped; PostgreSQL and Garage remain running.'
-}
-trap cleanup EXIT
-trap 'exit 130' INT
-trap 'exit 143' TERM
 
 (
   cd backend
