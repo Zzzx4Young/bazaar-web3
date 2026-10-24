@@ -5,6 +5,13 @@ repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$repo_root"
 state_file="$repo_root/.tmp/bazaar-start.pid"
 state_lock="$state_file.lock"
+ready_file="$repo_root/.tmp/bazaar-start.ready"
+log_file="$repo_root/.tmp/start.log"
+mode="${1:-}"
+if [[ $# -gt 1 || ( -n "$mode" && "$mode" != '--foreground' ) ]]; then
+  echo 'Usage: ./start.sh' >&2
+  exit 2
+fi
 
 probe() {
   curl -s -o /dev/null --connect-timeout 1 --max-time 3 "$1"
@@ -28,7 +35,7 @@ if "$backend_up" || "$frontend_up"; then
   exit 1
 fi
 
-for command in node npm curl docker flock; do
+for command in node npm curl docker flock setsid; do
   command -v "$command" >/dev/null || { echo "Missing command: $command" >&2; exit 1; }
 done
 node -e 'const [major, minor] = process.versions.node.split(".").map(Number); if (major < 22 || (major === 22 && minor < 12)) process.exit(1)' || {
@@ -47,6 +54,41 @@ if ! docker info >/dev/null 2>&1; then
     echo 'Docker is unavailable. Start Docker or configure noninteractive sudo for it.' >&2
     exit 1
   fi
+fi
+
+if [[ "$mode" != '--foreground' ]]; then
+  mkdir -p "$repo_root/.tmp"
+  umask 077
+  exec 9>"$repo_root/.tmp/bazaar-start.launch.lock"
+  flock -n 9 || { echo 'Bazaar startup is already in progress.' >&2; exit 1; }
+  rm -f "$ready_file"
+  : > "$log_file"
+  chmod 600 "$log_file"
+  # The launcher owns the service processes; setsid isolates it from terminal signals.
+  setsid bash "$repo_root/start.sh" --foreground 9>&- </dev/null >"$log_file" 2>&1 &
+  launcher_pid=$!
+  trap 'kill -TERM "$launcher_pid" 2>/dev/null || true; wait "$launcher_pid" 2>/dev/null || true; exit 130' INT
+  trap 'kill -TERM "$launcher_pid" 2>/dev/null || true; wait "$launcher_pid" 2>/dev/null || true; exit 143' TERM
+  echo 'Starting Bazaar services...'
+  # Build, Garage bootstrap, and migrations have no fixed duration.
+  while :; do
+    if [[ -f "$ready_file" ]] && read -r ready_pid ready_start < "$ready_file" &&
+      [[ "$ready_pid" == "$launcher_pid" ]] &&
+      [[ "$(awk '{print $22}' "/proc/$launcher_pid/stat" 2>/dev/null || true)" == "$ready_start" ]]; then
+      trap - INT TERM
+      echo 'Bazaar ready: http://localhost:3000/zh-CN/explore'
+      echo "Logs: $log_file"
+      echo 'Stop applications with ./stop.sh; stop containers with ./down.sh.'
+      exit 0
+    fi
+    if ! kill -0 "$launcher_pid" 2>/dev/null ||
+      [[ "$(awk '{print $3}' "/proc/$launcher_pid/stat" 2>/dev/null || true)" == 'Z' ]]; then
+      wait "$launcher_pid" || true
+      echo "Bazaar startup failed. Inspect $log_file" >&2
+      exit 1
+    fi
+    sleep 1
+  done
 fi
 
 backend_pid=''
@@ -69,6 +111,10 @@ cleanup() {
     if [[ -f "$state_file" ]] && read -r recorded_pid recorded_start < "$state_file" &&
       [[ "$recorded_pid" == "$$" && "$recorded_start" == "$start_ticks" ]]; then
       rm -f "$state_file"
+    fi
+    if [[ -f "$ready_file" ]] && read -r recorded_pid recorded_start < "$ready_file" &&
+      [[ "$recorded_pid" == "$$" && "$recorded_start" == "$start_ticks" ]]; then
+      rm -f "$ready_file"
     fi
   ) 9>"$state_lock"
   echo 'Application services stopped; PostgreSQL and Garage remain running.'
@@ -170,5 +216,8 @@ curl -fsS -o /dev/null --connect-timeout 1 --max-time 10 \
   }
 
 echo 'Bazaar ready: http://localhost:3000/zh-CN/explore'
-echo 'Press Ctrl+C to stop the frontend, backend and archive worker. PostgreSQL and Garage will remain running.'
+(
+  flock -x 9
+  printf '%s %s\n' "$$" "$start_ticks" > "$ready_file"
+) 9>"$state_lock"
 wait -n "$backend_pid" "$frontend_pid" "$archive_pid"

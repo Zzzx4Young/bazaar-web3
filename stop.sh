@@ -36,6 +36,19 @@ process_start() {
   awk '{print $22}' "/proc/$owner_pid/stat" 2>/dev/null || true
 }
 
+process_state() {
+  awk '{print $3}' "/proc/$owner_pid/stat" 2>/dev/null || true
+}
+
+# A zombie can retain its PID and start time after the launcher has cleaned up.
+# Only treat it as stopped once its own record is gone (or belongs to a new run).
+launcher_record_cleared() (
+  flock -x 9
+  [[ ! -f "$state_file" ]] && exit 0
+  read -r recorded_pid recorded_start < "$state_file" || exit 1
+  [[ "$recorded_pid" != "$owner_pid" || "$recorded_start" != "$owner_start" ]]
+) 9>"$state_lock"
+
 if [[ "$(process_start)" != "$owner_start" ]]; then
   rm -f "$state_file"
   echo 'Removed stale Bazaar process record; no application process needed stopping.'
@@ -63,7 +76,8 @@ flock -u 9
 exec 9>&-
 # Wait up to 10 seconds for that exact launcher process to exit.
 for ((attempt = 0; attempt < 50; attempt++)); do
-  if [[ "$(process_start)" != "$owner_start" ]]; then
+  if [[ "$(process_start)" != "$owner_start" ]] ||
+    { [[ "$(process_state)" == 'Z' ]] && launcher_record_cleared; }; then
     echo 'Bazaar application processes stopped; PostgreSQL and Garage remain running.'
     exit 0
   fi

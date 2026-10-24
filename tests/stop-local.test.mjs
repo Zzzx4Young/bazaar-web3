@@ -109,6 +109,31 @@ test('stop signals a live launcher and reports success after it exits', async ()
   }
 })
 
+test('down continues after launcher cleanup even while its exited PID remains a zombie', () => {
+  const { root, state } = fixture()
+  const bin = join(root, 'bin')
+  mkdirSync(bin)
+  const log = join(root, 'docker.log')
+  const docker = join(bin, 'docker')
+  writeFileSync(docker, '#!/bin/sh\ncase "$1" in\ninfo) exit 0;;\ncompose) case " $* " in *" ps "*) exit 0;; esac; printf "%s\\n" "$*" >> "$DOCKER_LOG";;\nesac\n')
+  chmodSync(docker, 0o755)
+  const launcher = join(root, 'start.sh')
+  writeFileSync(launcher, '#!/bin/bash\ntrap \'rm -f .tmp/bazaar-start.pid; exit 0\' TERM\nwhile :; do sleep 0.1; done\n')
+  const child = spawn('bash', [launcher], { cwd: root, stdio: 'ignore' })
+  try {
+    const start = readFileSync(`/proc/${child.pid}/stat`, 'utf8').split(' ')[21]
+    writeFileSync(state, `${child.pid} ${start}\n`)
+    const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, DOCKER_LOG: log }
+    // execFileSync blocks this parent from reaping child; /proc keeps its zombie entry.
+    execFileSync(join(root, 'down.sh'), { env, timeout: 3000 })
+    assert.equal(existsSync(state), false)
+    assert.match(readFileSync(log, 'utf8'), /stop postgres/)
+  } finally {
+    child.kill('SIGKILL')
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test('stop preserves a real signal failure', () => {
   const { root, state } = fixture()
   const launcher = join(root, 'start.sh')
