@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { spawn } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 
 const envFile = new URL('../.tmp/i8-observer.env', import.meta.url)
 const content = await readFile(envFile, 'utf8')
@@ -15,10 +16,9 @@ if (
   throw new Error('Refusing unexpected observer database target')
 
 const child = spawn(
-  'npx',
+  process.execPath,
   [
-    '-y',
-    '@bytebase/dbhub@1.2.0',
+    fileURLToPath(import.meta.resolve('@bytebase/dbhub')),
     '--transport',
     'stdio',
     '--config',

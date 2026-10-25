@@ -53,6 +53,7 @@
     "rxjs": "7.8.2"
   },
   "devDependencies": {
+    "@bytebase/dbhub": "1.2.0",
     "@eslint/js": "10.0.1",
     "@types/node": "22.20.2",
     "ajv": "8.20.0",
