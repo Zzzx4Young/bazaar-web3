@@ -4,10 +4,12 @@ import { DatabaseService } from './database/database.service.js'
 import { startOrderExpiry } from './orders/order-expiry.js'
 import { startAuthRateCleanup } from './auth/auth-rate-cleanup.js'
 import { assertAuthRuntimeGrants } from './auth/auth-runtime-grants.js'
+import { createDevEmailSender } from './auth/dev-email-sender.js'
 
 async function main() {
   const config = readConfig()
-  const app = await createApp(config)
+  const emailSender = createDevEmailSender(process.env, config)
+  const app = await createApp(config, undefined, { emailSender: emailSender ?? undefined })
   try {
     await assertAuthRuntimeGrants(app.get(DatabaseService).client)
     await app.listen(config.port, config.host)

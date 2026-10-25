@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { BackendError, backendErrorMessage } from '@/lib/backend-api'
+import { useLocale } from 'next-intl'
+import { BackendError } from '@/lib/backend-api'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 import { authenticatedPost } from '@/lib/authenticated-api'
 import { useAuthStore } from '@/stores/use-auth-store'
 
@@ -47,6 +49,7 @@ function restoreSaved(accountId: string): PendingCommand | null {
 // Freeze payload and key after an unknown outcome. Every account transition
 // creates a new owner, so even A -> B -> A cannot accept an obsolete completion.
 export function useOrderCommand() {
+  const locale = useLocale()
   const accountId = useAuthStore((state) => state.view?.account.id)
   const ownerRef = useRef<CommandOwner>({ accountId, pending: null, busy: false })
   const [busy, setBusy] = useState(false)
@@ -93,7 +96,7 @@ export function useOrderCommand() {
       (owner.pending.path !== path ||
         JSON.stringify(owner.pending.body) !== JSON.stringify(frozenBody))
     ) {
-      setError('RETRY_PENDING_COMMAND')
+      setError(apiErrorCopy('RETRY_PENDING_COMMAND', locale))
       return
     }
     owner.busy = true
@@ -127,7 +130,7 @@ export function useOrderCommand() {
         setRetryPath(undefined)
       } else setRetryPath(command.path)
       setUncertain(unknown)
-      setError(backendErrorMessage(failure))
+      setError(apiErrorCopy(failure, locale))
     } finally {
       owner.busy = false
       if (isCurrent()) setBusy(false)

@@ -3,6 +3,7 @@ import { type FastifyReply, type FastifyRequest } from 'fastify'
 import { mapApplicationError } from './domain-error.js'
 import { RequestTelemetry } from './request-telemetry.js'
 import { loginWindowSeconds } from '../auth/auth-policy.js'
+import { type PublicErrorCode } from './error-codes.js'
 
 @Catch()
 export class ApiErrorFilter implements ExceptionFilter {
@@ -12,7 +13,7 @@ export class ApiErrorFilter implements ExceptionFilter {
     let result = mapApplicationError(error)
     if (error instanceof HttpException) {
       const status = error.getStatus()
-      const codes: Record<number, string> = {
+      const codes: Record<number, PublicErrorCode> = {
         400: 'INVALID_INPUT',
         401: 'UNAUTHENTICATED',
         403: 'FORBIDDEN',

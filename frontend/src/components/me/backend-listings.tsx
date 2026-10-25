@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { authenticatedPost } from '@/lib/authenticated-api'
-import { backendErrorMessage, uploadListingImage, type BackendListing, type ListingPage } from '@/lib/backend-api'
+import { BackendError, uploadListingImage, type BackendListing, type ListingPage } from '@/lib/backend-api'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 import { useLocale } from 'next-intl'
 import { transactionLabel } from '@/lib/transaction-copy'
 import { useAuthStore } from '@/stores/use-auth-store'
@@ -64,7 +65,8 @@ export function BackendListings() {
       toast.success(publicationStatus === 'withdrawn' ? '商品已下架' : '商品已更新')
       resource.reload()
     } catch (failure) {
-      const message = backendErrorMessage(failure)
+      const message = failure instanceof BackendError ? apiErrorCopy(failure, locale)
+        : failure instanceof Error ? failure.message : apiErrorCopy(failure, locale)
       setError(message)
       toast.error(`更新失败：${message}`)
     } finally {

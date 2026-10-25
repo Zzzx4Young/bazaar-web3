@@ -1,0 +1,45 @@
+// Public API codes. Add new codes here before using them in a response.
+export const domainErrorCodes = [
+  'ACCOUNT_LINK_REQUIRED',
+  'CSRF_REJECTED',
+  'DELIVERY_REQUIRED',
+  'DESCRIPTION_REQUIRED',
+  'EMAIL_UNAVAILABLE',
+  'FORBIDDEN',
+  'FX_SNAPSHOT_EXPIRED',
+  'FX_UNAVAILABLE',
+  'GOOGLE_INVALID',
+  'GOOGLE_UNAVAILABLE',
+  'IDEMPOTENCY_CONFLICT',
+  'INVALID_AMOUNT',
+  'INVALID_CREDENTIALS',
+  'INVALID_INPUT',
+  'INVENTORY_CONFLICT',
+  'JSON_REQUIRED',
+  'LISTING_CONFLICT',
+  'MEDIA_LIMIT_REACHED',
+  'MEDIA_UNAVAILABLE',
+  'NOT_FOUND',
+  'ORIGIN_REJECTED',
+  'RATE_LIMITED',
+  'REFUND_REQUIRED',
+  'RESTORE_CONFLICT',
+  'RETRY_EXHAUSTED',
+  'RETURN_REQUIRED',
+  'SHIPPING_REQUIRED',
+  'STATE_CONFLICT',
+  'UNAUTHENTICATED',
+  'UNAVAILABLE'
+] as const
+
+export const publicErrorCodes = [
+  ...domainErrorCodes,
+  'BODY_TOO_LARGE',
+  'CONFLICT',
+  'DATABASE_UNAVAILABLE',
+  'INTERNAL_ERROR',
+  'OVERLOADED'
+] as const
+
+export type DomainErrorCode = (typeof domainErrorCodes)[number]
+export type PublicErrorCode = (typeof publicErrorCodes)[number]

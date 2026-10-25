@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { useRouter } from '@/i18n/routing'
+import { Link, useRouter } from '@/i18n/routing'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { getDevLoginCredentials } from '@/lib/dev-login'
 import { IdentityOptions } from '@/components/auth/identity-options'
 import { resolveSafeReturnTo } from '@/lib/safe-return-to'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 
 export default function LoginPage() {
   const t = useTranslations('nav')
@@ -20,11 +21,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState(() => getDevLoginCredentials()?.password ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [returnTo, setReturnTo] = useState('/')
+  const [registerHref, setRegisterHref] = useState('/register')
   const [redirectError, setRedirectError] = useState<string | null>(null)
 
   useEffect(() => {
     const value = new URLSearchParams(window.location.search).get('returnTo')
     if (value?.startsWith('/')) setReturnTo(value)
+    if (value !== null)
+      setRegisterHref(`/register?returnTo=${encodeURIComponent(resolveSafeReturnTo(value))}`)
     setRedirectError(new URLSearchParams(window.location.search).get('authError'))
   }, [])
 
@@ -70,7 +74,7 @@ export default function LoginPage() {
         </div>
         {auth.error && (
           <p role="alert" className="text-sm text-destructive">
-            {t('authError')}：{auth.error}
+            {t('authError')}：{apiErrorCopy(auth.error, locale)}
           </p>
         )}
         <Button type="submit" disabled={submitting}>
@@ -81,6 +85,12 @@ export default function LoginPage() {
         {redirectError === 'ACCOUNT_LINK_REQUIRED' ? t('accountLinkRequired') : t('googleSignInFailed')}
       </p>}
       <IdentityOptions returnTo={returnTo === '/' ? `/${locale}/me` : returnTo} />
+      <p className="text-sm text-muted-foreground">
+        {t('newAccount')}{' '}
+        <Link href={registerHref} className="font-medium text-primary hover:underline">
+          {t('register')}
+        </Link>
+      </p>
     </section>
   )
 }

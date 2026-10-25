@@ -5,6 +5,10 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  distDir: process.env.NEXT_DIST_DIR || '.next',
+  typescript: process.env.NEXT_TS_CONFIG
+    ? { tsconfigPath: process.env.NEXT_TS_CONFIG }
+    : undefined,
   async rewrites() {
     const backendOrigin = process.env.BACKEND_ORIGIN ?? 'http://127.0.0.1:3001'
     return [{ source: '/api/:path*', destination: `${backendOrigin}/api/:path*` }]

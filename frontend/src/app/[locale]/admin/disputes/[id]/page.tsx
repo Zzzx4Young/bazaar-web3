@@ -9,6 +9,7 @@ import { useApiResource } from '@/hooks/use-api-resource'
 import { useOrderCommand } from '@/hooks/use-order-command'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { useState } from 'react'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 
 interface DisputeDetail {
   id: string
@@ -31,7 +32,7 @@ export default function AdminDisputeDetailPage() {
   const [returnOutcome, setReturnOutcome] = useState<'not_sent' | 'returned' | 'not_required'>('returned')
   if (role !== 'admin') return <p role="alert">{t('restricted')}</p>
   if (dispute.loading) return <p role="status">{t('loading')}</p>
-  if (dispute.error || !dispute.data) return <p role="alert">{t('loadError', { error: dispute.error ?? 'NOT_FOUND' })}</p>
+  if (dispute.error || !dispute.data) return <p role="alert">{t('loadError', { error: dispute.error ?? apiErrorCopy('NOT_FOUND', locale) })}</p>
   const item = dispute.data
   const resolve = async (outcome: 'refund' | 'release') => {
     const result = await command.run(`/admin/disputes/${item.id}/resolve`, {

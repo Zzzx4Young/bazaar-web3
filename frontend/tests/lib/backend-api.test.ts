@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { BackendError, backendErrorMessage, backendPost, toItem, type BackendListing } from '@/lib/backend-api'
+import { BackendError, backendPost, toItem, type BackendListing } from '@/lib/backend-api'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -53,13 +53,6 @@ describe('backend request correlation', () => {
         retryable: true
       })
     )
-  })
-
-  it('formats the stable code and request ID for tester-visible errors', () => {
-    expect(backendErrorMessage(new BackendError('UNAVAILABLE', 503, 'request-123', true))).toBe(
-      'UNAVAILABLE · Request ID: request-123'
-    )
-    expect(backendErrorMessage(new Error('NETWORK_ERROR'))).toBe('NETWORK_ERROR')
   })
 
   it('keeps the sent request ID when the response is lost', async () => {

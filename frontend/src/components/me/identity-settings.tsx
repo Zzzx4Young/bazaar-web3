@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { backendErrorMessage, backendRequest } from '@/lib/backend-api'
+import { backendRequest } from '@/lib/backend-api'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 import { useAuthStore } from '@/stores/use-auth-store'
 
 interface IdentityStatus { google: boolean; email: boolean; hasPassword: boolean }
@@ -14,6 +15,7 @@ interface Methods { google: boolean; emailCode: boolean }
 
 export function IdentitySettings() {
   const t = useTranslations('identity')
+  const locale = useLocale()
   const account = useAuthStore(state => state.view?.account)
   const csrf = useAuthStore(state => state.view?.csrfToken)
   const [identities, setIdentities] = useState<IdentityStatus | null>(null)
@@ -30,9 +32,9 @@ export function IdentitySettings() {
       backendRequest<Methods>('/auth/methods')
     ]).then(([status, available]) => {
       if (active) { setIdentities(status); setMethods(available) }
-    }).catch(cause => { if (active) setError(backendErrorMessage(cause)) })
+    }).catch(cause => { if (active) setError(apiErrorCopy(cause, locale)) })
     return () => { active = false }
-  }, [account])
+  }, [account, locale])
 
   if (!account || account.role !== 'participant') return null
   return (
@@ -59,13 +61,16 @@ export function IdentitySettings() {
                     })
                   window.location.assign(result.authorizationUrl)
                 } catch (cause) {
-                  setError(backendErrorMessage(cause))
+                  setError(apiErrorCopy(cause, locale))
                   setPending(false)
                 }
               }}>{t('linkGoogle')}</Button>
           </div>
         ) : <p className="text-sm text-muted-foreground">{t('googleUnavailable')}</p>}
-        <p className="text-sm text-muted-foreground">{t('emailUnavailable')}</p>
+        <p className="text-sm text-muted-foreground">
+          {identities?.email ? t('emailLinked') : methods?.emailCode
+            ? t('emailAvailable') : t('emailUnavailable')}
+        </p>
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       </CardContent>
     </Card>

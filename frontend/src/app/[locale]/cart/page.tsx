@@ -1,20 +1,20 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Link, useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { useOrderCommand } from '@/hooks/use-order-command'
 import {
-  backendErrorMessage,
   listingCanBePurchased,
   publishedListingsResolvePath,
   resolvePublishedListings,
   type BackendListing,
   type ListingResolution
 } from '@/lib/backend-api'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 import { cartMinItems, cartMaxItems } from '@/lib/cart-policy'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { useCartStore, type CartLine } from '@/stores/use-cart-store'
@@ -64,6 +64,7 @@ export default function CartPage() {
 }
 
 function CartContents({ items, accountId }: { items: CartLine[]; accountId: string }) {
+  const locale = useLocale()
   const t = useTranslations('cartPage')
   const router = useRouter()
   const cart = useCartStore()
@@ -125,7 +126,7 @@ function CartContents({ items, accountId }: { items: CartLine[]; accountId: stri
         router.push(`/me/checkouts/${result.checkoutId}`)
       }
     } catch (error) {
-      setCheckError(t('refreshError', { error: backendErrorMessage(error) }))
+      setCheckError(t('refreshError', { error: apiErrorCopy(error, locale) }))
     } finally {
       setChecking(false)
     }

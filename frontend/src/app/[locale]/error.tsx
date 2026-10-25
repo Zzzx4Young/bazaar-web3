@@ -10,7 +10,7 @@ export default function Error({
     <div role="alert" className="mx-auto max-w-xl space-y-4 rounded-md border p-6">
       <h1 className="text-lg font-semibold">页面暂时无法加载</h1>
       <p className="text-sm text-muted-foreground">
-        请重试；如果问题持续，请提供页面上的 Request ID。
+        请重试；如果问题持续，请联系支持人员并说明发生时间。
       </p>
       <button
         type="button"

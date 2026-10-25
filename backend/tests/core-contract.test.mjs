@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { DomainError, mapApplicationError } from '../dist/common/domain-error.js'
+import { domainErrorCodes, publicErrorCodes } from '../dist/common/error-codes.js'
 import { parseStoredAmount } from '../dist/common/money.js'
 import { retryable } from '../dist/database/transaction.js'
 
@@ -29,6 +30,9 @@ test('C1 money input rejects rounding, special values and floating-point numbers
 })
 
 test('C1 maps only known errors and does not expose database messages', () => {
+  assert.equal(new Set(publicErrorCodes).size, publicErrorCodes.length)
+  for (const code of domainErrorCodes)
+    assert.equal(mapApplicationError(new DomainError(code)).code, code)
   for (const [code, status] of [
     ['FORBIDDEN', 403],
     ['NOT_FOUND', 404],

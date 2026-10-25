@@ -40,7 +40,11 @@ Google 登录需创建 Web OAuth 客户端，在服务端配置 `GOOGLE_CLIENT_I
 `infra/compose.google-auth.yaml`，用 Docker secret 挂载客户端密钥。
 Google 身份以 `sub` 关联账号，不按邮箱自动合并；已有密码账号须登录并重新输入密码后才能绑定。
 邮箱验证码固定 6 位、5 分钟有效，服务端使用 PostgreSQL 和 HMAC-SHA256 保存校验状态；
-目前没有邮件发送实现，申请和校验接口均返回 `EMAIL_UNAVAILABLE`，不能用于真实注册或登录。
+生产环境目前没有邮件发送实现，申请和校验接口均返回 `EMAIL_UNAVAILABLE`。
+通过根目录 `./start.sh` 启动的本地开发环境会启用仅限随机测试 Gmail 账号的本地收件箱：
+`cat backend/.tmp/dev-email-account` 查看测试邮箱，在登录或注册页申请验证码后运行
+`node backend/scripts/read-dev-email-code.mjs` 读取验证码。验证码不会发送至真实邮箱；
+测试账号、密钥和收件箱均保存在 Git 忽略的 `backend/.tmp/` 中。勿在公开环境启用此模式。
 若网络需要 HTTP(S) 代理访问 Coinbase，使用 Node.js >=22.21 并在启动 Node 进程前设置
 `NODE_USE_ENV_PROXY=1`，同时提供可信的 `HTTPS_PROXY` 和适当的 `NO_PROXY`。
 根目录的 `./start.sh` 会在检测到代理变量时自动为宿主机后端设置此开关。

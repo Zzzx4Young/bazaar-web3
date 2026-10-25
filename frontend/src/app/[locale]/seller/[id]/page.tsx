@@ -9,7 +9,8 @@ import { useBackendListings } from '@/hooks/use-backend-listings'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { useStoredPage } from '@/hooks/use-stored-page'
 import { RecordPagination } from '@/components/ui/record-pagination'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 
 const SELLER_LISTINGS_PAGE_SIZE = 18
 
@@ -21,6 +22,7 @@ interface SellerProfile {
 
 export default function SellerPage({ params }: { params: { id: string } }) {
   const t = useTranslations('sellerProfile')
+  const locale = useLocale()
   const [page, setPage] = useStoredPage(`bazaar:seller:${params.id}`)
   const backend = useBackendListings(new URLSearchParams({
     sort: 'newest',
@@ -38,7 +40,7 @@ export default function SellerPage({ params }: { params: { id: string } }) {
   if (backend.error || profile.error)
     return (
       <p role="alert" className="text-destructive">
-        {t('loadError', { error: backend.error ?? profile.error ?? 'NOT_FOUND' })}
+        {t('loadError', { error: backend.error ?? profile.error ?? apiErrorCopy('NOT_FOUND', locale) })}
       </p>
     )
   const sellerItems = backend.items

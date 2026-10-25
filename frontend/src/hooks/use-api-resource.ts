@@ -1,10 +1,13 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { backendPost, backendErrorMessage } from '@/lib/backend-api'
+import { useLocale } from 'next-intl'
+import { backendPost } from '@/lib/backend-api'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 import { authenticatedPost } from '@/lib/authenticated-api'
 import { useAuthStore } from '@/stores/use-auth-store'
 
 export function useApiResource<T>(path: string, body: unknown = {}, privateRead = false) {
+  const locale = useLocale()
   const token = useAuthStore((s) => s.view?.csrfToken)
   const readToken = privateRead ? token : undefined
   const requestRef = useRef<{
@@ -15,7 +18,7 @@ export function useApiResource<T>(path: string, body: unknown = {}, privateRead 
   } | null>(null)
   const [revision, setRevision] = useState(0)
   const json = JSON.stringify(body)
-  const baseKey = JSON.stringify([path, json, readToken ?? null])
+  const baseKey = JSON.stringify([path, json, readToken ?? null, locale])
   const key = JSON.stringify([baseKey, revision])
   const [result, setResult] = useState<{
     key: string
@@ -37,7 +40,7 @@ export function useApiResource<T>(path: string, body: unknown = {}, privateRead 
           if (owner.active) setResult({ key, baseKey, data })
         },
         (error) => {
-          if (owner.active) setResult({ key, baseKey, error: backendErrorMessage(error) })
+          if (owner.active) setResult({ key, baseKey, error: apiErrorCopy(error, locale) })
         }
       )
       .finally(() => {
@@ -53,7 +56,7 @@ export function useApiResource<T>(path: string, body: unknown = {}, privateRead 
       controller.abort()
       if (requestRef.current === owner) requestRef.current = null
     }
-  }, [path, json, readToken, privateRead, key, baseKey])
+  }, [path, json, readToken, privateRead, key, baseKey, locale])
   const reload = useCallback(() => {
     const owner = requestRef.current
     if (!owner?.active || owner.scheduled) return

@@ -6,9 +6,10 @@ import { useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { backendErrorMessage, backendPost, backendRequest } from '@/lib/backend-api'
+import { BackendError, backendPost, backendRequest } from '@/lib/backend-api'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { resolveSafeReturnTo } from '@/lib/safe-return-to'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 import type { AuthView } from '@/lib/backend-api'
 
 interface Methods { password: boolean; google: boolean; emailCode: boolean }
@@ -28,6 +29,7 @@ export function IdentityOptions({ returnTo, googleReturnTo, onSuccess }: {
   const [methods, setMethods] = useState<Methods | null>(null)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [requestError, setRequestError] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [requestedEmail, setRequestedEmail] = useState<string | null>(null)
   const [code, setCode] = useState('')
@@ -54,7 +56,7 @@ export function IdentityOptions({ returnTo, googleReturnTo, onSuccess }: {
                 { returnTo: googleReturnTo ?? returnTo ?? `/${locale}/me` })
               window.location.assign(result.authorizationUrl)
             } catch (cause) {
-              setError(backendErrorMessage(cause))
+              setError(apiErrorCopy(cause, locale))
               setPending(false)
             }
           }}>
@@ -68,21 +70,23 @@ export function IdentityOptions({ returnTo, googleReturnTo, onSuccess }: {
         <p className="text-sm font-medium">{t('emailCodeTitle')}</p>
         <form className="space-y-2" onSubmit={async event => {
           event.preventDefault()
+          setError(null)
           const normalized = email.trim().toLowerCase()
           if (normalized.length > 100 ||
             !/^[a-z0-9][a-z0-9._+-]{0,63}@gmail\.com$/.test(normalized) ||
             normalized.includes('..')) {
-            setError(t('invalidGmail'))
+            setRequestError(t('invalidGmail'))
             return
           }
           setPending(true)
-          setError(null)
+          setRequestError(null)
           try {
             await backendPost('/auth/email/request', { email: normalized, locale })
             setRequestedEmail(normalized)
             setCode('')
           } catch (cause) {
-            setError(backendErrorMessage(cause))
+            setRequestError(cause instanceof BackendError && cause.status === 429
+              ? t('emailCodeRateLimited') : apiErrorCopy(cause, locale))
           } finally { setPending(false) }
         }}>
           <Label htmlFor={emailId}>{t('emailAddress')}</Label>
@@ -92,8 +96,10 @@ export function IdentityOptions({ returnTo, googleReturnTo, onSuccess }: {
               setRequestedEmail(null)
               setCode('')
               setError(null)
+              setRequestError(null)
             }} required disabled={pending} />
           <Button type="submit" variant="outline" disabled={pending}>{t('requestEmailCode')}</Button>
+          {requestError && <p role="alert" className="text-sm text-destructive">{requestError}</p>}
         </form>
         {requestedEmail && <form className="space-y-2" onSubmit={async event => {
           event.preventDefault()
@@ -107,10 +113,13 @@ export function IdentityOptions({ returnTo, googleReturnTo, onSuccess }: {
             onSuccess?.()
             router.replace(destination)
           } catch (cause) {
-            setError(backendErrorMessage(cause))
+            setError(apiErrorCopy(cause, locale))
           } finally { setPending(false) }
         }}>
-          <p role="status" className="text-sm text-muted-foreground">{t('emailCodeSent')}</p>
+          <p role="status" className="text-sm text-muted-foreground">
+            {process.env.NEXT_PUBLIC_EMAIL_CODE_DEV_INBOX === '1'
+              ? t('emailCodeDevInbox') : t('emailCodeSent')}
+          </p>
           <Label htmlFor={codeId}>{t('verificationCode')}</Label>
           <Input id={codeId} value={code} onChange={event => setCode(event.target.value)}
             inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}"

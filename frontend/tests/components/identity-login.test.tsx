@@ -104,6 +104,27 @@ it('clears a requested code when the Gmail address changes', async () => {
   expect(screen.queryByLabelText('verificationCode')).not.toBeInTheDocument()
 })
 
+it('shows a localized rate-limit message beside the code request form', async () => {
+  const fetchMock = vi.fn().mockImplementation(async (url: string) => ({
+    ok: !url.endsWith('/auth/email/request'),
+    status: url.endsWith('/auth/email/request') ? 429 : 200,
+    headers: new Headers(),
+    json: async () => url.endsWith('/auth/methods')
+      ? { password: true, google: false, emailCode: true }
+      : { code: 'RATE_LIMITED', retryable: true, requestId: 'rate-request' }
+  }))
+  vi.stubGlobal('fetch', fetchMock)
+  render(<LoginPage />)
+  fireEvent.change(await screen.findByLabelText('emailAddress'),
+    { target: { value: 'user@gmail.com' } })
+  const send = screen.getByRole('button', { name: 'requestEmailCode' })
+  fireEvent.click(send)
+  expect(await within(send.closest('form')!).findByRole('alert'))
+    .toHaveTextContent('emailCodeRateLimited')
+  expect(screen.queryByLabelText('verificationCode')).not.toBeInTheDocument()
+  expect(fetchMock).toHaveBeenCalledWith('/api/auth/email/request', expect.anything())
+})
+
 it('closes the TopNav dialog after email verification succeeds', async () => {
   emailFetch()
   const { container } = render(<><TopNav /><LoginPage /></>)
@@ -130,7 +151,7 @@ it('keeps the TopNav dialog open and shows an error when the code is rejected', 
   fireEvent.change(await within(dialog).findByLabelText('verificationCode'),
     { target: { value: '123456' } })
   fireEvent.click(within(dialog).getByRole('button', { name: 'verifyEmailCode' }))
-  expect(await within(dialog).findByRole('alert')).toHaveTextContent('INVALID_CODE')
+  expect(await within(dialog).findByRole('alert')).toHaveTextContent('验证码不正确')
   expect(screen.getByRole('dialog')).toBeInTheDocument()
   expect(useAuthStore.getState().status).toBe('anonymous')
 })

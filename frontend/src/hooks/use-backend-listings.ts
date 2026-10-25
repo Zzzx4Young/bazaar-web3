@@ -1,8 +1,11 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { useLocale } from 'next-intl'
 import type { Item } from '@/types'
 import { fetchListings, toItem } from '@/lib/backend-api'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 export function useBackendListings(params: URLSearchParams) {
+  const locale = useLocale()
   const quote = useRef<{ key: string; id: string } | null>(null)
   const [items, setItems] = useState<Item[]>([]),
     [loading, setLoading] = useState(true),
@@ -34,7 +37,7 @@ export function useBackendListings(params: URLSearchParams) {
         }
       })
       .catch((error) => {
-        if (!cancelled) setError(error instanceof Error ? error.message : 'NETWORK_ERROR')
+        if (!cancelled) setError(apiErrorCopy(error, locale))
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -42,6 +45,6 @@ export function useBackendListings(params: URLSearchParams) {
     return () => {
       cancelled = true
     }
-  }, [query])
+  }, [query, locale])
   return { items, loading, error, hasMore, total, page }
 }

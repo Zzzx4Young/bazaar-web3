@@ -145,6 +145,7 @@ deploy_migrations() (
 )
 
 run_startup_step bash infra/scripts/init-secrets.sh
+run_startup_step node backend/scripts/init-dev-email.mjs
 run_startup_step "${docker_cmd[@]}" compose -f infra/compose.yaml up -d --wait postgres
 run_startup_step npm --prefix backend run build
 run_startup_step node infra/scripts/bootstrap-garage.mjs
@@ -159,6 +160,12 @@ media_env=(
   GARAGE_COLD_ACCESS_KEY_ID_FILE="$repo_root/infra/.secrets/garage-app/cold_access_key_id"
   GARAGE_COLD_SECRET_KEY_FILE="$repo_root/infra/.secrets/garage-app/cold_secret_key"
 )
+dev_email_env=(
+  NODE_ENV=development
+  EMAIL_CODE_HMAC_KEY_FILE="$repo_root/backend/.tmp/dev-email-key"
+  EMAIL_CODE_DEV_ACCOUNT_FILE="$repo_root/backend/.tmp/dev-email-account"
+  EMAIL_CODE_DEV_INBOX_FILE="$repo_root/backend/.tmp/dev-email-inbox"
+)
 proxy_env=()
 if [[ -n "${HTTPS_PROXY:-}${https_proxy:-}${HTTP_PROXY:-}${http_proxy:-}" ]]; then
   proxy_env=(NODE_USE_ENV_PROXY=1)
@@ -166,7 +173,7 @@ fi
 
 (
   cd backend
-  exec env -u DATABASE_URL -u DATABASE_URL_FILE "${proxy_env[@]}" "${media_env[@]}" \
+  exec env -u DATABASE_URL -u DATABASE_URL_FILE "${proxy_env[@]}" "${media_env[@]}" "${dev_email_env[@]}" \
     node --env-file-if-exists=.env dist/main.js
 ) &
 backend_pid=$!
@@ -193,7 +200,10 @@ ready || { echo 'Backend did not become ready within 60 seconds.' >&2; exit 1; }
 
 (
   cd frontend
-  exec env BACKEND_ORIGIN=http://127.0.0.1:3001 ./node_modules/.bin/next dev
+  # Keep the dev compiler separate from npm run build, which writes .next.
+  exec env BACKEND_ORIGIN=http://127.0.0.1:3001 NEXT_PUBLIC_EMAIL_CODE_DEV_INBOX=1 \
+    NEXT_DIST_DIR=.next-dev \
+    ./node_modules/.bin/next dev
 ) &
 frontend_pid=$!
 

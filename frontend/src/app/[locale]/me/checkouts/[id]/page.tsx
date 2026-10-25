@@ -6,6 +6,7 @@ import { transactionLabel } from '@/lib/transaction-copy'
 import { Link } from '@/i18n/routing'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { useAuthStore } from '@/stores/use-auth-store'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 
 interface CheckoutDetail {
   id: string
@@ -29,7 +30,7 @@ export default function CheckoutDetailPage() {
   if (!account) return <p role="alert">{t('signIn')}</p>
   if (resource.loading) return <p role="status">{t('loading')}</p>
   if (resource.error || !resource.data)
-    return <p role="alert">{t('error', { error: resource.error ?? 'NOT_FOUND' })}</p>
+    return <p role="alert">{t('error', { error: resource.error ?? apiErrorCopy('NOT_FOUND', locale) })}</p>
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <h1 className="text-2xl font-bold">{t('title')}</h1>

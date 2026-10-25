@@ -91,7 +91,7 @@ it('keeps the dialog open after a rejected email code', async () => {
   fireEvent.change(await within(dialog).findByLabelText('verificationCode'),
     { target: { value: '123456' } })
   fireEvent.click(within(dialog).getByRole('button', { name: 'verifyEmailCode' }))
-  expect(await within(dialog).findByRole('alert')).toHaveTextContent('INVALID_CODE')
+  expect(await within(dialog).findByRole('alert')).toHaveTextContent('验证码不正确')
   expect(screen.getByRole('dialog')).toBeInTheDocument()
   expect(replace).not.toHaveBeenCalled()
 })

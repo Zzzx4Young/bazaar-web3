@@ -4,7 +4,11 @@ import LoginPage from '@/app/[locale]/login/page'
 import { useAuthStore } from '@/stores/use-auth-store'
 
 const replace = vi.hoisted(() => vi.fn())
-vi.mock('@/i18n/routing', () => ({ useRouter: () => ({ replace }) }))
+vi.mock('@/i18n/routing', () => ({
+  Link: ({ href, children }: { href: string; children: React.ReactNode }) =>
+    <a href={href}>{children}</a>,
+  useRouter: () => ({ replace })
+}))
 
 beforeEach(() => {
   useAuthStore.setState({ status: 'anonymous', view: null, error: null })
@@ -66,6 +70,6 @@ it('does not redirect when password authentication fails', async () => {
   fireEvent.change(screen.getByLabelText('loginName'), { target: { value: 'buyer' } })
   fireEvent.change(screen.getByLabelText('password'), { target: { value: 'wrong' } })
   fireEvent.click(screen.getByRole('button', { name: 'login' }))
-  expect(await screen.findByRole('alert')).toHaveTextContent('INVALID_CREDENTIALS')
+  expect(await screen.findByRole('alert')).toHaveTextContent('账号或验证码不正确')
   expect(replace).not.toHaveBeenCalled()
 })

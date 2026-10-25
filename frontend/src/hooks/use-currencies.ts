@@ -1,7 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useLocale } from 'next-intl'
 import { backendPost } from '@/lib/backend-api'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 import type { Currency } from '@/types'
 
 export interface CurrencyOption {
@@ -10,6 +12,7 @@ export interface CurrencyOption {
 }
 
 export function useCurrencies() {
+  const locale = useLocale()
   const [currencies, setCurrencies] = useState<CurrencyOption[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -40,7 +43,7 @@ export function useCurrencies() {
       .catch((cause) => {
         if (!cancelled) {
           setCurrencies([])
-          setError(cause instanceof Error ? cause.message : 'NETWORK_ERROR')
+          setError(apiErrorCopy(cause, locale))
         }
       })
       .finally(() => {
@@ -49,7 +52,7 @@ export function useCurrencies() {
     return () => {
       cancelled = true
     }
-  }, [revision])
+  }, [revision, locale])
 
   return { currencies, loading, error, retry }
 }

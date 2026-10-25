@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Link, usePathname } from '@/i18n/routing'
+import { useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/layout/mode-toggle'
@@ -21,6 +22,7 @@ import { getDevLoginCredentials } from '@/lib/dev-login'
 import { IdentityOptions } from '@/components/auth/identity-options'
 import { locales } from '@/i18n/locales'
 import { resolveSafeReturnTo } from '@/lib/safe-return-to'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 
 const loginPaths = new Set(['/login', ...locales.map(locale => `/${locale}/login`)])
 
@@ -34,6 +36,31 @@ function emailReturnTo(locale: string) {
   const safe = resolveSafeReturnTo(target ?? undefined)
   const destinationPath = safe.split(/[?#]/, 1)[0] ?? ''
   return loginPaths.has(destinationPath.replace(/\/$/, '')) ? '/me' : safe
+}
+
+function registrationHref(locale: string, fromDialog = true) {
+  if (typeof window === 'undefined') return '/register'
+  const { pathname, search } = window.location
+  const onLoginPage = loginPaths.has(pathname.replace(/\/$/, ''))
+  if (!fromDialog && !onLoginPage) return '/register'
+  if (onLoginPage &&
+    !new URLSearchParams(search).has('returnTo')) return '/register'
+  return `/register?returnTo=${encodeURIComponent(resolveSafeReturnTo(emailReturnTo(locale)))}`
+}
+
+function HeaderRegistrationLink({ locale, pathname, label }: {
+  locale: string
+  pathname: string
+  label: string
+}) {
+  const search = useSearchParams().toString()
+  const [href, setHref] = useState('/register')
+
+  useEffect(() => {
+    setHref(registrationHref(locale, false))
+  }, [locale, pathname, search])
+
+  return <Button variant="ghost" size="sm" asChild><Link href={href}>{label}</Link></Button>
 }
 
 export function TopNav() {
@@ -100,26 +127,33 @@ export function TopNav() {
               {auth.view?.account.displayName} · {t('logout')}
             </Button>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const credentials = getDevLoginCredentials()
-                if (credentials) {
-                  setLoginName(credentials.loginName)
-                  setPassword(credentials.password)
-                }
-                setOpen(true)
-              }}
-            >
-              {t('login')}
-            </Button>
+            <>
+              <Suspense fallback={<Button variant="ghost" size="sm" asChild>
+                <Link href="/register">{t('register')}</Link>
+              </Button>}>
+                <HeaderRegistrationLink locale={locale} pathname={pathname} label={t('register')} />
+              </Suspense>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const credentials = getDevLoginCredentials()
+                  if (credentials) {
+                    setLoginName(credentials.loginName)
+                    setPassword(credentials.password)
+                  }
+                  setOpen(true)
+                }}
+              >
+                {t('login')}
+              </Button>
+            </>
           )}
         </div>
       </div>
       {auth.error && !open && (
         <p role="alert" className="container text-sm text-destructive">
-          {t('authError')}：{auth.error}
+          {t('authError')}：{apiErrorCopy(auth.error, locale)}
         </p>
       )}
       <Dialog open={open} onOpenChange={setOpen}>
@@ -164,7 +198,7 @@ export function TopNav() {
             </div>
             {auth.error && (
               <p role="alert" className="text-sm text-destructive">
-                {t('authError')}：{auth.error}
+                {t('authError')}：{apiErrorCopy(auth.error, locale)}
               </p>
             )}
             <Button type="submit" disabled={submitting}>
@@ -174,6 +208,11 @@ export function TopNav() {
           <IdentityOptions returnTo={emailReturnTo(locale)}
             googleReturnTo={typeof window === 'undefined' ? `/${locale}/me` : window.location.pathname}
             onSuccess={() => setOpen(false)} />
+          <p className="text-sm text-muted-foreground">
+            {t('newAccount')}{' '}
+            <Link href={registrationHref(locale)} className="font-medium text-primary hover:underline"
+              onClick={() => setOpen(false)}>{t('register')}</Link>
+          </p>
         </DialogContent>
       </Dialog>
     </header>

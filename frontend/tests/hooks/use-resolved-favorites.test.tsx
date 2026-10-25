@@ -57,7 +57,7 @@ it('returns no unconfirmed count when the API fails', async () => {
     })
   )
   const { result } = renderHook(() => useResolvedFavorites())
-  await waitFor(() => expect(result.current.error).toBe('NETWORK_ERROR'))
+  await waitFor(() => expect(result.current.error).toBe('网络连接失败，请检查网络后重试。'))
   expect(result.current.items).toEqual([])
 })
 

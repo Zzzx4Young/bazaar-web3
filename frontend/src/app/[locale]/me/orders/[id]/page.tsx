@@ -19,6 +19,7 @@ import { useApiResource } from '@/hooks/use-api-resource'
 import { useOrderCommand } from '@/hooks/use-order-command'
 import { useVisiblePolling } from '@/hooks/use-visible-polling'
 import { orderRefreshIntervalMs } from '@/lib/refresh-policy'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 import { hasIllustrativeImages } from '@/lib/listing-illustration'
 import { orderActions, type OrderDetail, type SimulatedBalance } from '@/lib/order-api'
 import {
@@ -64,7 +65,7 @@ export default function OrderDetailPage() {
   if (resource.error || !resource.data)
     return (
       <p role="alert" className="text-destructive">
-        订单加载失败：{resource.error ?? 'NOT_FOUND'}
+        订单加载失败：{resource.error ?? apiErrorCopy('NOT_FOUND', locale)}
       </p>
     )
   const order = resource.data

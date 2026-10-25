@@ -1,14 +1,15 @@
 import { isDatabaseUnavailable } from '../database/database-errors.js'
+import { type DomainErrorCode, type PublicErrorCode } from './error-codes.js'
 
 export class DomainError extends Error {
-  constructor(readonly code: string) {
+  constructor(readonly code: DomainErrorCode) {
     super(code)
   }
 }
 
 export interface ErrorResult {
   status: number
-  code: string
+  code: PublicErrorCode
   retryable: boolean
 }
 

@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process'
 import { once } from 'node:events'
 import { createServer } from 'node:net'
 import { resolve } from 'node:path'
+import { readFile, rm, writeFile } from 'node:fs/promises'
 import { chromium } from '@playwright/test'
 import { createApp } from '../../backend/dist/app.js'
 import { readConfig } from '../../backend/dist/config.js'
@@ -15,6 +16,8 @@ const backendDirectory = resolve(frontendDirectory, '../backend')
 process.chdir(backendDirectory)
 const testEmail = `browser-${randomUUID().slice(0, 12)}@gmail.com`
 const sent = []
+const distName = `.next-email-e2e-${randomUUID().slice(0, 8)}`
+const tsconfigName = `tsconfig.email-e2e-${randomUUID().slice(0, 8)}.json`
 
 async function freePort() {
   const server = createServer()
@@ -27,7 +30,7 @@ async function freePort() {
   return port
 }
 
-let db, app, frontend, browser
+let db, app, frontend, browser, tsconfigWritten = false
 try {
   db = await sandbox()
   const frontendPort = await freePort()
@@ -39,9 +42,15 @@ try {
   })
   await app.listen(0, '127.0.0.1')
   const backendOrigin = `http://127.0.0.1:${app.getHttpServer().address().port}`
+  const tsconfig = JSON.parse(await readFile(resolve(frontendDirectory, 'tsconfig.json'), 'utf8'))
+  tsconfig.include = [...tsconfig.include, `${distName}/types/**/*.ts`]
+  await writeFile(resolve(frontendDirectory, tsconfigName),
+    `${JSON.stringify(tsconfig, null, 2)}\n`, { flag: 'wx' })
+  tsconfigWritten = true
   frontend = spawn(process.execPath,
     ['node_modules/next/dist/bin/next', 'dev', '-p', String(frontendPort), '-H', '127.0.0.1'],
     { cwd: frontendDirectory, env: { ...process.env, BACKEND_ORIGIN: backendOrigin,
+      NEXT_DIST_DIR: distName, NEXT_TS_CONFIG: tsconfigName,
       NEXT_TELEMETRY_DISABLED: '1' }, stdio: ['ignore', 'pipe', 'pipe'] })
   let startupOutput = ''
   for (const stream of [frontend.stdout, frontend.stderr])
@@ -50,7 +59,7 @@ try {
   let ready = false
   while (Date.now() < deadline && frontend.exitCode === null) {
     try {
-      const response = await fetch(`${origin}/zh-CN/login`, { signal: AbortSignal.timeout(2000) })
+      const response = await fetch(`${origin}/zh-CN/register`, { signal: AbortSignal.timeout(2000) })
       if (response.ok) { ready = true; break }
     } catch { /* Next.js is still compiling. */ }
     await new Promise(done => setTimeout(done, 300))
@@ -59,7 +68,7 @@ try {
 
   browser = await chromium.launch({ headless: true })
   const page = await browser.newPage()
-  await page.goto(`${origin}/zh-CN/login`)
+  await page.goto(`${origin}/zh-CN/register`)
   await page.getByLabel('Gmail 邮箱').fill(testEmail)
   await page.getByRole('button', { name: '获取验证码' }).click()
   await page.getByRole('status').filter({ hasText: '验证码已发送' }).waitFor()
@@ -87,9 +96,48 @@ try {
   assert.ok((await db.client.emailCodeChallenge.findUniqueOrThrow({
     where: { key: challenge.key }
   })).consumedAt)
+  const firstSession = (await page.context().cookies(origin))
+    .find(cookie => cookie.name === 'bazaar_session')?.value
+  assert.ok(firstSession)
   await page.reload()
   await page.getByText(`登录名：${testEmail}`).waitFor()
-  console.log(JSON.stringify({ email: testEmail, registered: true,
+
+  await page.getByRole('button', { name: /退出登录/ }).click()
+  await page.getByRole('button', { name: '登录', exact: true }).waitFor()
+  await page.goto(`${origin}/zh-CN/login`)
+  console.log('Registration complete; waiting for the 60-second email resend window')
+  await new Promise(done => setTimeout(done, 61_000))
+  await page.getByLabel('Gmail 邮箱').fill(testEmail)
+  await page.getByRole('button', { name: '获取验证码' }).click()
+  await page.getByRole('status').filter({ hasText: '验证码已发送' }).waitFor()
+  assert.equal(sent.length, 2)
+  assert.equal(sent[1].to, testEmail)
+  const secondChallenge = await db.client.emailCodeChallenge.findUniqueOrThrow({
+    where: { key: challenge.key }
+  })
+  assert.notEqual(secondChallenge.id, challenge.id)
+  assert.equal(secondChallenge.codeHash,
+    codeDigest(config.emailCodeKey, secondChallenge.id, testEmail, 'login', sent[1].code))
+
+  await page.getByLabel('6 位验证码').fill(sent[1].code)
+  await page.getByRole('button', { name: '验证并继续' }).click()
+  await page.waitForURL('**/zh-CN/me', { timeout: 15_000 })
+  await page.getByText(`登录名：${testEmail}`).waitFor()
+  const secondSession = (await page.context().cookies(origin))
+    .find(cookie => cookie.name === 'bazaar_session')?.value
+  assert.ok(secondSession)
+  assert.notEqual(secondSession, firstSession)
+  assert.equal(await db.client.account.count({ where: { loginName: testEmail } }), 1)
+  assert.equal((await db.client.accountIdentity.findUniqueOrThrow({
+    where: { provider_subject: { provider: 'email', subject: testEmail } }
+  })).accountId, account.id)
+  assert.ok((await db.client.emailCodeChallenge.findUniqueOrThrow({
+    where: { key: challenge.key }
+  })).consumedAt)
+  await page.reload()
+  await page.getByText(`登录名：${testEmail}`).waitFor()
+  console.log(JSON.stringify({ email: testEmail, registered: true, signedOut: true,
+    loggedInAgain: true, accountCount: 1, sessionRotated: true,
     challengeStoredAsHmac: true, challengeConsumed: true, sessionRestored: true }))
 } finally {
   await browser?.close()
@@ -100,4 +148,6 @@ try {
   }
   await app?.close()
   await db?.close()
+  await rm(resolve(frontendDirectory, distName), { recursive: true, force: true })
+  if (tsconfigWritten) await rm(resolve(frontendDirectory, tsconfigName))
 }

@@ -2,6 +2,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useLocale } from 'next-intl'
 import { toast } from 'sonner'
 import { useRouter } from '@/i18n/routing'
 import { useForm } from 'react-hook-form'
@@ -23,13 +24,15 @@ import {
 import { marketplaceCategories } from '@/lib/categories'
 import { publishSchema } from '@/lib/publish-schema'
 import { useAuthStore } from '@/stores/use-auth-store'
-import { createListing, uploadListingImage } from '@/lib/backend-api'
+import { BackendError, createListing, uploadListingImage } from '@/lib/backend-api'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 import { useCurrencies } from '@/hooks/use-currencies'
 import type { ItemCategory, Currency } from '@/types'
 
 type FormValues = z.infer<typeof publishSchema>
 
 export function PublishForm() {
+  const locale = useLocale()
   const router = useRouter()
   const auth = useAuthStore()
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -113,8 +116,9 @@ export function PublishForm() {
       toast.success('商品发布成功')
       router.push(`/listing/${listing.id}`)
     } catch (error) {
-      const message =
-        error instanceof Error ? `发布失败：${error.message}` : '发布失败，请稍后重试。'
+      const message = error instanceof BackendError
+        ? `发布失败：${apiErrorCopy(error, locale)}`
+        : error instanceof Error ? `发布失败：${error.message}` : '发布失败，请稍后重试。'
       setSaveError(message)
       toast.error(message)
     } finally {

@@ -183,7 +183,8 @@ test('Google callback Location stays on the configured origin for accepted retur
     GOOGLE_CLIENT_ID: 'test-client', GOOGLE_CLIENT_SECRET: 'test-secret' })
   const app = await createApp(config, false, { googleClient })
   try {
-    for (const returnTo of ['/en/me?tab=profile', '/en//example.com',
+    for (const returnTo of ['/en/me?tab=profile', '/en/explore?q=foo+bar',
+      '/en/products?sort=price#results', '/en//example.com',
       '/en/%2F%2Fexample.com', '/en/../me']) {
       const start = await post(app, 'google/start', { returnTo })
       assert.equal(start.statusCode, 200, start.body)

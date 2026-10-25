@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -17,11 +17,11 @@ import { useRouter } from '@/i18n/routing'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { useOrderCommand } from '@/hooks/use-order-command'
 import {
-  backendErrorMessage,
   fetchListingDetail,
   listingCanBePurchased,
   type BackendListing
 } from '@/lib/backend-api'
+import { apiErrorCopy } from '@/lib/api-error-copy'
 import type { Item } from '@/types'
 
 type CurrentListing = {
@@ -51,6 +51,7 @@ export function BuyModal({
   onOpenChange: (open: boolean) => void
 }) {
   const t = useTranslations('buyModal')
+  const locale = useLocale()
   const router = useRouter()
   const auth = useAuthStore()
   const command = useOrderCommand()
@@ -86,13 +87,13 @@ export function BuyModal({
       })
       .catch((error) => {
         if (active)
-          setCurrent({ key, generation, listing: null, error: backendErrorMessage(error) })
+          setCurrent({ key, generation, listing: null, error: apiErrorCopy(error, locale) })
       })
     return () => {
       active = false
       controller.abort()
     }
-  }, [key, listingId, revision, generation])
+  }, [key, listingId, revision, generation, locale])
 
   if (!item) return null
   const read = current?.key === key && current.generation === generation ? current : null
@@ -132,7 +133,7 @@ export function BuyModal({
       }
     } catch (error) {
       if (sessionRef.current.generation === generation)
-        setCurrent({ key, generation, listing: null, error: backendErrorMessage(error) })
+        setCurrent({ key, generation, listing: null, error: apiErrorCopy(error, locale) })
     } finally {
       setCheckingGeneration((value) => (value === generation ? null : value))
     }

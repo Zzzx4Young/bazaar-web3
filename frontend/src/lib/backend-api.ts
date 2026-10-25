@@ -105,12 +105,6 @@ export async function backendRequest<T>(path: string, init?: RequestInit): Promi
 export function backendErrorCode(error: unknown) {
   return error instanceof Error ? error.message : 'NETWORK_ERROR'
 }
-export function backendErrorMessage(error: unknown) {
-  const code = backendErrorCode(error)
-  return error instanceof BackendError && error.requestId
-    ? `${code} · Request ID: ${error.requestId}`
-    : code
-}
 export function login(loginName: string, password: string) {
   return backendPost<AuthView>('/auth/login', { loginName, password })
 }

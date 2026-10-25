@@ -44,7 +44,7 @@ export class GoogleAuthService {
 
   private returnPath(value?: string) {
     if (!value) return '/zh-CN/me'
-    if (value.length > 255 || !/^\/(?!\/)[\w\-/?.=&%]*$/.test(value) || value.includes('\\'))
+    if (value.length > 255 || !/^\/(?!\/)[\w\-/?.=&%#+]*$/.test(value) || value.includes('\\'))
       throw new DomainError('INVALID_INPUT')
     return value
   }
