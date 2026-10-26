@@ -14,10 +14,13 @@ import type { AuthView } from '@/lib/backend-api'
 
 interface Methods { password: boolean; google: boolean; emailCode: boolean }
 
-export function IdentityOptions({ returnTo, googleReturnTo, onSuccess }: {
+export function IdentityOptions({ returnTo, googleReturnTo, onSuccess,
+  showEmail = true, emailFirst = false }: {
   returnTo?: string
   googleReturnTo?: string
   onSuccess?: () => void
+  showEmail?: boolean
+  emailFirst?: boolean
 }) {
   const t = useTranslations('nav')
   const locale = useLocale()
@@ -44,29 +47,29 @@ export function IdentityOptions({ returnTo, googleReturnTo, onSuccess }: {
     return () => { active = false }
   }, [])
 
+  const googleOption = methods?.google ? (
+    <Button type="button" variant="outline" className="w-full" disabled={pending}
+      onClick={async () => {
+        setPending(true)
+        setError(null)
+        try {
+          const result = await backendPost<{ authorizationUrl: string }>('/auth/google/start',
+            { returnTo: googleReturnTo ?? returnTo ?? `/${locale}/me` })
+          window.location.assign(result.authorizationUrl)
+        } catch (cause) {
+          setError(apiErrorCopy(cause, locale))
+          setPending(false)
+        }
+      }}>
+      {t('googleSignIn')}
+    </Button>
+  ) : methods ? <p className="text-sm text-muted-foreground">{t('googleUnavailable')}</p> : null
+
   return (
     <div className="space-y-3 border-t pt-4">
-      {methods?.google && (
-        <Button type="button" variant="outline" className="w-full" disabled={pending}
-          onClick={async () => {
-            setPending(true)
-            setError(null)
-            try {
-              const result = await backendPost<{ authorizationUrl: string }>('/auth/google/start',
-                { returnTo: googleReturnTo ?? returnTo ?? `/${locale}/me` })
-              window.location.assign(result.authorizationUrl)
-            } catch (cause) {
-              setError(apiErrorCopy(cause, locale))
-              setPending(false)
-            }
-          }}>
-          {t('googleSignIn')}
-        </Button>
-      )}
-      {methods && !methods.google && (
-        <p className="text-sm text-muted-foreground">{t('googleUnavailable')}</p>
-      )}
-      {methods?.emailCode ? <div className="space-y-3 border-t pt-4">
+      {!emailFirst && googleOption}
+      {showEmail && methods?.emailCode ? <div
+        className={emailFirst ? 'space-y-3' : 'space-y-3 border-t pt-4'}>
         <p className="text-sm font-medium">{t('emailCodeTitle')}</p>
         <form className="space-y-2" onSubmit={async event => {
           event.preventDefault()
@@ -126,9 +129,10 @@ export function IdentityOptions({ returnTo, googleReturnTo, onSuccess }: {
             minLength={6} maxLength={6} required disabled={pending} />
           <Button type="submit" disabled={pending}>{t('verifyEmailCode')}</Button>
         </form>}
-      </div> : methods && <p className="text-sm text-muted-foreground">
+      </div> : showEmail && methods && <p className="text-sm text-muted-foreground">
         {t('emailCodeUnavailable')}
       </p>}
+      {emailFirst && googleOption}
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     </div>
   )

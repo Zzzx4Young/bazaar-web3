@@ -44,6 +44,7 @@ afterEach(() => {
 it('shows available Google sign-in and explains that email codes are not open', async () => {
   render(<LoginPage />)
   expect(await screen.findByRole('button', { name: 'googleSignIn' })).toBeEnabled()
+  fireEvent.click(screen.getByRole('button', { name: 'emailCodeLogin' }))
   expect(screen.getByText('emailCodeUnavailable')).toBeInTheDocument()
 })
 
@@ -76,6 +77,7 @@ it('registers a Gmail account through the enabled email-code form', async () => 
   vi.stubGlobal('fetch', fetchMock)
   useAuthStore.setState({ status: 'anonymous', view: null, error: null })
   render(<LoginPage />)
+  fireEvent.click(screen.getByRole('button', { name: 'emailCodeLogin' }))
   fireEvent.change(await screen.findByLabelText('emailAddress'),
     { target: { value: 'browser-check@gmail.com' } })
   fireEvent.click(screen.getByRole('button', { name: 'requestEmailCode' }))
@@ -96,6 +98,7 @@ it('clears a requested code when the Gmail address changes', async () => {
       ? { password: true, google: false, emailCode: true } : { accepted: true }
   })))
   render(<LoginPage />)
+  fireEvent.click(screen.getByRole('button', { name: 'emailCodeLogin' }))
   const email = await screen.findByLabelText('emailAddress')
   fireEvent.change(email, { target: { value: 'first@gmail.com' } })
   fireEvent.click(screen.getByRole('button', { name: 'requestEmailCode' }))
@@ -115,6 +118,7 @@ it('shows a localized rate-limit message beside the code request form', async ()
   }))
   vi.stubGlobal('fetch', fetchMock)
   render(<LoginPage />)
+  fireEvent.click(screen.getByRole('button', { name: 'emailCodeLogin' }))
   fireEvent.change(await screen.findByLabelText('emailAddress'),
     { target: { value: 'user@gmail.com' } })
   const send = screen.getByRole('button', { name: 'requestEmailCode' })
@@ -130,6 +134,7 @@ it('closes the TopNav dialog after email verification succeeds', async () => {
   const { container } = render(<><TopNav /><LoginPage /></>)
   fireEvent.click(within(container.querySelector('header')!).getByRole('button', { name: 'login' }))
   const dialog = screen.getByRole('dialog')
+  fireEvent.click(within(dialog).getByRole('button', { name: 'emailCodeLogin' }))
   fireEvent.change(await within(dialog).findByLabelText('emailAddress'),
     { target: { value: 'user@gmail.com' } })
   fireEvent.click(within(dialog).getByRole('button', { name: 'requestEmailCode' }))
@@ -145,6 +150,7 @@ it('keeps the TopNav dialog open and shows an error when the code is rejected', 
   render(<TopNav />)
   fireEvent.click(screen.getByRole('button', { name: 'login' }))
   const dialog = screen.getByRole('dialog')
+  fireEvent.click(within(dialog).getByRole('button', { name: 'emailCodeLogin' }))
   fireEvent.change(await within(dialog).findByLabelText('emailAddress'),
     { target: { value: 'user@gmail.com' } })
   fireEvent.click(within(dialog).getByRole('button', { name: 'requestEmailCode' }))
@@ -162,6 +168,8 @@ it('associates labels with unique email and code inputs in page and dialog', asy
   fireEvent.click(within(container.querySelector('header')!).getByRole('button', { name: 'login' }))
   const dialog = screen.getByRole('dialog')
   const page = container.querySelector('section')!
+  fireEvent.click(within(page).getByRole('button', { name: 'emailCodeLogin', hidden: true }))
+  fireEvent.click(within(dialog).getByRole('button', { name: 'emailCodeLogin' }))
   const pageEmail = await within(page).findByLabelText('emailAddress')
   const dialogEmail = await within(dialog).findByLabelText('emailAddress')
   expect(pageEmail.id).not.toBe(dialogEmail.id)
@@ -181,6 +189,7 @@ it('associates labels with unique email and code inputs in page and dialog', asy
 it('rejects non-Gmail addresses before requesting a code', async () => {
   const fetchMock = emailFetch()
   render(<LoginPage />)
+  fireEvent.click(screen.getByRole('button', { name: 'emailCodeLogin' }))
   fireEvent.change(await screen.findByLabelText('emailAddress'),
     { target: { value: 'user@yahoo.com' } })
   fireEvent.click(screen.getByRole('button', { name: 'requestEmailCode' }))
@@ -192,6 +201,7 @@ it('rejects non-Gmail addresses before requesting a code', async () => {
 it('trims and lowercases a valid Gmail address before requesting a code', async () => {
   const fetchMock = emailFetch()
   render(<LoginPage />)
+  fireEvent.click(screen.getByRole('button', { name: 'emailCodeLogin' }))
   fireEvent.change(await screen.findByLabelText('emailAddress'),
     { target: { value: '  User.Name+Tag@GMAIL.COM  ' } })
   fireEvent.click(screen.getByRole('button', { name: 'requestEmailCode' }))

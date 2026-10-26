@@ -107,6 +107,7 @@ try {
   await page.goto(`${origin}/zh-CN/login`)
   console.log('Registration complete; waiting for the 60-second email resend window')
   await new Promise(done => setTimeout(done, 61_000))
+  await page.getByRole('main').getByRole('button', { name: '邮箱验证码登录' }).click()
   await page.getByLabel('Gmail 邮箱').fill(testEmail)
   await page.getByRole('button', { name: '获取验证码' }).click()
   await page.getByRole('status').filter({ hasText: '验证码已发送' }).waitFor()

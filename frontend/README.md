@@ -42,10 +42,7 @@ npm run dev
 
 默认打开 http://localhost:3000/zh-CN；后端默认位于 `http://127.0.0.1:3001`，
 可用 `BACKEND_ORIGIN` 覆盖。后端的 `APP_ORIGIN` 必须与浏览器访问的前端 origin 一致。
-开发时如需打开登录框或 `/login` 页面后自动填充测试账号，在被 Git 忽略的
-`frontend/.env.local` 中设置 `NEXT_PUBLIC_DEV_LOGIN_NAME` 和
-`NEXT_PUBLIC_DEV_LOGIN_PASSWORD`，然后重启前端。两个值都会发送到浏览器，
-仅能使用专门的本机测试账号；生产模式不自动填充。登录仍需手动点击提交。
+登录页与页头登录弹窗均不预填账号或密码，测试账号需手动输入。
 生产构建使用 `npm run build` 后 `npm run start`；构建前先停止开发服务，避免共用 `.next` 输出。
 
 ```bash

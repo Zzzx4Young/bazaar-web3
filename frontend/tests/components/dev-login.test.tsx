@@ -17,23 +17,26 @@ beforeEach(() => {
 
 afterEach(() => vi.unstubAllEnvs())
 
-describe('development login autofill', () => {
-  it('fills both fields when opening the header login dialog', () => {
+describe('login fields', () => {
+  it('opens the header login dialog with blank fields in development', () => {
     render(<TopNav />)
     fireEvent.click(screen.getByRole('button', { name: 'login' }))
-    expect(screen.getByLabelText('loginName')).toHaveValue('local-buyer@test.com')
-    expect(screen.getByLabelText('password')).toHaveValue('local-test-password')
+    fireEvent.click(screen.getByRole('button', { name: 'passwordLogin' }))
+    expect(screen.getByLabelText('loginName')).toHaveValue('')
+    expect(screen.getByLabelText('password')).toHaveValue('')
   })
 
-  it('fills the dedicated login page', () => {
+  it('opens the dedicated login page with blank fields in development', () => {
     render(<LoginPage />)
-    expect(screen.getByLabelText('loginName')).toHaveValue('local-buyer@test.com')
-    expect(screen.getByLabelText('password')).toHaveValue('local-test-password')
+    fireEvent.click(screen.getByRole('button', { name: 'passwordLogin' }))
+    expect(screen.getByLabelText('loginName')).toHaveValue('')
+    expect(screen.getByLabelText('password')).toHaveValue('')
   })
 
   it('keeps the login fields blank outside development', () => {
     vi.stubEnv('NODE_ENV', 'production')
     render(<LoginPage />)
+    fireEvent.click(screen.getByRole('button', { name: 'passwordLogin' }))
     expect(screen.getByLabelText('loginName')).toHaveValue('')
     expect(screen.getByLabelText('password')).toHaveValue('')
   })

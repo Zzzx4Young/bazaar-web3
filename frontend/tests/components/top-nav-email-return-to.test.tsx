@@ -47,6 +47,7 @@ async function verifyInNav(currentUrl: string) {
   render(<TopNav />)
   fireEvent.click(screen.getByRole('button', { name: 'login' }))
   const dialog = screen.getByRole('dialog')
+  fireEvent.click(within(dialog).getByRole('button', { name: 'emailCodeLogin' }))
   fireEvent.change(await within(dialog).findByLabelText('emailAddress'),
     { target: { value: 'buyer@gmail.com' } })
   fireEvent.click(within(dialog).getByRole('button', { name: 'requestEmailCode' }))
@@ -85,6 +86,7 @@ it('keeps the dialog open after a rejected email code', async () => {
   render(<TopNav />)
   fireEvent.click(screen.getByRole('button', { name: 'login' }))
   const dialog = screen.getByRole('dialog')
+  fireEvent.click(within(dialog).getByRole('button', { name: 'emailCodeLogin' }))
   fireEvent.change(await within(dialog).findByLabelText('emailAddress'),
     { target: { value: 'buyer@gmail.com' } })
   fireEvent.click(within(dialog).getByRole('button', { name: 'requestEmailCode' }))

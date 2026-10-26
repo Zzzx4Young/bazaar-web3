@@ -31,6 +31,7 @@ async function signIn(returnTo?: string) {
   const query = returnTo === undefined ? '' : `?returnTo=${encodeURIComponent(returnTo)}`
   window.history.replaceState({}, '', `/zh-CN/login${query}`)
   render(<LoginPage />)
+  fireEvent.click(screen.getByRole('button', { name: 'passwordLogin' }))
   fireEvent.change(screen.getByLabelText('loginName'), { target: { value: 'buyer' } })
   fireEvent.change(screen.getByLabelText('password'), { target: { value: 'password' } })
   fireEvent.click(screen.getByRole('button', { name: 'login' }))
@@ -67,6 +68,7 @@ it('does not redirect when password authentication fails', async () => {
   })))
   window.history.replaceState({}, '', '/zh-CN/login?returnTo=%2F%2Fevil.example')
   render(<LoginPage />)
+  fireEvent.click(screen.getByRole('button', { name: 'passwordLogin' }))
   fireEvent.change(screen.getByLabelText('loginName'), { target: { value: 'buyer' } })
   fireEvent.change(screen.getByLabelText('password'), { target: { value: 'wrong' } })
   fireEvent.click(screen.getByRole('button', { name: 'login' }))

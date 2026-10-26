@@ -58,7 +58,7 @@ try {
     await page.goto(`${origin}/zh-CN/login?returnTo=${encodeURIComponent(returnTo)}`)
     await page.locator('section').getByLabel('登录名').fill('buyer')
     await page.locator('section').getByLabel('密码').fill('test-password')
-    await page.locator('section').getByRole('button', { name: '登录' }).click()
+    await page.locator('section').getByRole('button', { name: '登录', exact: true }).click()
     await page.waitForURL(url => `${url.pathname}${url.search}${url.hash}` === expected,
       { timeout: 15_000 })
     assert.equal(new URL(page.url()).origin, origin)
@@ -86,6 +86,7 @@ try {
     await page.goto(`${origin}${source}`)
     await page.locator('header').getByRole('button', { name: '登录' }).click()
     const dialog = page.getByRole('dialog')
+    await dialog.getByRole('button', { name: '邮箱验证码登录' }).click()
     await dialog.getByLabel('Gmail 邮箱').fill('buyer@gmail.com')
     await dialog.getByRole('button', { name: '获取验证码' }).click()
     await dialog.getByLabel('6 位验证码').fill('123456')

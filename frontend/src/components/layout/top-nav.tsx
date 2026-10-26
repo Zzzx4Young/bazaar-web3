@@ -18,8 +18,8 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { useAuthStore } from '@/stores/use-auth-store'
-import { getDevLoginCredentials } from '@/lib/dev-login'
 import { IdentityOptions } from '@/components/auth/identity-options'
+import { LoginMethodPicker, type LoginMethod } from '@/components/auth/login-method-picker'
 import { locales } from '@/i18n/locales'
 import { resolveSafeReturnTo } from '@/lib/safe-return-to'
 import { apiErrorCopy } from '@/lib/api-error-copy'
@@ -70,6 +70,7 @@ export function TopNav() {
   const [open, setOpen] = useState(false)
   const [loginName, setLoginName] = useState('')
   const [password, setPassword] = useState('')
+  const [method, setMethod] = useState<LoginMethod>('password')
   const [submitting, setSubmitting] = useState(false)
   const auth = useAuthStore()
 
@@ -137,11 +138,9 @@ export function TopNav() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const credentials = getDevLoginCredentials()
-                  if (credentials) {
-                    setLoginName(credentials.loginName)
-                    setPassword(credentials.password)
-                  }
+                  setLoginName('')
+                  setPassword('')
+                  setMethod('password')
                   setOpen(true)
                 }}
               >
@@ -162,7 +161,8 @@ export function TopNav() {
             <DialogTitle>{t('login')}</DialogTitle>
             <DialogDescription>{t('loginHint')}</DialogDescription>
           </DialogHeader>
-          <form
+          <LoginMethodPicker method={method} onChange={setMethod} />
+          {method === 'password' && <form
             className="space-y-4"
             onSubmit={async (event) => {
               event.preventDefault()
@@ -204,9 +204,10 @@ export function TopNav() {
             <Button type="submit" disabled={submitting}>
               {submitting ? t('signingIn') : t('login')}
             </Button>
-          </form>
+          </form>}
           <IdentityOptions returnTo={emailReturnTo(locale)}
             googleReturnTo={typeof window === 'undefined' ? `/${locale}/me` : window.location.pathname}
+            showEmail={method === 'email'} emailFirst={method === 'email'}
             onSuccess={() => setOpen(false)} />
           <p className="text-sm text-muted-foreground">
             {t('newAccount')}{' '}

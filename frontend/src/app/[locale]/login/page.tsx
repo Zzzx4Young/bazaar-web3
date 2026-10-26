@@ -7,8 +7,8 @@ import { useAuthStore } from '@/stores/use-auth-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { getDevLoginCredentials } from '@/lib/dev-login'
 import { IdentityOptions } from '@/components/auth/identity-options'
+import { LoginMethodPicker, type LoginMethod } from '@/components/auth/login-method-picker'
 import { resolveSafeReturnTo } from '@/lib/safe-return-to'
 import { apiErrorCopy } from '@/lib/api-error-copy'
 
@@ -17,8 +17,9 @@ export default function LoginPage() {
   const locale = useLocale()
   const router = useRouter()
   const auth = useAuthStore()
-  const [loginName, setLoginName] = useState(() => getDevLoginCredentials()?.loginName ?? '')
-  const [password, setPassword] = useState(() => getDevLoginCredentials()?.password ?? '')
+  const [loginName, setLoginName] = useState('')
+  const [password, setPassword] = useState('')
+  const [method, setMethod] = useState<LoginMethod>('password')
   const [submitting, setSubmitting] = useState(false)
   const [returnTo, setReturnTo] = useState('/')
   const [registerHref, setRegisterHref] = useState('/register')
@@ -38,7 +39,8 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold">{t('login')}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{t('loginHint')}</p>
       </div>
-      <form
+      <LoginMethodPicker method={method} onChange={setMethod} />
+      {method === 'password' && <form
         className="space-y-4"
         onSubmit={async (event) => {
           event.preventDefault()
@@ -80,11 +82,12 @@ export default function LoginPage() {
         <Button type="submit" disabled={submitting}>
           {submitting ? t('signingIn') : t('login')}
         </Button>
-      </form>
+      </form>}
       {redirectError && <p role="alert" className="text-sm text-destructive">
         {redirectError === 'ACCOUNT_LINK_REQUIRED' ? t('accountLinkRequired') : t('googleSignInFailed')}
       </p>}
-      <IdentityOptions returnTo={returnTo === '/' ? `/${locale}/me` : returnTo} />
+      <IdentityOptions returnTo={returnTo === '/' ? `/${locale}/me` : returnTo}
+        showEmail={method === 'email'} emailFirst={method === 'email'} />
       <p className="text-sm text-muted-foreground">
         {t('newAccount')}{' '}
         <Link href={registerHref} className="font-medium text-primary hover:underline">
