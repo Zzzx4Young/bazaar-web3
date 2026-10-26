@@ -198,6 +198,17 @@ it('rejects non-Gmail addresses before requesting a code', async () => {
   expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/auth/email/request'))).toBe(false)
 })
 
+it('rejects malformed Gmail aliases before requesting a code', async () => {
+  const fetchMock = emailFetch()
+  render(<LoginPage />)
+  fireEvent.click(screen.getByRole('button', { name: 'emailCodeLogin' }))
+  fireEvent.change(await screen.findByLabelText('emailAddress'),
+    { target: { value: 'user+@gmail.com' } })
+  fireEvent.click(screen.getByRole('button', { name: 'requestEmailCode' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('invalidGmail')
+  expect(fetchMock.mock.calls.some(([url]) => url.endsWith('/auth/email/request'))).toBe(false)
+})
+
 it('trims and lowercases a valid Gmail address before requesting a code', async () => {
   const fetchMock = emailFetch()
   render(<LoginPage />)

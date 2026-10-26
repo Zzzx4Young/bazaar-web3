@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import { createHmac, generateKeyPairSync, sign } from 'node:crypto'
 import { Buffer } from 'node:buffer'
 import test from 'node:test'
-import { codeDigest, createEmailCode, emailCodeMessage, normalizeGmail } from '../dist/auth/email-code.js'
+import { codeDigest, createEmailCode, emailCodeMessage, gmailIdentityKey,
+  normalizeGmail } from '../dist/auth/email-code.js'
 import { GoogleOidcClient } from '../dist/auth/google-client.js'
 
 test('email code is six digits including possible leading zeros and bound to challenge identity', () => {
@@ -14,6 +15,7 @@ test('email code is six digits including possible leading zeros and bound to cha
   assert.notEqual(digest, code)
   assert.notEqual(digest, codeDigest(key, 'challenge-2', 'user@gmail.com', 'login', code))
   assert.notEqual(digest, codeDigest(key, 'challenge-1', 'user@gmail.com', 'bind', code))
+  assert.notEqual(digest, codeDigest(key, 'challenge-1', 'user@gmail.com', 'register', code))
   assert.notEqual(digest, codeDigest(key, 'challenge-1', 'other@gmail.com', 'login', code))
   assert.notEqual(digest, createHmac('sha256', key).update(code).digest('hex'))
 })
@@ -22,6 +24,21 @@ test('Gmail input is normalized and other domains are rejected', () => {
   assert.equal(normalizeGmail('  User.Name@gmail.com  '), 'user.name@gmail.com')
   assert.throws(() => normalizeGmail('user@example.com'), /INVALID_INPUT/)
   assert.throws(() => normalizeGmail('not-an-email'), /INVALID_INPUT/)
+})
+
+test('Gmail aliases share one identity key while full delivery addresses stay distinct', () => {
+  assert.equal(gmailIdentityKey(' User.Name+Shop@gmail.com '), 'username@gmail.com')
+  assert.equal(gmailIdentityKey('username@gmail.com'), 'username@gmail.com')
+  assert.equal(normalizeGmail('User.Name+Shop@gmail.com'), 'user.name+shop@gmail.com')
+  for (const input of ['user+@gmail.com', 'user..name@gmail.com',
+    'user.@gmail.com', 'user.+tag@gmail.com', 'user+one+two@gmail.com']) {
+    assert.throws(() => gmailIdentityKey(input), /INVALID_INPUT/)
+  }
+})
+
+test('registration email template identifies registration rather than sign-in', () => {
+  assert.match(emailCodeMessage('zh-CN', 'register', '123456').subject, /注册/)
+  assert.match(emailCodeMessage('en', 'login', '123456').subject, /sign in/)
 })
 
 test('email templates identify purpose and expiry without including a login link', () => {

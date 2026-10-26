@@ -76,7 +76,7 @@ export function IdentityOptions({ returnTo, googleReturnTo, onSuccess,
           setError(null)
           const normalized = email.trim().toLowerCase()
           if (normalized.length > 100 ||
-            !/^[a-z0-9][a-z0-9._+-]{0,63}@gmail\.com$/.test(normalized) ||
+            !/^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?(?:\+[a-z0-9_-]+)?@gmail\.com$/.test(normalized) ||
             normalized.includes('..')) {
             setRequestError(t('invalidGmail'))
             return

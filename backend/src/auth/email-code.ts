@@ -1,7 +1,7 @@
 import { createHmac, randomInt } from 'node:crypto'
 import { DomainError } from '../common/domain-error.js'
 
-export type EmailCodePurpose = 'login' | 'bind'
+export type EmailCodePurpose = 'register' | 'login' | 'bind'
 export type EmailCodeLocale = 'zh-CN' | 'en'
 
 export interface EmailCodeMessage {
@@ -23,10 +23,15 @@ export function normalizeGmail(input: string): string {
   const email = input.trim().toLowerCase()
   if (
     email.length > 100 ||
-    !/^[a-z0-9][a-z0-9._+-]{0,63}@gmail\.com$/.test(email) ||
+    !/^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?(?:\+[a-z0-9_-]+)?@gmail\.com$/.test(email) ||
     email.includes('..')
   ) throw new DomainError('INVALID_INPUT')
   return email
+}
+
+export function gmailIdentityKey(input: string): string {
+  const email = normalizeGmail(input)
+  return `${email.slice(0, email.indexOf('@')).split('+')[0].replaceAll('.', '')}@gmail.com`
 }
 
 export function createEmailCode(nextInt: (max: number) => number = randomInt): string {
@@ -54,8 +59,8 @@ export function emailCodeMessage(
   code: string
 ): EmailCodeMessage {
   const zh = locale === 'zh-CN'
-  const action = zh ? (purpose === 'bind' ? '绑定邮箱' : '注册或登录') :
-    (purpose === 'bind' ? 'link your email' : 'sign up or sign in')
+  const action = zh ? (purpose === 'bind' ? '绑定邮箱' : purpose === 'register' ? '注册' : '登录') :
+    (purpose === 'bind' ? 'link your email' : purpose === 'register' ? 'sign up' : 'sign in')
   const subject = zh ? `Bazaar Web3 ${action}验证码` : `Bazaar Web3 code to ${action}`
   const text = zh
     ? `你的验证码是 ${code}，5 分钟内有效，仅可使用一次。若非本人操作，请忽略此邮件。`
