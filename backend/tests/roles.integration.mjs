@@ -58,6 +58,16 @@ test('C1: migration owner and restricted runtime support transactions without DD
     const commands = new OrderCommands(app.client)
     const listings = new ListingCommands(app.client)
     const f = await fixture({ client: app.client })
+    await app.client.gmailClaim.create({ data: {
+      key: 'runtimebuyer@gmail.com', accountId: f.buyer
+    } })
+    assert.equal((await app.client.gmailClaim.findUniqueOrThrow({
+      where: { key: 'runtimebuyer@gmail.com' }
+    })).accountId, f.buyer)
+    await assert.rejects(app.client.gmailClaim.create({ data: {
+      key: 'runtimebuyer@gmail.com', accountId: f.seller
+    } }), /Unique constraint/)
+    await app.client.gmailClaim.delete({ where: { key: 'runtimebuyer@gmail.com' } })
     const identity = await app.client.accountIdentity.create({ data: {
       accountId: f.buyer, provider: 'google', subject: randomUUID(), email: 'runtime@example.com'
     } })

@@ -28,6 +28,7 @@ model Account {
   credential           AccountCredential?
   sessions             Session[]
   identities           AccountIdentity[]
+  gmailClaims          GmailClaim[]
   googleAttempts       GoogleOAuthAttempt[]
 }
 
@@ -42,6 +43,15 @@ model AccountIdentity {
 
   @@unique([provider, subject])
   @@unique([accountId, provider])
+}
+
+model GmailClaim {
+  key       String   @id @db.VarChar(100)
+  accountId String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([accountId])
 }
 
 model EmailCodeChallenge {

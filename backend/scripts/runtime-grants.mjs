@@ -28,6 +28,7 @@ export async function grantRuntime(client, schema, role) {
     'Session',
     'AuthRateBucket',
     'AccountIdentity',
+    'GmailClaim',
     'EmailCodeChallenge',
     'GoogleOAuthAttempt',
     'MediaAsset',
@@ -47,7 +48,7 @@ export async function grantRuntime(client, schema, role) {
     await tx.$executeRawUnsafe(`GRANT USAGE ON SCHEMA "${schema}" TO "${role}"`)
     await tx.$executeRawUnsafe(`REVOKE ALL ON ALL TABLES IN SCHEMA "${schema}" FROM "${role}"`)
     for (const table of [...immutable, ...mutable]) {
-      const permissions = [
+      const permissions = table === 'GmailClaim' ? 'SELECT, INSERT, DELETE' : [
         'AuthRateBucket', 'ListingMedia', 'EmailCodeChallenge', 'GoogleOAuthAttempt'
       ].includes(table)
         ? 'SELECT, INSERT, UPDATE, DELETE'
