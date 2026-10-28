@@ -111,10 +111,11 @@ const db = new DatabaseService(config.databaseUrl, config.databasePool)
 await db.onModuleInit()
 try {
   const sellers = await db.client.account.findMany({
-    where: { loginName: { contains: '_seller_' } }, select: { id: true, loginName: true }
+    where: { loginName: { contains: '.seller.' } }, select: { id: true, loginName: true }
   })
   const testSellerIds = sellers.filter((seller) =>
-    /^v2-stress(?:-r2)?_seller_[1-6]@test\.com$/.test(seller.loginName)).map((seller) => seller.id)
+    /^v2\.stress(?:\.r2)?\.seller\.[1-6]@gmail\.com$/.test(seller.loginName)).map((seller) => seller.id)
+  assert.ok(testSellerIds.length > 0, 'No V2 Gmail sellers found; catalog refresh cannot proceed')
   const listings = await db.client.listing.findMany({
     where: { sellerId: { in: testSellerIds }, OR: [
       { description: { startsWith: 'V2 seeded description ' } },

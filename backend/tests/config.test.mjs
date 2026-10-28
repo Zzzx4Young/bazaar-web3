@@ -97,6 +97,16 @@ test('validates configuration and defaults to loopback', () => {
   assert.equal(readConfig({ DATABASE_URL }).secureCookie, false)
 })
 
+test('development email binding reauthentication bypass is explicit and loopback-only', () => {
+  assert.equal(readConfig({ DATABASE_URL }).devEmailBindSkipReauth, false)
+  const local = { DATABASE_URL, NODE_ENV: 'development', DEV_EMAIL_BIND_SKIP_REAUTH: '1' }
+  assert.equal(readConfig(local).devEmailBindSkipReauth, true)
+  for (const change of [{ NODE_ENV: 'production' }, { HOST: '0.0.0.0' },
+    { APP_ORIGIN: 'https://example.com' }]) {
+    assert.throws(() => readConfig({ ...local, ...change }), /DEV_EMAIL_BIND_SKIP_REAUTH/)
+  }
+})
+
 test('reads a database URL from a secret file without allowing ambiguous input', () => {
   const directory = mkdtempSync(join(tmpdir(), 'bazaar-config-'))
   const file = join(directory, 'database-url')

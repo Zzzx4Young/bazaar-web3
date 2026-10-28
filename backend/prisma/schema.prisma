@@ -28,6 +28,7 @@ model Account {
   credential           AccountCredential?
   sessions             Session[]
   identities           AccountIdentity[]
+  identityEvents        AccountIdentityEvent[]
   gmailClaims          GmailClaim[]
   googleAttempts       GoogleOAuthAttempt[]
 }
@@ -38,11 +39,29 @@ model AccountIdentity {
   provider  String   @db.VarChar(16)
   subject   String   @db.VarChar(100)
   email     String   @db.VarChar(100)
+  verifiedAt DateTime? @db.Timestamptz(6)
+  verificationSource String? @db.VarChar(24)
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   account   Account  @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([provider, subject])
   @@unique([accountId, provider])
+}
+
+model AccountIdentityEvent {
+  id                 String   @id @default(uuid()) @db.Uuid
+  accountId          String   @db.Uuid
+  provider           String   @db.VarChar(16)
+  action             String   @db.VarChar(16)
+  previousSubject    String?  @db.VarChar(100)
+  currentSubject     String   @db.VarChar(100)
+  previousEmail      String?  @db.VarChar(100)
+  currentEmail       String   @db.VarChar(100)
+  verificationSource String   @db.VarChar(24)
+  createdAt          DateTime @default(now()) @db.Timestamptz(6)
+  account            Account  @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([accountId, createdAt])
 }
 
 model GmailClaim {
@@ -95,6 +114,8 @@ model AccountCredential {
 model Session {
   tokenHash String    @id @db.Char(64)
   accountId String    @db.Uuid
+  authMethod String?   @db.VarChar(24)
+  authenticatedAt DateTime? @db.Timestamptz(6)
   createdAt DateTime  @default(now()) @db.Timestamptz(6)
   expiresAt DateTime  @db.Timestamptz(6)
   revokedAt DateTime? @db.Timestamptz(6)

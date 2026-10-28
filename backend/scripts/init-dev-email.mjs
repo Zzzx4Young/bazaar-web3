@@ -5,8 +5,7 @@ import { resolve } from 'node:path'
 const directory = resolve(import.meta.dirname, '../.tmp')
 mkdirSync(directory, { recursive: true, mode: 0o700 })
 for (const [name, value] of [
-  ['dev-email-key', randomBytes(48).toString('hex')],
-  ['dev-email-account', `bazaar-dev-${randomBytes(8).toString('hex')}@gmail.com`]
+  ['dev-email-key', randomBytes(48).toString('hex')]
 ]) {
   const path = resolve(directory, name)
   if (!existsSync(path)) {

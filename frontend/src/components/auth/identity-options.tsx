@@ -10,17 +10,19 @@ import { BackendError, backendPost, backendRequest } from '@/lib/backend-api'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { resolveSafeReturnTo } from '@/lib/safe-return-to'
 import { apiErrorCopy } from '@/lib/api-error-copy'
+import { normalizeGmailInput } from '@/lib/gmail'
 import type { AuthView } from '@/lib/backend-api'
 
 interface Methods { password: boolean; google: boolean; emailCode: boolean }
 
 export function IdentityOptions({ returnTo, googleReturnTo, onSuccess,
-  showEmail = true, emailFirst = false }: {
+  showEmail = true, emailFirst = false, emailIntent = 'login' }: {
   returnTo?: string
   googleReturnTo?: string
   onSuccess?: () => void
   showEmail?: boolean
   emailFirst?: boolean
+  emailIntent?: 'register' | 'login'
 }) {
   const t = useTranslations('nav')
   const locale = useLocale()
@@ -70,21 +72,23 @@ export function IdentityOptions({ returnTo, googleReturnTo, onSuccess,
       {!emailFirst && googleOption}
       {showEmail && methods?.emailCode ? <div
         className={emailFirst ? 'space-y-3' : 'space-y-3 border-t pt-4'}>
-        <p className="text-sm font-medium">{t('emailCodeTitle')}</p>
+        <p className="text-sm font-medium">
+          {t(emailIntent === 'register' ? 'emailCodeRegisterTitle' : 'emailCodeLoginTitle')}
+        </p>
         <form className="space-y-2" onSubmit={async event => {
           event.preventDefault()
           setError(null)
-          const normalized = email.trim().toLowerCase()
-          if (normalized.length > 100 ||
-            !/^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?(?:\+[a-z0-9_-]+)?@gmail\.com$/.test(normalized) ||
-            normalized.includes('..')) {
+          const normalized = normalizeGmailInput(email)
+          if (!normalized) {
             setRequestError(t('invalidGmail'))
             return
           }
           setPending(true)
           setRequestError(null)
           try {
-            await backendPost('/auth/email/request', { email: normalized, locale })
+            await backendPost('/auth/email/request', {
+              email: normalized, locale, intent: emailIntent
+            })
             setRequestedEmail(normalized)
             setCode('')
           } catch (cause) {
@@ -110,7 +114,7 @@ export function IdentityOptions({ returnTo, googleReturnTo, onSuccess,
           setError(null)
           try {
             const view = await backendPost<AuthView>('/auth/email/verify',
-              { email: requestedEmail, code })
+              { email: requestedEmail, code, intent: emailIntent })
             acceptView(view)
             const destination = resolveSafeReturnTo(returnTo ?? `/${locale}/me`)
             onSuccess?.()
@@ -119,9 +123,10 @@ export function IdentityOptions({ returnTo, googleReturnTo, onSuccess,
             setError(apiErrorCopy(cause, locale))
           } finally { setPending(false) }
         }}>
-          <p role="status" className="text-sm text-muted-foreground">
+          <p role="status" className="break-all text-sm text-muted-foreground">
             {process.env.NEXT_PUBLIC_EMAIL_CODE_DEV_INBOX === '1'
-              ? t('emailCodeDevInbox') : t('emailCodeSent')}
+              ? t('emailCodeDevInbox', { email: requestedEmail, purpose: emailIntent })
+              : t('emailCodeSent')}
           </p>
           <Label htmlFor={codeId}>{t('verificationCode')}</Label>
           <Input id={codeId} value={code} onChange={event => setCode(event.target.value)}

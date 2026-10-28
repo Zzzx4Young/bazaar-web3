@@ -70,7 +70,7 @@
       "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
       "get": { "operationId": "authMethods", "summary": "Available sign-in methods", "security": [],
         "responses": { "200": { "description": "Method availability", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } },
-          "content": { "application/json": { "schema": { "type": "object", "properties": { "password": { "type": "boolean" }, "google": { "type": "boolean" }, "emailCode": { "type": "boolean" } } } } } } } }
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "password": { "type": "boolean" }, "google": { "type": "boolean" }, "emailCode": { "type": "boolean" }, "emailBindPasswordRequired": { "type": "boolean" } } } } } } } }
     },
     "/auth/identities": {
       "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
@@ -100,16 +100,21 @@
     },
     "/auth/email/request": {
       "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
-      "post": { "operationId": "requestEmailCode", "summary": "Request six-digit email sign-in code; disabled until sender configured", "security": [],
+      "post": { "operationId": "requestEmailCode", "summary": "Request six-digit Gmail registration or sign-in code; accepted response does not reveal account existence", "security": [],
         "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EmailCodeRequest" } } } },
         "responses": { "202": { "description": "Accepted without account enumeration", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } },
+          "429": { "description": "RATE_LIMITED; Retry-After reports the active window", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" }, "Retry-After": { "schema": { "type": "integer" } } } },
           "503": { "description": "EMAIL_UNAVAILABLE", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
     },
     "/auth/email/verify": {
       "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
-      "post": { "operationId": "verifyEmailCode", "summary": "Register or sign in using a verified Gmail code", "security": [],
+      "post": { "operationId": "verifyEmailCode", "summary": "Register or sign in using a verified Gmail code and explicit intent", "security": [],
         "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EmailCodeVerify" } } } },
         "responses": { "200": { "description": "New session", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Session" } } } },
+          "401": { "description": "INVALID_CREDENTIALS", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } },
+          "404": { "description": "EMAIL_ACCOUNT_NOT_FOUND after successful code verification", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } },
+          "409": { "description": "EMAIL_ACCOUNT_EXISTS or ACCOUNT_LINK_REQUIRED after successful code verification", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } },
+          "429": { "description": "RATE_LIMITED; Retry-After reports the active window", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" }, "Retry-After": { "schema": { "type": "integer" } } } },
           "503": { "description": "EMAIL_UNAVAILABLE", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
     },
     "/auth/email/bind/request": {
@@ -122,7 +127,7 @@
     "/auth/email/bind/verify": {
       "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
       "post": { "operationId": "verifyEmailBinding", "summary": "Enable email-code sign-in for current account", "security": [{ "session": [], "csrf": [] }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EmailCodeVerify" } } } },
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EmailCodeBindVerify" } } } },
         "responses": { "200": { "description": "Binding complete; session rotated", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Session" } } } },
           "503": { "description": "EMAIL_UNAVAILABLE", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
     },
@@ -4279,7 +4284,8 @@
             "maxLength": 100,
             "enum": [
               "ACCOUNT_LINK_REQUIRED", "CSRF_REJECTED", "DELIVERY_REQUIRED",
-              "DESCRIPTION_REQUIRED", "EMAIL_UNAVAILABLE", "FORBIDDEN",
+              "DESCRIPTION_REQUIRED", "EMAIL_ACCOUNT_EXISTS", "EMAIL_ACCOUNT_NOT_FOUND",
+              "EMAIL_UNAVAILABLE", "FORBIDDEN",
               "FX_SNAPSHOT_EXPIRED", "FX_UNAVAILABLE", "GOOGLE_INVALID",
               "GOOGLE_UNAVAILABLE", "IDEMPOTENCY_CONFLICT", "INVALID_AMOUNT",
               "INVALID_CREDENTIALS", "INVALID_INPUT", "INVENTORY_CONFLICT",
@@ -4405,14 +4411,18 @@
         }
       },
       "EmailCodeRequest": {
-        "type": "object", "additionalProperties": false, "required": ["email"],
-        "properties": { "email": { "type": "string", "format": "email", "maxLength": 100 }, "locale": { "type": "string", "enum": ["zh-CN", "en"] } }
+        "type": "object", "additionalProperties": false, "required": ["email", "intent"],
+        "properties": { "email": { "type": "string", "format": "email", "maxLength": 100 }, "intent": { "type": "string", "enum": ["register", "login"] }, "locale": { "type": "string", "enum": ["zh-CN", "en"] } }
       },
       "EmailCodeBindRequest": {
         "type": "object", "additionalProperties": false, "required": ["email"],
         "properties": { "email": { "type": "string", "format": "email", "maxLength": 100 }, "locale": { "type": "string", "enum": ["zh-CN", "en"] }, "password": { "type": "string", "writeOnly": true } }
       },
       "EmailCodeVerify": {
+        "type": "object", "additionalProperties": false, "required": ["email", "code", "intent"],
+        "properties": { "email": { "type": "string", "format": "email", "maxLength": 100 }, "code": { "type": "string", "pattern": "^[0-9]{6}$", "writeOnly": true }, "intent": { "type": "string", "enum": ["register", "login"] } }
+      },
+      "EmailCodeBindVerify": {
         "type": "object", "additionalProperties": false, "required": ["email", "code"],
         "properties": { "email": { "type": "string", "format": "email", "maxLength": 100 }, "code": { "type": "string", "pattern": "^[0-9]{6}$", "writeOnly": true } }
       },

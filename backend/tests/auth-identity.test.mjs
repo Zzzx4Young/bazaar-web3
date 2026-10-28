@@ -5,6 +5,12 @@ import test from 'node:test'
 import { codeDigest, createEmailCode, emailCodeMessage, gmailIdentityKey,
   normalizeGmail } from '../dist/auth/email-code.js'
 import { GoogleOidcClient } from '../dist/auth/google-client.js'
+import { EmailAuthService } from '../dist/auth/email-auth.service.js'
+
+test('email sender requires an explicit verification source', () => {
+  assert.throws(() => new EmailAuthService(null, null, null,
+    { send: async () => {} }), /provenance must be explicit/)
+})
 
 test('email code is six digits including possible leading zeros and bound to challenge identity', () => {
   const code = createEmailCode(() => 42)
@@ -29,6 +35,8 @@ test('Gmail input is normalized and other domains are rejected', () => {
 test('Gmail aliases share one identity key while full delivery addresses stay distinct', () => {
   assert.equal(gmailIdentityKey(' User.Name+Shop@gmail.com '), 'username@gmail.com')
   assert.equal(gmailIdentityKey('username@gmail.com'), 'username@gmail.com')
+  assert.equal(normalizeGmail('User+Tag.More@gmail.com'), 'user+tag.more@gmail.com')
+  assert.equal(gmailIdentityKey('User+Tag.More@gmail.com'), 'user@gmail.com')
   assert.equal(normalizeGmail('User.Name+Shop@gmail.com'), 'user.name+shop@gmail.com')
   for (const input of ['user+@gmail.com', 'user..name@gmail.com',
     'user.@gmail.com', 'user.+tag@gmail.com', 'user+one+two@gmail.com']) {

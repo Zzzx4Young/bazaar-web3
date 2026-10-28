@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useLocale } from 'next-intl'
 import LoginPage from '@/app/[locale]/login/page'
+import RegisterPage from '@/app/[locale]/register/page'
 import { TopNav } from '@/components/layout/top-nav'
 import { useAuthStore } from '@/stores/use-auth-store'
 import zhMessages from '@/../messages/zh-CN.json'
@@ -63,7 +64,7 @@ it('starts Google sign-in with the active English locale', async () => {
     expect.objectContaining({ body: JSON.stringify({ returnTo: '/en/me' }) })))
 })
 
-it('registers a Gmail account through the enabled email-code form', async () => {
+it('signs in with a Gmail account through the enabled email-code form', async () => {
   const account = { id: 'new-account', loginName: 'browser-check@gmail.com',
     displayName: 'browser-check', role: 'participant' }
   const fetchMock = vi.fn().mockImplementation(async (url: string) => ({
@@ -78,17 +79,38 @@ it('registers a Gmail account through the enabled email-code form', async () => 
   useAuthStore.setState({ status: 'anonymous', view: null, error: null })
   render(<LoginPage />)
   fireEvent.click(screen.getByRole('button', { name: 'emailCodeLogin' }))
+  expect(await screen.findByText('emailCodeLoginTitle')).toBeInTheDocument()
   fireEvent.change(await screen.findByLabelText('emailAddress'),
     { target: { value: 'browser-check@gmail.com' } })
   fireEvent.click(screen.getByRole('button', { name: 'requestEmailCode' }))
   await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/auth/email/request',
-    expect.objectContaining({ body: JSON.stringify({ email: 'browser-check@gmail.com', locale: 'zh-CN' }) })))
+    expect.objectContaining({ body: JSON.stringify({ email: 'browser-check@gmail.com',
+      locale: 'zh-CN', intent: 'login' }) })))
   fireEvent.change(await screen.findByLabelText('verificationCode'),
     { target: { value: '123456' } })
   fireEvent.click(screen.getByRole('button', { name: 'verifyEmailCode' }))
   await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/auth/email/verify',
-    expect.objectContaining({ body: JSON.stringify({ email: 'browser-check@gmail.com', code: '123456' }) })))
+    expect.objectContaining({ body: JSON.stringify({ email: 'browser-check@gmail.com',
+      code: '123456', intent: 'login' }) })))
   await waitFor(() => expect(useAuthStore.getState().view?.account.id).toBe('new-account'))
+})
+
+it('registers with a separate email-code intent on the registration page', async () => {
+  const fetchMock = emailFetch()
+  render(<RegisterPage />)
+  expect(await screen.findByText('emailCodeRegisterTitle')).toBeInTheDocument()
+  fireEvent.change(await screen.findByLabelText('emailAddress'),
+    { target: { value: 'new.user@gmail.com' } })
+  fireEvent.click(screen.getByRole('button', { name: 'requestEmailCode' }))
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/auth/email/request',
+    expect.objectContaining({ body: JSON.stringify({ email: 'new.user@gmail.com',
+      locale: 'zh-CN', intent: 'register' }) })))
+  fireEvent.change(await screen.findByLabelText('verificationCode'),
+    { target: { value: '123456' } })
+  fireEvent.click(screen.getByRole('button', { name: 'verifyEmailCode' }))
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/auth/email/verify',
+    expect.objectContaining({ body: JSON.stringify({ email: 'new.user@gmail.com',
+      code: '123456', intent: 'register' }) })))
 })
 
 it('clears a requested code when the Gmail address changes', async () => {
@@ -214,10 +236,10 @@ it('trims and lowercases a valid Gmail address before requesting a code', async 
   render(<LoginPage />)
   fireEvent.click(screen.getByRole('button', { name: 'emailCodeLogin' }))
   fireEvent.change(await screen.findByLabelText('emailAddress'),
-    { target: { value: '  User.Name+Tag@GMAIL.COM  ' } })
+    { target: { value: '  User.Name+Tag.More@GMAIL.COM  ' } })
   fireEvent.click(screen.getByRole('button', { name: 'requestEmailCode' }))
   await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/auth/email/request',
     expect.objectContaining({ body: JSON.stringify({
-      email: 'user.name+tag@gmail.com', locale: 'zh-CN'
+      email: 'user.name+tag.more@gmail.com', locale: 'zh-CN', intent: 'login'
     }) })))
 })

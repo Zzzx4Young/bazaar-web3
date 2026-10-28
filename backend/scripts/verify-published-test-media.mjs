@@ -33,7 +33,7 @@ try {
     select: { id: true, loginName: true }
   })
   const testSellers = new Set(accounts.filter((account) =>
-    /^v2-stress(?:-r2)?_seller_[1-6]@test\.com$/.test(account.loginName))
+    /^v2\.stress(?:\.r2)?\.seller\.[1-6]@gmail\.com$/.test(account.loginName))
     .map((account) => account.id))
   for (const item of all) {
     if (!testSellers.has(item.seller.id) || !item.description.startsWith('V2 seeded description ')) {

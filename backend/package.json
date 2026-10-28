@@ -16,6 +16,7 @@
     "start": "node --env-file-if-exists=.env dist/main.js",
     "dev": "npm run build && npm start",
     "db:psql": "node scripts/local-psql.mjs",
+    "auth:check-claims": "node --env-file-if-exists=.env scripts/check-gmail-claims.mjs",
     "archive:media": "node --env-file-if-exists=.env scripts/archive-order-media.mjs",
     "db:observer:grant": "node --env-file-if-exists=.tmp/i7-migrate.env scripts/apply-observer-grants.mjs",
     "db:observer:setup": "node scripts/setup-local-observer.mjs --confirm-local-create",

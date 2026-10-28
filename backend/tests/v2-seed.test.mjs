@@ -19,6 +19,10 @@ test('V2 seed plan covers dense listings, orders, currencies, and edge states', 
   assert.ok(plan.listings.every((listing) => categoryType[listing.category] === listing.type))
   assert.equal(plan.orders.length, V2_ORDER_COUNT)
   assert.ok(plan.accounts.length >= 12)
+  assert.ok(plan.accounts.every(account =>
+    /^[a-z0-9]+(?:\.[a-z0-9]+)*@gmail\.com$/.test(account.loginName)))
+  assert.equal(new Set(plan.accounts.map(account =>
+    account.loginName.replaceAll('.', ''))).size, plan.accounts.length)
   assert.ok(plan.listings.some((listing) => listing.title.length > 100))
   assert.ok(plan.listings.some((listing) => /[\u4e00-\u9fff]/u.test(listing.title)))
   assert.ok(plan.listings.some((listing) => listing.price.currency === 'BTC'))

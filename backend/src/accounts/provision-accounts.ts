@@ -2,6 +2,7 @@ import { type PrismaClient } from '../generated/prisma/client.js'
 import { hashPassword, normalizeLogin } from '../auth/password.js'
 import { DomainError } from '../common/domain-error.js'
 import { accountProvisionPolicy } from './account-policy.js'
+import { gmailIdentityKey } from '../auth/email-code.js'
 
 interface SeedAccount {
   loginName: string
@@ -37,7 +38,17 @@ export async function provisionAccounts(client: PrismaClient, input: unknown) {
   await client.$transaction(
     async (tx) => {
       for (const { passwordHash, ...account } of prepared) {
-        await tx.account.create({ data: { ...account, credential: { create: { passwordHash } } } })
+        const identityKey = account.loginName.endsWith('@gmail.com')
+          ? gmailIdentityKey(account.loginName) : null
+        if (identityKey)
+          await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${identityKey}, 0))::text AS locked`
+        const created = await tx.account.create({
+          data: { ...account, credential: { create: { passwordHash } } }
+        })
+        if (identityKey)
+          await tx.gmailClaim.create({
+            data: { key: identityKey, accountId: created.id }
+          })
       }
     },
     { timeout: accountProvisionPolicy.transactionTimeoutMs }

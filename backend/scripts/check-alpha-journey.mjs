@@ -221,10 +221,12 @@ try {
 
   stage = 'home catalog sections show both listing types from the API'
   await sellerPage.goto(`${origin}/zh-CN`)
-  await sellerPage.getByRole('heading', { name: '💎 数字资产' }).locator('..')
-    .getByText('Alpha E2E Digital Delivery').waitFor({ state: 'visible' })
-  await sellerPage.getByRole('heading', { name: '📦 实物二手' }).locator('..')
-    .getByText('Alpha E2E Inventory Item').waitFor({ state: 'visible' })
+  await sellerPage.locator('section').filter({
+    has: sellerPage.getByRole('heading', { name: '数字资产', exact: true })
+  }).getByText('Alpha E2E Digital Delivery').waitFor({ state: 'visible' })
+  await sellerPage.locator('section').filter({
+    has: sellerPage.getByRole('heading', { name: '实物二手', exact: true })
+  }).getByText('Alpha E2E Inventory Item').waitFor({ state: 'visible' })
 
   stage = 'favorites page and navigation agree on persisted public listings'
   await sellerPage.goto(`${origin}/zh-CN/listing/${digitalListingId}`)

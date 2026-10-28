@@ -2,7 +2,7 @@ import { isDatabaseUnavailable } from '../database/database-errors.js'
 import { type DomainErrorCode, type PublicErrorCode } from './error-codes.js'
 
 export class DomainError extends Error {
-  constructor(readonly code: DomainErrorCode) {
+  constructor(readonly code: DomainErrorCode, readonly retryAfterSeconds?: number) {
     super(code)
   }
 }
@@ -34,6 +34,8 @@ export function mapApplicationError(error: unknown): ErrorResult {
     if (error.code === 'MEDIA_LIMIT_REACHED') return { status: 429, code: error.code, retryable: true }
     if (error.code === 'FORBIDDEN') return { status: 403, code: error.code, retryable: false }
     if (error.code === 'NOT_FOUND') return { status: 404, code: error.code, retryable: false }
+    if (error.code === 'EMAIL_ACCOUNT_NOT_FOUND')
+      return { status: 404, code: error.code, retryable: false }
     if (
       [
         'INVALID_INPUT',
@@ -55,7 +57,7 @@ export function mapApplicationError(error: unknown): ErrorResult {
         'STATE_CONFLICT',
         'REFUND_REQUIRED',
         'RESTORE_CONFLICT'
-        , 'ACCOUNT_LINK_REQUIRED'
+        , 'ACCOUNT_LINK_REQUIRED', 'EMAIL_ACCOUNT_EXISTS'
       ].includes(error.code)
     ) {
       return { status: 409, code: error.code, retryable: false }

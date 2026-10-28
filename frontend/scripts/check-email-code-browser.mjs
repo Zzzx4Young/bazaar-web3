@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
 import { createServer } from 'node:net'
@@ -38,7 +38,8 @@ try {
   const config = readConfig({ DATABASE_URL: db.url.toString(), APP_ORIGIN: origin,
     EMAIL_CODE_HMAC_KEY: 'isolated-browser-test-key-at-least-32-bytes' })
   app = await createApp(config, false, {
-    emailSender: { send: async message => { sent.push(message) } }
+    emailSender: { provenance: 'dev_inbox',
+      send: async message => { sent.push(message) } }
   })
   await app.listen(0, '127.0.0.1')
   const backendOrigin = `http://127.0.0.1:${app.getHttpServer().address().port}`
@@ -51,6 +52,7 @@ try {
     ['node_modules/next/dist/bin/next', 'dev', '-p', String(frontendPort), '-H', '127.0.0.1'],
     { cwd: frontendDirectory, env: { ...process.env, BACKEND_ORIGIN: backendOrigin,
       NEXT_DIST_DIR: distName, NEXT_TS_CONFIG: tsconfigName,
+      NEXT_PUBLIC_EMAIL_CODE_DEV_INBOX: '1',
       NEXT_TELEMETRY_DISABLED: '1' }, stdio: ['ignore', 'pipe', 'pipe'] })
   let startupOutput = ''
   for (const stream of [frontend.stdout, frontend.stderr])
@@ -69,17 +71,20 @@ try {
   browser = await chromium.launch({ headless: true })
   const page = await browser.newPage()
   await page.goto(`${origin}/zh-CN/register`)
+  await page.getByText('使用 Gmail 验证码注册').waitFor()
   await page.getByLabel('Gmail 邮箱').fill(testEmail)
   await page.getByRole('button', { name: '获取验证码' }).click()
-  await page.getByRole('status').filter({ hasText: '验证码已发送' }).waitFor()
+  await page.getByRole('status').filter({
+    hasText: `--email ${testEmail} --purpose register`
+  }).waitFor()
   assert.equal(sent.length, 1)
   assert.equal(sent[0].to, testEmail)
 
   const challenge = await db.client.emailCodeChallenge.findFirstOrThrow({
-    where: { email: testEmail, purpose: 'login' }
+    where: { email: testEmail, purpose: 'register' }
   })
   assert.equal(challenge.codeHash,
-    codeDigest(config.emailCodeKey, challenge.id, testEmail, 'login', sent[0].code))
+    codeDigest(config.emailCodeKey, challenge.id, testEmail, 'register', sent[0].code))
   assert.equal(challenge.attempts, 0)
   assert.equal(challenge.consumedAt, null)
   assert.ok(challenge.expiresAt.getTime() > Date.now())
@@ -93,30 +98,43 @@ try {
     where: { provider_subject: { provider: 'email', subject: testEmail } }
   })
   assert.equal(identity.accountId, account.id)
+  assert.equal(identity.verificationSource, 'dev_inbox')
+  assert.ok(identity.verifiedAt)
+  assert.equal((await db.client.gmailClaim.findUniqueOrThrow({
+    where: { key: testEmail }
+  })).accountId, account.id)
+  assert.equal(await db.client.accountIdentityEvent.count({
+    where: { accountId: account.id, action: 'register' }
+  }), 1)
   assert.ok((await db.client.emailCodeChallenge.findUniqueOrThrow({
     where: { key: challenge.key }
   })).consumedAt)
   const firstSession = (await page.context().cookies(origin))
     .find(cookie => cookie.name === 'bazaar_session')?.value
   assert.ok(firstSession)
+  assert.equal((await db.client.session.findUniqueOrThrow({
+    where: { tokenHash: createHash('sha256').update(firstSession).digest('hex') }
+  })).authMethod, 'email_code_dev')
   await page.reload()
   await page.getByText(`登录名：${testEmail}`).waitFor()
 
   await page.getByRole('button', { name: /退出登录/ }).click()
   await page.getByRole('button', { name: '登录', exact: true }).waitFor()
   await page.goto(`${origin}/zh-CN/login`)
-  console.log('Registration complete; waiting for the 60-second email resend window')
-  await new Promise(done => setTimeout(done, 61_000))
+  console.log('Registration complete; checking a separate login challenge')
   await page.getByRole('main').getByRole('button', { name: '邮箱验证码登录' }).click()
+  await page.getByText('使用 Gmail 验证码登录').waitFor()
   await page.getByLabel('Gmail 邮箱').fill(testEmail)
   await page.getByRole('button', { name: '获取验证码' }).click()
-  await page.getByRole('status').filter({ hasText: '验证码已发送' }).waitFor()
+  await page.getByRole('status').filter({
+    hasText: `--email ${testEmail} --purpose login`
+  }).waitFor()
   assert.equal(sent.length, 2)
   assert.equal(sent[1].to, testEmail)
-  const secondChallenge = await db.client.emailCodeChallenge.findUniqueOrThrow({
-    where: { key: challenge.key }
+  const secondChallenge = await db.client.emailCodeChallenge.findFirstOrThrow({
+    where: { email: testEmail, purpose: 'login' }
   })
-  assert.notEqual(secondChallenge.id, challenge.id)
+  assert.notEqual(secondChallenge.key, challenge.key)
   assert.equal(secondChallenge.codeHash,
     codeDigest(config.emailCodeKey, secondChallenge.id, testEmail, 'login', sent[1].code))
 

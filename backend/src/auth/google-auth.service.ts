@@ -4,6 +4,8 @@ import { type AppConfig } from '../config.js'
 import { DomainError } from '../common/domain-error.js'
 import { AuthService, type Authenticated } from './auth.service.js'
 import { type GoogleClient } from './google-client.js'
+import { gmailIdentityKey } from './email-code.js'
+import { recordIdentityEvent } from './identity-event.js'
 
 const digest = (value: string) => createHash('sha256').update(value).digest('hex')
 const token = () => randomBytes(32).toString('base64url')
@@ -85,15 +87,20 @@ export class GoogleAuthService {
     if (attempt.mode === 'bind' && bindingAuth?.account.id !== attempt.accountId)
       throw new DomainError('FORBIDDEN')
     const auth = await this.client.$transaction(async tx => {
+      const profileKey = gmailIdentityKey(profile.email)
       const existing = await tx.accountIdentity.findUnique({
         where: { provider_subject: { provider: 'google', subject: profile.sub } },
         include: { account: true }
       })
       if (attempt.mode === 'bind') {
         if (!attempt.accountId) throw new DomainError('GOOGLE_INVALID')
+        await tx.$queryRaw`SELECT "id" FROM "Account" WHERE "id" = ${attempt.accountId}::uuid FOR UPDATE`
         const account = await tx.account.findUniqueOrThrow({ where: { id: attempt.accountId } })
         if (account.role !== 'participant' || account.status !== 'active') throw new DomainError('FORBIDDEN')
         if (existing && existing.accountId !== account.id) throw new DomainError('ACCOUNT_LINK_REQUIRED')
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${profileKey}, 0))::text AS locked`
+        const claim = await tx.gmailClaim.findUnique({ where: { key: profileKey } })
+        if (claim && claim.accountId !== account.id) throw new DomainError('ACCOUNT_LINK_REQUIRED')
         const otherEmail = await tx.accountIdentity.findUnique({
           where: { provider_subject: { provider: 'email', subject: profile.email } }
         })
@@ -102,32 +109,63 @@ export class GoogleAuthService {
         const nameOwner = await tx.account.findUnique({ where: { loginName: profile.email } })
         if (nameOwner && nameOwner.id !== account.id)
           throw new DomainError('ACCOUNT_LINK_REQUIRED')
+        if (!claim) await tx.gmailClaim.create({
+          data: { key: profileKey, accountId: account.id }
+        })
+        const previous = await tx.accountIdentity.findUnique({
+          where: { accountId_provider: { accountId: account.id, provider: 'google' } }
+        })
+        const verifiedAt = new Date()
         await tx.accountIdentity.upsert({
           where: { accountId_provider: { accountId: account.id, provider: 'google' } },
-          create: { accountId: account.id, provider: 'google', subject: profile.sub, email: profile.email },
-          update: { subject: profile.sub, email: profile.email }
+          create: { accountId: account.id, provider: 'google', subject: profile.sub,
+            email: profile.email, verifiedAt, verificationSource: 'google_oidc' },
+          update: { subject: profile.sub, email: profile.email,
+            verifiedAt, verificationSource: 'google_oidc' }
         })
-        return this.auth.issueSession(tx, account, cookies)
+        await recordIdentityEvent(tx, { accountId: account.id, provider: 'google',
+          action: !previous ? 'bind' : previous.subject === profile.sub ? 'reverify' : 'replace',
+          previousSubject: previous?.subject, currentSubject: profile.sub,
+          previousEmail: previous?.email, currentEmail: profile.email,
+          verificationSource: 'google_oidc' })
+        if (previous && gmailIdentityKey(previous.email) !== profileKey) {
+          const previousKey = gmailIdentityKey(previous.email)
+          const emailIdentity = await tx.accountIdentity.findUnique({
+            where: { accountId_provider: { accountId: account.id, provider: 'email' } }
+          })
+          const loginNameKey = account.loginName.toLowerCase().endsWith('@gmail.com')
+            ? gmailIdentityKey(account.loginName) : null
+          const emailKey = emailIdentity ? gmailIdentityKey(emailIdentity.subject) : null
+          if (loginNameKey !== previousKey && emailKey !== previousKey)
+            await tx.gmailClaim.deleteMany({ where: { key: previousKey, accountId: account.id } })
+        }
+        return this.auth.issueSession(tx, account, cookies, 'google_oidc')
       }
       if (existing) {
         if (existing.account.status !== 'active' || existing.account.role !== 'participant')
           throw new DomainError('INVALID_CREDENTIALS')
-        if (existing.email !== profile.email)
-          await tx.accountIdentity.update({ where: { id: existing.id }, data: { email: profile.email } })
-        return this.auth.issueSession(tx, existing.account, cookies)
+        return this.auth.issueSession(tx, existing.account, cookies, 'google_oidc')
       }
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${profileKey}, 0))::text AS locked`
+      if (await tx.gmailClaim.findUnique({ where: { key: profileKey } }))
+        throw new DomainError('ACCOUNT_LINK_REQUIRED')
       const sameEmail = await tx.accountIdentity.findUnique({
         where: { provider_subject: { provider: 'email', subject: profile.email } }
       })
       if (sameEmail || await tx.account.findUnique({ where: { loginName: profile.email } }))
         throw new DomainError('ACCOUNT_LINK_REQUIRED')
       const account = await tx.account.create({
-        data: { loginName: profile.email, displayName: profile.name }
+        data: { loginName: profileKey, displayName: profile.name }
       })
+      await tx.gmailClaim.create({ data: { key: profileKey, accountId: account.id } })
       await tx.accountIdentity.create({
-        data: { accountId: account.id, provider: 'google', subject: profile.sub, email: profile.email }
+        data: { accountId: account.id, provider: 'google', subject: profile.sub,
+          email: profile.email, verifiedAt: new Date(), verificationSource: 'google_oidc' }
       })
-      return this.auth.issueSession(tx, account, cookies)
+      await recordIdentityEvent(tx, { accountId: account.id, provider: 'google',
+        action: 'register', currentSubject: profile.sub, currentEmail: profile.email,
+        verificationSource: 'google_oidc' })
+      return this.auth.issueSession(tx, account, cookies, 'google_oidc')
     })
     return { auth, returnTo: attempt.returnTo }
   }

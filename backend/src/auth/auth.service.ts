@@ -11,11 +11,14 @@ import {
 
 const digest = (value: string) => createHash('sha256').update(value).digest('hex')
 export const csrfToken = (token: string) => digest(`csrf:${token}`)
+export type AuthMethod = 'password' | 'email_code' | 'email_code_dev' | 'google_oidc'
 export interface Authenticated {
   token: string
   tokenHash: string
   account: Account
   createdAt: Date
+  authMethod: AuthMethod | null
+  authenticatedAt: Date | null
 }
 
 export class AuthService {
@@ -82,10 +85,13 @@ export class AuthService {
       session.account.status !== 'active'
     )
       throw new DomainError('UNAUTHENTICATED')
-    return { token, tokenHash, account: session.account, createdAt: session.createdAt }
+    return { token, tokenHash, account: session.account, createdAt: session.createdAt,
+      authMethod: session.authMethod as AuthMethod | null,
+      authenticatedAt: session.authenticatedAt }
   }
 
-  async issueSession(tx: Transaction, account: Account, cookie?: string): Promise<Authenticated> {
+  async issueSession(tx: Transaction, account: Account, cookie: string | undefined,
+    authMethod: AuthMethod): Promise<Authenticated> {
     const token = randomBytes(32).toString('base64url')
     const tokenHash = digest(token)
     const now = new Date()
@@ -96,10 +102,10 @@ export class AuthService {
         data: { revokedAt: now }
       })
     await tx.session.create({
-      data: { tokenHash, accountId: account.id,
+      data: { tokenHash, accountId: account.id, authMethod, authenticatedAt: now,
         expiresAt: new Date(now.getTime() + sessionMaxAgeSeconds * 1000) }
     })
-    return { token, tokenHash, account, createdAt: now }
+    return { token, tokenHash, account, createdAt: now, authMethod, authenticatedAt: now }
   }
 
   checkCsrf(auth: Authenticated, header: string | string[] | undefined) {
@@ -115,7 +121,9 @@ export class AuthService {
     if (auth.account.role !== 'participant') throw new DomainError('FORBIDDEN')
     const credential = await this.client.accountCredential.findUnique({ where: { accountId: auth.account.id } })
     if (!credential) {
-      if (Date.now() - auth.createdAt.getTime() > 300_000) throw new DomainError('INVALID_CREDENTIALS')
+      if (!auth.authMethod || !auth.authenticatedAt ||
+          Date.now() - auth.authenticatedAt.getTime() > 300_000)
+        throw new DomainError('INVALID_CREDENTIALS')
       return
     }
     await this.consume(`ip:${ip}`, loginIpLimit)
@@ -151,7 +159,7 @@ export class AuthService {
           current.credential?.passwordHash !== account.credential?.passwordHash
         )
           throw new DomainError('INVALID_CREDENTIALS')
-        return this.issueSession(tx, current, cookie)
+        return this.issueSession(tx, current, cookie, 'password')
       })
     } finally {
       this.activeHashes--

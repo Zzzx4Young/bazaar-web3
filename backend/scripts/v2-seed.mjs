@@ -66,19 +66,20 @@ function money(index) {
 }
 
 export function buildV2SeedPlan({ seed = V2_SEED_PREFIX } = {}) {
+  const gmailPrefix = seed.replaceAll(/[_-]/g, '.')
   const accounts = [
     ...Array.from({ length: 6 }, (_, index) => ({
       key: `seller${index + 1}`,
-      loginName: `${seed}_seller_${index + 1}@test.com`,
+      loginName: `${gmailPrefix}.seller.${index + 1}@gmail.com`,
       displayName: `V2 Seller ${index + 1}`
     })),
     ...Array.from({ length: 6 }, (_, index) => ({
       key: `buyer${index + 1}`,
-      loginName: `${seed}_buyer_${index + 1}@test.com`,
+      loginName: `${gmailPrefix}.buyer.${index + 1}@gmail.com`,
       displayName: `V2 Buyer ${index + 1}`
     })),
-    { key: 'admin', loginName: `${seed}_admin@test.com`, displayName: 'V2 Admin' },
-    { key: 'observer', loginName: `${seed}_observer@test.com`, displayName: 'V2 Observer' }
+    { key: 'admin', loginName: `${gmailPrefix}.admin@gmail.com`, displayName: 'V2 Admin' },
+    { key: 'observer', loginName: `${gmailPrefix}.observer@gmail.com`, displayName: 'V2 Observer' }
   ]
 
   const listings = Array.from({ length: V2_LISTING_COUNT }, (_, index) => {
@@ -183,7 +184,10 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
   const { provisionAccounts } = await import('../dist/accounts/provision-accounts.js')
   const createdAccounts = await provisionAccounts(client, plan.accounts.map((account) => accountInput(account, password)))
   assert.equal(createdAccounts, plan.accounts.length)
-  const accountRows = await client.account.findMany({ where: { loginName: { startsWith: `${seed}_` } } })
+  const accountRows = await client.account.findMany({
+    where: { loginName: { in: plan.accounts.map(account => account.loginName) } }
+  })
+  assert.equal(accountRows.length, plan.accounts.length)
   const accountByKey = new Map(plan.accounts.map((account) => [account.key, accountRows.find((row) => row.loginName === account.loginName)]))
   for (const role of ['admin', 'observer']) {
     const account = accountByKey.get(role)

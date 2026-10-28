@@ -11,11 +11,13 @@ export interface EmailCodeMessage {
 }
 
 export interface EmailSender {
+  provenance: 'email_delivery' | 'dev_inbox'
   send(input: {
     to: string
     locale: EmailCodeLocale
     purpose: EmailCodePurpose
     code: string
+    challengeId: string
   }): Promise<void>
 }
 
@@ -23,7 +25,7 @@ export function normalizeGmail(input: string): string {
   const email = input.trim().toLowerCase()
   if (
     email.length > 100 ||
-    !/^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?(?:\+[a-z0-9_-]+)?@gmail\.com$/.test(email) ||
+    !/^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?(?:\+[a-z0-9_-]+(?:\.[a-z0-9_-]+)*)?@gmail\.com$/.test(email) ||
     email.includes('..')
   ) throw new DomainError('INVALID_INPUT')
   return email

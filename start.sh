@@ -163,8 +163,8 @@ media_env=(
 dev_email_env=(
   NODE_ENV=development
   EMAIL_CODE_HMAC_KEY_FILE="$repo_root/backend/.tmp/dev-email-key"
-  EMAIL_CODE_DEV_ACCOUNT_FILE="$repo_root/backend/.tmp/dev-email-account"
   EMAIL_CODE_DEV_INBOX_FILE="$repo_root/backend/.tmp/dev-email-inbox"
+  DEV_EMAIL_BIND_SKIP_REAUTH=1
 )
 proxy_env=()
 if [[ -n "${HTTPS_PROXY:-}${https_proxy:-}${HTTP_PROXY:-}${http_proxy:-}" ]]; then

@@ -9,6 +9,7 @@ import { createApp } from '../dist/app.js'
 import { readConfig } from '../dist/config.js'
 import { hashPassword } from '../dist/auth/password.js'
 import { pruneExpiredAuthRateBuckets, pruneExpiredAuthChallenges } from '../dist/auth/auth-rate-cleanup.js'
+import { recordIdentityEvent } from '../dist/auth/identity-event.js'
 
 const permissionDenied = (error) =>
   (error.meta?.code ?? error.meta?.driverAdapterError?.cause?.originalCode) === '42501'
@@ -73,7 +74,21 @@ test('C1: migration owner and restricted runtime support transactions without DD
     } })
     await app.client.accountIdentity.update({ where: { id: identity.id },
       data: { email: 'updated@example.com' } })
+    assert.equal(identity.verifiedAt, null)
+    assert.equal(identity.verificationSource, null)
     await assert.rejects(app.client.accountIdentity.delete({ where: { id: identity.id } }),
+      permissionDenied)
+    await recordIdentityEvent(app.client, {
+      accountId: f.buyer, provider: 'google', action: 'bind',
+      currentSubject: identity.subject, currentEmail: identity.email,
+      verificationSource: 'google_oidc'
+    })
+    const event = await migration.client.accountIdentityEvent.findFirstOrThrow({
+      where: { accountId: f.buyer }
+    })
+    await assert.rejects(app.client.accountIdentityEvent.findUnique({ where: { id: event.id } }),
+      permissionDenied)
+    await assert.rejects(app.client.accountIdentityEvent.delete({ where: { id: event.id } }),
       permissionDenied)
     const expiredAt = new Date(Date.now() - 25 * 60 * 60 * 1000)
     const challengeKey = randomBytes(32).toString('hex')
@@ -109,7 +124,7 @@ test('C1: migration owner and restricted runtime support transactions without DD
     })
     const googleClient = {
       authorizeUrl: ({ state }) => `https://accounts.google.com/o/oauth2/v2/auth?state=${state}`,
-      exchange: async () => ({ sub: randomUUID(), email: 'new-google@example.com', name: 'Google' })
+      exchange: async () => ({ sub: randomUUID(), email: 'new-google@gmail.com', name: 'Google' })
     }
     const http = await createApp(readConfig({ DATABASE_URL: urls[1].toString(),
       GOOGLE_CLIENT_ID: 'runtime-test', GOOGLE_CLIENT_SECRET: 'runtime-test-secret' }), false,

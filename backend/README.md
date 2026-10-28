@@ -41,14 +41,36 @@ Google 登录需创建 Web OAuth 客户端，在服务端配置 `GOOGLE_CLIENT_I
 Google 身份以 `sub` 关联账号，不按邮箱自动合并；已有密码账号须登录并重新输入密码后才能绑定。
 邮箱验证码固定 6 位、5 分钟有效，服务端使用 PostgreSQL 和 HMAC-SHA256 保存校验状态；
 生产环境目前没有邮件发送实现，申请和校验接口均返回 `EMAIL_UNAVAILABLE`。
-通过根目录 `./start.sh` 启动的本地开发环境会启用仅限随机测试 Gmail 账号的本地收件箱：
-`cat backend/.tmp/dev-email-account` 查看测试邮箱，在登录或注册页申请验证码后运行
-`node backend/scripts/read-dev-email-code.mjs` 读取验证码。验证码不会发送至真实邮箱；
-测试账号、密钥和收件箱均保存在 Git 忽略的 `backend/.tmp/` 中。勿在公开环境启用此模式。
+通过根目录 `./start.sh` 启动的本地开发环境允许任意格式合规的 Gmail 地址申请注册、登录或绑定验证码。
+验证码不会发送至真实邮箱；在页面申请后运行
+`node backend/scripts/read-dev-email-code.mjs --email your.name@gmail.com --purpose register`
+读取本地验证码，登录时将用途改为 `login`，绑定时改为 `bind`。不同地址的验证码互不覆盖。
+密钥和收件箱保存在 Git 忽略的 `backend/.tmp/` 中，本地绑定免再次输入密码仅在显式启用的
+development、loopback 环境可用；生产环境保持再次认证要求。
+
+账号的 `id` 始终是订单、商品及会话的归属键。Gmail 登录名或 `GmailClaim` 只保留
+邮箱别名的归属，不能证明已验证邮箱；验证码登录还需对应的 `AccountIdentity(provider=email)`。
+Gmail 去点号与 `+` 标签仅适用于 `gmail.com`，其他邮箱域名不能直接沿用此规则。
+Google 身份以单一 Google 提供方的 `sub` 识别；增加其他 OIDC 发行方前应将发行方纳入身份键。
+新建 Session 记录 `authMethod` 和 `authenticatedAt`；邮箱与 Google 身份记录验证时间和来源，
+绑定、换绑在同一事务中追加不可修改的 `AccountIdentityEvent`。既有记录保留空来源，
+不会假定历史邮箱已通过真实投递验证。开发收件箱验证码标记为 `dev_inbox`，不能作为
+真实邮箱所有权的证明。身份事件保留变更前后的标识与邮箱，属于敏感历史数据；
+运行角色仅能追加，不能读取、修改或删除，审计读取应使用受控的管理连接。
+历史 Google 身份的 Gmail 归属在迁移时回填；遇到不同账号争用同一归属，迁移会失败并等待人工处理。
+开发账号改写邮箱时会清除旧邮箱验证来源，并追加来源为 `unknown` 的迁移事件。
+`npm run auth:check-claims` 使用 `.env` 中的运行连接执行只读、一致性快照检查，
+核对登录名、邮箱与 Google 身份所需的 Gmail 归属；结果仅输出问题类型和账号 ID，
+不会输出地址或验证码。发现漂移时退出码为 1，不会自动修改归属；每表超过 5 万条时
+会拒绝并提示改用分页审计。部署前和身份迁移后应执行此检查。
+Alpha 模拟结算阶段保持现有订单与交付权限；真实资金操作上线前须按会话认证方式设计
+加强认证。生产邮件发送、换绑旧地址通知及邮箱身份历史数据的重新验证仍待接入，
+因此当前开发收件箱验收不能作为生产邮件安全验收。
 若网络需要 HTTP(S) 代理访问 Coinbase，使用 Node.js >=22.21 并在启动 Node 进程前设置
 `NODE_USE_ENV_PROXY=1`，同时提供可信的 `HTTPS_PROXY` 和适当的 `NO_PROXY`。
 根目录的 `./start.sh` 会在检测到代理变量时自动为宿主机后端设置此开关。
-启动不会自动迁移、生成商品或清理数据库。部署容器可用 `DATABASE_URL_FILE`
+`./start.sh` 会部署待执行迁移并刷新运行角色授权，但不会自动生成商品或清理数据库。
+部署容器可用 `DATABASE_URL_FILE`
 挂载连接信息，不能同时设置 `DATABASE_URL`；镜像与回滚见本地
 `docs/api-deployment-runbook.md`。
 

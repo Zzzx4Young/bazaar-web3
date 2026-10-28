@@ -15,14 +15,22 @@ class GoogleBindInput extends GoogleStartInput {
 }
 class EmailRequestInput {
   @IsEmail() email!: string
+  @IsIn(['register', 'login']) intent!: 'register' | 'login'
   @IsOptional() @IsIn(['zh-CN', 'en']) locale?: 'zh-CN' | 'en'
 }
 class EmailVerifyInput {
   @IsEmail() email!: string
   @IsString() @Length(6, 6) code!: string
+  @IsIn(['register', 'login']) intent!: 'register' | 'login'
 }
-class EmailBindRequestInput extends EmailRequestInput {
+class EmailBindRequestInput {
+  @IsEmail() email!: string
+  @IsOptional() @IsIn(['zh-CN', 'en']) locale?: 'zh-CN' | 'en'
   @IsOptional() @IsString() password?: string
+}
+class EmailBindVerifyInput {
+  @IsEmail() email!: string
+  @IsString() @Length(6, 6) code!: string
 }
 
 @Controller('auth')
@@ -34,7 +42,8 @@ export class IdentityController {
   ) {}
 
   @Public() @Get('methods') @Header('Cache-Control', 'no-store')
-  methods() { return { password: true, google: this.google.enabled, emailCode: this.email.enabled } }
+  methods() { return { password: true, google: this.google.enabled, emailCode: this.email.enabled,
+    emailBindPasswordRequired: !this.auth.config.devEmailBindSkipReauth } }
 
   @Get('identities') @Header('Cache-Control', 'no-store')
   async identities(@Req() request: AuthRequest) {
@@ -88,14 +97,15 @@ export class IdentityController {
 
   @Public() @Post('email/request') @HttpCode(202) @Header('Cache-Control', 'no-store')
   async emailRequest(@Body() input: EmailRequestInput, @Req() request: AuthRequest) {
-    await this.email.request(input.email, input.locale ?? 'zh-CN', request.ip)
+    await this.email.request(input.email, input.locale ?? 'zh-CN', request.ip, input.intent)
     return { accepted: true }
   }
 
   @Public() @Post('email/verify') @HttpCode(200) @Header('Cache-Control', 'no-store')
   async emailVerify(@Body() input: EmailVerifyInput, @Req() request: AuthRequest,
     @Res({ passthrough: true }) reply: FastifyReply) {
-    const auth = await this.email.verify(input.email, input.code, request.ip, request.headers.cookie)
+    const auth = await this.email.verify(input.email, input.code, request.ip,
+      request.headers.cookie, input.intent)
     reply.header('Set-Cookie', this.auth.cookie(auth.token))
     return this.auth.view(auth)
   }
@@ -103,14 +113,15 @@ export class IdentityController {
   @Post('email/bind/request') @HttpCode(202) @Header('Cache-Control', 'no-store')
   async emailBindRequest(@Body() input: EmailBindRequestInput, @Req() request: AuthRequest) {
     if (!this.email.enabled) throw new DomainError('EMAIL_UNAVAILABLE')
-    await this.auth.requireRecentAccountProof(request.auth, input.password, request.ip)
+    if (!this.auth.config.devEmailBindSkipReauth)
+      await this.auth.requireRecentAccountProof(request.auth, input.password, request.ip)
     await this.email.request(input.email, input.locale ?? 'zh-CN', request.ip,
       'bind', request.auth.account.id)
     return { accepted: true }
   }
 
   @Post('email/bind/verify') @HttpCode(200) @Header('Cache-Control', 'no-store')
-  async emailBindVerify(@Body() input: EmailVerifyInput, @Req() request: AuthRequest,
+  async emailBindVerify(@Body() input: EmailBindVerifyInput, @Req() request: AuthRequest,
     @Res({ passthrough: true }) reply: FastifyReply) {
     const auth = await this.email.verify(input.email, input.code, request.ip,
       request.headers.cookie, 'bind', request.auth.account.id)

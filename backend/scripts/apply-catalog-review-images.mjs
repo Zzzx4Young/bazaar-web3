@@ -150,7 +150,7 @@ try {
     assert.equal(row.title, target.product.title, `Title drift: ${source.id}`)
     assert.equal(row.publicationStatus, target.publicationStatus, `Status drift: ${source.id}`)
     assert.ok(row.description.includes('展示用测试商品；'), `Non-test listing: ${source.id}`)
-    assert.ok(/^v2-stress(?:-r2)?_seller_[1-6]@test\.com$/.test(row.listingSeller.loginName),
+    assert.ok(/^v2\.stress(?:\.r2)?\.seller\.[1-6]@gmail\.com$/.test(row.listingSeller.loginName),
       `Non-test seller: ${source.id}`)
     assert.ok(row.saleMode !== 'one_off' || row._count.orderListingRows === 0,
       `Ordered one-off listing: ${source.id}`)

@@ -25,7 +25,8 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-bold">{t('register')}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{t('registerHint')}</p>
       </div>
-      <IdentityOptions returnTo={returnTo} googleReturnTo={`/${locale}${returnTo}`} />
+      <IdentityOptions returnTo={returnTo} googleReturnTo={`/${locale}${returnTo}`}
+        emailIntent="register" />
       <p className="text-sm text-muted-foreground">
         {t('existingAccount')}{' '}
         <Link href={loginHref} className="font-medium text-primary hover:underline">

@@ -8,6 +8,7 @@ export async function assertAuthRuntimeGrants(client: PrismaClient) {
       ('AccountIdentity', 'SELECT'),
       ('AccountIdentity', 'INSERT'),
       ('AccountIdentity', 'UPDATE'),
+      ('AccountIdentityEvent', 'INSERT'),
       ('GmailClaim', 'SELECT'),
       ('GmailClaim', 'INSERT'),
       ('GmailClaim', 'DELETE'),

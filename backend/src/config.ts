@@ -20,6 +20,7 @@ export interface AppConfig {
   mediaStore: GarageStoreConfig | null
   googleOAuth: { clientId: string; clientSecret: string; redirectUri: string } | null
   emailCodeKey: Buffer | null
+  devEmailBindSkipReauth: boolean
 }
 
 function readSecret(env: NodeJS.ProcessEnv, valueName: string, fileName: string): string | null {
@@ -146,6 +147,13 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const emailSecret = readSecret(env, 'EMAIL_CODE_HMAC_KEY', 'EMAIL_CODE_HMAC_KEY_FILE')
   if (emailSecret && Buffer.byteLength(emailSecret) < 32)
     throw new Error('EMAIL_CODE_HMAC_KEY must contain at least 32 bytes')
+  if (env.DEV_EMAIL_BIND_SKIP_REAUTH && !['0', '1'].includes(env.DEV_EMAIL_BIND_SKIP_REAUTH))
+    throw new Error('Invalid DEV_EMAIL_BIND_SKIP_REAUTH')
+  const devEmailBindSkipReauth = env.DEV_EMAIL_BIND_SKIP_REAUTH === '1'
+  if (devEmailBindSkipReauth && (env.NODE_ENV !== 'development' ||
+      (env.HOST ?? '127.0.0.1') !== '127.0.0.1' ||
+      origin.origin !== 'http://localhost:3000'))
+    throw new Error('DEV_EMAIL_BIND_SKIP_REAUTH requires local development configuration')
   return {
     databaseUrl: url.toString(),
     host: env.HOST ?? '127.0.0.1',
@@ -161,6 +169,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       clientSecret: googleClientSecret,
       redirectUri: `${origin.origin}/api/auth/google/callback`
     } : null,
-    emailCodeKey: emailSecret ? Buffer.from(emailSecret) : null
+    emailCodeKey: emailSecret ? Buffer.from(emailSecret) : null,
+    devEmailBindSkipReauth
   }
 }
