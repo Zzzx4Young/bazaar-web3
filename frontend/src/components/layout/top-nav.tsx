@@ -168,6 +168,7 @@ export function TopNav() {
       {auth.error && !open && (
         <p role="alert" className="container text-sm text-destructive">
           {t('authError')}：{apiErrorCopy(auth.error, locale)}
+          {auth.errorRequestId && <span className="ml-2">{t('requestId', { id: auth.errorRequestId })}</span>}
         </p>
       )}
       <Dialog open={open} onOpenChange={setOpen}>
@@ -215,6 +216,9 @@ export function TopNav() {
               {auth.error && (
                 <p role="alert" className="text-sm text-destructive">
                   {t('authError')}：{apiErrorCopy(auth.error, locale)}
+                  {auth.errorRequestId && (
+                    <span className="ml-2">{t('requestId', { id: auth.errorRequestId })}</span>
+                  )}
                 </p>
               )}
               <Button type="submit" disabled={submitting}>

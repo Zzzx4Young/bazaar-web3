@@ -73,7 +73,7 @@ export default function AdminDisputeDetailPage() {
         <p className="break-words">{item.counteroffer ?? t('offerPending')}</p>
       </section>
       <div className="rounded-xl border bg-secondary/60 p-4 text-sm">
-        {item.refundRequested ? t('refundRequested') : t('refundNotRequested')}
+        {item.refundRequested ? t('refundRequested') : t('noPendingRefundRequest')}
       </div>
       {item.status === 'issue' && item.refundRequested && item.counteroffer && (
         <div className="space-y-3">

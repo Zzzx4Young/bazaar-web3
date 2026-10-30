@@ -38,6 +38,7 @@
     "password": "Password",
     "signingIn": "Signing in…",
     "authError": "The account request failed. Please retry.",
+    "requestId": "Request ID: {id}",
     "myItems": "My Listings",
     "favorites": "Favorites",
     "notifications": "Notifications",
@@ -84,13 +85,14 @@
     "actionError": "Action failed: {error}",
     "retry": "Retry resolution",
     "refundRequested": "Buyer requested a refund.",
-    "refundNotRequested": "Buyer has not requested a refund.",
+    "noPendingRefundRequest": "No buyer refund request is currently pending.",
     "noAction": "No resolution action is currently available. Review the status and both statements."
   },
   "orderDispute": {
     "sellerOffer": "Seller proposal",
     "sellerOfferHint": "Describe redelivery or another solution",
     "balance": "Simulated balance",
+    "balanceHint": "Cumulative simulated ledger net by currency: buyer payments are negative, refunds and seller releases are positive. This is not spendable or withdrawable money.",
     "adminResolved": "Administrator decision"
   },
   "orderReview": {
@@ -252,6 +254,80 @@
   "footer": {
     "tagline": "Internal Alpha · server persistence · simulated settlement"
   },
+  "mePage": {
+    "loading": "Restoring your session…",
+    "signInTitle": "Sign in to view your profile",
+    "signInHint": "Use the sign-in button at the top. Your listings and orders come from the Alpha server.",
+    "buyerTab": "Purchases",
+    "sellerTab": "Sales"
+  },
+  "myOrders": {
+    "signIn": "Sign in to see your orders.",
+    "loading": "Loading orders…",
+    "loadError": "Could not load orders: {error}",
+    "retry": "Retry",
+    "empty": "No orders yet.",
+    "physical": "Physical",
+    "digital": "Digital",
+    "orderId": "Order ID: {id}",
+    "detail": "View details"
+  },
+  "myListings": {
+    "loading": "Loading your listings…",
+    "loadError": "Could not load listings: {error}",
+    "invalidImages": "Choose up to 8 JPEG, PNG, or WebP images, each no larger than 5 MiB.",
+    "signInAgain": "Sign in again before uploading images.",
+    "withdrawn": "Listing withdrawn",
+    "updated": "Listing updated",
+    "updateError": "Update failed: {error}",
+    "empty": "You have no published listings.",
+    "title": "Listing title",
+    "price": "Listing price",
+    "description": "Listing description",
+    "license": "License terms",
+    "contentVersion": "Content version",
+    "imageNotice": "Replacing images keeps the originals in past order snapshots.",
+    "replaceImages": "Replace listing images",
+    "selectedImages": "{count} new images selected; leave empty to keep the current images.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "oneOff": "One-off sale",
+    "repeatable": "Repeatable sale",
+    "edit": "Edit",
+    "locked": "A one-off listing with an order cannot be edited.",
+    "withdraw": "Withdraw"
+  },
+  "profileHeader": {
+    "alphaAccount": "Alpha account",
+    "loginName": "Login name: {name}",
+    "publish": "Publish listing"
+  },
+  "createListing": {
+    "title": "Publish a listing",
+    "hint": "Listing details and digital license notes are saved on the Alpha server. Submit private delivery links only after order payment."
+  },
+  "notificationsPage": {
+    "title": "Notifications",
+    "unavailable": "Notifications are not available in Alpha",
+    "body": "Check your order status in Profile. This page does not show invented notifications or unread counts."
+  },
+  "favoritesPage": {
+    "title": "Favorites ({count})",
+    "loading": "Loading saved listings from the server…",
+    "loadError": "Could not load favorites: {error}"
+  },
+  "routeState": {
+    "errorTitle": "This page could not load",
+    "errorBody": "Retry. If the problem continues, contact support and include when it happened.",
+    "retry": "Retry",
+    "loading": "Loading page…"
+  },
+  "recordPagination": {
+    "label": "Record pages",
+    "status": "{total} records · Page {page} of {pages}",
+    "previous": "Previous page",
+    "next": "Next page"
+  },
   "apiErrors": {
     "UNKNOWN": "The action could not be completed. Please try again later.",
     "NETWORK_ERROR": "Network connection failed. Check your connection and try again.",
@@ -347,6 +423,7 @@
     "notRecorded": "Not recorded for this listing"
   },
   "orderDetailUi": {
+    "requestId": "Request ID: {id}",
     "snapshot": "Listing at purchase",
     "license": "License terms",
     "version": "Content version",

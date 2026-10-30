@@ -3,6 +3,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 import { useOrderCommand } from '@/hooks/use-order-command'
 import { authenticatedPost } from '@/lib/authenticated-api'
 import { useAuthStore } from '@/stores/use-auth-store'
+import { BackendError } from '@/lib/backend-api'
 
 vi.mock('@/lib/authenticated-api', () => ({ authenticatedPost: vi.fn() }))
 
@@ -36,6 +37,18 @@ it('replays the same payload and idempotency key after remounting an unknown res
   expect(vi.mocked(authenticatedPost).mock.calls[1]).toEqual(initialCall)
   expect(sessionStorage.getItem('bazaar:alpha-pending-command:buyer-1')).toBeNull()
   expect(restored.result.current.uncertain).toBe(false)
+})
+
+it('shows a safe request ID for an unknown payment outcome and clears it after retry', async () => {
+  vi.mocked(authenticatedPost)
+    .mockRejectedValueOnce(new BackendError('NETWORK_ERROR', 0, 'request-123', true))
+    .mockResolvedValueOnce({ orderId: 'order-1' })
+  const hook = renderHook(() => useOrderCommand())
+  await act(() => hook.result.current.run('/orders/order-1/actions/pay', {}))
+  expect(hook.result.current.uncertain).toBe(true)
+  expect(hook.result.current.errorRequestId).toBe('request-123')
+  await act(() => hook.result.current.retry())
+  expect(hook.result.current.errorRequestId).toBeNull()
 })
 
 function switchAccount(id: string) {

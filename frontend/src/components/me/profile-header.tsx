@@ -3,8 +3,10 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAuthStore } from '@/stores/use-auth-store'
+import { useTranslations } from 'next-intl'
 
 export function ProfileHeader() {
+  const t = useTranslations('profileHeader')
   const account = useAuthStore((state) => state.view?.account)
   if (!account) return null
   return (
@@ -16,15 +18,15 @@ export function ProfileHeader() {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-bold">{account.displayName}</h1>
-            <Badge variant="outline">Alpha 账户</Badge>
+            <Badge variant="outline">{t('alphaAccount')}</Badge>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">登录名：{account.loginName}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('loginName', { name: account.loginName })}</p>
         </div>
         <Link
           href="/publish"
           className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          发布商品
+          {t('publish')}
         </Link>
       </CardContent>
     </Card>

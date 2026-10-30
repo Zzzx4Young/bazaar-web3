@@ -38,6 +38,7 @@
     "password": "密码",
     "signingIn": "登录中…",
     "authError": "账户请求失败，请重试。",
+    "requestId": "Request ID: {id}",
     "myItems": "我的商品",
     "favorites": "收藏",
     "notifications": "通知",
@@ -84,13 +85,14 @@
     "actionError": "操作失败：{error}",
     "retry": "重试原裁决",
     "refundRequested": "买家已请求退款。",
-    "refundNotRequested": "买家尚未请求退款。",
+    "noPendingRefundRequest": "当前无待处理的买家退款申请。",
     "noAction": "当前无可裁决操作；请查看争议状态与双方说明。"
   },
   "orderDispute": {
     "sellerOffer": "卖家方案",
     "sellerOfferHint": "说明补交、重新交付或其他处理方案",
     "balance": "模拟余额",
+    "balanceHint": "按币种累计的模拟账本净额：买家付款记负、退款记正，卖家放款记正。此金额不可用于真实支付或提现。",
     "adminResolved": "管理员裁决"
   },
   "orderReview": {
@@ -252,6 +254,80 @@
   "footer": {
     "tagline": "内部 Alpha · 服务端持久化 · 模拟结算"
   },
+  "mePage": {
+    "loading": "正在恢复账户会话…",
+    "signInTitle": "登录后查看个人中心",
+    "signInHint": "请使用页面右上角的登录入口。个人商品和订单均从 Alpha 服务端读取。",
+    "buyerTab": "我买到的",
+    "sellerTab": "我卖出的"
+  },
+  "myOrders": {
+    "signIn": "请先登录查看真实订单。",
+    "loading": "正在加载订单…",
+    "loadError": "订单加载失败：{error}",
+    "retry": "重试",
+    "empty": "暂无真实订单。",
+    "physical": "实物",
+    "digital": "数字资产",
+    "orderId": "订单号：{id}",
+    "detail": "查看详情"
+  },
+  "myListings": {
+    "loading": "正在加载我的商品…",
+    "loadError": "商品加载失败：{error}",
+    "invalidImages": "请选择至多 8 张 JPEG、PNG 或 WebP 图片，每张不超过 5 MiB。",
+    "signInAgain": "请重新登录后上传图片。",
+    "withdrawn": "商品已下架",
+    "updated": "商品已更新",
+    "updateError": "更新失败：{error}",
+    "empty": "暂无已发布商品。",
+    "title": "商品标题",
+    "price": "商品价格",
+    "description": "商品描述",
+    "license": "授权说明",
+    "contentVersion": "内容版本",
+    "imageNotice": "更换图片会保留历史订单中的原图。",
+    "replaceImages": "更换商品图片",
+    "selectedImages": "已选 {count} 张新图片；不选则保留当前图片。",
+    "save": "保存",
+    "cancel": "取消",
+    "oneOff": "仅售一次",
+    "repeatable": "可重复销售",
+    "edit": "编辑",
+    "locked": "已有订单，一次性商品不可编辑",
+    "withdraw": "下架"
+  },
+  "profileHeader": {
+    "alphaAccount": "Alpha 账户",
+    "loginName": "登录名：{name}",
+    "publish": "发布商品"
+  },
+  "createListing": {
+    "title": "发布商品",
+    "hint": "商品及数字授权元数据将写入 Alpha 服务端；私有交付链接在订单付款后单独提交。"
+  },
+  "notificationsPage": {
+    "title": "通知",
+    "unavailable": "Alpha 暂未开放通知服务",
+    "body": "当前订单状态请在“我的”页面查看。这里不会展示虚构通知或未落库的未读数量。"
+  },
+  "favoritesPage": {
+    "title": "我的收藏 ({count})",
+    "loading": "正在从服务端加载收藏商品…",
+    "loadError": "收藏商品加载失败：{error}"
+  },
+  "routeState": {
+    "errorTitle": "页面暂时无法加载",
+    "errorBody": "请重试；如果问题持续，请联系支持人员并说明发生时间。",
+    "retry": "重试",
+    "loading": "页面加载中…"
+  },
+  "recordPagination": {
+    "label": "记录分页",
+    "status": "共 {total} 条 · 第 {page} / {pages} 页",
+    "previous": "上一页",
+    "next": "下一页"
+  },
   "apiErrors": {
     "UNKNOWN": "操作未完成，请稍后重试。",
     "NETWORK_ERROR": "网络连接失败，请检查网络后重试。",
@@ -347,6 +423,7 @@
     "notRecorded": "当前商品未记录"
   },
   "orderDetailUi": {
+    "requestId": "Request ID: {id}",
     "snapshot": "购买时商品信息",
     "license": "授权说明",
     "version": "内容版本",

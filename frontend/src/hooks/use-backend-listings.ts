@@ -21,15 +21,20 @@ export function useBackendListings(params: URLSearchParams) {
     const request = new URLSearchParams(query)
     const pageNumber = Number(request.get('page') ?? '1')
     request.delete('page')
+    const linkedQuoteId = request.get('quoteId')
+    request.delete('quoteId')
     const filterKey = request.toString()
     if (pageNumber === 1) quote.current = null
-    else if (request.get('sort')?.startsWith('price_') && quote.current?.key === filterKey)
-      request.set('quoteId', quote.current.id)
+    else if (request.get('sort')?.startsWith('price_')) {
+      if (linkedQuoteId && /^[0-9a-f-]{36}$/i.test(linkedQuoteId))
+        quote.current = { key: filterKey, id: linkedQuoteId }
+      if (quote.current?.key === filterKey) request.set('quoteId', quote.current.id)
+    }
     request.set('page', String(pageNumber))
     fetchListings(request)
       .then((page) => {
         if (!cancelled) {
-          if (page.quote && pageNumber === 1) quote.current = { key: filterKey, id: page.quote.id }
+          if (page.quote) quote.current = { key: filterKey, id: page.quote.id }
           setItems(page.items.map(toItem))
           setHasMore(page.hasMore)
           setTotal(page.total)
@@ -46,5 +51,5 @@ export function useBackendListings(params: URLSearchParams) {
       cancelled = true
     }
   }, [query, locale])
-  return { items, loading, error, hasMore, total, page }
+  return { items, loading, error, hasMore, total, page, quoteId: quote.current?.id ?? null }
 }

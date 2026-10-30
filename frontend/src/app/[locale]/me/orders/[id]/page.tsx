@@ -205,6 +205,9 @@ export default function OrderDetailPage() {
       {command.error && (
         <p role="alert" className="text-destructive">
           {tUi('actionError', { error: command.error })}
+          {command.errorRequestId && (
+            <span className="ml-2">{tUi('requestId', { id: command.errorRequestId })}</span>
+          )}
         </p>
       )}
       {command.uncertain && (
@@ -280,6 +283,7 @@ export default function OrderDetailPage() {
       {!!balances.data?.items.length && (
         <div data-testid="simulated-balance" className="rounded-lg border p-3 text-sm">
           <p className="font-medium">{tDispute('balance')}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{tDispute('balanceHint')}</p>
           {balances.data.items.map((item) => (
             <p key={item.currency}>
               {item.amount} {item.currency}

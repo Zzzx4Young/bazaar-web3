@@ -9,7 +9,7 @@ import { useApiResource } from '@/hooks/use-api-resource'
 import { authenticatedPost } from '@/lib/authenticated-api'
 import { BackendError, uploadListingImage, type BackendListing, type ListingPage } from '@/lib/backend-api'
 import { apiErrorCopy } from '@/lib/api-error-copy'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { transactionLabel } from '@/lib/transaction-copy'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { useStoredPage } from '@/hooks/use-stored-page'
@@ -18,6 +18,7 @@ import { paginationPolicy } from '@/lib/pagination'
 
 export function BackendListings() {
   const locale = useLocale()
+  const t = useTranslations('myListings')
   const accountId = useAuthStore((state) => state.view?.account.id)
   const [page, setPage] = useStoredPage(`bazaar:listings:${accountId ?? 'guest'}`)
   const resource = useApiResource<ListingPage>(
@@ -29,15 +30,17 @@ export function BackendListings() {
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [description, setDescription] = useState('')
+  const [licenseDescription, setLicenseDescription] = useState('')
+  const [contentVersion, setContentVersion] = useState('')
   const [photos, setPhotos] = useState<File[]>([])
   const [saving, setSaving] = useState(false)
   const csrfToken = useAuthStore((state) => state.view?.csrfToken)
   const [error, setError] = useState<string>()
-  if (resource.loading) return <p role="status">正在加载我的商品…</p>
+  if (resource.loading) return <p role="status">{t('loading')}</p>
   if (resource.error)
     return (
       <p role="alert" className="text-sm text-destructive">
-        商品加载失败：{resource.error}
+        {t('loadError', { error: resource.error })}
       </p>
     )
   const save = async (listing: BackendListing, publicationStatus?: 'published' | 'withdrawn') => {
@@ -47,8 +50,8 @@ export function BackendListings() {
       if (photos.length > 8 || photos.some((photo) =>
         !['image/jpeg', 'image/png', 'image/webp'].includes(photo.type) ||
         photo.size < 1 || photo.size > 5 * 1024 * 1024))
-        throw new Error('请选择至多 8 张 JPEG、PNG 或 WebP 图片，每张不超过 5 MiB。')
-      if (!publicationStatus && photos.length && !csrfToken) throw new Error('请重新登录后上传图片。')
+        throw new Error(t('invalidImages'))
+      if (!publicationStatus && photos.length && !csrfToken) throw new Error(t('signInAgain'))
       const mediaIds = publicationStatus || !photos.length ? undefined : [] as string[]
       if (mediaIds && csrfToken) {
         for (const photo of photos) mediaIds.push(await uploadListingImage(csrfToken, photo))
@@ -57,29 +60,30 @@ export function BackendListings() {
         version: listing.version,
         ...(publicationStatus ? { publicationStatus } : {
           title, description, priceAmount: price,
+          ...(listing.type === 'digital' ? { licenseDescription, contentVersion } : {}),
           ...(mediaIds ? { mediaIds } : {})
         })
       })
       setEditing(null)
       setPhotos([])
-      toast.success(publicationStatus === 'withdrawn' ? '商品已下架' : '商品已更新')
+      toast.success(t(publicationStatus === 'withdrawn' ? 'withdrawn' : 'updated'))
       resource.reload()
     } catch (failure) {
       const message = failure instanceof BackendError ? apiErrorCopy(failure, locale)
         : failure instanceof Error ? failure.message : apiErrorCopy(failure, locale)
       setError(message)
-      toast.error(`更新失败：${message}`)
+      toast.error(t('updateError', { error: message }))
     } finally {
       setSaving(false)
     }
   }
   const items = resource.data?.items ?? []
-  if (!items.length && page === 1) return <p className="text-sm text-muted-foreground">暂无已发布商品。</p>
+  if (!items.length && page === 1) return <p className="text-sm text-muted-foreground">{t('empty')}</p>
   return (
     <div className="space-y-3">
       {error && (
         <p role="alert" className="text-sm text-destructive">
-          更新失败：{error}
+          {t('updateError', { error })}
         </p>
       )}
       {items.map((listing) => (
@@ -87,27 +91,35 @@ export function BackendListings() {
           {editing === listing.id ? (
             <div className="space-y-2">
               <Input
-                aria-label="商品标题"
+                aria-label={t('title')}
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
               />
               <Input
-                aria-label="商品价格"
+                aria-label={t('price')}
                 value={price}
                 onChange={(event) => setPrice(event.target.value)}
                 inputMode="decimal"
               />
-              <Textarea aria-label="商品描述" value={description}
+              <Textarea aria-label={t('description')} value={description}
                 onChange={(event) => setDescription(event.target.value)} />
-              <p className="text-xs text-muted-foreground">更换图片会保留历史订单中的原图。</p>
-              <Input aria-label="更换商品图片" type="file" multiple
+              {listing.type === 'digital' && (
+                <>
+                  <Textarea aria-label={t('license')} value={licenseDescription}
+                    onChange={(event) => setLicenseDescription(event.target.value)} />
+                  <Input aria-label={t('contentVersion')} value={contentVersion}
+                    onChange={(event) => setContentVersion(event.target.value)} />
+                </>
+              )}
+              <p className="text-xs text-muted-foreground">{t('imageNotice')}</p>
+              <Input aria-label={t('replaceImages')} type="file" multiple
                 accept="image/jpeg,image/png,image/webp"
                 onChange={(event) => setPhotos(Array.from(event.target.files ?? []))} />
-              <p className="text-xs text-muted-foreground">已选 {photos.length} 张新图片；不选则保留当前图片。</p>
+              <p className="text-xs text-muted-foreground">{t('selectedImages', { count: photos.length })}</p>
               <div className="flex gap-2">
-                <Button disabled={saving} onClick={() => void save(listing)}>保存</Button>
+                <Button disabled={saving} onClick={() => void save(listing)}>{t('save')}</Button>
                 <Button variant="outline" disabled={saving} onClick={() => setEditing(null)}>
-                  取消
+                  {t('cancel')}
                 </Button>
               </div>
             </div>
@@ -117,9 +129,9 @@ export function BackendListings() {
                 <div className="min-w-0 flex-1">
                   <h3 className="break-words font-medium">{listing.title}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {listing.price.amount} {listing.price.currency} · v{listing.version} · {listing.saleMode === 'one_off' ? '仅售一次' : '可重复销售'}
+                    {listing.price.amount} {listing.price.currency} · v{listing.version} · {t(listing.saleMode === 'one_off' ? 'oneOff' : 'repeatable')}
                   </p>
-                  {listing.media[0] && <img src={listing.media[0].url} alt={listing.title}
+                  {listing.media[0] && <img src={listing.media[0].url} alt={listing.title} width={80} height={80}
                     className="mt-2 h-20 w-20 rounded object-cover" />}
                 </div>
                 <span className="shrink-0 text-sm">{transactionLabel(listing.publicationStatus, locale)}</span>
@@ -133,18 +145,20 @@ export function BackendListings() {
                       setTitle(listing.title)
                       setPrice(listing.price.amount)
                       setDescription(listing.description)
+                      setLicenseDescription(listing.licenseDescription ?? '')
+                      setContentVersion(listing.contentVersion ?? '')
                       setPhotos([])
                     }}
                   >
-                    编辑
+                    {t('edit')}
                   </Button>
                 ) : (
                   <span className="self-center text-xs text-muted-foreground">
-                    已有订单，一次性商品不可编辑
+                    {t('locked')}
                   </span>
                 )}
                 <Button variant="outline" disabled={saving} onClick={() => void save(listing, 'withdrawn')}>
-                  下架
+                  {t('withdraw')}
                 </Button>
               </div>
             </>

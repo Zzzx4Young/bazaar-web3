@@ -1,16 +1,25 @@
 'use client'
 
-import { Suspense, useEffect, useMemo } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { FilterSidebar } from '@/components/explore/filter-sidebar'
 import { SortDropdown } from '@/components/explore/sort-dropdown'
 import { ItemGrid } from '@/components/home/item-grid'
 import { marketplaceCategories } from '@/lib/categories'
-import { useFilterStore } from '@/stores/use-filter-store'
 import { useSearchParams } from 'next/navigation'
-import type { SortBy } from '@/types'
+import type { FilterState, SortBy } from '@/types'
 import { useBackendListings } from '@/hooks/use-backend-listings'
 import { Pagination } from '@/components/explore/pagination'
 import { useTranslations } from 'next-intl'
+import { categoryForType, parseExploreQuery, serializeExploreQuery } from '@/lib/explore-query'
+
+function writeExploreUrl(filter: FilterState, quoteId: string | null, replace = false) {
+  const params = new URLSearchParams(serializeExploreQuery(filter))
+  if (filter.page > 1 && filter.sortBy.startsWith('price_') && quoteId)
+    params.set('quoteId', quoteId)
+  const serialized = params.toString()
+  const url = `${window.location.pathname}${serialized ? `?${serialized}` : ''}`
+  window.history[replace ? 'replaceState' : 'pushState'](window.history.state, '', url)
+}
 
 export default function ExplorePage() {
   const t = useTranslations('explore')
@@ -24,18 +33,16 @@ export default function ExplorePage() {
 function ExploreContent() {
   const t = useTranslations('explore')
   const searchParams = useSearchParams()
-  const categoryParam = searchParams.get('category')
-  const typeParam = searchParams.get('type')
-  const filter = useFilterStore()
-  const setCategory = filter.setCategory
-  const setItemCategory = filter.setItemCategory
-  const setPage = filter.setPage
+  const query = searchParams.toString()
+  const linkedQuoteId = searchParams.get('quoteId')
+  const [filter, setFilter] = useState<FilterState>(() => parseExploreQuery(searchParams))
   useEffect(() => {
-    setCategory(marketplaceCategories.find((category) => category.id === categoryParam)?.id)
-  }, [categoryParam, setCategory])
-  useEffect(() => {
-    setItemCategory(typeParam === 'physical' || typeParam === 'digital' ? typeParam : undefined)
-  }, [typeParam, setItemCategory])
+    setFilter(parseExploreQuery(new URLSearchParams(query)))
+  }, [query])
+  const updateFilter = (next: FilterState, replace = false) => {
+    setFilter(next)
+    writeExploreUrl(next, backend.quoteId, replace)
+  }
   const backendParams = useMemo(() => {
     const params = new URLSearchParams({
       sort: filter.sortBy,
@@ -46,6 +53,8 @@ function ExploreContent() {
     if (filter.itemCategory) params.set('type', filter.itemCategory)
     if (filter.currency) params.set('currency', filter.currency)
     if (filter.keyword?.trim()) params.set('keyword', filter.keyword.trim())
+    if (filter.page > 1 && filter.sortBy.startsWith('price_') && linkedQuoteId)
+      params.set('quoteId', linkedQuoteId)
     return params
   }, [
     filter.category,
@@ -54,13 +63,18 @@ function ExploreContent() {
     filter.keyword,
     filter.page,
     filter.pageSize,
-    filter.sortBy
+    filter.sortBy,
+    linkedQuoteId
   ])
   const backend = useBackendListings(backendParams)
   const totalPages = Math.max(1, Math.ceil(backend.total / filter.pageSize))
   useEffect(() => {
-    if (filter.page > totalPages) setPage(totalPages)
-  }, [filter.page, setPage, totalPages])
+    if (!backend.loading && !backend.error && backend.page === filter.page && filter.page > totalPages) {
+      const next = { ...filter, page: totalPages }
+      setFilter(next)
+      writeExploreUrl(next, backend.quoteId, true)
+    }
+  }, [backend.loading, backend.error, backend.page, backend.quoteId, filter, totalPages])
 
   return (
     <div className="space-y-8">
@@ -76,11 +90,23 @@ function ExploreContent() {
           <FilterSidebar
             categories={marketplaceCategories}
             filter={filter}
-            onKeyword={(v) => filter.setKeyword(v || undefined)}
-            onCategory={(v) => filter.setCategory(v)}
-            onItemCategory={(v) => filter.setItemCategory(v)}
-            onCurrency={(v) => filter.setCurrency(v)}
-            onReset={() => filter.reset()}
+            onKeyword={(value) => updateFilter({ ...filter, keyword: value || undefined, page: 1 }, true)}
+            onCategory={(category) => updateFilter({
+              ...filter,
+              category,
+              itemCategory: category && filter.itemCategory &&
+                marketplaceCategories.find((entry) => entry.id === category)?.itemCategory !== filter.itemCategory
+                ? undefined : filter.itemCategory,
+              page: 1
+            })}
+            onItemCategory={(itemCategory) => updateFilter({
+              ...filter,
+              itemCategory,
+              category: categoryForType(filter.category, itemCategory),
+              page: 1
+            })}
+            onCurrency={(currency) => updateFilter({ ...filter, currency, page: 1 })}
+            onReset={() => updateFilter(parseExploreQuery(new URLSearchParams()))}
           />
         </aside>
 
@@ -95,7 +121,7 @@ function ExploreContent() {
             <div className="text-sm text-muted-foreground">
               {t('count', { count: backend.total })}
             </div>
-            <SortDropdown value={filter.sortBy} onChange={(v: SortBy) => filter.setSortBy(v)} />
+            <SortDropdown value={filter.sortBy} onChange={(sortBy: SortBy) => updateFilter({ ...filter, sortBy, page: 1 })} />
           </div>
 
           {!backend.loading && <ItemGrid items={backend.items} />}
@@ -104,7 +130,7 @@ function ExploreContent() {
               page={filter.page}
               pageSize={filter.pageSize}
               total={backend.total}
-              onPageChange={setPage}
+              onPageChange={(page) => updateFilter({ ...filter, page })}
             />
           )}
         </div>
