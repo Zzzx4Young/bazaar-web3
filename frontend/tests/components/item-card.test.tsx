@@ -11,7 +11,9 @@ const baseItem: Item = {
   category: 'physical',
   tags: [],
   price: { amount: 6899, currency: 'CNY' },
-  media: [{ type: 'image', url: 'https://placehold.co/600x400/000/fff?text=iPhone', alt: 'iPhone' }],
+  media: [
+    { type: 'image', url: 'https://placehold.co/600x400/000/fff?text=iPhone', alt: 'iPhone' }
+  ],
   status: 'active',
   viewCount: 0,
   favoriteCount: 0,
@@ -33,13 +35,22 @@ const baseSeller: Seller = {
 describe('ItemCard', () => {
   it('displays supplied media and falls back only for missing or failed images', () => {
     const { rerender } = render(<ItemCard item={baseItem} />)
-    expect(screen.getByRole('img', { name: 'iPhone' })).toHaveAttribute('src', baseItem.media[0]!.url)
+    expect(screen.getByRole('img', { name: 'iPhone' })).toHaveAttribute(
+      'src',
+      baseItem.media[0]!.url
+    )
     expect(screen.queryByTestId('placeholder-art')).not.toBeInTheDocument()
     fireEvent.error(screen.getByRole('img', { name: 'iPhone' }))
     expect(screen.getByTestId('placeholder-art')).toBeInTheDocument()
-    const replacement = { ...baseItem, media: [{ type: 'image' as const, url: 'https://placehold.co/new.png', alt: 'Replacement' }] }
+    const replacement = {
+      ...baseItem,
+      media: [{ type: 'image' as const, url: 'https://placehold.co/new.png', alt: 'Replacement' }]
+    }
     rerender(<ItemCard item={replacement} />)
-    expect(screen.getByRole('img', { name: 'Replacement' })).toHaveAttribute('src', replacement.media[0]!.url)
+    expect(screen.getByRole('img', { name: 'Replacement' })).toHaveAttribute(
+      'src',
+      replacement.media[0]!.url
+    )
     rerender(<ItemCard item={{ ...baseItem, media: [] }} />)
     expect(screen.getByTestId('placeholder-art')).toBeInTheDocument()
   })
@@ -103,6 +114,31 @@ describe('ItemCard', () => {
     }
     render(<ItemCard item={samePriceItem} />)
     expect(screen.queryByText('降价')).not.toBeInTheDocument()
+  })
+
+  it('shows comparable facts supplied by the seller without inventing missing rights', () => {
+    const digitalItem: Item = {
+      ...baseItem,
+      category: 'digital',
+      contentVersion: 'v2.4',
+      licenseDescription: 'Personal use only'
+    }
+    const { rerender } = render(<ItemCard item={digitalItem} />)
+    expect(screen.getByText(/v2.4/)).toBeInTheDocument()
+    expect(screen.getByText(/Personal use only/)).toBeInTheDocument()
+    rerender(
+      <ItemCard
+        item={{ ...digitalItem, contentVersion: undefined, licenseDescription: undefined }}
+      />
+    )
+    expect(screen.queryByText(/v2.4/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Personal use only/)).not.toBeInTheDocument()
+  })
+
+  it('shows condition and delivery for a physical listing', () => {
+    render(<ItemCard item={{ ...baseItem, condition: 'good', shippingMethod: 'delivery' }} />)
+    expect(screen.getByText(/conditionGood/)).toBeInTheDocument()
+    expect(screen.getByText(/shippingDelivery/)).toBeInTheDocument()
   })
 
   it('shows original price line-through when discounted', () => {

@@ -15,6 +15,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { OrderHistory, useOrderHistory } from '@/components/me/order-history'
+import { OrderSnapshot } from '@/components/me/order-snapshot'
 import { useApiResource } from '@/hooks/use-api-resource'
 import { useOrderCommand } from '@/hooks/use-order-command'
 import { useVisiblePolling } from '@/hooks/use-visible-polling'
@@ -33,6 +34,7 @@ export default function OrderDetailPage() {
   const params = useParams<{ id: string }>()
   const tDispute = useTranslations('orderDispute')
   const tReview = useTranslations('orderReview')
+  const tUi = useTranslations('orderDetailUi')
   const locale = useLocale()
   const auth = useAuthStore()
   const resource = useApiResource<OrderDetail>(`/orders/${encodeURIComponent(params.id)}`, {}, true)
@@ -61,11 +63,11 @@ export default function OrderDetailPage() {
     }
     previousStatus.current = status
   }, [resource.data?.status, reloadBalances, reloadHistory])
-  if (resource.loading) return <p role="status">正在加载订单…</p>
+  if (resource.loading) return <p role="status">{tUi('loading')}</p>
   if (resource.error || !resource.data)
     return (
       <p role="alert" className="text-destructive">
-        订单加载失败：{resource.error ?? apiErrorCopy('NOT_FOUND', locale)}
+        {tUi('loadError', { error: resource.error ?? apiErrorCopy('NOT_FOUND', locale) })}
       </p>
     )
   const order = resource.data
@@ -93,7 +95,7 @@ export default function OrderDetailPage() {
     }
   }
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">{order.title}</h1>
         <p className="text-sm text-muted-foreground">
@@ -104,13 +106,22 @@ export default function OrderDetailPage() {
           {order.price.amount} {order.price.currency}
         </p>
       </div>
-      <MediaCarousel
-        media={(order.snapshot.media ?? []).map((entry) => ({
-          type: 'image', url: entry.url, alt: order.snapshot.title
-        }))}
-        alt={order.snapshot.title}
-        illustrative={hasIllustrativeImages(order.snapshot.description)}
-      />
+      <div className="max-w-xl">
+        <MediaCarousel
+          media={(order.snapshot.media ?? []).map((entry) => ({
+            type: 'image',
+            url: entry.url,
+            alt: order.snapshot.title
+          }))}
+          alt={order.snapshot.title}
+          illustrative={hasIllustrativeImages(order.snapshot.description)}
+        />
+      </div>
+      <OrderSnapshot type={order.type} snapshot={order.snapshot} />
+      <div className="rounded-xl border bg-secondary/60 p-4 text-sm">
+        <strong>{tUi('simulated')}</strong>
+        <p className="mt-1 text-muted-foreground">{tUi('futureWallet')}</p>
+      </div>
       {order.checkoutId && (
         <Link
           href={`/me/checkouts/${order.checkoutId}`}
@@ -121,7 +132,7 @@ export default function OrderDetailPage() {
       )}
       {order.shipping && (
         <div className="rounded-lg border p-4 text-sm">
-          <p className="font-medium">收货信息</p>
+          <p className="font-medium">{tUi('shipping')}</p>
           <p>
             {order.shipping.recipient} · {order.shipping.contact}
           </p>
@@ -130,8 +141,8 @@ export default function OrderDetailPage() {
       )}
       {actions.includes('issue') && (
         <Input
-          aria-label="问题描述"
-          placeholder="描述商品问题"
+          aria-label={tUi('issueLabel')}
+          placeholder={tUi('issueHint')}
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
@@ -147,14 +158,14 @@ export default function OrderDetailPage() {
       {order.type === 'digital' && actions.includes('deliver') && (
         <div className="space-y-2">
           <Input
-            aria-label="交付链接"
+            aria-label={tUi('deliveryLink')}
             placeholder="https://…"
             value={url}
             onChange={(event) => setUrl(event.target.value)}
           />
           <Input
-            aria-label="提取码"
-            placeholder="提取码（可选）"
+            aria-label={tUi('accessCode')}
+            placeholder={tUi('optionalAccessCode')}
             value={accessCode}
             onChange={(event) => setAccessCode(event.target.value)}
           />
@@ -163,14 +174,14 @@ export default function OrderDetailPage() {
       {order.type === 'physical' && actions.includes('deliver') && (
         <div className="flex gap-2">
           <Input
-            aria-label="物流公司"
-            placeholder="物流公司"
+            aria-label={tUi('carrier')}
+            placeholder={tUi('carrier')}
             value={carrier}
             onChange={(event) => setCarrier(event.target.value)}
           />
           <Input
-            aria-label="物流单号"
-            placeholder="物流单号"
+            aria-label={tUi('trackingNumber')}
+            placeholder={tUi('trackingNumber')}
             value={trackingNumber}
             onChange={(event) => setTrackingNumber(event.target.value)}
           />
@@ -181,24 +192,24 @@ export default function OrderDetailPage() {
           value={returnOutcome}
           onValueChange={(value) => setReturnOutcome(value as typeof returnOutcome)}
         >
-          <SelectTrigger aria-label="退货结果">
+          <SelectTrigger aria-label={tUi('returnOutcome')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="returned">已退回卖家</SelectItem>
-            <SelectItem value="not_sent">尚未发货</SelectItem>
-            <SelectItem value="not_required">无需退回</SelectItem>
+            <SelectItem value="returned">{tUi('returned')}</SelectItem>
+            <SelectItem value="not_sent">{tUi('notSent')}</SelectItem>
+            <SelectItem value="not_required">{tUi('notRequired')}</SelectItem>
           </SelectContent>
         </Select>
       )}
       {command.error && (
         <p role="alert" className="text-destructive">
-          操作失败：{command.error}
+          {tUi('actionError', { error: command.error })}
         </p>
       )}
       {command.uncertain && (
         <div role="alert" className="space-y-2 text-destructive">
-          <p>结果未知，请重试原操作。</p>
+          <p>{tUi('uncertain')}</p>
           <Button
             variant="outline"
             disabled={command.busy}
@@ -210,24 +221,28 @@ export default function OrderDetailPage() {
               }
             }}
           >
-            重试原操作
+            {tUi('retry')}
           </Button>
         </div>
       )}
-      <div className="flex flex-wrap gap-3">
-        {actions.map((action) => (
-          <div key={action} className="max-w-xs space-y-1">
-            <Button disabled={command.busy || command.uncertain} onClick={() => void act(action)}>
-              {transactionActionLabel(action, locale)}
-            </Button>
-            {transactionConsequence(action, locale) && (
-              <p className="text-xs text-muted-foreground">
-                {transactionConsequence(action, locale)}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
+      <section className="space-y-3 rounded-xl border bg-card p-5">
+        <h2 className="font-semibold">{tUi('nextAction')}</h2>
+        {actions.length === 0 && <p className="text-sm text-muted-foreground">{tUi('noAction')}</p>}
+        <div className="flex flex-wrap gap-3">
+          {actions.map((action) => (
+            <div key={action} className="max-w-xs space-y-1">
+              <Button disabled={command.busy || command.uncertain} onClick={() => void act(action)}>
+                {transactionActionLabel(action, locale)}
+              </Button>
+              {transactionConsequence(action, locale) && (
+                <p className="text-xs text-muted-foreground">
+                  {transactionConsequence(action, locale)}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
       {order.status === 'completed' && auth.view?.account.id === order.buyerId && (
         <div className="space-y-2 rounded-lg border p-3">
           <p className="font-medium">{tReview('title')}</p>

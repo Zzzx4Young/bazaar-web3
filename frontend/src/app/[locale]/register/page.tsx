@@ -20,13 +20,16 @@ export default function RegisterPage() {
   }, [])
 
   return (
-    <section className="mx-auto max-w-md space-y-6">
+    <section className="mx-auto w-full max-w-lg space-y-6 rounded-xl border bg-card p-6 shadow-sm sm:p-8">
       <div>
-        <h1 className="text-2xl font-bold">{t('register')}</h1>
+        <h1 className="market-heading text-3xl">{t('register')}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{t('registerHint')}</p>
       </div>
-      <IdentityOptions returnTo={returnTo} googleReturnTo={`/${locale}${returnTo}`}
-        emailIntent="register" />
+      <IdentityOptions
+        returnTo={returnTo}
+        googleReturnTo={`/${locale}${returnTo}`}
+        emailIntent="register"
+      />
       <p className="text-sm text-muted-foreground">
         {t('existingAccount')}{' '}
         <Link href={loginHref} className="font-medium text-primary hover:underline">

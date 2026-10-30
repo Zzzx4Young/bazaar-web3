@@ -29,6 +29,7 @@ export function useOrderHistory(orderId: string) {
 
 export function OrderHistory({ history }: { history: ReturnType<typeof useOrderHistory> }) {
   const tDispute = useTranslations('orderDispute')
+  const tHistory = useTranslations('orderHistory')
   const locale = useLocale()
   const error = [
     history.deliveries,
@@ -40,14 +41,16 @@ export function OrderHistory({ history }: { history: ReturnType<typeof useOrderH
   if (error)
     return (
       <p role="alert" className="text-sm text-destructive">
-        私有记录加载失败：{error}
+        {tHistory('loadError', { error })}
       </p>
     )
   return (
     <div className="space-y-4">
       {history.deliveries.data?.items.map((delivery) => (
         <section key={delivery.id} className="rounded-lg border p-4 text-sm">
-          <h2 className="font-medium">第 {delivery.sequence} 次交付</h2>
+          <h2 className="font-medium">
+            {tHistory('deliveryNumber', { number: delivery.sequence })}
+          </h2>
           {delivery.kind === 'digital' ? (
             <p>
               <a
@@ -56,9 +59,11 @@ export function OrderHistory({ history }: { history: ReturnType<typeof useOrderH
                 rel="noopener noreferrer"
                 className="break-all text-primary underline"
               >
-                打开交付链接
+                {tHistory('openDelivery')}
               </a>
-              {delivery.accessCode && <> · 提取码：{delivery.accessCode}</>}
+              {delivery.accessCode && (
+                <> · {tHistory('accessCode', { code: delivery.accessCode })}</>
+              )}
             </p>
           ) : (
             <p>
@@ -69,7 +74,7 @@ export function OrderHistory({ history }: { history: ReturnType<typeof useOrderH
       ))}
       {!!history.issues.data?.items.length && (
         <section className="rounded-lg border p-4 text-sm">
-          <h2 className="font-medium">问题记录</h2>
+          <h2 className="font-medium">{tHistory('issues')}</h2>
           {history.issues.data.items.map((issue) => (
             <p key={issue.id}>
               {transactionLabel(issue.status, locale)} · {issue.description}
@@ -79,7 +84,7 @@ export function OrderHistory({ history }: { history: ReturnType<typeof useOrderH
       )}
       {!!history.refunds.data?.items.length && (
         <section className="rounded-lg border p-4 text-sm">
-          <h2 className="font-medium">退款记录</h2>
+          <h2 className="font-medium">{tHistory('refunds')}</h2>
           {history.refunds.data.items.map((refund) => (
             <p key={refund.id}>
               {transactionLabel(refund.status, locale)}
@@ -91,20 +96,23 @@ export function OrderHistory({ history }: { history: ReturnType<typeof useOrderH
       )}
       {!!history.settlements.data?.items.length && (
         <section className="rounded-lg border p-4 text-sm">
-          <h2 className="font-medium">模拟结算</h2>
+          <h2 className="font-medium">{tHistory('settlements')}</h2>
           {history.settlements.data.items.map((settlement) => (
             <p key={settlement.id}>
-              {transactionLabel(settlement.operation, locale)} · {settlement.price.amount} {settlement.price.currency}
+              {transactionLabel(settlement.operation, locale)} · {settlement.price.amount}{' '}
+              {settlement.price.currency}
             </p>
           ))}
         </section>
       )}
       {!!history.events.data?.items.length && (
         <section className="rounded-lg border p-4 text-sm">
-          <h2 className="font-medium">状态历史</h2>
+          <h2 className="font-medium">{tHistory('events')}</h2>
           {history.events.data.items.map((event) => (
             <p key={event.id}>
-              {transactionLabel(event.operation, locale)} · {transactionLabel(event.fromState, locale)} → {transactionLabel(event.toState, locale)}
+              {transactionLabel(event.operation, locale)} ·{' '}
+              {transactionLabel(event.fromState, locale)} →{' '}
+              {transactionLabel(event.toState, locale)}
               {event.note ? ` · ${event.note}` : ''}
             </p>
           ))}

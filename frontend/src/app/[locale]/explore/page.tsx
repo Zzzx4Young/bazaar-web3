@@ -13,8 +13,9 @@ import { Pagination } from '@/components/explore/pagination'
 import { useTranslations } from 'next-intl'
 
 export default function ExplorePage() {
+  const t = useTranslations('explore')
   return (
-    <Suspense fallback={<p>加载商品中...</p>}>
+    <Suspense fallback={<p>{t('loading')}</p>}>
       <ExploreContent />
     </Suspense>
   )
@@ -24,12 +25,17 @@ function ExploreContent() {
   const t = useTranslations('explore')
   const searchParams = useSearchParams()
   const categoryParam = searchParams.get('category')
+  const typeParam = searchParams.get('type')
   const filter = useFilterStore()
   const setCategory = filter.setCategory
+  const setItemCategory = filter.setItemCategory
   const setPage = filter.setPage
   useEffect(() => {
     setCategory(marketplaceCategories.find((category) => category.id === categoryParam)?.id)
   }, [categoryParam, setCategory])
+  useEffect(() => {
+    setItemCategory(typeParam === 'physical' || typeParam === 'digital' ? typeParam : undefined)
+  }, [typeParam, setItemCategory])
   const backendParams = useMemo(() => {
     const params = new URLSearchParams({
       sort: filter.sortBy,
@@ -81,13 +87,13 @@ function ExploreContent() {
         <div className="min-w-0 flex-1 space-y-5">
           {backend.error && (
             <p role="alert" className="text-sm text-destructive">
-              商品加载失败：{backend.error}
+              {t('loadError', { error: backend.error })}
             </p>
           )}
-          {backend.loading && <p role="status">正在从服务端加载商品…</p>}
+          {backend.loading && <p role="status">{t('loading')}</p>}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
             <div className="text-sm text-muted-foreground">
-              共 <span className="font-semibold text-foreground">{backend.total}</span> 件商品
+              {t('count', { count: backend.total })}
             </div>
             <SortDropdown value={filter.sortBy} onChange={(v: SortBy) => filter.setSortBy(v)} />
           </div>

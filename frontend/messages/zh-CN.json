@@ -42,7 +42,10 @@
     "favorites": "收藏",
     "notifications": "通知",
     "adminDisputes": "争议裁决",
-    "cart": "购物车"
+    "cart": "购物车",
+    "skipContent": "跳转到主要内容",
+    "lightMode": "切换浅色主题",
+    "darkMode": "切换深色主题"
   },
   "identity": {
     "title": "登录方式",
@@ -53,9 +56,12 @@
     "emailUnavailable": "邮箱验证码登录及绑定暂未开放。",
     "emailAvailable": "绑定 Gmail 后可使用验证码登录。",
     "emailLinked": "已关联 Gmail 验证码登录。",
-    "emailAddress": "Gmail 邮箱", "invalidGmail": "请输入有效的 Gmail 邮箱地址",
-    "requestEmailCode": "获取验证码", "verificationCode": "6 位验证码",
-    "verifyEmailCode": "验证并绑定", "emailCodeSent": "验证码已发送，请查收邮件。",
+    "emailAddress": "Gmail 邮箱",
+    "invalidGmail": "请输入有效的 Gmail 邮箱地址",
+    "requestEmailCode": "获取验证码",
+    "verificationCode": "6 位验证码",
+    "verifyEmailCode": "验证并绑定",
+    "emailCodeSent": "验证码已发送，请查收邮件。",
     "emailCodeDevInbox": "验证码已写入本地开发收件箱，请使用本机命令读取。"
   },
   "adminDisputes": {
@@ -76,7 +82,10 @@
     "refund": "裁决退款给买家",
     "release": "裁决放款给卖家",
     "actionError": "操作失败：{error}",
-    "retry": "重试原裁决"
+    "retry": "重试原裁决",
+    "refundRequested": "买家已请求退款。",
+    "refundNotRequested": "买家尚未请求退款。",
+    "noAction": "当前无可裁决操作；请查看争议状态与双方说明。"
   },
   "orderDispute": {
     "sellerOffer": "卖家方案",
@@ -130,13 +139,16 @@
     "minimum": "一次购买至少需要 {min} 件不同商品。",
     "error": "下单失败：{error}",
     "retry": "重试原下单请求",
-    "checkout": "一起下单"
+    "checkout": "一起下单",
+    "simulated": "订单将分别记录各商品原币种价格；本轮使用模拟结算，不连接钱包。"
   },
   "checkoutDetail": {
     "signIn": "请先登录查看购买记录。",
     "loading": "正在加载购买记录…",
     "error": "购买记录加载失败：{error}",
-    "title": "本次购买的订单"
+    "title": "本次购买的订单",
+    "perItemOnly": "各商品按原币种分别列价；本次购买不计算跨币种合计。",
+    "simulated": "本次购买使用模拟结算，未连接钱包或链上交易。"
   },
   "commonCart": {
     "addToCart": "加入购物车",
@@ -156,9 +168,9 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "BAZAAR · 精选市集",
-      "title": "发现值得拥有的好东西",
-      "body": "从独立创作到日常好物，在这里遇见下一件心头好。",
+      "eyebrow": "BAZAAR · 数字优先的可信市集",
+      "title": "看清价值，再决定拥有",
+      "body": "先看清商品描述与卖家填写的授权信息，再决定购买数字资源或实物二手。",
       "explore": "探索商品",
       "publish": "发布商品",
       "featured": "本周精选"
@@ -191,7 +203,9 @@
     "trending": {
       "title": "热门类目",
       "viewAll": "查看全部 →"
-    }
+    },
+    "physicalHint": "浏览当前公开的实物二手商品说明。",
+    "browsePhysical": "浏览实物二手 →"
   },
   "emptyState": {
     "favorites": {
@@ -224,6 +238,15 @@
       "price_asc": "价格从低到高",
       "price_desc": "价格从高到低",
       "popular": "热度最高"
+    },
+    "loading": "正在从服务端加载商品…",
+    "loadError": "商品加载失败：{error}",
+    "count": "共 {count} 件商品",
+    "pagination": {
+      "label": "商品分页",
+      "previous": "上一页",
+      "next": "下一页",
+      "pageStatus": "第 {page} / {pageCount} 页"
     }
   },
   "footer": {
@@ -296,5 +319,147 @@
   "demo": {
     "notice": "内部 Alpha · 商品与订单写入共享服务端 · 付款和结算仍为模拟流程",
     "publishNotice": "发布内容将写入 Alpha 服务端并对其他测试账户可见。请勿填写真实个人或敏感信息。"
+  },
+  "listingFacts": {
+    "sellerStatement": "卖家声明",
+    "version": "版本",
+    "conditionNew": "全新",
+    "conditionLikeNew": "近全新",
+    "conditionGood": "良好",
+    "conditionFair": "一般",
+    "conditionPoor": "较旧",
+    "shippingDelivery": "支持快递或面交",
+    "shippingFaceToFace": "仅面交",
+    "license": "授权说明",
+    "notProvided": "卖家未提供",
+    "delivery": "交付方式",
+    "deliveryDownloadLink": "下载链接",
+    "deliveryLicenseKey": "授权密钥",
+    "deliveryCloudLink": "云端链接",
+    "deliveryAccountCredentials": "账号凭据",
+    "platformRecord": "平台记录",
+    "privateDelivery": "交付内容仅对订单参与者可见",
+    "futureChain": "链上验证尚未开放",
+    "description": "商品描述",
+    "price": "价格",
+    "seller": "卖家",
+    "condition": "成色",
+    "notRecorded": "当前商品未记录"
+  },
+  "orderDetailUi": {
+    "snapshot": "购买时商品信息",
+    "license": "授权说明",
+    "version": "内容版本",
+    "notProvided": "卖家未提供",
+    "nextAction": "当前可执行操作",
+    "noAction": "当前没有需要你执行的操作。",
+    "simulated": "模拟结算",
+    "futureWallet": "钱包与链上结果尚未开放",
+    "sellerStatement": "购买时卖家声明",
+    "loading": "正在加载订单…",
+    "loadError": "订单加载失败：{error}",
+    "shipping": "收货信息",
+    "issueLabel": "问题描述",
+    "issueHint": "描述商品问题",
+    "deliveryLink": "交付链接",
+    "accessCode": "提取码",
+    "optionalAccessCode": "提取码（可选）",
+    "carrier": "物流公司",
+    "trackingNumber": "物流单号",
+    "returnOutcome": "退货结果",
+    "returned": "已退回卖家",
+    "notSent": "尚未发货",
+    "notRequired": "无需退回",
+    "actionError": "操作失败：{error}",
+    "uncertain": "结果未知，请重试原操作。",
+    "retry": "重试原操作",
+    "description": "购买时商品描述"
+  },
+  "publishUi": {
+    "title": "发布商品",
+    "saleModeHint": "销售次数不代表授权范围。请在授权说明中写明买家实际获得的权利。",
+    "digitalTerms": "数字商品说明",
+    "sellerStatementHint": "以下内容将作为卖家声明展示给买家；实际交付链接或密钥请在订单交付阶段填写。",
+    "signIn": "请先登录后再发布商品。",
+    "currencyPending": "币种列表尚未加载，请重试。",
+    "priceScale": "{currency} 最多支持 {scale} 位小数",
+    "photoRule": "请选择 1–8 张 JPEG、PNG 或 WebP 图片，每张不超过 5 MiB。",
+    "success": "商品发布成功",
+    "saveError": "发布失败：{error}",
+    "saveErrorGeneric": "发布失败，请稍后重试。",
+    "itemType": "商品类型",
+    "physical": "实物二手",
+    "digital": "数字资产",
+    "saleMode": "销售方式",
+    "repeatable": "可重复销售",
+    "oneOff": "仅售一次",
+    "category": "商品分类",
+    "listingTitle": "标题",
+    "titleHint": "一句话描述商品",
+    "description": "详细描述（支持 Markdown）",
+    "descriptionHint": "## 商品详情\n- 规格\n- 配件\n- 交易说明",
+    "photos": "商品图片（1–8 张，每张不超过 5 MiB）",
+    "selectedPhotos": "已选择 {count} 张",
+    "price": "价格",
+    "loadingCurrencies": "加载币种中...",
+    "currencyError": "币种加载失败：{error}",
+    "retry": "重试",
+    "license": "授权说明",
+    "licenseHint": "说明买家获得的使用授权，不要填写实际交付链接或密钥",
+    "licenseRequired": "请填写授权说明（至少 3 个字符）",
+    "version": "内容版本",
+    "versionHint": "例如 v1.0",
+    "versionRequired": "请填写内容版本",
+    "cancel": "取消",
+    "submitting": "发布中...",
+    "submit": "立即发布"
+  },
+  "listingPage": {
+    "loading": "正在加载商品…",
+    "loadError": "商品加载失败：{error}",
+    "home": "首页",
+    "physical": "实物二手",
+    "digital": "数字资源",
+    "published": "{date}发布 · 数据来自 Alpha 服务端",
+    "buyNow": "立即购买",
+    "contactUnavailable": "联系卖家（未开放）",
+    "saved": "已收藏",
+    "save": "收藏",
+    "noImage": "暂无图片",
+    "previousImage": "上一张图片",
+    "nextImage": "下一张图片",
+    "imageNumber": "查看第 {number} 张图片"
+  },
+  "orderHistory": {
+    "loadError": "私有记录加载失败：{error}",
+    "deliveryNumber": "第 {number} 次交付",
+    "openDelivery": "打开交付链接",
+    "accessCode": "提取码：{code}",
+    "issues": "问题记录",
+    "refunds": "退款记录",
+    "settlements": "模拟结算",
+    "events": "状态历史"
+  },
+  "marketCategories": {
+    "electronics": "电子数码",
+    "digital_assets": "数字资产",
+    "software_source": "软件源码",
+    "game_items": "游戏道具",
+    "secondhand_fashion": "二手服饰"
+  },
+  "filter": {
+    "title": "筛选",
+    "keyword": "关键词",
+    "searchHint": "搜索商品...",
+    "category": "分类",
+    "all": "全部",
+    "type": "类型",
+    "physical": "实物",
+    "digital": "数字",
+    "currency": "币种",
+    "loadingCurrencies": "加载币种中...",
+    "currencyError": "币种加载失败：{error}",
+    "retry": "重试",
+    "reset": "重置筛选"
   }
 }

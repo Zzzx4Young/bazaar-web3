@@ -30,21 +30,34 @@ export default function CheckoutDetailPage() {
   if (!account) return <p role="alert">{t('signIn')}</p>
   if (resource.loading) return <p role="status">{t('loading')}</p>
   if (resource.error || !resource.data)
-    return <p role="alert">{t('error', { error: resource.error ?? apiErrorCopy('NOT_FOUND', locale) })}</p>
+    return (
+      <p role="alert">
+        {t('error', { error: resource.error ?? apiErrorCopy('NOT_FOUND', locale) })}
+      </p>
+    )
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <h1 className="text-2xl font-bold">{t('title')}</h1>
       <p className="break-all text-sm text-muted-foreground">{resource.data.id}</p>
-      {resource.data.items.map((item) => (
-        <article key={item.orderId} className="rounded-lg border p-4">
-          <Link href={`/me/orders/${item.orderId}`} className="break-words font-medium hover:underline">
-            {item.title}
-          </Link>
-          <p className="text-sm text-muted-foreground">
-            {item.price.amount} {item.price.currency} · {transactionLabel(item.status, locale)}
-          </p>
-        </article>
-      ))}
+      <div className="rounded-xl border border-primary/25 bg-accent/40 p-4 text-sm">
+        <p>{t('perItemOnly')}</p>
+        <p className="mt-1 text-muted-foreground">{t('simulated')}</p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        {resource.data.items.map((item) => (
+          <article key={item.orderId} className="min-w-0 rounded-xl border bg-card p-5">
+            <Link
+              href={`/me/orders/${item.orderId}`}
+              className="break-words font-medium hover:underline"
+            >
+              {item.title}
+            </Link>
+            <p className="text-sm text-muted-foreground">
+              {item.price.amount} {item.price.currency} · {transactionLabel(item.status, locale)}
+            </p>
+          </article>
+        ))}
+      </div>
     </div>
   )
 }

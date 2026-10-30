@@ -42,7 +42,10 @@
     "favorites": "Favorites",
     "notifications": "Notifications",
     "adminDisputes": "Dispute review",
-    "cart": "Cart"
+    "cart": "Cart",
+    "skipContent": "Skip to content",
+    "lightMode": "Switch to light mode",
+    "darkMode": "Switch to dark mode"
   },
   "identity": {
     "title": "Sign-in methods",
@@ -53,9 +56,12 @@
     "emailUnavailable": "Email-code sign-in and linking are not available yet.",
     "emailAvailable": "Link a Gmail address to enable code sign-in.",
     "emailLinked": "Gmail code sign-in is linked.",
-    "emailAddress": "Gmail address", "invalidGmail": "Enter a valid Gmail address",
-    "requestEmailCode": "Request code", "verificationCode": "6-digit code",
-    "verifyEmailCode": "Verify and link", "emailCodeSent": "Code sent. Check your email.",
+    "emailAddress": "Gmail address",
+    "invalidGmail": "Enter a valid Gmail address",
+    "requestEmailCode": "Request code",
+    "verificationCode": "6-digit code",
+    "verifyEmailCode": "Verify and link",
+    "emailCodeSent": "Code sent. Check your email.",
     "emailCodeDevInbox": "The code is in the local development inbox. Read it with the host command."
   },
   "adminDisputes": {
@@ -76,7 +82,10 @@
     "refund": "Resolve with buyer refund",
     "release": "Resolve with seller payout",
     "actionError": "Action failed: {error}",
-    "retry": "Retry resolution"
+    "retry": "Retry resolution",
+    "refundRequested": "Buyer requested a refund.",
+    "refundNotRequested": "Buyer has not requested a refund.",
+    "noAction": "No resolution action is currently available. Review the status and both statements."
   },
   "orderDispute": {
     "sellerOffer": "Seller proposal",
@@ -130,13 +139,16 @@
     "minimum": "Add at least {min} different items to check out together.",
     "error": "Checkout failed: {error}",
     "retry": "Retry the same checkout",
-    "checkout": "Check out together"
+    "checkout": "Check out together",
+    "simulated": "Each item keeps its original currency. Settlement is simulated; no wallet is connected."
   },
   "checkoutDetail": {
     "signIn": "Sign in to view this checkout.",
     "loading": "Loading checkout…",
     "error": "Could not load checkout: {error}",
-    "title": "Orders in this checkout"
+    "title": "Orders in this checkout",
+    "perItemOnly": "Each item keeps its original currency; no cross-currency total is calculated.",
+    "simulated": "This checkout uses simulated settlement. No wallet or on-chain transfer is connected."
   },
   "commonCart": {
     "addToCart": "Add to cart",
@@ -156,9 +168,9 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "BAZAAR · Curated market",
-      "title": "Find something worth keeping",
-      "body": "Independent creations and everyday finds, all in one place.",
+      "eyebrow": "BAZAAR · A digital-first marketplace",
+      "title": "Know what you get before you buy",
+      "body": "Review the listing description and any seller-supplied license terms before buying digital or pre-owned goods.",
       "explore": "Explore listings",
       "publish": "Publish a listing",
       "featured": "Selected for you"
@@ -191,7 +203,9 @@
     "trending": {
       "title": "Trending categories",
       "viewAll": "View all →"
-    }
+    },
+    "physicalHint": "Browse available descriptions of pre-owned goods.",
+    "browsePhysical": "Browse pre-owned goods →"
   },
   "emptyState": {
     "favorites": {
@@ -224,6 +238,15 @@
       "price_asc": "Price: low to high",
       "price_desc": "Price: high to low",
       "popular": "Most popular"
+    },
+    "loading": "Loading listings from the server…",
+    "loadError": "Could not load listings: {error}",
+    "count": "{count} listings",
+    "pagination": {
+      "label": "Product pages",
+      "previous": "Previous page",
+      "next": "Next page",
+      "pageStatus": "Page {page} of {pageCount}"
     }
   },
   "footer": {
@@ -296,5 +319,147 @@
   "demo": {
     "notice": "Internal Alpha · Listings and orders use the shared server · Payment and settlement remain simulated",
     "publishNotice": "Listings are stored by the Alpha server and visible to other test accounts. Do not enter real personal or sensitive information."
+  },
+  "listingFacts": {
+    "sellerStatement": "Seller statement",
+    "version": "Version",
+    "conditionNew": "New",
+    "conditionLikeNew": "Like new",
+    "conditionGood": "Good",
+    "conditionFair": "Fair",
+    "conditionPoor": "Used",
+    "shippingDelivery": "Shipping or local pickup",
+    "shippingFaceToFace": "Local pickup only",
+    "license": "License terms",
+    "notProvided": "Not provided by seller",
+    "delivery": "Delivery method",
+    "deliveryDownloadLink": "Download link",
+    "deliveryLicenseKey": "License key",
+    "deliveryCloudLink": "Cloud link",
+    "deliveryAccountCredentials": "Account credentials",
+    "platformRecord": "Platform record",
+    "privateDelivery": "Delivery details are visible only to order participants",
+    "futureChain": "On-chain verification is not available",
+    "description": "Description",
+    "price": "Price",
+    "seller": "Seller",
+    "condition": "Condition",
+    "notRecorded": "Not recorded for this listing"
+  },
+  "orderDetailUi": {
+    "snapshot": "Listing at purchase",
+    "license": "License terms",
+    "version": "Content version",
+    "notProvided": "Not provided by seller",
+    "nextAction": "Available actions",
+    "noAction": "No action is needed from you now.",
+    "simulated": "Simulated settlement",
+    "futureWallet": "Wallet and on-chain results are not available",
+    "sellerStatement": "Seller statement at purchase",
+    "loading": "Loading order…",
+    "loadError": "Could not load order: {error}",
+    "shipping": "Shipping details",
+    "issueLabel": "Issue description",
+    "issueHint": "Describe the issue",
+    "deliveryLink": "Delivery link",
+    "accessCode": "Access code",
+    "optionalAccessCode": "Access code (optional)",
+    "carrier": "Carrier",
+    "trackingNumber": "Tracking number",
+    "returnOutcome": "Return outcome",
+    "returned": "Returned to seller",
+    "notSent": "Not shipped",
+    "notRequired": "Return not required",
+    "actionError": "Action failed: {error}",
+    "uncertain": "The result is unknown. Retry the original action.",
+    "retry": "Retry original action",
+    "description": "Description at purchase"
+  },
+  "publishUi": {
+    "title": "Publish a listing",
+    "saleModeHint": "Number of sales does not define license rights. Describe what the buyer receives in the license terms.",
+    "digitalTerms": "Digital listing details",
+    "sellerStatementHint": "These details appear as your statement to buyers. Provide private links or keys during order delivery.",
+    "signIn": "Sign in before publishing.",
+    "currencyPending": "Currencies are still loading. Please retry.",
+    "priceScale": "{currency} supports up to {scale} decimal places",
+    "photoRule": "Choose 1–8 JPEG, PNG, or WebP images, each up to 5 MiB.",
+    "success": "Listing published",
+    "saveError": "Publish failed: {error}",
+    "saveErrorGeneric": "Publish failed. Please retry later.",
+    "itemType": "Listing type",
+    "physical": "Pre-owned goods",
+    "digital": "Digital resource",
+    "saleMode": "Sales mode",
+    "repeatable": "Repeatable sales",
+    "oneOff": "One-off sale",
+    "category": "Category",
+    "listingTitle": "Title",
+    "titleHint": "Describe the listing in one sentence",
+    "description": "Detailed description (Markdown supported)",
+    "descriptionHint": "## Listing details\n- Specifications\n- Included items\n- Terms",
+    "photos": "Listing images (1–8, up to 5 MiB each)",
+    "selectedPhotos": "{count} images selected",
+    "price": "Price",
+    "loadingCurrencies": "Loading currencies...",
+    "currencyError": "Could not load currencies: {error}",
+    "retry": "Retry",
+    "license": "License terms",
+    "licenseHint": "Explain buyer usage rights. Do not enter private links or keys here.",
+    "licenseRequired": "Describe the license in at least 3 characters",
+    "version": "Content version",
+    "versionHint": "For example v1.0",
+    "versionRequired": "Provide a content version",
+    "cancel": "Cancel",
+    "submitting": "Publishing...",
+    "submit": "Publish now"
+  },
+  "listingPage": {
+    "loading": "Loading listing…",
+    "loadError": "Could not load listing: {error}",
+    "home": "Home",
+    "physical": "Pre-owned goods",
+    "digital": "Digital resource",
+    "published": "Published {date} · Data from the Alpha server",
+    "buyNow": "Buy now",
+    "contactUnavailable": "Contact seller (unavailable)",
+    "saved": "Saved",
+    "save": "Save",
+    "noImage": "No image provided",
+    "previousImage": "Previous image",
+    "nextImage": "Next image",
+    "imageNumber": "View image {number}"
+  },
+  "orderHistory": {
+    "loadError": "Could not load private records: {error}",
+    "deliveryNumber": "Delivery #{number}",
+    "openDelivery": "Open delivery link",
+    "accessCode": "Access code: {code}",
+    "issues": "Issues",
+    "refunds": "Refunds",
+    "settlements": "Simulated settlement",
+    "events": "Status history"
+  },
+  "marketCategories": {
+    "electronics": "Electronics",
+    "digital_assets": "Digital assets",
+    "software_source": "Software source",
+    "game_items": "Game items",
+    "secondhand_fashion": "Pre-owned fashion"
+  },
+  "filter": {
+    "title": "Filters",
+    "keyword": "Keyword",
+    "searchHint": "Search listings...",
+    "category": "Category",
+    "all": "All",
+    "type": "Type",
+    "physical": "Physical",
+    "digital": "Digital",
+    "currency": "Currency",
+    "loadingCurrencies": "Loading currencies...",
+    "currencyError": "Could not load currencies: {error}",
+    "retry": "Retry",
+    "reset": "Reset filters"
   }
 }

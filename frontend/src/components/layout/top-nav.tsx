@@ -24,13 +24,12 @@ import { locales } from '@/i18n/locales'
 import { resolveSafeReturnTo } from '@/lib/safe-return-to'
 import { apiErrorCopy } from '@/lib/api-error-copy'
 
-const loginPaths = new Set(['/login', ...locales.map(locale => `/${locale}/login`)])
+const loginPaths = new Set(['/login', ...locales.map((locale) => `/${locale}/login`)])
 
 function emailReturnTo(locale: string) {
   if (typeof window === 'undefined') return `/${locale}/me`
   const { pathname, search, hash } = window.location
-  if (!loginPaths.has(pathname.replace(/\/$/, '')))
-    return `${pathname}${search}${hash}`
+  if (!loginPaths.has(pathname.replace(/\/$/, ''))) return `${pathname}${search}${hash}`
 
   const target = new URLSearchParams(search).get('returnTo')
   const safe = resolveSafeReturnTo(target ?? undefined)
@@ -43,12 +42,15 @@ function registrationHref(locale: string, fromDialog = true) {
   const { pathname, search } = window.location
   const onLoginPage = loginPaths.has(pathname.replace(/\/$/, ''))
   if (!fromDialog && !onLoginPage) return '/register'
-  if (onLoginPage &&
-    !new URLSearchParams(search).has('returnTo')) return '/register'
+  if (onLoginPage && !new URLSearchParams(search).has('returnTo')) return '/register'
   return `/register?returnTo=${encodeURIComponent(resolveSafeReturnTo(emailReturnTo(locale)))}`
 }
 
-function HeaderRegistrationLink({ locale, pathname, label }: {
+function HeaderRegistrationLink({
+  locale,
+  pathname,
+  label
+}: {
   locale: string
   pathname: string
   label: string
@@ -60,7 +62,11 @@ function HeaderRegistrationLink({ locale, pathname, label }: {
     setHref(registrationHref(locale, false))
   }, [locale, pathname, search])
 
-  return <Button variant="ghost" size="sm" asChild><Link href={href}>{label}</Link></Button>
+  return (
+    <Button variant="ghost" size="sm" asChild>
+      <Link href={href}>{label}</Link>
+    </Button>
+  )
 }
 
 export function TopNav() {
@@ -84,10 +90,13 @@ export function TopNav() {
   ] as const
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/80 bg-card/95 backdrop-blur-xl">
-      <div className="container flex min-h-16 flex-wrap items-center gap-x-7 gap-y-2 py-3">
+    <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl">
+      <div className="container flex min-h-16 flex-wrap items-center gap-x-6 gap-y-2 py-3">
         <BrandLogo />
-        <nav className="order-3 flex w-full min-w-0 items-center gap-5 overflow-x-auto pb-1 text-[13px] sm:order-none sm:w-auto sm:flex-1 sm:justify-center sm:pb-0" aria-label={t('home')}>
+        <nav
+          className="order-3 flex w-full min-w-0 items-center gap-5 overflow-x-auto pb-1 text-[13px] font-medium sm:order-none sm:w-auto sm:flex-1 sm:justify-center sm:pb-0"
+          aria-label={t('home')}
+        >
           {links.map((link) => {
             const active =
               pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))
@@ -107,7 +116,10 @@ export function TopNav() {
           })}
           <FavoritesLink />
           {auth.view?.account.role === 'admin' && (
-            <Link href="/admin/disputes" className="shrink-0 border-b-2 border-transparent pb-1 text-muted-foreground hover:text-foreground">
+            <Link
+              href="/admin/disputes"
+              className="shrink-0 border-b-2 border-transparent pb-1 text-muted-foreground hover:text-foreground"
+            >
               {t('adminDisputes')}
             </Link>
           )}
@@ -129,13 +141,16 @@ export function TopNav() {
             </Button>
           ) : (
             <>
-              <Suspense fallback={<Button variant="ghost" size="sm" asChild>
-                <Link href="/register">{t('register')}</Link>
-              </Button>}>
+              <Suspense
+                fallback={
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/register">{t('register')}</Link>
+                  </Button>
+                }
+              >
                 <HeaderRegistrationLink locale={locale} pathname={pathname} label={t('register')} />
               </Suspense>
               <Button
-                variant="outline"
                 size="sm"
                 onClick={() => {
                   setLoginName('')
@@ -162,57 +177,69 @@ export function TopNav() {
             <DialogDescription>{t('loginHint')}</DialogDescription>
           </DialogHeader>
           <LoginMethodPicker method={method} onChange={setMethod} />
-          {method === 'password' && <form
-            className="space-y-4"
-            onSubmit={async (event) => {
-              event.preventDefault()
-              setSubmitting(true)
-              const ok = await auth.signIn(loginName, password)
-              setSubmitting(false)
-              if (ok) {
-                setPassword('')
-                setOpen(false)
-              }
-            }}
-          >
-            <div className="space-y-2">
-              <Label htmlFor="login-name">{t('loginName')}</Label>
-              <Input
-                id="login-name"
-                value={loginName}
-                onChange={(event) => setLoginName(event.target.value)}
-                autoComplete="username"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="login-password">{t('password')}</Label>
-              <Input
-                id="login-password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete="current-password"
-                required
-              />
-            </div>
-            {auth.error && (
-              <p role="alert" className="text-sm text-destructive">
-                {t('authError')}：{apiErrorCopy(auth.error, locale)}
-              </p>
-            )}
-            <Button type="submit" disabled={submitting}>
-              {submitting ? t('signingIn') : t('login')}
-            </Button>
-          </form>}
-          <IdentityOptions returnTo={emailReturnTo(locale)}
-            googleReturnTo={typeof window === 'undefined' ? `/${locale}/me` : window.location.pathname}
-            showEmail={method === 'email'} emailFirst={method === 'email'}
-            onSuccess={() => setOpen(false)} />
+          {method === 'password' && (
+            <form
+              className="space-y-4"
+              onSubmit={async (event) => {
+                event.preventDefault()
+                setSubmitting(true)
+                const ok = await auth.signIn(loginName, password)
+                setSubmitting(false)
+                if (ok) {
+                  setPassword('')
+                  setOpen(false)
+                }
+              }}
+            >
+              <div className="space-y-2">
+                <Label htmlFor="login-name">{t('loginName')}</Label>
+                <Input
+                  id="login-name"
+                  value={loginName}
+                  onChange={(event) => setLoginName(event.target.value)}
+                  autoComplete="username"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="login-password">{t('password')}</Label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+              {auth.error && (
+                <p role="alert" className="text-sm text-destructive">
+                  {t('authError')}：{apiErrorCopy(auth.error, locale)}
+                </p>
+              )}
+              <Button type="submit" disabled={submitting}>
+                {submitting ? t('signingIn') : t('login')}
+              </Button>
+            </form>
+          )}
+          <IdentityOptions
+            returnTo={emailReturnTo(locale)}
+            googleReturnTo={
+              typeof window === 'undefined' ? `/${locale}/me` : window.location.pathname
+            }
+            showEmail={method === 'email'}
+            emailFirst={method === 'email'}
+            onSuccess={() => setOpen(false)}
+          />
           <p className="text-sm text-muted-foreground">
             {t('newAccount')}{' '}
-            <Link href={registrationHref(locale)} className="font-medium text-primary hover:underline"
-              onClick={() => setOpen(false)}>{t('register')}</Link>
+            <Link
+              href={registrationHref(locale)}
+              className="font-medium text-primary hover:underline"
+              onClick={() => setOpen(false)}
+            >
+              {t('register')}
+            </Link>
           </p>
         </DialogContent>
       </Dialog>
