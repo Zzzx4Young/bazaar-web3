@@ -25,9 +25,18 @@ vi.mock('next/navigation', () => ({
   notFound: vi.fn()
 }))
 
-// next-intl mocks (toLocale)
+// Keep existing key-only mocks, but exercise the newly localized account and record UI with real copy.
+const localizedNamespaces = new Set([
+  'mePage', 'myOrders', 'myListings', 'profileHeader', 'createListing',
+  'notificationsPage', 'favoritesPage', 'routeState', 'recordPagination'
+])
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => key,
+  useTranslations: (namespace: string) => (key: string, values?: Record<string, string | number>) => {
+    if (!localizedNamespaces.has(namespace)) return key
+    const messages = require('../messages/zh-CN.json') as Record<string, Record<string, string>>
+    const message = messages[namespace]?.[key] ?? key
+    return message.replace(/\{(\w+)\}/g, (_match, name: string) => String(values?.[name] ?? ''))
+  },
   useLocale: vi.fn(() => 'zh-CN')
 }))
 

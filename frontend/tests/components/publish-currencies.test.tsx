@@ -3,6 +3,21 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { PublishForm } from '@/components/publish/publish-form'
 import { useAuthStore } from '@/stores/use-auth-store'
 
+vi.mock('next-intl', async () => {
+  const { default: messages } = await import('../../messages/zh-CN.json')
+  return {
+    useLocale: () => 'zh-CN',
+    useTranslations:
+      (namespace: keyof typeof messages) =>
+      (key: string, values?: Record<string, string | number>) => {
+        const catalog = messages[namespace] as Record<string, string>
+        return (catalog[key] ?? key).replace(/\{(\w+)\}/g, (_, name: string) =>
+          String(values?.[name] ?? '')
+        )
+      }
+  }
+})
+
 afterEach(() => {
   vi.unstubAllGlobals()
   useAuthStore.setState({ status: 'anonymous', view: null, error: null })

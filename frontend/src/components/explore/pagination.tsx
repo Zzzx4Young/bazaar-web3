@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { useTranslations } from 'next-intl'
 
 interface PaginationProps {
   page: number
@@ -10,30 +11,31 @@ interface PaginationProps {
 }
 
 export function Pagination({ page, pageSize, total, onPageChange }: PaginationProps) {
+  const t = useTranslations('explore.pagination')
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
   const currentPage = Math.min(Math.max(page, 1), pageCount)
   return (
-    <nav className="flex items-center justify-center gap-3" aria-label="商品分页">
+    <nav className="flex items-center justify-center gap-3" aria-label={t('label')}>
       <Button
         variant="outline"
         size="sm"
-        aria-label="上一页"
+        aria-label={t('previous')}
         disabled={currentPage <= 1}
         onClick={() => onPageChange(currentPage - 1)}
       >
-        上一页
+        {t('previous')}
       </Button>
       <span className="text-sm text-muted-foreground">
-        第 {currentPage} / {pageCount} 页
+        {t('pageStatus', { page: currentPage, pageCount })}
       </span>
       <Button
         variant="outline"
         size="sm"
-        aria-label="下一页"
+        aria-label={t('next')}
         disabled={currentPage >= pageCount}
         onClick={() => onPageChange(currentPage + 1)}
       >
-        下一页
+        {t('next')}
       </Button>
     </nav>
   )

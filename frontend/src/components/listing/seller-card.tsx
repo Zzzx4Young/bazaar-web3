@@ -21,7 +21,6 @@ export function SellerCard({ seller }: SellerCardProps) {
           >
             {seller.displayName}
           </Link>
-          <div className="text-xs text-muted-foreground">Alpha 预置账户</div>
         </div>
       </CardContent>
     </Card>

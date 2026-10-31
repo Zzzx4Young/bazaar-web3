@@ -55,6 +55,7 @@ export function useOrderCommand() {
   const [busy, setBusy] = useState(false)
   const [uncertain, setUncertain] = useState(false)
   const [error, setError] = useState<string>()
+  const [errorRequestId, setErrorRequestId] = useState<string | null>(null)
   const [retryPath, setRetryPath] = useState<string>()
   useEffect(() => {
     function resetOwner(id: string | undefined) {
@@ -62,6 +63,7 @@ export function useOrderCommand() {
       ownerRef.current = { accountId: id, pending, busy: false }
       setBusy(false)
       setError(undefined)
+      setErrorRequestId(null)
       setRetryPath(pending?.path)
       setUncertain(pending !== null)
     }
@@ -102,6 +104,7 @@ export function useOrderCommand() {
     owner.busy = true
     setBusy(true)
     setError(undefined)
+    setErrorRequestId(null)
     const command = owner.pending ?? { path, body: frozenBody, key: crypto.randomUUID() }
     owner.pending = command
     try {
@@ -116,6 +119,7 @@ export function useOrderCommand() {
       removeSaved(accountId)
       setRetryPath(undefined)
       setUncertain(false)
+      setErrorRequestId(null)
       return result
     } catch (failure) {
       if (!isCurrent()) return
@@ -131,6 +135,10 @@ export function useOrderCommand() {
       } else setRetryPath(command.path)
       setUncertain(unknown)
       setError(apiErrorCopy(failure, locale))
+      const requestId = failure instanceof BackendError ? failure.requestId : null
+      setErrorRequestId(
+        requestId && /^[A-Za-z0-9._:-]{1,128}$/.test(requestId) ? requestId : null
+      )
     } finally {
       owner.busy = false
       if (isCurrent()) setBusy(false)
@@ -140,5 +148,5 @@ export function useOrderCommand() {
     const pending = ownerRef.current.pending
     return pending ? run<T>(pending.path, pending.body) : Promise.resolve(undefined)
   }
-  return { run, retry, busy, uncertain, error, retryPath }
+  return { run, retry, busy, uncertain, error, errorRequestId, retryPath }
 }

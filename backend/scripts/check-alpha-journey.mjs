@@ -218,6 +218,25 @@ try {
     path: resolve(resultsDirectory, 'seller-published.png'),
     fullPage: true
   })
+  stage = 'seller edits digital rights and version before the first order'
+  await sellerPage.goto(`${origin}/zh-CN/me`)
+  const digitalCard = sellerPage.locator('article').filter({ hasText: 'Alpha E2E Digital Delivery' })
+  await digitalCard.getByRole('button', { name: '编辑' }).click()
+  await sellerPage.getByRole('textbox', { name: '授权说明' }).fill('Updated buyer license for the accepted version.')
+  await sellerPage.getByRole('textbox', { name: '内容版本' }).fill('2026.10-e2e')
+  await sellerPage.getByRole('button', { name: '保存' }).click()
+  await waitForText(sellerPage, '商品已更新')
+  await sellerPage.goto(`${origin}/zh-CN/listing/${digitalListingId}`)
+  await waitForText(sellerPage, 'Updated buyer license for the accepted version.')
+  await waitForText(sellerPage, '2026.10-e2e')
+  stage = 'English seller account and publication labels'
+  await sellerPage.goto(`${origin}/en/me`)
+  await sellerPage.getByRole('tab', { name: 'Sales' }).waitFor()
+  await sellerPage.getByText('Alpha account').waitFor()
+  await sellerPage.goto(`${origin}/en/listings/create`)
+  await sellerPage.getByRole('heading', { name: 'Publish a listing' }).waitFor()
+  await sellerPage.goto(`${origin}/en/notifications`)
+  await sellerPage.getByRole('heading', { name: 'Notifications are not available in Alpha' }).waitFor()
 
   stage = 'home catalog sections show both listing types from the API'
   await sellerPage.goto(`${origin}/zh-CN`)
@@ -315,6 +334,7 @@ try {
   const digitalOrderId = new URL(digitalOrderUrl).pathname.split('/').at(-1)
   await buyerPage.getByRole('button', { name: '确认付款' }).click()
   await buyerPage.getByTestId('acceptance-order-status').getByText('待交付').waitFor()
+  await buyerPage.getByText('此金额不可用于真实支付或提现。', { exact: false }).waitFor()
 
   stage = 'slow real order read does not overlap periodic or focus refresh'
   const refreshSource = await readFile(new URL('../../frontend/src/lib/refresh-policy.ts', import.meta.url), 'utf8')
@@ -386,6 +406,11 @@ try {
     path: resolve(resultsDirectory, 'seller-refunded.png'),
     fullPage: true
   })
+  stage = 'English buyer order history labels'
+  await buyerPage.goto(`${origin}/en/me`)
+  await buyerPage.getByRole('tab', { name: 'Purchases' }).waitFor()
+  await buyerPage.getByText('Order ID:', { exact: false }).first().waitFor()
+  await buyerPage.getByRole('navigation', { name: 'Record pages' }).waitFor()
 
   stage = 'observer facts and request correlation'
   const orders = await observerRows(

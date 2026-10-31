@@ -2,7 +2,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { useRouter } from '@/i18n/routing'
 import { useForm } from 'react-hook-form'
@@ -33,6 +33,8 @@ type FormValues = z.infer<typeof publishSchema>
 
 export function PublishForm() {
   const locale = useLocale()
+  const tUi = useTranslations('publishUi')
+  const tCategory = useTranslations('marketCategories')
   const router = useRouter()
   const auth = useAuthStore()
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -73,25 +75,35 @@ export function PublishForm() {
     setSaveError(null)
     try {
       if (auth.status !== 'authenticated' || !auth.view) {
-        setSaveError('请先登录后再发布商品。')
+        setSaveError(tUi('signIn'))
         return
       }
       const selectedCurrency = currencies.find(({ code }) => code === data.priceCurrency)
       if (!selectedCurrency) {
-        setSaveError('币种列表尚未加载，请重试。')
+        setSaveError(tUi('currencyPending'))
         return
       }
       if ((data.priceAmount.split('.')[1]?.length ?? 0) > selectedCurrency.scale) {
         setError('priceAmount', {
           type: 'validate',
-          message: `${selectedCurrency.code} 最多支持 ${selectedCurrency.scale} 位小数`
+          message: tUi('priceScale', {
+            currency: selectedCurrency.code,
+            scale: selectedCurrency.scale
+          })
         })
         return
       }
-      if (photos.length < 1 || photos.length > 8 || photos.some((photo) =>
-        !['image/jpeg', 'image/png', 'image/webp'].includes(photo.type) ||
-        photo.size < 1 || photo.size > 5 * 1024 * 1024)) {
-        setSaveError('请选择 1–8 张 JPEG、PNG 或 WebP 图片，每张不超过 5 MiB。')
+      if (
+        photos.length < 1 ||
+        photos.length > 8 ||
+        photos.some(
+          (photo) =>
+            !['image/jpeg', 'image/png', 'image/webp'].includes(photo.type) ||
+            photo.size < 1 ||
+            photo.size > 5 * 1024 * 1024
+        )
+      ) {
+        setSaveError(tUi('photoRule'))
         return
       }
       const mediaIds: string[] = []
@@ -113,12 +125,15 @@ export function PublishForm() {
             }
           : {})
       })
-      toast.success('商品发布成功')
+      toast.success(tUi('success'))
       router.push(`/listing/${listing.id}`)
     } catch (error) {
-      const message = error instanceof BackendError
-        ? `发布失败：${apiErrorCopy(error, locale)}`
-        : error instanceof Error ? `发布失败：${error.message}` : '发布失败，请稍后重试。'
+      const message =
+        error instanceof BackendError
+          ? tUi('saveError', { error: apiErrorCopy(error, locale) })
+          : error instanceof Error
+            ? tUi('saveError', { error: error.message })
+            : tUi('saveErrorGeneric')
       setSaveError(message)
       toast.error(message)
     } finally {
@@ -131,7 +146,7 @@ export function PublishForm() {
       {/* 类型选择 */}
       <Card>
         <CardContent className="p-4">
-          <Label className="mb-2 block">商品类型</Label>
+          <Label className="mb-2 block">{tUi('itemType')}</Label>
           <Tabs
             value={category}
             onValueChange={(v) => {
@@ -141,8 +156,8 @@ export function PublishForm() {
             }}
           >
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="physical">实物二手</TabsTrigger>
-              <TabsTrigger value="digital">数字资产</TabsTrigger>
+              <TabsTrigger value="physical">{tUi('physical')}</TabsTrigger>
+              <TabsTrigger value="digital">{tUi('digital')}</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardContent>
@@ -150,21 +165,22 @@ export function PublishForm() {
 
       {category === 'digital' && (
         <div className="space-y-2">
-          <Label htmlFor="saleMode">销售方式</Label>
+          <Label htmlFor="saleMode">{tUi('saleMode')}</Label>
           <select
             id="saleMode"
             className="flex h-10 w-full rounded-md border bg-background px-3 text-sm"
             {...register('saleMode')}
           >
-            <option value="repeatable">可重复销售</option>
-            <option value="one_off">仅售一次</option>
+            <option value="repeatable">{tUi('repeatable')}</option>
+            <option value="one_off">{tUi('oneOff')}</option>
           </select>
+          <p className="text-xs leading-5 text-muted-foreground">{tUi('saleModeHint')}</p>
           {errors.saleMode && <p className="text-sm text-destructive">{errors.saleMode.message}</p>}
         </div>
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="primaryCategory">商品分类</Label>
+        <Label htmlFor="primaryCategory">{tUi('category')}</Label>
         <select
           id="primaryCategory"
           className="flex h-10 w-full rounded-md border bg-background px-3 text-sm"
@@ -174,7 +190,7 @@ export function PublishForm() {
             .filter((c) => c.itemCategory === category)
             .map((c) => (
               <option key={c.id} value={c.id}>
-                {c.label}
+                {tCategory(c.id)}
               </option>
             ))}
         </select>
@@ -189,18 +205,18 @@ export function PublishForm() {
       <Card>
         <CardContent className="space-y-4 p-4">
           <div>
-            <Label htmlFor="title">标题</Label>
-            <Input id="title" placeholder="一句话描述商品" {...register('title')} />
+            <Label htmlFor="title">{tUi('listingTitle')}</Label>
+            <Input id="title" placeholder={tUi('titleHint')} {...register('title')} />
             {errors.title && (
               <p className="mt-1 text-xs text-destructive">{errors.title.message}</p>
             )}
           </div>
           <div>
-            <Label htmlFor="description">详细描述（支持 Markdown）</Label>
+            <Label htmlFor="description">{tUi('description')}</Label>
             <Textarea
               id="description"
               rows={6}
-              placeholder="## 商品详情&#10;- 规格&#10;- 配件&#10;- 交易说明"
+              placeholder={tUi('descriptionHint')}
               {...register('description')}
             />
             {errors.description && (
@@ -213,7 +229,7 @@ export function PublishForm() {
       {/* 商品图片 */}
       <Card>
         <CardContent className="space-y-2 p-4">
-          <Label htmlFor="listingPhotos">商品图片（1–8 张，每张不超过 5 MiB）</Label>
+          <Label htmlFor="listingPhotos">{tUi('photos')}</Label>
           <Input
             id="listingPhotos"
             type="file"
@@ -222,7 +238,10 @@ export function PublishForm() {
             onChange={(event) => setPhotos(Array.from(event.target.files ?? []))}
           />
           {photos.length > 0 && (
-            <p className="text-sm text-muted-foreground">已选择 {photos.length} 张：{photos.map((photo) => photo.name).join('、')}</p>
+            <p className="text-sm text-muted-foreground">
+              {tUi('selectedPhotos', { count: photos.length })}：
+              {photos.map((photo) => photo.name).join('、')}
+            </p>
           )}
         </CardContent>
       </Card>
@@ -230,7 +249,7 @@ export function PublishForm() {
       {/* 价格 */}
       <Card>
         <CardContent className="p-4">
-          <Label className="mb-2 block">价格</Label>
+          <Label className="mb-2 block">{tUi('price')}</Label>
           <div className="flex gap-2">
             <Input
               inputMode="decimal"
@@ -244,7 +263,7 @@ export function PublishForm() {
               disabled={currenciesLoading || !!currenciesError}
             >
               <SelectTrigger className="w-32">
-                <SelectValue placeholder="加载币种中..." />
+                <SelectValue placeholder={tUi('loadingCurrencies')} />
               </SelectTrigger>
               <SelectContent>
                 {currencies.map(({ code }) => (
@@ -257,14 +276,14 @@ export function PublishForm() {
           </div>
           {selectedPriceCurrency && (
             <p className="mt-1 text-xs text-muted-foreground">
-              {priceCurrency} 最多支持 {selectedPriceCurrency.scale} 位小数
+              {tUi('priceScale', { currency: priceCurrency, scale: selectedPriceCurrency.scale })}
             </p>
           )}
           {currenciesError && (
             <div role="alert" className="text-sm text-destructive">
-              币种加载失败：{currenciesError}
+              {tUi('currencyError', { error: currenciesError })}
               <Button type="button" variant="link" size="sm" onClick={retry}>
-                重试
+                {tUi('retry')}
               </Button>
             </div>
           )}
@@ -279,24 +298,32 @@ export function PublishForm() {
       {/* 数字字段 */}
       {category === 'digital' && (
         <Card>
-          <CardContent className="space-y-4 p-4">
+          <CardContent className="space-y-4 p-5 sm:p-6">
             <div>
-              <Label htmlFor="licenseDescription">授权说明</Label>
+              <h2 className="text-lg font-semibold">{tUi('digitalTerms')}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{tUi('sellerStatementHint')}</p>
+            </div>
+            <div>
+              <Label htmlFor="licenseDescription">{tUi('license')}</Label>
               <Textarea
                 id="licenseDescription"
                 rows={3}
-                placeholder="说明买家获得的使用授权，不要填写实际交付链接或密钥"
+                placeholder={tUi('licenseHint')}
                 {...register('licenseDescription')}
               />
               {errors.licenseDescription && (
-                <p className="mt-1 text-xs text-destructive">请填写授权说明（至少 3 个字符）</p>
+                <p className="mt-1 text-xs text-destructive">{tUi('licenseRequired')}</p>
               )}
             </div>
             <div>
-              <Label htmlFor="contentVersion">内容版本</Label>
-              <Input id="contentVersion" placeholder="例如 v1.0" {...register('contentVersion')} />
+              <Label htmlFor="contentVersion">{tUi('version')}</Label>
+              <Input
+                id="contentVersion"
+                placeholder={tUi('versionHint')}
+                {...register('contentVersion')}
+              />
               {errors.contentVersion && (
-                <p className="mt-1 text-xs text-destructive">请填写内容版本</p>
+                <p className="mt-1 text-xs text-destructive">{tUi('versionRequired')}</p>
               )}
             </div>
           </CardContent>
@@ -311,10 +338,10 @@ export function PublishForm() {
       {/* 提交 */}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={() => router.back()}>
-          取消
+          {tUi('cancel')}
         </Button>
         <Button type="submit" disabled={submitting || currenciesLoading || !!currenciesError}>
-          {submitting ? '发布中...' : '立即发布'}
+          {submitting ? tUi('submitting') : tUi('submit')}
         </Button>
       </div>
     </form>

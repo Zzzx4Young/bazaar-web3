@@ -16,7 +16,7 @@ const view: AuthView = {
 
 beforeEach(() => {
   vi.resetAllMocks()
-  useAuthStore.setState({ status: 'loading', view: null, error: null })
+  useAuthStore.setState({ status: 'loading', view: null, error: null, errorRequestId: null })
 })
 
 describe('backend session boundaries', () => {
@@ -67,10 +67,14 @@ describe('backend session boundaries', () => {
     expect(useAuthStore.getState().status).toBe('anonymous')
   })
 
-  it('keeps only the machine code in store state for later localized display', async () => {
+  it('keeps the machine code and a safe correlation ID for localized display', async () => {
     const failure = Object.assign(new Error('UNAVAILABLE'), { requestId: 'request-123' })
     vi.mocked(login).mockRejectedValue(failure)
     await useAuthStore.getState().signIn('buyer', 'password')
     expect(useAuthStore.getState().error).toBe('UNAVAILABLE')
+    expect(useAuthStore.getState().errorRequestId).toBe('request-123')
+    vi.mocked(login).mockResolvedValueOnce(view)
+    await useAuthStore.getState().signIn('buyer', 'password')
+    expect(useAuthStore.getState().errorRequestId).toBeNull()
   })
 })

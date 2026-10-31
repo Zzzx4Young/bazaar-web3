@@ -59,11 +59,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyTheme(initial)
   }, [])
 
-  // Keep DOM in sync if state changes for any other reason.
-  useEffect(() => {
-    applyTheme(theme)
-  }, [theme])
-
   const setTheme = (next: Theme) => {
     setThemeState(next)
     applyTheme(next)

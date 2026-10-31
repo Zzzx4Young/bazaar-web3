@@ -6,6 +6,7 @@ import { marketplaceCategories } from '@/lib/categories'
 
 export function TrendingCategories() {
   const t = useTranslations('home.trending')
+  const tCategory = useTranslations('marketCategories')
 
   return (
     <section aria-label={t('title')} className="space-y-5" data-testid="trending-categories">
@@ -27,10 +28,12 @@ export function TrendingCategories() {
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-primary transition-transform group-hover:scale-105 motion-reduce:transform-none">
               <span className="font-display text-2xl font-semibold" aria-hidden>
-                {cat.label.slice(0, 1)}
+                {tCategory(cat.id).slice(0, 1)}
               </span>
             </div>
-            <div className="text-center text-sm font-medium text-foreground">{cat.label}</div>
+            <div className="text-center text-sm font-medium text-foreground">
+              {tCategory(cat.id)}
+            </div>
           </Link>
         ))}
       </div>

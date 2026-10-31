@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { useCurrencies } from '@/hooks/use-currencies'
+import { useTranslations } from 'next-intl'
 import type { Category, FilterState, ItemCategory, Currency, PrimaryCategory } from '@/types'
 
 interface FilterSidebarProps {
@@ -34,20 +35,22 @@ export function FilterSidebar({
   onCurrency,
   onReset
 }: FilterSidebarProps) {
+  const t = useTranslations('filter')
+  const tCategory = useTranslations('marketCategories')
   const NONE = 'all'
   const { currencies, loading: currenciesLoading, error: currenciesError, retry } = useCurrencies()
   return (
     <Card className="w-full lg:w-64">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm">筛选</CardTitle>
+        <CardTitle className="text-sm">{t('title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         {/* 关键词 */}
         <div className="space-y-1.5">
-          <Label htmlFor="explore-keyword">关键词</Label>
+          <Label htmlFor="explore-keyword">{t('keyword')}</Label>
           <Input
             id="explore-keyword"
-            placeholder="搜索商品..."
+            placeholder={t('searchHint')}
             value={filter.keyword ?? ''}
             onChange={(e) => onKeyword(e.target.value)}
           />
@@ -55,19 +58,19 @@ export function FilterSidebar({
 
         {/* 一级分类 */}
         <div className="space-y-1.5">
-          <Label>分类</Label>
+          <Label>{t('category')}</Label>
           <Select
             value={filter.category ?? NONE}
             onValueChange={(v) => onCategory(v === NONE ? undefined : (v as PrimaryCategory))}
           >
             <SelectTrigger>
-              <SelectValue placeholder="全部" />
+              <SelectValue placeholder={t('all')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NONE}>全部</SelectItem>
+              <SelectItem value={NONE}>{t('all')}</SelectItem>
               {categories.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.label}
+                  {tCategory(c.id)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -76,35 +79,35 @@ export function FilterSidebar({
 
         {/* 实物 / 数字 */}
         <div className="space-y-1.5">
-          <Label>类型</Label>
+          <Label>{t('type')}</Label>
           <Select
             value={filter.itemCategory ?? NONE}
             onValueChange={(v) => onItemCategory(v === NONE ? undefined : (v as ItemCategory))}
           >
             <SelectTrigger>
-              <SelectValue placeholder="全部" />
+              <SelectValue placeholder={t('all')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NONE}>全部</SelectItem>
-              <SelectItem value="physical">实物</SelectItem>
-              <SelectItem value="digital">数字</SelectItem>
+              <SelectItem value={NONE}>{t('all')}</SelectItem>
+              <SelectItem value="physical">{t('physical')}</SelectItem>
+              <SelectItem value="digital">{t('digital')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {/* 币种 */}
         <div className="space-y-1.5">
-          <Label>币种</Label>
+          <Label>{t('currency')}</Label>
           <Select
             value={filter.currency ?? NONE}
             onValueChange={(v) => onCurrency(v === NONE ? undefined : (v as Currency))}
             disabled={currenciesLoading || !!currenciesError}
           >
             <SelectTrigger>
-              <SelectValue placeholder={currenciesLoading ? '加载币种中...' : '全部'} />
+              <SelectValue placeholder={currenciesLoading ? t('loadingCurrencies') : t('all')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NONE}>全部</SelectItem>
+              <SelectItem value={NONE}>{t('all')}</SelectItem>
               {currencies.map(({ code }) => (
                 <SelectItem key={code} value={code}>
                   {code}
@@ -114,9 +117,9 @@ export function FilterSidebar({
           </Select>
           {currenciesError && (
             <div role="alert" className="text-destructive">
-              币种加载失败：{currenciesError}
+              {t('currencyError', { error: currenciesError })}
               <Button type="button" variant="link" size="sm" onClick={retry}>
-                重试
+                {t('retry')}
               </Button>
             </div>
           )}
@@ -124,7 +127,7 @@ export function FilterSidebar({
 
         {/* 重置 */}
         <Button variant="outline" className="w-full" onClick={onReset}>
-          重置筛选
+          {t('reset')}
         </Button>
       </CardContent>
     </Card>

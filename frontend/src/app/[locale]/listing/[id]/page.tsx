@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { MediaCarousel } from '@/components/listing/media-carousel'
 import { MarkdownRenderer } from '@/components/listing/markdown-renderer'
 import { SellerCard } from '@/components/listing/seller-card'
+import { ListingFacts } from '@/components/listing/listing-facts'
 import { BuyModal } from '@/components/listing/buy-modal'
 import { formatPrice, formatDate } from '@/lib/format'
 import { useFavoriteStore } from '@/stores/use-favorite-store'
@@ -29,6 +30,8 @@ export default function ListingDetailPage({ params }: Props) {
   const t = useTranslations('common')
   const tCart = useTranslations('commonCart')
   const tExplore = useTranslations('explore')
+  const tFacts = useTranslations('listingFacts')
+  const tPage = useTranslations('listingPage')
   const locale = useLocale()
   const backend = useBackendListing(params.id)
   const { toggle, isFavorite, error } = useFavoriteStore()
@@ -43,18 +46,18 @@ export default function ListingDetailPage({ params }: Props) {
   const [buyOpen, setBuyOpen] = useState(false)
   const item = backend.item
   if (!item && backend.loading) {
-    return <p role="status">正在加载商品…</p>
+    return <p role="status">{tPage('loading')}</p>
   }
   if (!item) {
     if (backend.error)
       return (
         <p role="alert" className="text-destructive">
-          商品加载失败：{backend.error}
+          {tPage('loadError', { error: backend.error })}
         </p>
       )
     notFound()
   }
-  const seller = { id: item.sellerId, displayName: item.sellerDisplayName ?? 'Alpha 卖家' }
+  const seller = { id: item.sellerId, displayName: item.sellerDisplayName ?? item.sellerId }
   const favorited = isFavorite(item.id)
   const currentCart = cartOwnerId === account?.id ? cartItems : []
   const alreadyInCart = currentCart.some((line) => line.listingId === item.id)
@@ -69,14 +72,14 @@ export default function ListingDetailPage({ params }: Props) {
       {/* 面包屑 */}
       <nav className="border-b border-border pb-5 text-sm text-muted-foreground">
         <Link href="/" className="hover:underline">
-          首页
+          {tPage('home')}
         </Link>
         <span className="mx-1">/</span>
         <Link
           href={item.primaryCategory ? `/explore?category=${item.primaryCategory}` : '/explore'}
           className="hover:underline"
         >
-          {item.category === 'physical' ? '实物' : '数字'}
+          {item.category === 'physical' ? tPage('physical') : tPage('digital')}
         </Link>
         <span className="mx-1">/</span>
         <span className="text-foreground">{item.title.slice(0, 20)}</span>
@@ -94,21 +97,12 @@ export default function ListingDetailPage({ params }: Props) {
                 {transactionLabel(item.status, locale)}
               </Badge>
               <Badge variant={item.category === 'digital' ? 'secondary' : 'outline'}>
-                {item.category === 'digital' ? '数字资产' : '实物二手'}
+                {item.category === 'digital' ? tPage('digital') : tPage('physical')}
               </Badge>
-              {item.condition && (
-                <Badge variant="outline">
-                  {item.condition === 'like_new'
-                    ? '99新'
-                    : item.condition === 'good'
-                      ? '95新'
-                      : '其他'}
-                </Badge>
-              )}
             </div>
             <h1 className="market-heading mt-4 text-3xl leading-tight sm:text-4xl">{item.title}</h1>
             <div className="mt-2 text-xs text-muted-foreground">
-              {formatDate(item.createdAt)}发布 · 数据来自 Alpha 服务端
+              {tPage('published', { date: formatDate(item.createdAt) })}
             </div>
           </div>
 
@@ -138,18 +132,24 @@ export default function ListingDetailPage({ params }: Props) {
                     disabled={item.status !== 'active'}
                     onClick={() => setBuyOpen(true)}
                   >
-                    立即购买
+                    {tPage('buyNow')}
                   </Button>
                   <Button
                     variant="outline"
                     className="w-full"
                     size="lg"
-                    disabled={!cartReady || item.status !== 'active' || !account ||
-                      account.role !== 'participant' || account.id === item.sellerId}
+                    disabled={
+                      !cartReady ||
+                      item.status !== 'active' ||
+                      !account ||
+                      account.role !== 'participant' ||
+                      account.id === item.sellerId
+                    }
                     onClick={() => {
                       if (!account) return
                       if (alreadyInCart) return toast.info(tCart('alreadyInCart'))
-                      if (currentCart.length >= cartMaxItems) return toast.error(tCart('full', { max: cartMaxItems }))
+                      if (currentCart.length >= cartMaxItems)
+                        return toast.error(tCart('full', { max: cartMaxItems }))
                       addToCart(account.id, item)
                       toast.success(tCart('added'))
                     }}
@@ -160,7 +160,7 @@ export default function ListingDetailPage({ params }: Props) {
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   <Button variant="outline" className="w-full" size="lg" disabled>
                     <MessageCircle className="mr-1 h-4 w-4" />
-                    联系卖家（未开放）
+                    {tPage('contactUnavailable')}
                   </Button>
                   <Button
                     variant="outline"
@@ -171,7 +171,7 @@ export default function ListingDetailPage({ params }: Props) {
                     <Heart
                       className={`mr-1 h-4 w-4 ${favorited ? 'fill-red-500 text-red-500' : ''}`}
                     />
-                    {favorited ? '已收藏' : '收藏'}
+                    {favorited ? tPage('saved') : tPage('save')}
                   </Button>
                   <Button variant="outline" className="w-full" size="lg" disabled>
                     <Share2 className="mr-1 h-4 w-4" />
@@ -184,50 +184,12 @@ export default function ListingDetailPage({ params }: Props) {
 
           <SellerCard seller={seller} />
 
-          {/* 实物成色 / 数字交付提示 */}
-          {item.category === 'physical' && item.condition && (
-            <Card>
-              <CardContent className="p-4 text-sm">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-muted-foreground">物品成色</div>
-                  <div>
-                    {item.condition === 'like_new'
-                      ? '99新'
-                      : item.condition === 'good'
-                        ? '95新'
-                        : item.condition === 'fair'
-                          ? '9成新'
-                          : item.condition === 'poor'
-                            ? '8成新'
-                            : '全新'}
-                  </div>
-                  <div className="text-muted-foreground">交易方式</div>
-                  <div>
-                    {item.shippingMethod === 'delivery' ? '快递发货 / 同城面交' : '仅限同城面交'}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          {item.category === 'digital' && (
-            <Card>
-              <CardContent className="p-4 text-sm">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-muted-foreground">授权说明</div>
-                  <div>{item.licenseDescription ?? '以订单交付记录为准'}</div>
-                  <div className="text-muted-foreground">内容版本</div>
-                  <div>{item.contentVersion ?? '未标注'}</div>
-                  <div className="text-muted-foreground">隐私边界</div>
-                  <div>交付链接和提取码仅对订单参与方可见</div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <ListingFacts item={item} />
         </div>
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">商品描述</h2>
+        <h2 className="text-lg font-semibold">{tFacts('description')}</h2>
         <Card>
           <CardContent className="p-6">
             <MarkdownRenderer content={item.description} />

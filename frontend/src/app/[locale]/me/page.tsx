@@ -8,19 +8,21 @@ import { BackendOrders } from '@/components/me/backend-orders'
 import { BackendListings } from '@/components/me/backend-listings'
 import { Card, CardContent } from '@/components/ui/card'
 import { IdentitySettings } from '@/components/me/identity-settings'
+import { useTranslations } from 'next-intl'
 
 export default function MePage() {
+  const t = useTranslations('mePage')
   const status = useAuthStore((state) => state.status)
   const [tab, setTab] = useState<'buyer' | 'seller'>('buyer')
 
-  if (status === 'loading') return <p role="status">正在恢复账户会话…</p>
+  if (status === 'loading') return <p role="status">{t('loading')}</p>
   if (status !== 'authenticated')
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <h1 className="text-xl font-semibold">登录后查看个人中心</h1>
+          <h1 className="text-xl font-semibold">{t('signInTitle')}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            请使用页面右上角的登录入口。个人商品和订单均从 Alpha 服务端读取。
+            {t('signInHint')}
           </p>
         </CardContent>
       </Card>
@@ -33,8 +35,8 @@ export default function MePage() {
       <BackendListings />
       <Tabs value={tab} onValueChange={(value) => setTab(value as 'buyer' | 'seller')}>
         <TabsList>
-          <TabsTrigger value="buyer">我买到的</TabsTrigger>
-          <TabsTrigger value="seller">我卖出的</TabsTrigger>
+          <TabsTrigger value="buyer">{t('buyerTab')}</TabsTrigger>
+          <TabsTrigger value="seller">{t('sellerTab')}</TabsTrigger>
         </TabsList>
         <TabsContent value="buyer" className="mt-4">
           <BackendOrders role="buyer" />

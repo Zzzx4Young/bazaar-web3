@@ -48,8 +48,11 @@ export default function CartPage() {
   const items = cart.ownerId === account?.id ? cart.items : []
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <h1 className="text-2xl font-bold">{t('title')}</h1>
+      <p className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+        {t('simulated')}
+      </p>
       {!account || account.role !== 'participant' ? (
         <p role="alert">{t('signIn')}</p>
       ) : !cartReady ? (
