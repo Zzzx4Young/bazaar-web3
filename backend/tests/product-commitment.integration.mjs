@@ -5,6 +5,7 @@ import { sandbox, fixture } from './helpers/database.mjs'
 import { ListingReviewController } from '../dist/listings/listing-review.controller.js'
 import { ListingService } from '../dist/listings/listing.service.js'
 import { OrderCommands } from '../dist/orders/order-commands.js'
+import { OrderController } from '../dist/orders/order.controller.js'
 import { fixtureMediaAsset } from './helpers/media.mjs'
 import { exampleCommitment } from '../scripts/example-commitment.mjs'
 
@@ -36,6 +37,38 @@ test('purchase freezes commitment; later repeatable edits only affect new orders
   const secondSnapshot = await db.client.orderSnapshot.findUniqueOrThrow({ where: { orderId: second } })
   assert.equal(firstSnapshot.commitment.sellerUseNotes, 'One test project')
   assert.equal(secondSnapshot.commitment.sellerUseNotes, 'Two test projects')
+})
+
+test('online access snapshot uses the server acceptance event without computing an expiry', async () => {
+  const f = await fixture(db, 'digital')
+  const media = await fixtureMediaAsset(db, f.seller)
+  await db.client.listingMedia.create({ data: {
+    listingId: f.listing.id, mediaId: media.id, position: 0
+  } })
+  const access = { ...exampleCommitment('digital'), resourceMode: 'access',
+    accessDurationValue: 30, accessDurationUnit: 'days',
+    accessTermNotes: 'Seller counts from buyer acceptance',
+    expiryBehavior: 'Reading ends; renewal requires a new order' }
+  await db.market.edit(f.seller, f.listing.id, 1, { commitment: access })
+  const orderId = await db.market.create(f.buyer, randomUUID(), { ...f.input, version: 2 })
+  const snapshot = await db.client.orderSnapshot.findUniqueOrThrow({ where: { orderId } })
+  assert.equal(snapshot.commitmentVersion, 1)
+  assert.equal(snapshot.commitment.resourceMode, 'access')
+  assert.equal(snapshot.commitment.accessDurationValue, 30)
+  assert.equal(await db.client.orderMediaSnapshot.count({ where: { orderId } }), 1)
+  await db.market.act(f.buyer, randomUUID(), orderId, 'pay')
+  await db.market.act(f.seller, randomUUID(), orderId, 'deliver', {
+    reference: 'https://example.com/private-access'
+  })
+  await db.market.act(f.buyer, randomUUID(), orderId, 'accept')
+  const event = await db.client.orderEvent.findFirstOrThrow({ where: {
+    orderId, operation: 'accept'
+  } })
+  const detail = await new OrderController(db.database).detail(actor(f.buyer), orderId)
+  assert.equal(detail.acceptedAt.getTime(), event.createdAt.getTime())
+  assert.equal(detail.snapshot.commitment.accessDurationValue, 30)
+  assert.equal('expiryAt' in detail, false)
+  assert.equal('activatedAt' in detail, false)
 })
 
 test('source report pauses transactions until seller evidence and admin review', async () => {
