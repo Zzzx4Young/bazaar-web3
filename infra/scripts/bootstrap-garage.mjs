@@ -19,8 +19,11 @@ function run(program, args, { allowFailure = false } = {}) {
   return result
 }
 
+const composeEnvironment = ['COMPOSE_PROJECT_NAME', 'GARAGE_HOT_PORT', 'GARAGE_COLD_PORT']
+  .filter((name) => process.env[name])
+  .map((name) => `${name}=${process.env[name]}`)
 const docker = run('docker', ['info'], { allowFailure: true }).status === 0
-  ? ['docker'] : ['sudo', '-n', 'docker']
+  ? ['docker'] : ['sudo', '-n', 'env', ...composeEnvironment, 'docker']
 if (run(docker[0], [...docker.slice(1), 'info'], { allowFailure: true }).status !== 0)
   throw new Error('Docker is unavailable')
 const compose = [...docker.slice(1), 'compose', '-f', composeFile, '--profile', 'media']

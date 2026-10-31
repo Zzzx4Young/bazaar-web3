@@ -8,6 +8,11 @@ ALTER TABLE "OrderSnapshot" ADD COLUMN "commitment" JSONB,
   ADD COLUMN "commitmentVersion" INTEGER;
 ALTER TABLE "Order" ADD COLUMN "transactionPausedAt" TIMESTAMPTZ(6),
   ADD COLUMN "pauseReviewId" UUID;
+-- A migration-triggered pause has no human actor, like the existing expiry event.
+ALTER TABLE "OrderEvent" DROP CONSTRAINT "order_event_actor_valid";
+ALTER TABLE "OrderEvent" ADD CONSTRAINT "order_event_actor_valid" CHECK (
+  "actorId" IS NOT NULL OR "operation" IN ('expire', 'listing_review_pause')
+);
 CREATE TABLE "ListingReviewEvent" (
   "id" UUID NOT NULL, "listingId" UUID NOT NULL, "actorId" UUID,
   "action" TEXT NOT NULL, "kind" TEXT, "reason" TEXT NOT NULL,

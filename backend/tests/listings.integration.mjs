@@ -72,6 +72,11 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
       return app.inject({ method: 'POST', url: '/api/listings', headers: alice,
         payload: { ...payload, commitment: exampleCommitment(payload.type), mediaIds: [asset.id] } })
     }
+    const oldClientAsset = await fixtureMediaAsset(db, sellerId)
+    const oldClient = await app.inject({ method: 'POST', url: '/api/listings', headers: alice,
+      payload: { ...listing('USD', '2'), mediaIds: [oldClientAsset.id] } })
+    assert.equal(oldClient.statusCode, 400, oldClient.body)
+    assert.equal(await db.client.listing.count(), 0)
     assert.equal((await app.inject({ method: 'POST', url: '/api/currencies', headers: { origin, 'content-type': 'application/json' }, payload: {} })).json().length, 19)
     const created = []
     for (const payload of [

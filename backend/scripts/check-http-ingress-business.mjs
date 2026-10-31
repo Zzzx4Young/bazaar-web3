@@ -10,6 +10,7 @@ import { provisionAccounts } from '../dist/accounts/provision-accounts.js'
 import { grantRuntime } from './runtime-grants.mjs'
 import { httpIngressEnvironment, cleanupHttpIngress } from './http-ingress-environment.mjs'
 import { fixtureMediaAsset } from '../tests/helpers/media.mjs'
+import { exampleCommitment } from './example-commitment.mjs'
 
 const origin = 'http://localhost:3000'
 const root = new URL('../../', import.meta.url).pathname
@@ -20,6 +21,7 @@ const children = []
 const sourceFiles = ['infra/http/haproxy.cfg', 'infra/compose.http-validation.yaml',
   'backend/scripts/http-ingress-environment.mjs', 'backend/scripts/check-http-ingress-business.mjs',
   'backend/tests/helpers/media.mjs',
+  'backend/scripts/example-commitment.mjs',
   ...['main', 'app', 'config', 'auth/auth.service', 'orders/order-commands', 'orders/order-idempotency',
     'database/database.service', 'health/health.controller'].map(name => `backend/dist/${name}.js`)]
 const fingerprint = async () => Object.fromEntries(await Promise.all(sourceFiles.map(async name =>
@@ -141,7 +143,8 @@ try {
     const media = await fixtureMediaAsset(db, sellerAccountId)
     const result = await post(ports[index % 2], '/listings', { type: 'physical', saleMode: 'one_off',
       category: 'electronics', title: `Ingress functional product ${index}`, description: 'Isolated real database product',
-      price: { amount: '12.50', currency: 'USD' }, mediaIds: [media.id] }, actors.seller)
+      price: { amount: '12.50', currency: 'USD' }, mediaIds: [media.id],
+      commitment: exampleCommitment('physical') }, actors.seller)
     assert.equal(result.status, 201)
     return { listingId: result.value.id, version: 1, shipping }
   }

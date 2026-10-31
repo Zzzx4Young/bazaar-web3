@@ -21,14 +21,17 @@ type ReviewEntry = {
 }
 
 export function ListingReviewQueue() {
-  const t = useTranslations('commitmentUi')
   const isAdmin = useAuthStore((state) => state.view?.account.role === 'admin')
-  const resource = useApiResource<ReviewEntry[]>('/listings/review-queue', {}, isAdmin)
+  return isAdmin ? <AdminListingReviewQueue /> : null
+}
+
+function AdminListingReviewQueue() {
+  const t = useTranslations('commitmentUi')
+  const resource = useApiResource<ReviewEntry[]>('/listings/review-queue', {}, true)
   const [reason, setReason] = useState('')
   const [returnOutcome, setReturnOutcome] = useState('not_sent')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  if (!isAdmin) return null
   const run = async (path: string, body: unknown) => {
     setError('')
     setBusy(true)
