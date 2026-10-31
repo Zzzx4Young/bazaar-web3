@@ -29,12 +29,15 @@ import {
   transactionLabel
 } from '@/lib/transaction-copy'
 import { useAuthStore } from '@/stores/use-auth-store'
+import { authenticatedPost } from '@/lib/authenticated-api'
+import { toast } from 'sonner'
 
 export default function OrderDetailPage() {
   const params = useParams<{ id: string }>()
   const tDispute = useTranslations('orderDispute')
   const tReview = useTranslations('orderReview')
   const tUi = useTranslations('orderDetailUi')
+  const tCommitment = useTranslations('commitmentUi')
   const locale = useLocale()
   const auth = useAuthStore()
   const resource = useApiResource<OrderDetail>(`/orders/${encodeURIComponent(params.id)}`, {}, true)
@@ -47,6 +50,8 @@ export default function OrderDetailPage() {
   const [description, setDescription] = useState('')
   const [rating, setRating] = useState('5')
   const [url, setUrl] = useState('')
+  const [reviewNote, setReviewNote] = useState('')
+  const [noteSending, setNoteSending] = useState(false)
   const [carrier, setCarrier] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
   const [accessCode, setAccessCode] = useState('')
@@ -117,6 +122,27 @@ export default function OrderDetailPage() {
           illustrative={hasIllustrativeImages(order.snapshot.description)}
         />
       </div>
+      {order.transactionPausedAt && <div role="status" className="space-y-2 rounded-lg border p-4 text-sm">
+        <p>{tCommitment('paused')}</p>
+        <Input aria-label={tCommitment('reviewNote')} value={reviewNote}
+          onChange={(event) => setReviewNote(event.target.value)} />
+        <Button type="button" variant="outline" disabled={noteSending || !reviewNote.trim()}
+          onClick={async () => {
+            setNoteSending(true)
+            try {
+              await authenticatedPost(`/orders/${order.id}/review-note`, { note: reviewNote })
+              setReviewNote('')
+              history.reload()
+            } catch { toast.error(tCommitment('reviewError')) }
+            finally { setNoteSending(false) }
+          }}>{tCommitment('sendNote')}</Button>
+      </div>}
+      {order.acceptedAt && order.snapshot.commitment &&
+        'resourceMode' in order.snapshot.commitment &&
+        order.snapshot.commitment.resourceMode === 'access' &&
+        <p className="rounded-lg border p-3 text-sm">
+          {tCommitment('acceptedAt', { date: new Date(order.acceptedAt).toLocaleString(locale) })}
+        </p>}
       <OrderSnapshot type={order.type} snapshot={order.snapshot} />
       <div className="rounded-xl border bg-secondary/60 p-4 text-sm">
         <strong>{tUi('simulated')}</strong>
@@ -237,6 +263,10 @@ export default function OrderDetailPage() {
               <Button disabled={command.busy || command.uncertain} onClick={() => void act(action)}>
                 {transactionActionLabel(action, locale)}
               </Button>
+              {action === 'accept' && order.snapshot.commitment &&
+                'resourceMode' in order.snapshot.commitment &&
+                order.snapshot.commitment.resourceMode === 'access' &&
+                <p className="text-xs text-muted-foreground">{tCommitment('acceptAccess')}</p>}
               {transactionConsequence(action, locale) && (
                 <p className="text-xs text-muted-foreground">
                   {transactionConsequence(action, locale)}

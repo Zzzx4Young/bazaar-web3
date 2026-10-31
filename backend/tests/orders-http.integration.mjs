@@ -1,3 +1,4 @@
+import { exampleCommitment } from '../scripts/example-commitment.mjs'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import test from 'node:test'
@@ -60,7 +61,7 @@ test('I4 HTTP: participant privacy, query pagination and command replay', async 
     const seller = await db.client.account.findUniqueOrThrow({ where: { loginName: 'seller' } })
     const media = await fixtureMediaAsset(db, seller.id)
     const listing = await post('/listings', accounts.seller, {
-      type: 'physical',
+      type: 'physical', commitment: exampleCommitment('physical'),
       saleMode: 'one_off', mediaIds: [media.id],
       title: 'Private order fixture',
       description: 'Public description',
@@ -220,7 +221,7 @@ test('I4 HTTP: participant privacy, query pagination and command replay', async 
     )
     assert.deepEqual(competing.map((r) => r.statusCode).sort(), [200, 409])
     const digital = await post('/listings', accounts.seller, {
-      type: 'digital',
+      type: 'digital', commitment: exampleCommitment('digital'),
       saleMode: 'repeatable', mediaIds: [(await fixtureMediaAsset(db, seller.id)).id],
       title: 'Digital fixture',
       description: 'Public digital description',

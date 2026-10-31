@@ -1,3 +1,4 @@
+import { exampleCommitment } from '../scripts/example-commitment.mjs'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import test from 'node:test'
@@ -69,7 +70,7 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     const create = async (payload) => {
       const asset = await fixtureMediaAsset(db, sellerId)
       return app.inject({ method: 'POST', url: '/api/listings', headers: alice,
-        payload: { ...payload, mediaIds: [asset.id] } })
+        payload: { ...payload, commitment: exampleCommitment(payload.type), mediaIds: [asset.id] } })
     }
     assert.equal((await app.inject({ method: 'POST', url: '/api/currencies', headers: { origin, 'content-type': 'application/json' }, payload: {} })).json().length, 19)
     const created = []

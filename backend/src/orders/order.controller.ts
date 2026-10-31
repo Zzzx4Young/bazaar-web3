@@ -182,6 +182,7 @@ export class OrderController {
         sellerId: order.sellerId,
         checkoutId: order.checkoutId,
         status: order.status,
+        transactionPausedAt: order.transactionPausedAt,
         version: order.version,
         title: order.snapshot?.title,
         type: order.snapshot?.type,
@@ -203,7 +204,11 @@ export class OrderController {
   @HttpCode(200)
   async detail(@Req() request: AuthRequest, @Param('id') id: string) {
     const order = await this.participantOrder(idInput(id), request.auth.account.id)
-    const review = await this.client.sellerReview.findUnique({ where: { orderId: order.id } })
+    const [review, acceptance] = await Promise.all([
+      this.client.sellerReview.findUnique({ where: { orderId: order.id } }),
+      this.client.orderEvent.findFirst({ where: { orderId: order.id, operation: 'accept' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] })
+    ])
     return {
       id: order.id,
       listingId: order.listingId,
@@ -211,6 +216,8 @@ export class OrderController {
       sellerId: order.sellerId,
       checkoutId: order.checkoutId,
       status: order.status,
+      transactionPausedAt: order.transactionPausedAt,
+      acceptedAt: acceptance?.createdAt ?? null,
       version: order.version,
       review: review ? { rating: review.rating, createdAt: review.createdAt } : null,
       title: order.snapshot?.title,
@@ -228,6 +235,8 @@ export class OrderController {
         price: { amount: order.snapshot.priceAmount.toFixed(), currency: order.snapshot.currency },
         licenseDescription: order.snapshot.licenseDescription,
         contentVersion: order.snapshot.contentVersion,
+        commitment: order.snapshot.commitment,
+        commitmentVersion: order.snapshot.commitmentVersion,
         media: order.mediaRows.map((row) => ({
           id: row.mediaId,
           position: row.position,
@@ -242,6 +251,24 @@ export class OrderController {
       createdAt: order.createdAt,
       updatedAt: order.updatedAt
     }
+  }
+
+  @Post('orders/:id/review-note')
+  @HttpCode(200)
+  async reviewNote(@Req() request: AuthRequest, @Param('id') rawId: string,
+    @Body() body: unknown) {
+    if (request.auth.account.role === 'observer') throw new DomainError('FORBIDDEN')
+    const id = idInput(rawId)
+    const input = objectInput(body, ['note'], ['note'])
+    const note = textInput(input.note, 2000)
+    const order = await this.participantOrder(id, request.auth.account.id)
+    if (!order.transactionPausedAt) throw new DomainError('STATE_CONFLICT')
+    await this.client.orderEvent.create({ data: {
+      orderId: id, actorId: request.auth.account.id, operation: 'listing_review_note',
+      fromState: order.status, toState: order.status,
+      requestId: globalThis.crypto.randomUUID(), note
+    } })
+    return { status: 'recorded' }
   }
 
   @Post('orders/:id/deliveries')

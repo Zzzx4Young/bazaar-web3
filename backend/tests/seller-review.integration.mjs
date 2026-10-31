@@ -1,3 +1,4 @@
+import { exampleCommitment } from '../scripts/example-commitment.mjs'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { after, before, test } from 'node:test'
@@ -42,7 +43,7 @@ test('completed buyer review is immutable, scoped, and reflected in public reput
   const seller = await db.client.account.findUniqueOrThrow({ where: { loginName: 'review_seller' } })
   const media = await fixtureMediaAsset(db, seller.id)
   const listing = await post('seller', '/listings', {
-    type: 'physical', saleMode: 'one_off', mediaIds: [media.id],
+    type: 'physical', commitment: exampleCommitment('physical'), saleMode: 'one_off', mediaIds: [media.id],
     title: 'Reviewable item', description: 'Review fixture',
     category: 'electronics', price: { amount: '5.00', currency: 'USD' }
   })

@@ -1,3 +1,4 @@
+import type { ProductCommitment } from '@/lib/commitment'
 // Item view model derived from the Alpha listing API.
 
 export type ItemCategory = 'physical' | 'digital'
@@ -47,6 +48,8 @@ export interface Item {
   deliveryPreview?: string // 仅 seller 可见
   licenseDescription?: string
   contentVersion?: string
+  commitment?: ProductCommitment | null
+  purchaseEligible?: boolean
   // 媒体
   media: MediaItem[]
   illustrativeImage?: boolean

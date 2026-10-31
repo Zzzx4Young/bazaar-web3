@@ -25,6 +25,7 @@ model Account {
   reviewSellerRows     SellerReview[]      @relation("reviewSeller")
   checkoutBuyerRows    Checkout[]          @relation("checkoutBuyer")
   mediaSellerRows      MediaAsset[]        @relation("mediaSeller")
+  listingReviewRows    ListingReviewEvent[]
   credential           AccountCredential?
   sessions             Session[]
   identities           AccountIdentity[]
@@ -157,6 +158,17 @@ model Listing {
   version              Int                 @default(1)
   licenseDescription   String?
   contentVersion       String?
+  commitment           Json?
+  commitmentVersion    Int?
+  replacementOfListingId String?           @unique @db.Uuid
+  reviewStatus         String              @default("clear")
+  reviewPending        Boolean             @default(false)
+  reviewReason         String?
+  reviewKind           String?
+  reviewUpdatedAt      DateTime?           @db.Timestamptz(6)
+  reviewRows           ListingReviewEvent[]
+  replacesListing      Listing?            @relation("listingReplacement", fields: [replacementOfListingId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  replacementRows      Listing[]           @relation("listingReplacement")
   createdAt            DateTime            @default(now()) @db.Timestamptz(6)
   updatedAt            DateTime            @updatedAt @db.Timestamptz(6)
   listingSeller        Account             @relation("listingSeller", fields: [sellerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
@@ -215,6 +227,8 @@ model Order {
   createdAt                 DateTime               @default(now()) @db.Timestamptz(6)
   updatedAt                 DateTime               @updatedAt @db.Timestamptz(6)
   completedAt               DateTime?              @db.Timestamptz(6)
+  transactionPausedAt       DateTime?              @db.Timestamptz(6)
+  pauseReviewId             String?                @db.Uuid
   orderListing              Listing                @relation("orderListing", fields: [listingId, sellerId], references: [id, sellerId], onDelete: Restrict, onUpdate: Restrict)
   orderBuyer                Account                @relation("orderBuyer", fields: [buyerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   snapshot                  OrderSnapshot?         @relation("snapshotOrder")
@@ -283,6 +297,8 @@ model OrderSnapshot {
   currency               String             @db.VarChar(12)
   licenseDescription     String?
   contentVersion         String?
+  commitment             Json?
+  commitmentVersion      Int?
   snapshotOrder          Order              @relation("snapshotOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   settlementSnapshotRows SettlementRecord[] @relation("settlementSnapshot")
 
@@ -432,4 +448,19 @@ model IdempotencyRecord {
   idempotencyOrder Order?   @relation("idempotencyOrder", fields: [resourceId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@id([actorId, operation, key])
+}
+
+model ListingReviewEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  listingId String   @db.Uuid
+  actorId   String?  @db.Uuid
+  action    String
+  kind      String?
+  reason    String
+  evidence  String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  actor     Account? @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([listingId, createdAt, id])
 }

@@ -4,7 +4,7 @@ import { cartMaxItems } from '@/lib/cart-policy'
 import { useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { transactionLabel } from '@/lib/transaction-copy'
-import { Link } from '@/i18n/routing'
+import { Link, useRouter } from '@/i18n/routing'
 import { Heart, Share2, MessageCircle } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,8 @@ import { useBackendListing } from '@/hooks/use-backend-listing'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { useCartStore } from '@/stores/use-cart-store'
 import { toast } from 'sonner'
+import { Textarea } from '@/components/ui/textarea'
+import { authenticatedPost } from '@/lib/authenticated-api'
 
 interface Props {
   params: { id: string }
@@ -32,7 +34,9 @@ export default function ListingDetailPage({ params }: Props) {
   const tExplore = useTranslations('explore')
   const tFacts = useTranslations('listingFacts')
   const tPage = useTranslations('listingPage')
+  const tCommitment = useTranslations('commitmentUi')
   const locale = useLocale()
+  const router = useRouter()
   const backend = useBackendListing(params.id)
   const { toggle, isFavorite, error } = useFavoriteStore()
   const account = useAuthStore((state) => state.view?.account)
@@ -44,6 +48,9 @@ export default function ListingDetailPage({ params }: Props) {
     void Promise.resolve(useCartStore.persist.rehydrate()).then(() => setCartReady(true))
   }, [])
   const [buyOpen, setBuyOpen] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reportKind, setReportKind] = useState<'source' | 'listing_rule'>('source')
+  const [reporting, setReporting] = useState(false)
   const item = backend.item
   if (!item && backend.loading) {
     return <p role="status">{tPage('loading')}</p>
@@ -69,6 +76,27 @@ export default function ListingDetailPage({ params }: Props) {
           {error}
         </p>
       )}
+      {account && account.id !== item.sellerId && <div className="space-y-2 rounded-lg border p-4">
+        <h2 className="font-medium">{tCommitment('reportLabel')}</h2>
+        <select className="rounded-md border bg-background px-3 py-2 text-sm" value={reportKind}
+          onChange={(event) => setReportKind(event.target.value as 'source' | 'listing_rule')}>
+          <option value="source">{tCommitment('reportSource')}</option>
+          <option value="listing_rule">{tCommitment('reportRule')}</option>
+        </select>
+        <Textarea aria-label={tCommitment('reportReason')} value={reportReason}
+          onChange={(event) => setReportReason(event.target.value)} />
+        <Button type="button" variant="outline" disabled={reporting || !reportReason.trim()}
+          onClick={async () => {
+            setReporting(true)
+            try {
+              await authenticatedPost(`/listings/${item.id}/report`,
+                { kind: reportKind, reason: reportReason })
+              toast.success(tCommitment('reportSent'))
+              router.push('/explore')
+            } catch { toast.error(tCommitment('reportError')) }
+            finally { setReporting(false) }
+          }}>{tCommitment('reportSubmit')}</Button>
+      </div>}
       {/* 面包屑 */}
       <nav className="border-b border-border pb-5 text-sm text-muted-foreground">
         <Link href="/" className="hover:underline">
@@ -124,6 +152,9 @@ export default function ListingDetailPage({ params }: Props) {
                   ≈ ${item.price.fiatEstimate.toLocaleString()} USD
                 </div>
               )}
+              {item.status !== 'active' && <p className="mt-3 text-sm text-muted-foreground">
+                {tCommitment('unavailable')}
+              </p>}
               <div className="mt-4 space-y-2">
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Button

@@ -20,10 +20,16 @@ interface ItemCardProps {
 export function ItemCard({ item, seller }: ItemCardProps) {
   const locale = useLocale()
   const facts = useTranslations('listingFacts')
+  const commitmentText = useTranslations('commitmentFields')
   const tCategory = useTranslations('marketCategories')
   const cover = item.media[0]
   const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null)
   const category = marketplaceCategories.find((entry) => entry.id === item.primaryCategory)
+  const commitment = item.commitment
+  const estimate = commitment && ('resourceMode' in commitment
+    ? commitment.estimatedDeliveryWindow : commitment.estimatedDispatchWindow)
+  const estimateText = estimate && `${estimate.min}–${estimate.max} ${estimate.unit === 'days'
+    ? commitmentText('days2') : commitmentText('hours')}`
 
   // No cover media at all → jump straight to placeholder.
   const showPlaceholder = !cover || failedCoverUrl === cover.url
@@ -86,6 +92,15 @@ export function ItemCard({ item, seller }: ItemCardProps) {
           </div>
           {item.category === 'digital' ? (
             <div className="mt-3 min-h-[2.5rem] space-y-1 text-xs text-muted-foreground">
+              {commitment && 'resourceMode' in commitment && (
+                <p className="truncate">
+                  {commitment.resourceMode === 'file'
+                    ? commitmentText('fileDelivery') : commitmentText('onlineAccess')}
+                  {commitment.resourceMode === 'access' && commitment.accessDurationValue
+                    ? ` · ${commitment.accessDurationValue} ${commitment.accessDurationUnit === 'months'
+                      ? commitmentText('months') : commitmentText('days')}` : ''}
+                </p>
+              )}
               {item.contentVersion && (
                 <p className="truncate">
                   {facts('version')}: {item.contentVersion}
@@ -96,6 +111,9 @@ export function ItemCard({ item, seller }: ItemCardProps) {
                   {item.licenseDescription}
                 </p>
               )}
+              {estimateText && <p className="truncate">
+                {commitmentText('sellerEstimatedDelivery')}: {estimateText}
+              </p>}
             </div>
           ) : (
             <div className="mt-3 min-h-[2.5rem] space-y-1 text-xs text-muted-foreground">
@@ -113,6 +131,9 @@ export function ItemCard({ item, seller }: ItemCardProps) {
                   )}
                 </p>
               )}
+              {estimateText && <p className="truncate">
+                {commitmentText('sellerEstimatedDispatch')}: {estimateText}
+              </p>}
             </div>
           )}
           <div className="mt-auto flex flex-wrap items-baseline gap-1 pt-4">

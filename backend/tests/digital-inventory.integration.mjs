@@ -1,3 +1,4 @@
+import { exampleCommitment } from '../scripts/example-commitment.mjs'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { after, before, test } from 'node:test'
@@ -63,7 +64,7 @@ test('listing API creates single digital stock and defaults other digital listin
     assert.equal(login.statusCode, 200, login.body)
     const headers = { origin, cookie: login.headers['set-cookie'].split(';')[0], 'x-csrf-token': login.json().csrfToken }
     const payload = {
-      type: 'digital', saleMode: 'repeatable', title: 'One license', description: 'One transferable license', category: 'software_source',
+      type: 'digital', commitment: exampleCommitment('digital'), saleMode: 'repeatable', title: 'One license', description: 'One transferable license', category: 'software_source',
       price: { amount: '15', currency: 'USD' }, licenseDescription: 'One use', contentVersion: 'v2'
     }
     const sellerId = (await db.client.account.findUniqueOrThrow({ where: { loginName: name } })).id

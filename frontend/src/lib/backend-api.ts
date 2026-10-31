@@ -1,4 +1,5 @@
 import type { Item, ItemCategory, Currency } from '@/types'
+import type { ProductCommitment } from '@/lib/commitment'
 import { hasIllustrativeImages } from '@/lib/listing-illustration'
 
 const API_BASE = '/api'
@@ -18,6 +19,14 @@ export interface BackendListing {
   version: number
   licenseDescription: string | null
   contentVersion: string | null
+  commitment: ProductCommitment | null
+  commitmentVersion: number | null
+  replacementOfListingId: string | null
+  reviewStatus: 'clear' | 'paused' | 'rejected'
+  reviewKind: string | null
+  reviewPending: boolean
+  purchaseEligible: boolean
+  purchaseBlockReason: string | null
   media: { id: string; position: number; url: string }[]
   createdAt: string
   updatedAt: string
@@ -43,10 +52,12 @@ export interface ListingResolution {
   total: number
 }
 export function listingCanBePurchased(
-  listing: Pick<BackendListing, 'publicationStatus' | 'availability'>
+  listing: Pick<BackendListing, 'publicationStatus' | 'availability'> &
+    Partial<Pick<BackendListing, 'purchaseEligible'>>
 ) {
   return (
     listing.publicationStatus === 'published' &&
+    listing.purchaseEligible !== false &&
     (listing.availability === 'available' || listing.availability === 'unlimited')
   )
 }
@@ -166,6 +177,8 @@ export function toItem(listing: BackendListing): Item {
     tags: [],
     licenseDescription: listing.licenseDescription ?? undefined,
     contentVersion: listing.contentVersion ?? undefined,
+    commitment: listing.commitment,
+    purchaseEligible: listing.purchaseEligible,
     price: {
       amount: Number(listing.price.amount),
       exactAmount: listing.price.amount,

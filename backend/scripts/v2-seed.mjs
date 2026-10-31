@@ -1,3 +1,4 @@
+import { exampleCommitment } from './example-commitment.mjs'
 import assert from 'node:assert/strict'
 import { URL } from 'node:url'
 
@@ -211,6 +212,7 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
       data: {
         sellerId: seller.id,
         type: spec.type,
+        commitment: exampleCommitment(spec.type), commitmentVersion: 1,
         saleMode: spec.type === 'digital' && spec.supplyMode === 'unlimited'
           ? 'repeatable' : 'one_off',
         title: spec.title,
@@ -258,7 +260,8 @@ export async function seedV2(client, { password = 'V2-Local-Test-Password-2026',
             priceAmount: listing.priceAmount,
             currency: listing.currency,
             licenseDescription: listing.licenseDescription,
-            contentVersion: listing.contentVersion
+            contentVersion: listing.contentVersion,
+            commitment: listing.commitment, commitmentVersion: listing.commitmentVersion
           }
         },
         ...(listing.type === 'physical'

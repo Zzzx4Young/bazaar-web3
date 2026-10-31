@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
 import type { Item } from '@/types'
+import { CommitmentView } from './commitment-view'
 
 const deliveryKeys = {
   download_link: 'deliveryDownloadLink',
@@ -66,6 +67,7 @@ export function ListingFacts({ item }: { item: Item }) {
             )}
           </dl>
         </div>
+        <div className="border-t pt-4"><CommitmentView commitment={item.commitment} /></div>
         <div className="border-t pt-4 text-xs leading-5 text-muted-foreground">
           <strong className="font-semibold text-foreground">{t('platformRecord')}</strong>
           <p>{t('privateDelivery')}</p>

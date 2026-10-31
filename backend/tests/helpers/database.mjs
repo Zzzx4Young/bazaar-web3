@@ -128,7 +128,23 @@ export async function fixture(
       priceAmount: price,
       currency: 'TEST',
       licenseDescription: type === 'digital' ? 'Test license' : null,
-      contentVersion: type === 'digital' ? 'v1' : null
+      contentVersion: type === 'digital' ? 'v1' : null,
+      commitmentVersion: 1,
+      commitment: type === 'digital' ? {
+        schemaVersion: 1, resourceMode: 'file',
+        deliverables: [{ name: 'Fixture file', format: 'zip', quantity: 1 }],
+        sellerUseNotes: 'One test project', exclusions: ['No redistribution'],
+        noOtherRestrictions: false, sourceTermsUrl: null,
+        fulfillmentMethod: 'order_delivery',
+        estimatedDeliveryWindow: { min: 1, max: 3, unit: 'days' },
+        useTerm: 'One year', seatOrProjectScope: 'One person', updatesIncluded: false,
+        sourceFilesIncluded: true, fileFormats: ['zip'], thirdPartyComponents: 'None'
+      } : {
+        schemaVersion: 1, conditionGrade: 'good', knownDefects: 'No known defects',
+        includedItems: ['Fixture item'], functionalStatus: 'normal',
+        functionalNotes: 'No known functional issue', dispatchMethod: 'seller_courier',
+        estimatedDispatchWindow: { min: 1, max: 3, unit: 'days' }
+      }
     }
   })
   if (type === 'physical')

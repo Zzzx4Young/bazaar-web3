@@ -1,3 +1,4 @@
+import { exampleCommitment } from '../scripts/example-commitment.mjs'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { after, before, test } from 'node:test'
@@ -58,7 +59,7 @@ test('HTTP dispute flow enforces roles, hides private data, and updates simulate
   const seller = await db.client.account.findUniqueOrThrow({ where: { loginName: 'v2_seller' } })
   const media = await fixtureMediaAsset(db, seller.id)
   const listing = await post('/listings', 'seller', {
-    type: 'physical', saleMode: 'one_off', mediaIds: [media.id],
+    type: 'physical', commitment: exampleCommitment('physical'), saleMode: 'one_off', mediaIds: [media.id],
     title: 'Dispute HTTP item', description: 'Dispute fixture',
     category: 'electronics', price: { amount: '12.50', currency: 'USD' }
   })

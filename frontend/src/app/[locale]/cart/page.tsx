@@ -18,6 +18,7 @@ import { apiErrorCopy } from '@/lib/api-error-copy'
 import { cartMinItems, cartMaxItems } from '@/lib/cart-policy'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { useCartStore, type CartLine } from '@/stores/use-cart-store'
+import { CommitmentView } from '@/components/listing/commitment-view'
 
 interface CheckoutResult {
   checkoutId: string
@@ -164,6 +165,7 @@ function CartContents({ items, accountId }: { items: CartLine[]; accountId: stri
                     <p className="text-sm text-muted-foreground">
                       {current.price.amount} {current.price.currency}
                     </p>
+                    <CommitmentView commitment={current.commitment} compact />
                   </>
                 ) : (
                   <p className="font-medium">{t('savedListing', { title: line.title })}</p>

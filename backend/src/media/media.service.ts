@@ -99,11 +99,11 @@ export class MediaService {
     const row = await this.client.listingMedia.findUnique({
       where: { listingId_mediaId: { listingId: idInput(listingId), mediaId: idInput(mediaId) } },
       include: {
-        listing: { select: { publicationStatus: true } },
+        listing: { select: { publicationStatus: true, reviewStatus: true } },
         media: { select: { status: true, hotKey: true, sha256: true, contentType: true } }
       }
     })
-    if (!row || row.listing.publicationStatus !== 'published' ||
+    if (!row || row.listing.publicationStatus !== 'published' || row.listing.reviewStatus !== 'clear' ||
       row.media.status !== 'ready' || !row.media.hotKey) throw new DomainError('NOT_FOUND')
     const { bytes, contentType } = await this.readStored(() =>
       store.readHot(row.media.hotKey!, mediaMaxBytes + 1))

@@ -1,3 +1,4 @@
+import { exampleCommitment } from '../scripts/example-commitment.mjs'
 import assert from 'node:assert/strict'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import test from 'node:test'
@@ -42,7 +43,8 @@ test('fault workload recovers ambiguous HTTP writes across two APIs and audits r
       const listing = await db.client.listing.create({
         data: {
           sellerId: seller.id,
-          type: 'physical',
+          type: 'physical', commitment: exampleCommitment('physical'),
+          commitmentVersion: 1,
           category: 'electronics',
           title: `Fault fixture ${index}`,
           description: `Real snapshot ${index}`,

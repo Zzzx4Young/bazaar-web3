@@ -1,3 +1,4 @@
+import type { ProductCommitment } from '@/lib/commitment'
 export interface Page<T> {
   items: T[]
   page: number
@@ -30,6 +31,7 @@ export interface OrderSummary {
   sellerId: string
   checkoutId: string | null
   status: OrderStatus
+  transactionPausedAt?: string | null
   title: string
   type: 'physical' | 'digital'
   price: Money
@@ -38,6 +40,7 @@ export interface OrderSummary {
   updatedAt: string
 }
 export interface OrderDetail extends OrderSummary {
+  acceptedAt: string | null
   review: { rating: number; createdAt: string } | null
   shipping: Shipping | null
   snapshot: {
@@ -49,6 +52,8 @@ export interface OrderDetail extends OrderSummary {
     price: Money
     licenseDescription: string | null
     contentVersion: string | null
+    commitment: ProductCommitment | null
+    commitmentVersion: number | null
     media: { id: string; position: number; url: string }[]
   }
 }
@@ -100,6 +105,7 @@ export interface SimulatedBalance {
 }
 
 export function orderActions(order: OrderDetail, accountId: string): OrderAction[] {
+  if (order.transactionPausedAt) return []
   if (accountId === order.buyerId) {
     if (order.status === 'pending_payment') return ['pay', 'cancel']
     if (order.status === 'pending_delivery') return ['issue']
