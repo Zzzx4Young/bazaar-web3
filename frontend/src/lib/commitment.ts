@@ -71,4 +71,3 @@ export function commitmentReady(commitment: ProductCommitment): boolean {
   return !!(commitment.knownDefects.trim() && commitment.includedItems.length &&
     commitment.functionalNotes.trim())
 }
-
