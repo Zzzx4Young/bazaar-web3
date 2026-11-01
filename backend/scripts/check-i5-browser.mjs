@@ -11,6 +11,7 @@ import { readConfig } from '../dist/config.js'
 import { grantRuntime } from './runtime-grants.mjs'
 import { GarageObjectStore } from '../dist/media/garage-object-store.js'
 import { GetBucketCorsCommand, PutBucketCorsCommand, S3Client } from '@aws-sdk/client-s3'
+import { exampleCommitment } from './example-commitment.mjs'
 
 const base = new URL('postgresql://bazaar_test_admin@127.0.0.1:55432/bazaar_test')
 base.password = (
@@ -31,15 +32,18 @@ const requestLogs = []
 const mediaKeys = []
 let originalCors
 const secretFile = async (name) => (await readFile(new URL(`../../infra/.secrets/garage-app/${name}`, import.meta.url), 'utf8')).trim()
+const hotEndpoint = process.env.GARAGE_HOT_ENDPOINT ?? 'http://127.0.0.1:3900'
+const coldEndpoint = process.env.GARAGE_COLD_ENDPOINT ?? 'http://127.0.0.1:3903'
+const hotPublicEndpoint = process.env.GARAGE_HOT_PUBLIC_ENDPOINT ?? 'http://localhost:3900'
 const mediaStore = new GarageObjectStore({
-  hotEndpoint: 'http://127.0.0.1:3900', hotPublicEndpoint: 'http://localhost:3900',
-  coldEndpoint: 'http://127.0.0.1:3903',
+  hotEndpoint, hotPublicEndpoint,
+  coldEndpoint,
   hotCredentials: { accessKeyId: await secretFile('hot_access_key_id'), secretAccessKey: await secretFile('hot_secret_key') },
   coldCredentials: { accessKeyId: await secretFile('cold_access_key_id'), secretAccessKey: await secretFile('cold_secret_key') },
   hotBucket: 'bazaar-hot', coldBucket: 'bazaar-cold'
 })
 const corsClient = new S3Client({
-  endpoint: 'http://127.0.0.1:3900', region: 'garage', forcePathStyle: true,
+  endpoint: hotEndpoint, region: 'garage', forcePathStyle: true,
   requestChecksumCalculation: 'WHEN_REQUIRED',
   credentials: {
     accessKeyId: await secretFile('hot_access_key_id'),
@@ -49,6 +53,11 @@ const corsClient = new S3Client({
 const logRequest = (entry) => {
   requestLogs.push(entry)
   if (entry.status >= 400) console.log(JSON.stringify(entry))
+}
+async function fillPhysicalCommitment(page) {
+  await page.getByLabel('已知瑕疵（无瑕疵请明确填写）').fill('No known defects')
+  await page.getByLabel('附带物（逗号分隔）').fill('Item shown')
+  await page.getByLabel('功能说明（无异常请明确填写）').fill('Works normally')
 }
 try {
   const currentCors = await corsClient.send(new GetBucketCorsCommand({ Bucket: 'bazaar-hot' }))
@@ -107,7 +116,7 @@ try {
       method: 'POST',
       url: '/api/listings',
       headers: { origin, cookie: auth.cookie, 'x-csrf-token': auth.csrf },
-      payload: { ...payload, mediaIds: [asset.id] }
+      payload: { ...payload, commitment: exampleCommitment(payload.type), mediaIds: [asset.id] }
     })
     assert.equal(response.statusCode, 201, response.body)
     return response.json()
@@ -430,6 +439,7 @@ try {
   await sellerPage.getByLabel('标题').fill('I5 Uploaded Browser Photo')
   await sellerPage.getByLabel('详细描述').fill('A real PNG uploaded from the seller browser into Garage.')
   await sellerPage.locator('input[name="priceAmount"]').fill('5.00')
+  await fillPhysicalCommitment(sellerPage)
   await sellerPage.getByLabel('商品图片（1–8 张，每张不超过 5 MiB）').setInputFiles({
     name: 'i5-upload.png', mimeType: 'image/png',
     buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z2joAAAAASUVORK5CYII=', 'base64')
@@ -465,6 +475,7 @@ try {
   await secondSellerPage.goto(`${origin}/zh-CN/publish`)
   await secondSellerPage.getByLabel('标题').fill('I5 Second Seller Photo')
   await secondSellerPage.getByLabel('详细描述').fill('A second seller publishes a real Garage image.')
+  await fillPhysicalCommitment(secondSellerPage)
   await secondSellerPage.locator('input[name="priceAmount"]').fill('6.00')
   await secondSellerPage.getByLabel('商品图片（1–8 张，每张不超过 5 MiB）').setInputFiles({
     name: 'i5-second-seller.png', mimeType: 'image/png',

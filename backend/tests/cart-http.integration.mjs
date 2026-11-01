@@ -1,3 +1,4 @@
+import { exampleCommitment } from '../scripts/example-commitment.mjs'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { after, before, test } from 'node:test'
@@ -52,7 +53,7 @@ test('HTTP cart enforces ownership, atomic validation, and published response co
     })
     const media = await fixtureMediaAsset(db, account.id)
     const result = await post(actor, '/listings', {
-      type, saleMode: type === 'digital' ? 'repeatable' : 'one_off', mediaIds: [media.id],
+      type, commitment: exampleCommitment(type), saleMode: type === 'digital' ? 'repeatable' : 'one_off', mediaIds: [media.id],
       title: `${actor} ${type}`, description: 'Cart fixture', category: type === 'digital' ? 'digital_assets' : 'electronics',
       price: { amount: '12.50', currency },
       ...(type === 'digital' ? { licenseDescription: 'Review license', contentVersion: 'v1' } : {})

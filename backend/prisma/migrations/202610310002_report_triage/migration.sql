@@ -1,0 +1,1 @@
+ALTER TABLE "Listing" ADD COLUMN "reviewPending" BOOLEAN NOT NULL DEFAULT false;

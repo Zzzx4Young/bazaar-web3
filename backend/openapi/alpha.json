@@ -3889,6 +3889,319 @@
         }
       }
     },
+    "/listings/{id}/pause-review": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }, { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+      "post": { "operationId": "pauseListingForReview", "summary": "Administrator pauses a reported listing and its open orders", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["reason", "kind"], "properties": { "reason": { "type": "string" }, "kind": { "type": "string", "enum": ["source", "listing_rule"] } } } } } }, "responses": { "200": { "description": "Paused", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } }, "default": { "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
+    },
+    "/listings/{id}/dismiss-report": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }, { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+      "post": { "operationId": "dismissListingReport", "summary": "Administrator records a report without pausing the listing", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["reason"], "properties": { "reason": { "type": "string" } } } } } }, "responses": { "200": { "description": "Dismissed", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } }, "default": { "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } } } }
+    },
+    "/listings/review-queue": {
+      "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+      "post": {
+        "operationId": "listingReviewQueue",
+        "summary": "Administrator review queue with seller evidence and affected open orders",
+        "responses": {
+          "200": { "description": "Review queue", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } },
+          "default": { "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } } }
+        }
+      }
+    },
+    "/listings/{id}/report": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RequestId" },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "reportListing",
+        "summary": "reportListing",
+        "responses": {
+          "200": {
+            "description": "Recorded", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          },
+          "default": {
+            "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "reason"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "source",
+                      "listing_rule"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings/{id}/source-response": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RequestId" },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "respondListingSource",
+        "summary": "respondListingSource",
+        "responses": {
+          "200": {
+            "description": "Recorded", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          },
+          "default": {
+            "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "explanation"
+                ],
+                "properties": {
+                  "explanation": {
+                    "type": "string"
+                  },
+                  "sourceUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "creationProcess": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings/{id}/review": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RequestId" },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "reviewListing",
+        "summary": "reviewListing",
+        "responses": {
+          "200": {
+            "description": "Recorded", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          },
+          "default": {
+            "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "outcome",
+                  "reason"
+                ],
+                "properties": {
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "resume",
+                      "continue_pause",
+                      "rule_violation"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings/{id}/review-history": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RequestId" },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "listingReviewHistory",
+        "summary": "listingReviewHistory",
+        "responses": {
+          "200": {
+            "description": "Recorded", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          },
+          "default": {
+            "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          }
+        }
+      }
+    },
+    "/listings/{id}/review-orders/{orderId}/resolve": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RequestId" },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "orderId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "resolveReviewOrder",
+        "summary": "resolveReviewOrder",
+        "responses": {
+          "200": {
+            "description": "Recorded", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          },
+          "default": {
+            "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "returnOutcome": {
+                    "type": "string",
+                    "enum": [
+                      "not_sent",
+                      "returned",
+                      "not_required"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{id}/review-note": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RequestId" },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "recordReviewNote",
+        "summary": "recordReviewNote",
+        "responses": {
+          "200": {
+            "description": "Recorded", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          },
+          "default": {
+            "description": "Error envelope", "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "note"
+                ],
+                "properties": {
+                  "note": {
+                    "type": "string",
+                    "maxLength": 2000
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/disputes": {
       "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
       "post": {
@@ -4535,7 +4848,15 @@
           "contentVersion",
           "createdAt",
           "updatedAt",
-          "priceUsd"
+          "priceUsd",
+          "commitment",
+          "commitmentVersion",
+          "replacementOfListingId",
+          "reviewStatus",
+          "reviewPending",
+          "reviewKind",
+          "purchaseEligible",
+          "purchaseBlockReason"
         ],
         "properties": {
           "id": {
@@ -4555,7 +4876,13 @@
             "type": "boolean",
             "description": "Whether content edits are currently permitted; one-off listings lock after the first order."
           },
-          "media": { "type": "array", "items": { "$ref": "#/components/schemas/ListingMedia" }, "maxItems": 8 },
+          "media": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListingMedia"
+            },
+            "maxItems": 8
+          },
           "title": {
             "type": "string",
             "minLength": 1,
@@ -4622,8 +4949,259 @@
             "type": "string",
             "nullable": true,
             "description": "Unrounded USD reference decimal string; null without a quote. Does not change original price."
+          },
+          "commitment": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/ProductCommitment" },
+              { "type": "null" }
+            ]
+          },
+          "commitmentVersion": {
+            "type": "integer",
+            "nullable": true
+          },
+          "replacementOfListingId": { "type": "string", "format": "uuid", "nullable": true },
+          "reviewStatus": {
+            "type": "string",
+            "enum": [
+              "clear",
+              "paused",
+              "rejected"
+            ]
+          },
+          "reviewKind": { "type": "string", "nullable": true },
+          "reviewPending": { "type": "boolean" },
+          "purchaseEligible": {
+            "type": "boolean"
+          },
+          "purchaseBlockReason": {
+            "type": "string",
+            "nullable": true
           }
         }
+      },
+      "DeliveryWindow": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "min",
+          "max",
+          "unit"
+        ],
+        "properties": {
+          "min": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "max": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "hours",
+              "days"
+            ]
+          }
+        }
+      },
+      "DigitalCommitment": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "resourceMode",
+          "deliverables",
+          "sellerUseNotes",
+          "fulfillmentMethod",
+          "estimatedDeliveryWindow"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "resourceMode": {
+            "type": "string",
+            "enum": [
+              "file",
+              "access"
+            ]
+          },
+          "deliverables": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 12,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "format",
+                "quantity"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "format": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 999
+                }
+              }
+            }
+          },
+          "sellerUseNotes": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "exclusions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "noOtherRestrictions": {
+            "type": "boolean"
+          },
+          "sourceTermsUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "fulfillmentMethod": {
+            "type": "string",
+            "enum": [
+              "order_delivery"
+            ]
+          },
+          "estimatedDeliveryWindow": {
+            "$ref": "#/components/schemas/DeliveryWindow"
+          },
+          "useTerm": {
+            "type": "string"
+          },
+          "seatOrProjectScope": {
+            "type": "string"
+          },
+          "updatesIncluded": {
+            "type": "boolean"
+          },
+          "sourceFilesIncluded": {
+            "type": "boolean"
+          },
+          "fileFormats": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "thirdPartyComponents": {
+            "type": "string"
+          },
+          "accessDurationValue": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1200
+          },
+          "accessDurationUnit": {
+            "type": "string",
+            "enum": [
+              "days",
+              "months"
+            ]
+          },
+          "accessTermNotes": {
+            "type": "string"
+          },
+          "expiryBehavior": {
+            "type": "string"
+          }
+        }
+      },
+      "PhysicalCommitment": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "conditionGrade",
+          "knownDefects",
+          "includedItems",
+          "functionalStatus",
+          "functionalNotes",
+          "dispatchMethod",
+          "estimatedDispatchWindow"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "conditionGrade": {
+            "type": "string",
+            "enum": [
+              "like_new",
+              "good",
+              "fair",
+              "worn"
+            ]
+          },
+          "knownDefects": {
+            "type": "string",
+            "minLength": 1
+          },
+          "includedItems": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "functionalStatus": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "partially_faulty",
+              "not_working",
+              "untested",
+              "not_applicable"
+            ]
+          },
+          "functionalNotes": {
+            "type": "string",
+            "minLength": 1
+          },
+          "dispatchMethod": {
+            "type": "string",
+            "enum": [
+              "seller_courier"
+            ]
+          },
+          "estimatedDispatchWindow": {
+            "$ref": "#/components/schemas/DeliveryWindow"
+          }
+        }
+      },
+      "ProductCommitment": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/DigitalCommitment"
+          },
+          {
+            "$ref": "#/components/schemas/PhysicalCommitment"
+          }
+        ],
+        "description": "Seller supplied public statement. Version 1. No private fulfillment or ownership certification."
       },
       "ListingCreate": {
         "oneOf": [
@@ -4638,6 +5216,7 @@
       "PhysicalListingCreate": {
         "type": "object",
         "additionalProperties": false,
+        "description": "During the compat rollout, commitment may be omitted; the published listing remains visible but purchaseEligible is false until the seller adds it. With LISTING_COMMITMENT_POLICY=enforce, omission returns INVALID_INPUT. A supplied commitment is always validated.",
         "required": [
           "type",
           "saleMode",
@@ -4656,9 +5235,20 @@
           },
           "saleMode": {
             "type": "string",
-            "enum": ["one_off"]
+            "enum": [
+              "one_off"
+            ]
           },
-          "mediaIds": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } },
+          "mediaIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           "title": {
             "type": "string",
             "minLength": 1,
@@ -4671,16 +5261,24 @@
           },
           "category": {
             "type": "string",
-            "enum": ["electronics", "secondhand_fashion"]
+            "enum": [
+              "electronics",
+              "secondhand_fashion"
+            ]
           },
           "price": {
             "$ref": "#/components/schemas/Price"
-          }
+          },
+          "commitment": {
+            "$ref": "#/components/schemas/PhysicalCommitment"
+          },
+          "replacementOfListingId": { "type": "string", "format": "uuid", "description": "Optional old one-off listing being replaced. Active stock blocks replacement; accepted replacement awaits administrator review." }
         }
       },
       "DigitalListingCreate": {
         "type": "object",
         "additionalProperties": false,
+        "description": "During the compat rollout, commitment may be omitted; the published listing remains visible but purchaseEligible is false until the seller adds it. With LISTING_COMMITMENT_POLICY=enforce, omission returns INVALID_INPUT. A supplied commitment is always validated.",
         "required": [
           "type",
           "saleMode",
@@ -4702,7 +5300,16 @@
           "saleMode": {
             "$ref": "#/components/schemas/SaleMode"
           },
-          "mediaIds": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } },
+          "mediaIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           "title": {
             "type": "string",
             "minLength": 1,
@@ -4715,7 +5322,11 @@
           },
           "category": {
             "type": "string",
-            "enum": ["digital_assets", "software_source", "game_items"]
+            "enum": [
+              "digital_assets",
+              "software_source",
+              "game_items"
+            ]
           },
           "price": {
             "$ref": "#/components/schemas/Price"
@@ -4732,10 +5343,17 @@
           },
           "supplyMode": {
             "type": "string",
-            "enum": ["unlimited", "single"],
+            "enum": [
+              "unlimited",
+              "single"
+            ],
             "default": "unlimited",
             "description": "Single reserves one digital entitlement at order creation; cancellation releases it, completion consumes it, and a refund keeps it unavailable. Delivery reference and access code remain private order data."
-          }
+          },
+          "commitment": {
+            "$ref": "#/components/schemas/DigitalCommitment"
+          },
+          "replacementOfListingId": { "type": "string", "format": "uuid" }
         }
       },
       "ListingPatch": {
@@ -4745,11 +5363,35 @@
           "version"
         ],
         "properties": {
-          "description": { "type": "string", "minLength": 1, "maxLength": 5000 },
-          "category": { "type": "string", "maxLength": 50 },
-          "licenseDescription": { "type": "string", "minLength": 1, "maxLength": 2000 },
-          "contentVersion": { "type": "string", "minLength": 1, "maxLength": 100 },
-          "mediaIds": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "type": "string", "format": "uuid" } },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "licenseDescription": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "contentVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "mediaIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           "version": {
             "type": "integer",
             "minimum": 1,
@@ -4771,6 +5413,9 @@
               "published",
               "withdrawn"
             ]
+          },
+          "commitment": {
+            "$ref": "#/components/schemas/ProductCommitment"
           }
         },
         "minProperties": 2
@@ -4985,7 +5630,8 @@
           "type",
           "price",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "transactionPausedAt"
         ],
         "properties": {
           "id": {
@@ -5004,7 +5650,11 @@
             "type": "string",
             "format": "uuid"
           },
-          "checkoutId": { "type": "string", "format": "uuid", "nullable": true },
+          "checkoutId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "status": {
             "$ref": "#/components/schemas/OrderStatus"
           },
@@ -5030,6 +5680,11 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "transactionPausedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
@@ -5044,8 +5699,10 @@
           "type",
           "price",
           "licenseDescription",
-          "contentVersion"
-          ,"media"
+          "contentVersion",
+          "media",
+          "commitment",
+          "commitmentVersion"
         ],
         "properties": {
           "listingVersion": {
@@ -5085,7 +5742,23 @@
             "maxLength": 100,
             "nullable": true
           },
-          "media": { "type": "array", "maxItems": 8, "items": { "$ref": "#/components/schemas/ListingMedia" } }
+          "media": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "$ref": "#/components/schemas/ListingMedia"
+            }
+          },
+          "commitment": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/ProductCommitment" },
+              { "type": "null" }
+            ]
+          },
+          "commitmentVersion": {
+            "type": "integer",
+            "nullable": true
+          }
         }
       },
       "Empty": {
@@ -5488,7 +6161,9 @@
           "updatedAt",
           "snapshot",
           "shipping",
-          "review"
+          "review",
+          "transactionPausedAt",
+          "acceptedAt"
         ],
         "properties": {
           "id": {
@@ -5507,7 +6182,11 @@
             "type": "string",
             "format": "uuid"
           },
-          "checkoutId": { "type": "string", "format": "uuid", "nullable": true },
+          "checkoutId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "status": {
             "$ref": "#/components/schemas/OrderStatus"
           },
@@ -5567,9 +6246,33 @@
           "review": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["rating", "createdAt"],
-            "properties": { "rating": { "type": "integer", "minimum": 1, "maximum": 5 }, "createdAt": { "type": "string", "format": "date-time" } },
+            "required": [
+              "rating",
+              "createdAt"
+            ],
+            "properties": {
+              "rating": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
             "nullable": true
+          },
+          "transactionPausedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Server-recorded buyer accept event, not external access activation."
           }
         }
       },
@@ -5766,7 +6469,7 @@
           "currency": { "$ref": "#/components/schemas/Currency" },
           "keyword": { "type": "string", "minLength": 1, "maxLength": 100 },
           "sort": { "type": "string", "enum": ["newest", "price_asc", "price_desc"] },
-          "quoteId": { "type": "string", "format": "uuid", "description": "Required for later price-sorted pages; valid until the snapshot expiresAt (one-hour cache lifetime)" },
+          "quoteId": { "type": "string", "format": "uuid", "description": "Required for later price-sorted pages when currency is omitted. With a currency filter and no quoteId, sort uses original-currency amounts, returns quote=null and needs no quoteId on later pages. A supplied quoteId still selects that FX snapshot until expiresAt." },
           "sellerId": { "type": "string", "format": "uuid" }
         }
       },

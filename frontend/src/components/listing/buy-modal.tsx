@@ -23,6 +23,7 @@ import {
 } from '@/lib/backend-api'
 import { apiErrorCopy } from '@/lib/api-error-copy'
 import type { Item } from '@/types'
+import { CommitmentView } from './commitment-view'
 
 type CurrentListing = {
   key: string
@@ -153,6 +154,7 @@ export function BuyModal({
               <p className="text-sm text-muted-foreground">
                 {latest.price.amount} {latest.price.currency}
               </p>
+              <CommitmentView commitment={latest.commitment} compact />
             </>
           ) : auth.status === 'authenticated' && !read?.error ? (
             <p role="status">{t('loading')}</p>

@@ -13,7 +13,8 @@ export async function grantRuntime(client, schema, role) {
     'RateSnapshot',
     'SellerReview',
     'OrderMediaSnapshot',
-    'AccountIdentityEvent'
+    'AccountIdentityEvent',
+    'ListingReviewEvent'
   ]
   const mutable = [
     'Account',

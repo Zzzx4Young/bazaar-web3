@@ -34,6 +34,14 @@ npm start
 ```
 
 `npm start` 从 `.env` 读取运行连接，默认监听 `127.0.0.1:3001`。
+商品承诺采用发布开关 `LISTING_COMMITMENT_POLICY`：默认 `compat`，旧客户端省略
+`commitment` 时仍可创建并浏览商品，但返回 `commitment=null`、
+`purchaseEligible=false`、`purchaseBlockReason=missing_commitment`，订单服务拒绝下单；
+卖家补全承诺后才可购买。只兼容**省略**字段，传入空值或不完整承诺仍返回
+`INVALID_INPUT`。待旧客户端升级并完成历史商品补录后，设置 `enforce`，新发布
+缺少承诺即返回 `INVALID_INPUT`；编辑与公开返回字段不受开关影响。回滚校验只需
+恢复 `compat` 并重启 API，无需回滚数据库迁移；切换前后已创建的缺承诺商品始终
+不可购买。
 Google 登录需创建 Web OAuth 客户端，在服务端配置 `GOOGLE_CLIENT_ID` 和
 `GOOGLE_CLIENT_SECRET_FILE`，并把 `${APP_ORIGIN}/api/auth/google/callback` 注册为精确回调地址。
 宿主机 `./start.sh` 会读取 `backend/.env`；API-only Compose 部署可叠加
@@ -78,6 +86,9 @@ Alpha 模拟结算阶段保持现有订单与交付权限；真实资金操作�
 前端 Origin 必须等于 `APP_ORIGIN`（默认 `http://localhost:3000`），写请求携带会话 Cookie
 和 CSRF token。每个响应带 `X-Request-Id`；错误和脱敏日志使用同一 ID。
 汇率快照有效期为 1 小时，过期且供应商不可用时排序返回 `FX_UNAVAILABLE`。
+指定单一 `currency` 且未提供 `quoteId` 的价格排序直接比较该币种原始金额，
+返回 `quote=null`、`priceUsd=null`，后续页无需 `quoteId`；混合币种排序仍必须使用
+真实汇率快照。显式提供 `quoteId` 时仍按指定快照处理。
 首页使用公开的 `POST /api/listings/home`，一次返回最新商品 10 件、数字与实物各至多 5 件；
 三组都直接读取 PostgreSQL 商品，类型区块不会受最新 10 件的组成影响。
 服务启动后及此后每分钟处理一次超过 30 分钟的待付款订单，释放受限库存并记录系统事件。

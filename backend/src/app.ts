@@ -15,6 +15,7 @@ import { type EmailSender } from './auth/email-code.js'
 import { AuthGuard } from './auth/auth.guard.js'
 import { ApiErrorFilter } from './common/api-error.filter.js'
 import { ListingController } from './listings/listing.controller.js'
+import { ListingReviewController } from './listings/listing-review.controller.js'
 import { ListingService } from './listings/listing.service.js'
 import { RatesService, type RateLoader } from './pricing/rates.service.js'
 import { OrderController } from './orders/order.controller.js'
@@ -48,7 +49,7 @@ export async function createApp(
   const googleAuth = new GoogleAuthService(database.client, config, auth,
     dependencies.googleClient ?? (config.googleOAuth ? new GoogleOidcClient(config.googleOAuth) : null))
   const rates = new RatesService(database.client, dependencies.loadRates)
-  const listings = new ListingService(database.client, rates)
+  const listings = new ListingService(database.client, rates, config.listingCommitmentPolicy)
   const media = new MediaService(
     database.client,
     dependencies.mediaStore ?? (config.mediaStore ? new GarageObjectStore(config.mediaStore) : null)
@@ -101,7 +102,7 @@ export async function createApp(
         HealthController,
         AuthController,
         IdentityController,
-        ListingController,
+        ListingController, ListingReviewController,
         OrderController,
         DisputeController,
         BalanceController,

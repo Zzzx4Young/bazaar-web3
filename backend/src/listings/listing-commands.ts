@@ -5,6 +5,7 @@ import { transact, type TransactionOptions } from '../database/transaction.js'
 import { requireActiveAccount } from '../accounts/require-active-account.js'
 import { lockListing } from './listing-lock.js'
 import { lockMediaAssets } from '../media/lock-media-assets.js'
+import { commitmentVersion, parseCommitment } from './product-commitment.js'
 
 export class ListingCommands {
   constructor(private readonly client: PrismaClient) {}
@@ -21,6 +22,7 @@ export class ListingCommands {
       licenseDescription?: string
       contentVersion?: string
       mediaIds?: string[]
+      commitment?: ReturnType<typeof parseCommitment>
       publicationStatus?: 'published' | 'withdrawn'
     },
     options: TransactionOptions = {}
@@ -37,6 +39,9 @@ export class ListingCommands {
           Object.keys(patch).some((key) => key !== 'publicationStatus') &&
           (await tx.order.count({ where: { listingId } })) > 0)
           throw new DomainError('LISTING_CONFLICT')
+        if (patch.commitment && listing.type === 'physical' && !patch.mediaIds &&
+          !(await tx.listingMedia.count({ where: { listingId } })))
+          throw new DomainError('INVALID_INPUT')
         if (patch.mediaIds) {
           await lockMediaAssets(tx, patch.mediaIds)
           const assets = await tx.mediaAsset.findMany({ where: { id: { in: patch.mediaIds } } })
@@ -59,6 +64,8 @@ export class ListingCommands {
             category: patch.category,
             licenseDescription: patch.licenseDescription,
             contentVersion: patch.contentVersion,
+            commitment: patch.commitment,
+            commitmentVersion: patch.commitment ? commitmentVersion : undefined,
             priceAmount:
               patch.priceAmount === undefined ? undefined : parseStoredAmount(patch.priceAmount),
             publicationStatus: patch.publicationStatus,

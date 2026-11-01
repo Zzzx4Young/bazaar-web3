@@ -26,6 +26,7 @@
     "test:media:restore": "npm run build && node scripts/check-media-backup-restore.mjs",
     "test": "npm run build && node --test tests/*.test.mjs",
     "test:db": "npm run build && node --test --test-concurrency=1 tests/*.integration.mjs",
+    "test:migration:product-commitment": "npm run build && node scripts/check-product-commitment-migration.mjs",
     "test:capacity": "npm run build && node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
     "test:capacity:failover": "npm run build && CAPACITY_FAULT=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
     "test:postgres-ha": "npm run build && node scripts/check-postgres-ha.mjs",

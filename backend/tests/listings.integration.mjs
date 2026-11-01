@@ -1,3 +1,4 @@
+import { exampleCommitment } from '../scripts/example-commitment.mjs'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import test from 'node:test'
@@ -57,7 +58,8 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
       db.client,
       ['alice', 'bob'].map((loginName) => ({ loginName, displayName: loginName, password }))
     )
-    app = await createApp(readConfig({ DATABASE_URL: db.url.toString() }), false, {
+    app = await createApp(readConfig({ DATABASE_URL: db.url.toString(),
+      LISTING_COMMITMENT_POLICY: 'enforce' }), false, {
       loadRates: async () => {
         calls++
         return rateData()
@@ -69,8 +71,13 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
     const create = async (payload) => {
       const asset = await fixtureMediaAsset(db, sellerId)
       return app.inject({ method: 'POST', url: '/api/listings', headers: alice,
-        payload: { ...payload, mediaIds: [asset.id] } })
+        payload: { ...payload, commitment: exampleCommitment(payload.type), mediaIds: [asset.id] } })
     }
+    const oldClientAsset = await fixtureMediaAsset(db, sellerId)
+    const oldClient = await app.inject({ method: 'POST', url: '/api/listings', headers: alice,
+      payload: { ...listing('USD', '2'), mediaIds: [oldClientAsset.id] } })
+    assert.equal(oldClient.statusCode, 400, oldClient.body)
+    assert.equal(await db.client.listing.count(), 0)
     assert.equal((await app.inject({ method: 'POST', url: '/api/currencies', headers: { origin, 'content-type': 'application/json' }, payload: {} })).json().length, 19)
     const created = []
     for (const payload of [
@@ -250,6 +257,61 @@ test('I2: shared listings, ownership, validation, version races, withdrawal and 
   }
 })
 
+test('commitment rollout accepts omitted fields in compat mode but keeps them unpurchasable', async () => {
+  const db = await sandbox()
+  let app
+  let strictApp
+  try {
+    await provisionAccounts(db.client, [
+      { loginName: 'rollout-seller', displayName: 'Rollout seller', password }
+    ])
+    app = await createApp(readConfig({ DATABASE_URL: db.url.toString() }), false)
+    const seller = await login(app, 'rollout-seller')
+    const sellerId = (await db.client.account.findUniqueOrThrow({
+      where: { loginName: 'rollout-seller' }
+    })).id
+    const oldAsset = await fixtureMediaAsset(db, sellerId)
+    const oldClient = await app.inject({ method: 'POST', url: '/api/listings', headers: seller,
+      payload: { ...listing(), mediaIds: [oldAsset.id] } })
+    assert.equal(oldClient.statusCode, 201, oldClient.body)
+    assert.equal(oldClient.json().commitment, null)
+    assert.equal(oldClient.json().commitmentVersion, null)
+    assert.equal(oldClient.json().purchaseEligible, false)
+    assert.equal(oldClient.json().purchaseBlockReason, 'missing_commitment')
+    const detail = await app.inject({ method: 'POST', url: `/api/listings/${oldClient.json().id}/detail`,
+      headers: { origin, 'content-type': 'application/json' }, payload: {} })
+    assert.equal(detail.statusCode, 200, detail.body)
+    assert.equal(detail.json().purchaseEligible, false)
+
+    const malformedAsset = await fixtureMediaAsset(db, sellerId)
+    const malformed = await app.inject({ method: 'POST', url: '/api/listings', headers: seller,
+      payload: { ...listing(), mediaIds: [malformedAsset.id], commitment: null } })
+    assert.equal(malformed.statusCode, 400, malformed.body)
+    assert.equal(await db.client.listing.count(), 1)
+
+    const completed = await app.inject({ method: 'POST',
+      url: `/api/listings/${oldClient.json().id}/edit`, headers: seller,
+      payload: { version: 1, commitment: exampleCommitment('physical') } })
+    assert.equal(completed.statusCode, 200, completed.body)
+    assert.equal(completed.json().purchaseEligible, true)
+    assert.equal(completed.json().commitmentVersion, 1)
+
+    strictApp = await createApp(readConfig({ DATABASE_URL: db.url.toString(),
+      LISTING_COMMITMENT_POLICY: 'enforce' }), false)
+    const strictSeller = await login(strictApp, 'rollout-seller')
+    const strictAsset = await fixtureMediaAsset(db, sellerId)
+    const strict = await strictApp.inject({ method: 'POST', url: '/api/listings',
+      headers: strictSeller, payload: { ...listing(), mediaIds: [strictAsset.id] } })
+    assert.equal(strict.statusCode, 400, strict.body)
+    assert.equal(strict.json().code, 'INVALID_INPUT')
+    assert.equal(await db.client.listing.count(), 1)
+  } finally {
+    await strictApp?.close()
+    await app?.close()
+    await db.close()
+  }
+})
+
 test('I2: invalid rates fail closed; provider failure does not block newest listings', async () => {
   const db = await sandbox()
   let app
@@ -298,6 +360,11 @@ test('I2: invalid rates fail closed; provider failure does not block newest list
     )
     assert.equal(response.json().requestId, response.headers['x-request-id'])
     assert.equal((await app.inject({ method: 'POST', url: '/api/listings/search', headers: { origin, 'content-type': 'application/json' }, payload: {} })).statusCode, 200)
+    const singleCurrency = await app.inject({ method: 'POST', url: '/api/listings/search',
+      headers: { origin, 'content-type': 'application/json' },
+      payload: { sort: 'price_desc', limit: '10', currency: 'CNY', page: '1' } })
+    assert.equal(singleCurrency.statusCode, 200, singleCurrency.body)
+    assert.equal(singleCurrency.json().quote, null)
   } finally {
     await app?.close()
     await db.close()

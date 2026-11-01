@@ -1,3 +1,4 @@
+import { exampleCommitment } from './example-commitment.mjs'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { performance } from 'node:perf_hooks'
@@ -15,7 +16,7 @@ export function capacityExpiry({ client, buyer, sellerId, create, count = capaci
   assert.notEqual(buyer.id, sellerId)
   assert.ok(Number.isSafeInteger(count) && count > 0)
   const listings = Array.from({ length: count }, (_, index) => ({ id: randomUUID(), sellerId,
-    type: 'physical', category: 'electronics', title: `Expiry capacity fixture ${index}`,
+    type: 'physical', commitment: exampleCommitment('physical'), commitmentVersion: 1, category: 'electronics', title: `Expiry capacity fixture ${index}`,
     description: 'Isolated capacity expiry fixture', priceAmount: '10.00', currency: 'USD' }))
   const ids = [], keys = new Map()
   let prepared = false

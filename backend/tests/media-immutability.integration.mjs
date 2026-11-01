@@ -1,3 +1,4 @@
+import { exampleCommitment } from '../scripts/example-commitment.mjs'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import test from 'node:test'
@@ -19,7 +20,8 @@ test('verified media content and ordered order snapshots cannot be rewritten or 
     })
     const media = await fixtureMediaAsset(db, seller.id)
     const listing = await db.client.listing.create({ data: {
-      sellerId: seller.id, type: 'digital', saleMode: 'repeatable', title: 'History',
+      sellerId: seller.id, type: 'digital', commitment: exampleCommitment('digital'),
+      commitmentVersion: 1, saleMode: 'repeatable', title: 'History',
       description: 'Original history', category: 'digital_assets',
       priceAmount: '3', currency: 'USD'
     } })

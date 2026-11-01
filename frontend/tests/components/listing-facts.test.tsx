@@ -2,6 +2,7 @@ import { expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ListingFacts } from '@/components/listing/listing-facts'
 import type { Item } from '@/types'
+import { initialDigitalCommitment, initialPhysicalCommitment } from '@/lib/commitment'
 
 const item = {
   id: 'digital-1',
@@ -66,4 +67,37 @@ it('labels fields absent from the live listing API as unrecorded', async () => {
   render(<ListingFacts item={toItem(listing)} />)
   expect(screen.getAllByText('notRecorded')).toHaveLength(2)
   expect(screen.queryByText('notProvided')).not.toBeInTheDocument()
+})
+
+it('uses a digital commitment for delivery instead of the old delivery field', () => {
+  render(<ListingFacts item={{ ...item, deliveryType: undefined,
+    commitment: { ...initialDigitalCommitment, deliverables: [{ name: 'Files', format: 'zip', quantity: 1 }] }
+  }} />)
+  expect(screen.getByText('fileDelivery')).toBeInTheDocument()
+  expect(screen.queryByText('notRecorded')).not.toBeInTheDocument()
+  expect(screen.queryByText('delivery')).not.toBeInTheDocument()
+})
+
+it('keeps a new digital listing license and content version visible before checkout', () => {
+  render(<ListingFacts item={{ ...item,
+    licenseDescription: 'Seller grants personal use',
+    contentVersion: 'acceptance-v2',
+    deliveryType: undefined,
+    commitment: { ...initialDigitalCommitment,
+      deliverables: [{ name: 'Files', format: 'zip', quantity: 1 }] }
+  }} />)
+  expect(screen.getByText('Seller grants personal use')).toBeInTheDocument()
+  expect(screen.getByText('acceptance-v2')).toBeInTheDocument()
+  expect(screen.getByText('fileDelivery')).toBeInTheDocument()
+  expect(screen.queryByText('delivery')).not.toBeInTheDocument()
+  expect(screen.queryByText('notRecorded')).not.toBeInTheDocument()
+})
+
+it('uses a physical commitment for condition instead of the old condition field', () => {
+  render(<ListingFacts item={{ ...item, category: 'physical', condition: undefined,
+    commitment: { ...initialPhysicalCommitment, conditionGrade: 'good' }
+  }} />)
+  expect(screen.getByText('good')).toBeInTheDocument()
+  expect(screen.queryByText('notRecorded')).not.toBeInTheDocument()
+  expect(screen.getAllByText('condition')).toHaveLength(1)
 })

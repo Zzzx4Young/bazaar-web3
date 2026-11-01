@@ -1,5 +1,6 @@
 import { useTranslations } from 'next-intl'
 import type { OrderDetail } from '@/lib/order-api'
+import { CommitmentView } from '@/components/listing/commitment-view'
 
 export function OrderSnapshot({ type, snapshot }: Pick<OrderDetail, 'type' | 'snapshot'>) {
   const t = useTranslations('orderDetailUi')
@@ -31,6 +32,7 @@ export function OrderSnapshot({ type, snapshot }: Pick<OrderDetail, 'type' | 'sn
           </>
         )}
       </dl>
+      <div className="mt-4"><CommitmentView commitment={snapshot.commitment} /></div>
     </section>
   )
 }

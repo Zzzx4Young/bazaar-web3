@@ -11,6 +11,8 @@ import { categoryInput } from './categories.js'
 import { favoritesMaxIds } from './favorites-policy.js'
 import { listingTextPolicy } from './listing-policy.js'
 import { mediaMaxItems } from '../media/media-policy.js'
+import { parseCommitment, canPurchaseCommitment, commitmentVersion } from './product-commitment.js'
+import { hasExcludedRightsClaim } from './prohibited-claims.js'
 import { lockMediaAssets } from '../media/lock-media-assets.js'
 
 const include = {
@@ -27,7 +29,8 @@ const homeTypeLimit = 5
 export class ListingService {
   constructor(
     private readonly client: PrismaClient,
-    private readonly rates: RatesService
+    private readonly rates: RatesService,
+    private readonly commitmentPolicy: 'compat' | 'enforce' = 'compat'
   ) {}
 
   private view(listing: ListingRow, priceUsd: string | null = null) {
@@ -50,6 +53,15 @@ export class ListingService {
       version: listing.version,
       licenseDescription: listing.licenseDescription,
       contentVersion: listing.contentVersion,
+      commitment: listing.commitment,
+      commitmentVersion: listing.commitmentVersion,
+      replacementOfListingId: listing.replacementOfListingId,
+      reviewStatus: listing.reviewStatus,
+      reviewPending: listing.reviewPending,
+      reviewKind: listing.reviewKind,
+      purchaseEligible: canPurchaseCommitment(listing),
+      purchaseBlockReason: listing.reviewStatus !== 'clear' ? 'under_review'
+        : !canPurchaseCommitment(listing) ? 'missing_commitment' : null,
       media: listing.mediaRows.map((entry) => ({
         id: entry.mediaId,
         position: entry.position,
@@ -62,7 +74,7 @@ export class ListingService {
 
   async detail(id: string) {
     const listing = await this.client.listing.findFirst({
-      where: { id: idInput(id), publicationStatus: 'published', currency: { in: currencyCodes } },
+      where: { id: idInput(id), publicationStatus: 'published', reviewStatus: 'clear', currency: { in: currencyCodes } },
       include
     })
     if (!listing) throw new DomainError('NOT_FOUND')
@@ -74,20 +86,20 @@ export class ListingService {
     const rows = await this.client.$queryRaw<{ section: string; id: string }[]>`
       SELECT 'featured' AS section, id, "createdAt" FROM (
         SELECT l.id, l."createdAt" FROM "Listing" l
-        WHERE l."publicationStatus" = 'published' AND l."currency" IN (${Prisma.join(currencyCodes)})
+        WHERE l."publicationStatus" = 'published' AND l."reviewStatus" = 'clear' AND l."currency" IN (${Prisma.join(currencyCodes)})
         ORDER BY l."createdAt" DESC, l.id DESC LIMIT ${homeFeaturedLimit}
       ) featured
       UNION ALL
       SELECT 'digital' AS section, id, "createdAt" FROM (
         SELECT l.id, l."createdAt" FROM "Listing" l
-        WHERE l."publicationStatus" = 'published' AND l."type" = 'digital'
+        WHERE l."publicationStatus" = 'published' AND l."reviewStatus" = 'clear' AND l."type" = 'digital'
           AND l."currency" IN (${Prisma.join(currencyCodes)})
         ORDER BY l."createdAt" DESC, l.id DESC LIMIT ${homeTypeLimit}
       ) digital
       UNION ALL
       SELECT 'physical' AS section, id, "createdAt" FROM (
         SELECT l.id, l."createdAt" FROM "Listing" l
-        WHERE l."publicationStatus" = 'published' AND l."type" = 'physical'
+        WHERE l."publicationStatus" = 'published' AND l."reviewStatus" = 'clear' AND l."type" = 'physical'
           AND l."currency" IN (${Prisma.join(currencyCodes)})
         ORDER BY l."createdAt" DESC, l.id DESC LIMIT ${homeTypeLimit}
       ) physical
@@ -95,7 +107,7 @@ export class ListingService {
     const listings = await this.client.listing.findMany({
       where: {
         id: { in: [...new Set(rows.map((row) => row.id))] },
-        publicationStatus: 'published',
+        publicationStatus: 'published', reviewStatus: 'clear',
         currency: { in: currencyCodes }
       },
       include
@@ -117,7 +129,7 @@ export class ListingService {
       throw new DomainError('INVALID_INPUT')
     const ids = [...new Set(input.ids.map((id) => idInput(id)))]
     const listings = await this.client.listing.findMany({
-      where: { id: { in: ids }, publicationStatus: 'published', currency: { in: currencyCodes } },
+      where: { id: { in: ids }, publicationStatus: 'published', reviewStatus: 'clear', currency: { in: currencyCodes } },
       include
     })
     const byId = new Map(listings.map((listing) => [listing.id, listing]))
@@ -131,7 +143,7 @@ export class ListingService {
   async create(actorId: string, body: unknown) {
     const input = objectInput(
       body,
-      ['type', 'saleMode', 'title', 'description', 'category', 'price', 'licenseDescription', 'contentVersion', 'supplyMode', 'mediaIds'],
+      ['type', 'saleMode', 'title', 'description', 'category', 'price', 'licenseDescription', 'contentVersion', 'supplyMode', 'mediaIds', 'commitment', 'replacementOfListingId'],
       ['type', 'saleMode', 'title', 'description', 'category', 'price', 'mediaIds']
     )
     if (input.type !== 'physical' && input.type !== 'digital')
@@ -156,7 +168,22 @@ export class ListingService {
     if (new Set(mediaIds).size !== mediaIds.length) throw new DomainError('INVALID_INPUT')
     const price = objectInput(input.price, ['amount', 'currency'])
     const currency = currencyInput(price.currency)
+    if (hasExcludedRightsClaim(String(input.title), String(input.description),
+      type === 'digital' ? String(input.licenseDescription ?? '') : null))
+      throw new DomainError('INVALID_INPUT')
+    const replacementOfListingId = input.replacementOfListingId === undefined ? null
+      : idInput(input.replacementOfListingId)
+    if (replacementOfListingId && input.saleMode !== 'one_off')
+      throw new DomainError('INVALID_INPUT')
+    const hasCommitment = 'commitment' in input
+    if (!hasCommitment && this.commitmentPolicy === 'enforce')
+      throw new DomainError('INVALID_INPUT')
+    const commitment = hasCommitment
+      ? parseCommitment(type, input.commitment, mediaIds.length) : null
+    if (commitment && hasExcludedRightsClaim(JSON.stringify(commitment)))
+      throw new DomainError('INVALID_INPUT')
     const data = {
+      ...(commitment ? { commitment, commitmentVersion } : {}), replacementOfListingId,
       sellerId: actorId,
       type,
       saleMode: input.saleMode as 'one_off' | 'repeatable',
@@ -172,6 +199,29 @@ export class ListingService {
       throw new DomainError('INVALID_INPUT')
     const id = await transact(this.client, async (tx) => {
       await requireActiveAccount(tx, actorId)
+      if (replacementOfListingId) {
+        const old = await tx.listing.findUnique({ where: { id: replacementOfListingId } })
+        if (!old || old.sellerId !== actorId || old.type !== type ||
+          old.saleMode !== 'one_off' ||
+          !(await tx.order.count({ where: { listingId: old.id } })))
+          throw new DomainError('INVALID_INPUT')
+        if (old.reviewStatus === 'clear' && old.commitmentVersion === commitmentVersion &&
+          old.commitment) throw new DomainError('UNAVAILABLE')
+        await tx.$queryRaw`SELECT "id" FROM "Listing" WHERE "id" = ${old.id}::uuid FOR UPDATE`
+        if (await tx.order.count({ where: { listingId: old.id,
+          status: { in: ['pending_payment', 'pending_delivery', 'pending_acceptance', 'issue'] }
+        } })) throw new DomainError('UNAVAILABLE')
+        const inventory = type === 'physical'
+          ? await tx.physicalInventory.findUnique({ where: { listingId: old.id } })
+          : await tx.digitalInventory.findUnique({ where: { listingId: old.id } })
+        if (inventory && (inventory.availability !== 'available' || inventory.activeOrderId))
+          throw new DomainError('UNAVAILABLE')
+      }
+      const lockedLegacy = input.saleMode === 'one_off' &&
+        (await tx.listing.count({ where: { sellerId: actorId, type, saleMode: 'one_off',
+          OR: [{ commitmentVersion: null }, { reviewStatus: { not: 'clear' } }],
+          orderListingRows: { some: {} }
+        } })) > 0
       await lockMediaAssets(tx, mediaIds)
       const assets = await tx.mediaAsset.findMany({ where: { id: { in: mediaIds } } })
       if (assets.some((asset) => asset.sellerId !== actorId)) throw new DomainError('FORBIDDEN')
@@ -179,7 +229,19 @@ export class ListingService {
         throw new DomainError('INVALID_INPUT')
       if (await tx.listingMedia.count({ where: { mediaId: { in: mediaIds } } }))
         throw new DomainError('LISTING_CONFLICT')
-      const listing = await tx.listing.create({ data })
+      const listing = await tx.listing.create({ data: {
+        ...data,
+        ...(lockedLegacy || replacementOfListingId ? {
+          reviewStatus: 'paused', reviewKind: 'replacement',
+          reviewReason: 'One-off stock needs distinct-resource review',
+          reviewUpdatedAt: new Date()
+        } : {})
+      } })
+      if (listing.reviewStatus === 'paused')
+        await tx.listingReviewEvent.create({ data: {
+          listingId: listing.id, actorId, action: 'replacement_submitted',
+          kind: 'replacement', reason: 'Seller submitted one-off resource for distinct-stock review'
+        } })
       await tx.listingMedia.createMany({
         data: mediaIds.map((mediaId, position) => ({ listingId: listing.id, mediaId, position }))
       })
@@ -198,7 +260,7 @@ export class ListingService {
     const input = objectInput(
       body,
       ['version', 'title', 'description', 'category', 'priceAmount',
-        'licenseDescription', 'contentVersion', 'mediaIds', 'publicationStatus'],
+        'licenseDescription', 'contentVersion', 'mediaIds', 'publicationStatus', 'commitment'],
       ['version']
     )
     const version = positiveInteger(input.version)
@@ -215,6 +277,7 @@ export class ListingService {
       contentVersion?: string
       mediaIds?: string[]
       publicationStatus?: 'published' | 'withdrawn'
+      commitment?: ReturnType<typeof parseCommitment>
     } = {}
     if ('title' in input) patch.title = textInput(input.title, listingTextPolicy.titleMaxLength)
     if ('description' in input)
@@ -231,6 +294,17 @@ export class ListingService {
         patch.contentVersion = textInput(input.contentVersion,
           listingTextPolicy.contentVersionMaxLength)
     }
+    if ('commitment' in input) {
+      const mediaCount = Array.isArray(input.mediaIds) ? input.mediaIds.length :
+        await this.client.listingMedia.count({ where: { listingId: id } })
+      patch.commitment = parseCommitment(listing.type, input.commitment, mediaCount)
+      if (hasExcludedRightsClaim(JSON.stringify(patch.commitment)))
+        throw new DomainError('INVALID_INPUT')
+    }
+    if (hasExcludedRightsClaim(patch.title ?? listing.title,
+      patch.description ?? listing.description,
+      patch.licenseDescription ?? listing.licenseDescription))
+      throw new DomainError('INVALID_INPUT')
     if ('mediaIds' in input) {
       if (!Array.isArray(input.mediaIds) || input.mediaIds.length < 1 ||
         input.mediaIds.length > mediaMaxItems ||
@@ -276,7 +350,7 @@ export class ListingService {
       throw new DomainError('INVALID_INPUT')
     const clauses: Prisma.Sql[] = [Prisma.sql`l."currency" IN (${Prisma.join(currencyCodes)})`]
     if (actorId) clauses.push(Prisma.sql`l."sellerId" = ${actorId}::uuid`)
-    else clauses.push(Prisma.sql`l."publicationStatus" = 'published'`)
+    else clauses.push(Prisma.sql`l."publicationStatus" = 'published' AND l."reviewStatus" = 'clear'`)
     if (input.sellerId !== undefined)
       clauses.push(Prisma.sql`l."sellerId" = ${idInput(input.sellerId)}::uuid`)
     if (input.publicationStatus !== undefined) {
@@ -299,25 +373,30 @@ export class ListingService {
         Prisma.sql`(l."title" ILIKE ${`%${keyword}%`} OR l."description" ILIKE ${`%${keyword}%`})`
       )
     }
+    // With one currency, multiplying every amount by the same positive FX factor
+    // cannot change its order. Keep an explicit quoteId meaningful when supplied.
+    const nativePriceSort = sort !== 'newest' && input.currency !== undefined &&
+      input.quoteId === undefined
     if (
       (sort === 'newest' && input.quoteId !== undefined) ||
-      (sort !== 'newest' && page > 1 && input.quoteId === undefined)
+      (sort !== 'newest' && !nativePriceSort && page > 1 && input.quoteId === undefined)
     )
       throw new DomainError('INVALID_INPUT')
     const quote =
-      sort === 'newest'
+      sort === 'newest' || nativePriceSort
         ? null
         : await this.rates.quote(input.quoteId === undefined ? undefined : idInput(input.quoteId))
     const factor = quote
       ? Prisma.sql`((${JSON.stringify(quote.rates)}::jsonb ->> l."currency")::numeric)`
       : Prisma.sql`NULL::numeric`
-    const price = Prisma.sql`(l."priceAmount" * ${factor})`
+    const convertedPrice = Prisma.sql`(l."priceAmount" * ${factor})`
+    const sortPrice = nativePriceSort ? Prisma.sql`l."priceAmount"` : convertedPrice
     const order =
       sort === 'newest'
         ? Prisma.sql`l."createdAt" DESC, l.id DESC`
         : sort === 'price_asc'
-          ? Prisma.sql`${price} ASC, l.id ASC`
-          : Prisma.sql`${price} DESC, l.id DESC`
+          ? Prisma.sql`${sortPrice} ASC, l.id ASC`
+          : Prisma.sql`${sortPrice} DESC, l.id DESC`
     type JsonItem = Omit<ReturnType<typeof this.view>, 'createdAt' | 'updatedAt'> & {
       createdAt: string
       updatedAt: string
@@ -329,7 +408,7 @@ export class ListingService {
       WITH filtered AS NOT MATERIALIZED (
         SELECT l.* FROM "Listing" l WHERE ${Prisma.join(clauses, ' AND ')}
       ), selected AS (
-        SELECT l.*, (${price})::text AS usd FROM filtered l
+        SELECT l.*, (${convertedPrice})::text AS usd FROM filtered l
         ORDER BY ${order} LIMIT ${limit + 1} OFFSET ${(page - 1) * limit}
       )
       SELECT (SELECT count(*)::bigint FROM filtered) AS total,
@@ -348,6 +427,14 @@ export class ListingService {
             ELSE coalesce(pi.availability, 'unavailable') END,
           'version', l.version, 'licenseDescription', l."licenseDescription",
           'contentVersion', l."contentVersion",
+          'commitment', l.commitment, 'commitmentVersion', l."commitmentVersion",
+          'replacementOfListingId', l."replacementOfListingId",
+          'reviewStatus', l."reviewStatus", 'reviewPending', l."reviewPending", 'reviewKind', l."reviewKind",
+          'purchaseEligible', l."reviewStatus" = 'clear' AND l."commitmentVersion" = 1
+            AND l.commitment IS NOT NULL,
+          'purchaseBlockReason', CASE WHEN l."reviewStatus" <> 'clear' THEN 'under_review'
+            WHEN l."commitmentVersion" IS DISTINCT FROM 1 OR l.commitment IS NULL
+              THEN 'missing_commitment' ELSE NULL END,
           'media', coalesce((SELECT jsonb_agg(jsonb_build_object(
             'id', lm."mediaId", 'position', lm.position,
             'url', '/api/listings/' || l.id::text || '/media/' || lm."mediaId"::text

@@ -28,18 +28,24 @@ import { BackendError, createListing, uploadListingImage } from '@/lib/backend-a
 import { apiErrorCopy } from '@/lib/api-error-copy'
 import { useCurrencies } from '@/hooks/use-currencies'
 import type { ItemCategory, Currency } from '@/types'
+import { CommitmentEditor } from '@/components/listing/commitment-editor'
+import { CommitmentView } from '@/components/listing/commitment-view'
+import { initialDigitalCommitment, initialPhysicalCommitment, commitmentReady, type ProductCommitment } from '@/lib/commitment'
 
 type FormValues = z.infer<typeof publishSchema>
 
 export function PublishForm() {
   const locale = useLocale()
   const tUi = useTranslations('publishUi')
+  const tCommitment = useTranslations('commitmentUi')
   const tCategory = useTranslations('marketCategories')
   const router = useRouter()
   const auth = useAuthStore()
   const [saveError, setSaveError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [photos, setPhotos] = useState<File[]>([])
+  const [commitment, setCommitment] = useState<ProductCommitment>(initialPhysicalCommitment)
+  const [replacementOfListingId, setReplacementOfListingId] = useState('')
   const { currencies, loading: currenciesLoading, error: currenciesError, retry } = useCurrencies()
 
   const {
@@ -93,6 +99,10 @@ export function PublishForm() {
         })
         return
       }
+      if (!commitmentReady(commitment)) {
+        setSaveError(tCommitment('commitmentInvalid'))
+        return
+      }
       if (
         photos.length < 1 ||
         photos.length > 8 ||
@@ -117,6 +127,9 @@ export function PublishForm() {
         category: data.primaryCategory,
         price: { amount: data.priceAmount, currency: data.priceCurrency },
         mediaIds,
+        commitment,
+        ...(data.saleMode === 'one_off' && replacementOfListingId.trim()
+          ? { replacementOfListingId: replacementOfListingId.trim() } : {}),
         ...(data.category === 'digital'
           ? {
               supplyMode: data.saleMode === 'one_off' ? 'single' : 'unlimited',
@@ -125,8 +138,9 @@ export function PublishForm() {
             }
           : {})
       })
-      toast.success(tUi('success'))
-      router.push(`/listing/${listing.id}`)
+      toast.success(listing.reviewStatus === 'paused'
+        ? tCommitment('replacementReview') : tUi('success'))
+      router.push(listing.reviewStatus === 'paused' ? '/me' : `/listing/${listing.id}`)
     } catch (error) {
       const message =
         error instanceof BackendError
@@ -153,6 +167,7 @@ export function PublishForm() {
               setValue('category', v as ItemCategory)
               setValue('saleMode', v === 'physical' ? 'one_off' : 'repeatable')
               setValue('primaryCategory', v === 'physical' ? 'electronics' : 'digital_assets')
+              setCommitment(v === 'physical' ? initialPhysicalCommitment : initialDigitalCommitment)
             }}
           >
             <TabsList className="grid w-full grid-cols-2">
@@ -329,6 +344,14 @@ export function PublishForm() {
           </CardContent>
         </Card>
       )}
+
+      {watch('saleMode') === 'one_off' && <label className="block text-sm">
+        {tCommitment('replacementOfListingId')}
+        <Input value={replacementOfListingId}
+          onChange={(event) => setReplacementOfListingId(event.target.value)} />
+      </label>}
+      <CommitmentEditor type={category} value={commitment} onChange={setCommitment} />
+      <div className="rounded-lg border p-4"><CommitmentView commitment={commitment} /></div>
 
       {saveError && (
         <p role="alert" className="text-destructive">

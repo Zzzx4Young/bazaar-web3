@@ -7,6 +7,14 @@ import { readConfig } from '../dist/config.js'
 
 const DATABASE_URL = 'postgresql://test:secret@127.0.0.1:55432/bazaar_test'
 
+test('listing commitment rollout accepts only explicit compatibility modes', () => {
+  assert.equal(readConfig({ DATABASE_URL }).listingCommitmentPolicy, 'compat')
+  assert.equal(readConfig({ DATABASE_URL, LISTING_COMMITMENT_POLICY: 'enforce' })
+    .listingCommitmentPolicy, 'enforce')
+  assert.throws(() => readConfig({ DATABASE_URL, LISTING_COMMITMENT_POLICY: 'invalid' }),
+    /LISTING_COMMITMENT_POLICY/)
+})
+
 test('request admission has a bounded deployment limit', () => {
   assert.equal(readConfig({ DATABASE_URL }).maxInFlightRequests, 200)
   assert.equal(readConfig({ DATABASE_URL, API_MAX_IN_FLIGHT: '2' }).maxInFlightRequests, 2)

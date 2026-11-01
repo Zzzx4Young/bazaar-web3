@@ -4,6 +4,7 @@ import { DomainError } from '../common/domain-error.js'
 import { transact, type TransactionOptions, type Transaction } from '../database/transaction.js'
 import { idempotent } from './order-idempotency.js'
 import { lockListing } from '../listings/listing-lock.js'
+import { canPurchaseCommitment } from '../listings/product-commitment.js'
 import { requireActiveAccount } from '../accounts/require-active-account.js'
 import { idInput } from '../common/input.js'
 import { maxOrderExpiryBatchSize, orderExpiryBatchSize } from './order-expiry-policy.js'
@@ -52,7 +53,8 @@ export class OrderCommands {
     if (listing.type === 'digital' && input.shipping) throw new DomainError('INVALID_INPUT')
     await options.checkpoint?.('locked', tx, attempt)
     if (listing.sellerId === actorId) throw new DomainError('FORBIDDEN')
-    if (listing.publicationStatus !== 'published' || listing.version !== input.version)
+    if (listing.publicationStatus !== 'published' || listing.version !== input.version ||
+      !canPurchaseCommitment(listing))
       throw new DomainError('LISTING_CONFLICT')
     const inventory = listing.type === 'physical'
       ? await tx.physicalInventory.findUnique({ where: { listingId: listing.id } })
@@ -95,7 +97,9 @@ export class OrderCommands {
         priceAmount: listing.priceAmount,
         currency: listing.currency,
         licenseDescription: listing.licenseDescription,
-        contentVersion: listing.contentVersion
+        contentVersion: listing.contentVersion,
+        commitment: listing.commitment ?? undefined,
+        commitmentVersion: listing.commitmentVersion
       }
     })
     const currentMedia = await tx.listingMedia.findMany({
@@ -279,6 +283,8 @@ export class OrderCommands {
                 inventory.availability !== (action === 'restore' ? 'refund_hold' : 'reserved'))
             )
               throw new DomainError('INVENTORY_CONFLICT')
+            if (order.transactionPausedAt)
+              throw new DomainError('STATE_CONFLICT')
             const snapshot = await tx.orderSnapshot.findUniqueOrThrow({ where: { orderId } })
             let next = order.status
             const requireStatus = (...states: string[]) => {
@@ -488,7 +494,8 @@ export class OrderCommands {
         await tx.$queryRaw`SELECT "id" FROM "Order" WHERE "id" = ${orderId}::uuid FOR UPDATE`
         const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } })
         await options.checkpoint?.('locked', tx, attempt)
-        if (order.status !== 'issue') throw new DomainError('STATE_CONFLICT')
+        if (order.transactionPausedAt || order.status !== 'issue')
+          throw new DomainError('STATE_CONFLICT')
         const request = await tx.refundRequest.findFirst({ where: { orderId, status: 'pending' } })
         const offer = await tx.orderEvent.findFirst({ where: { orderId, operation: 'counteroffer' } })
         if (!request || !offer) throw new DomainError('REFUND_REQUIRED')
@@ -630,7 +637,8 @@ export class OrderCommands {
           }
           await tx.order.update({
             where: { id: order.id },
-            data: { status: 'expired', version: { increment: 1 } }
+            data: { status: 'expired', transactionPausedAt: null, pauseReviewId: null,
+              version: { increment: 1 } }
           })
           await tx.orderEvent.create({
             data: {

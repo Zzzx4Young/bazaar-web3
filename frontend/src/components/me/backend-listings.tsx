@@ -15,10 +15,14 @@ import { useAuthStore } from '@/stores/use-auth-store'
 import { useStoredPage } from '@/hooks/use-stored-page'
 import { RecordPagination } from '@/components/ui/record-pagination'
 import { paginationPolicy } from '@/lib/pagination'
+import { CommitmentEditor } from '@/components/listing/commitment-editor'
+import { CommitmentView } from '@/components/listing/commitment-view'
+import { initialDigitalCommitment, initialPhysicalCommitment, commitmentReady, type ProductCommitment } from '@/lib/commitment'
 
 export function BackendListings() {
   const locale = useLocale()
   const t = useTranslations('myListings')
+  const tCommitment = useTranslations('commitmentUi')
   const accountId = useAuthStore((state) => state.view?.account.id)
   const [page, setPage] = useStoredPage(`bazaar:listings:${accountId ?? 'guest'}`)
   const resource = useApiResource<ListingPage>(
@@ -33,6 +37,10 @@ export function BackendListings() {
   const [licenseDescription, setLicenseDescription] = useState('')
   const [contentVersion, setContentVersion] = useState('')
   const [photos, setPhotos] = useState<File[]>([])
+  const [commitment, setCommitment] = useState<ProductCommitment>(initialPhysicalCommitment)
+  const [sourceExplanation, setSourceExplanation] = useState('')
+  const [sourceUrl, setSourceUrl] = useState('')
+  const [creationProcess, setCreationProcess] = useState('')
   const [saving, setSaving] = useState(false)
   const csrfToken = useAuthStore((state) => state.view?.csrfToken)
   const [error, setError] = useState<string>()
@@ -51,6 +59,8 @@ export function BackendListings() {
         !['image/jpeg', 'image/png', 'image/webp'].includes(photo.type) ||
         photo.size < 1 || photo.size > 5 * 1024 * 1024))
         throw new Error(t('invalidImages'))
+      if (!publicationStatus && !commitmentReady(commitment))
+        throw new Error(tCommitment('commitmentInvalid'))
       if (!publicationStatus && photos.length && !csrfToken) throw new Error(t('signInAgain'))
       const mediaIds = publicationStatus || !photos.length ? undefined : [] as string[]
       if (mediaIds && csrfToken) {
@@ -61,6 +71,7 @@ export function BackendListings() {
         ...(publicationStatus ? { publicationStatus } : {
           title, description, priceAmount: price,
           ...(listing.type === 'digital' ? { licenseDescription, contentVersion } : {}),
+          commitment,
           ...(mediaIds ? { mediaIds } : {})
         })
       })
@@ -111,6 +122,9 @@ export function BackendListings() {
                     onChange={(event) => setContentVersion(event.target.value)} />
                 </>
               )}
+              <CommitmentEditor type={listing.type} value={commitment}
+                onChange={setCommitment} />
+              <CommitmentView commitment={commitment} />
               <p className="text-xs text-muted-foreground">{t('imageNotice')}</p>
               <Input aria-label={t('replaceImages')} type="file" multiple
                 accept="image/jpeg,image/png,image/webp"
@@ -131,11 +145,40 @@ export function BackendListings() {
                   <p className="text-sm text-muted-foreground">
                     {listing.price.amount} {listing.price.currency} · v{listing.version} · {t(listing.saleMode === 'one_off' ? 'oneOff' : 'repeatable')}
                   </p>
+                  <p className="break-all text-xs text-muted-foreground">ID: {listing.id}</p>
                   {listing.media[0] && <img src={listing.media[0].url} alt={listing.title} width={80} height={80}
                     className="mt-2 h-20 w-20 rounded object-cover" />}
                 </div>
-                <span className="shrink-0 text-sm">{transactionLabel(listing.publicationStatus, locale)}</span>
+                <span className="shrink-0 text-sm">
+                  {listing.reviewStatus === 'clear'
+                    ? transactionLabel(listing.publicationStatus, locale)
+                    : tCommitment('underReview')}
+                </span>
               </div>
+              {listing.reviewStatus === 'paused' && listing.reviewKind === 'source' &&
+                <div className="mt-3 space-y-2 rounded border p-3">
+                  <p className="text-sm">{tCommitment('sourceResponse')}</p>
+                  <Textarea aria-label={tCommitment('sourceExplanation')}
+                    value={sourceExplanation} onChange={(event) => setSourceExplanation(event.target.value)} />
+                  <Input aria-label={tCommitment('sourceUrl')} type="url" value={sourceUrl}
+                    onChange={(event) => setSourceUrl(event.target.value)} />
+                  <Textarea aria-label={tCommitment('creationProcess')}
+                    value={creationProcess} onChange={(event) => setCreationProcess(event.target.value)} />
+                  <Button type="button" variant="outline" disabled={saving || !sourceExplanation.trim() ||
+                    (!sourceUrl.trim() && !creationProcess.trim())} onClick={async () => {
+                    setSaving(true)
+                    try {
+                      await authenticatedPost(`/listings/${listing.id}/source-response`, {
+                        explanation: sourceExplanation,
+                        ...(sourceUrl ? { sourceUrl } : {}),
+                        ...(creationProcess ? { creationProcess } : {})
+                      })
+                      setSourceExplanation(''); setSourceUrl(''); setCreationProcess('')
+                      toast.success(tCommitment('sourceSubmitted'))
+                    } catch { toast.error(tCommitment('reviewError')) }
+                    finally { setSaving(false) }
+                  }}>{tCommitment('sendSource')}</Button>
+                </div>}
               <div className="mt-3 flex gap-2">
                 {listing.canEdit ? (
                   <Button
@@ -147,6 +190,8 @@ export function BackendListings() {
                       setDescription(listing.description)
                       setLicenseDescription(listing.licenseDescription ?? '')
                       setContentVersion(listing.contentVersion ?? '')
+                      setCommitment(listing.commitment ?? (listing.type === 'digital'
+                        ? initialDigitalCommitment : initialPhysicalCommitment))
                       setPhotos([])
                     }}
                   >

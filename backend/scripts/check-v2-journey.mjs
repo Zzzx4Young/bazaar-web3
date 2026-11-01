@@ -19,7 +19,8 @@ const resultsDirectory = resolve(process.env.E2E_RESULTS_DIR ?? new URL('../../f
 await rm(resultsDirectory, { recursive: true, force: true })
 await mkdir(resultsDirectory, { recursive: true })
 
-let db, admin, observer, app, frontend, browser, sellerContext, buyerContext, adminContext
+let db, admin, observer, app, frontend, browser, sellerContext, buyerContext, adminContext,
+  reviewSellerContext
 const suffix = randomUUID().replaceAll('-', '')
 const runtimeRole = `v2_runtime_${suffix}`
 const observerRole = `v2_observer_${suffix}`
@@ -368,8 +369,66 @@ try {
   assert.equal(new Set(checkoutRows.map((row) => row.currency)).size, 2)
   const afterCart = await observerRows(`SELECT count(*)::int AS orders FROM orders`)
   assert.deepEqual(afterCart, [{ orders: 62 }])
+  stage = 'three-role product source review with a paused open order'
+  const reviewListing = cartListings[0]
+  const reviewOrder = await db.client.order.findFirstOrThrow({ where: {
+    checkoutId, listingId: reviewListing.id
+  } })
+  const reviewSeller = await db.client.account.findUniqueOrThrow({
+    where: { id: reviewListing.sellerId }
+  })
+  await buyerPage.goto(`${origin}/zh-CN/listing/${reviewListing.id}`)
+  await buyerPage.getByLabel('请说明具体疑点').fill('V2 source evidence needs platform review')
+  await buyerPage.getByRole('button', { name: '提交举报，等待管理员处理' }).click()
+  await buyerPage.waitForURL(/\/zh-CN\/explore/)
+  assert.equal((await db.client.listing.findUniqueOrThrow({
+    where: { id: reviewListing.id }
+  })).reviewPending, true)
+  await adminPage.goto(`${origin}/zh-CN/me`)
+  const reviewCard = adminPage.locator('article').filter({ hasText: reviewListing.title })
+  await reviewCard.getByLabel('复核理由').fill('Source complaint requires seller response')
+  await reviewCard.getByRole('button', { name: '暂停商品并冻结未完成订单' }).click()
+  await reviewCard.getByRole('button', { name: '允许继续展示' }).waitFor()
+  await adminPage.screenshot({ path: resolve(resultsDirectory, 'admin-review-paused.png'),
+    fullPage: true })
+  assert.ok((await db.client.order.findUniqueOrThrow({
+    where: { id: reviewOrder.id }
+  })).transactionPausedAt)
+  await buyerPage.goto(`${origin}/zh-CN/me/orders/${reviewOrder.id}`)
+  await buyerPage.screenshot({ path: resolve(resultsDirectory, 'buyer-review-paused.png'),
+    fullPage: true })
+  reviewSellerContext = await browser.newContext({ recordVideo: {
+    dir: resolve(resultsDirectory, 'video-review-seller')
+  } })
+  await reviewSellerContext.tracing.start({ screenshots: true, snapshots: true, sources: true })
+  const reviewSellerPage = await reviewSellerContext.newPage()
+  await login(reviewSellerPage, reviewSeller.loginName, password)
+  await reviewSellerPage.goto(`${origin}/zh-CN/me`)
+  await reviewSellerPage.getByLabel('来源说明').fill('Original material made by this seller')
+  await reviewSellerPage.getByLabel('创作过程说明').fill('Created from independent source files')
+  await reviewSellerPage.getByRole('button', { name: '提交来源资料' }).click()
+  await waitText(reviewSellerPage, '来源资料已提交')
+  await reviewSellerPage.screenshot({ path: resolve(resultsDirectory, 'seller-source-response.png'),
+    fullPage: true })
+  await adminPage.reload()
+  await reviewCard.getByLabel('复核理由').fill('Source response recorded; listing may continue')
+  await reviewCard.getByRole('button', { name: '允许继续展示' }).click()
+  await reviewCard.waitFor({ state: 'detached' })
+  assert.equal((await db.client.order.findUniqueOrThrow({
+    where: { id: reviewOrder.id }
+  })).transactionPausedAt, null)
+  const reviewActions = (await db.client.listingReviewEvent.findMany({
+    where: { listingId: reviewListing.id }, orderBy: { createdAt: 'asc' }
+  })).map((row) => row.action)
+  assert.deepEqual(reviewActions, ['report', 'pause', 'source_response', 'resume'])
+  const reviewOrderEvents = (await db.client.orderEvent.findMany({
+    where: { orderId: reviewOrder.id, operation: { in: ['listing_review_pause', 'listing_review_resume'] } }
+  })).map((row) => row.operation).sort()
+  assert.deepEqual(reviewOrderEvents, ['listing_review_pause', 'listing_review_resume'])
+  await adminPage.screenshot({ path: resolve(resultsDirectory, 'admin-review-resolved.png'),
+    fullPage: true })
   assert.deepEqual(browserErrors, [], 'Browser emitted runtime or hydration errors')
-  await writeFile(resolve(resultsDirectory, 'acceptance-summary.json'), `${JSON.stringify({ result: 'passed', listings: counts[0].listings, seededOrders: counts[0].orders, ordersAfterCart: afterCart[0].orders, seededCheckouts, checkoutId, checkoutRows, statusCounts, reputation, partialDeliveries, inventory, digitalInventory, targetOrderId: target.id, targetInventory, targetReservation, targetRefund, targetSettlements, newEvents }, null, 2)}\n`)
+  await writeFile(resolve(resultsDirectory, 'acceptance-summary.json'), `${JSON.stringify({ result: 'passed', listings: counts[0].listings, seededOrders: counts[0].orders, ordersAfterCart: afterCart[0].orders, seededCheckouts, checkoutId, checkoutRows, statusCounts, reputation, partialDeliveries, inventory, digitalInventory, targetOrderId: target.id, targetInventory, targetReservation, targetRefund, targetSettlements, newEvents, reviewListingId: reviewListing.id, reviewOrderId: reviewOrder.id, reviewActions, reviewOrderEvents, reviewRequests: requestLogs.filter((entry) => entry.route.startsWith('/api/listings/') && /report|review|source-response/.test(entry.route)) }, null, 2)}\n`)
   console.log(`PASS: V2 business data and edge-case journey; artifacts: ${resultsDirectory}`)
 } catch (error) {
   console.error(`V2 E2E failed at ${stage}`)
@@ -379,9 +438,11 @@ try {
   await Promise.allSettled([
     sellerContext?.tracing.stop({ path: resolve(resultsDirectory, 'seller-trace.zip') }),
     buyerContext?.tracing.stop({ path: resolve(resultsDirectory, 'buyer-trace.zip') }),
-    adminContext?.tracing.stop({ path: resolve(resultsDirectory, 'admin-trace.zip') })
+    adminContext?.tracing.stop({ path: resolve(resultsDirectory, 'admin-trace.zip') }),
+    reviewSellerContext?.tracing.stop({ path: resolve(resultsDirectory, 'review-seller-trace.zip') })
   ])
-  await Promise.allSettled([sellerContext?.close(), buyerContext?.close(), adminContext?.close()])
+  await Promise.allSettled([sellerContext?.close(), buyerContext?.close(), adminContext?.close(),
+    reviewSellerContext?.close()])
   await browser?.close()
   if (frontend?.pid && frontend.exitCode === null) {
     try {

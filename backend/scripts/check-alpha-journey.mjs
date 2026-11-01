@@ -34,6 +34,9 @@ const runtimeRole = `ae_runtime_${suffix}`
 const observerRole = `ae_observer_${suffix}`
 const observeSchema = `ae_observe_${suffix}`
 const requestLogs = []
+const hotEndpoint = process.env.GARAGE_HOT_ENDPOINT ?? 'http://127.0.0.1:3900'
+const coldEndpoint = process.env.GARAGE_COLD_ENDPOINT ?? 'http://127.0.0.1:3903'
+const hotPublicEndpoint = process.env.GARAGE_HOT_PUBLIC_ENDPOINT ?? 'http://localhost:3900'
 const garageSecret = async (name) => (await readFile(new URL(
   `../../infra/.secrets/garage-app/${name}`, import.meta.url), 'utf8')).trim()
 const hotCredentials = {
@@ -41,15 +44,15 @@ const hotCredentials = {
   secretAccessKey: await garageSecret('hot_secret_key')
 }
 const mediaStore = new GarageObjectStore({
-  hotEndpoint: 'http://127.0.0.1:3900', hotPublicEndpoint: 'http://localhost:3900',
-  coldEndpoint: 'http://127.0.0.1:3903', hotCredentials,
+  hotEndpoint, hotPublicEndpoint,
+  coldEndpoint, hotCredentials,
   coldCredentials: {
     accessKeyId: await garageSecret('cold_access_key_id'),
     secretAccessKey: await garageSecret('cold_secret_key')
   },
   hotBucket: 'bazaar-hot', coldBucket: 'bazaar-cold'
 })
-const corsClient = new S3Client({ endpoint: 'http://127.0.0.1:3900', region: 'garage',
+const corsClient = new S3Client({ endpoint: hotEndpoint, region: 'garage',
   forcePathStyle: true, requestChecksumCalculation: 'WHEN_REQUIRED', credentials: hotCredentials })
 let originalCors
 let app
@@ -90,6 +93,18 @@ async function publish(page, values) {
   if (values.type === 'digital') {
     await page.getByLabel('授权说明').fill(values.licenseDescription)
     await page.getByLabel('内容版本').fill(values.contentVersion)
+    await page.getByLabel('交付物名称').fill('Alpha E2E digital package')
+    await page.getByLabel('格式或版本').fill('ZIP v1')
+    await page.getByLabel('卖家使用范围说明').fill('Single buyer use for one project')
+    await page.getByLabel('限制（每行一项）').fill('No redistribution')
+    await page.getByLabel('使用期限').fill('One year')
+    await page.getByLabel('人数、团队或项目范围').fill('One person')
+    await page.getByLabel('文件格式（逗号分隔）').fill('zip')
+    await page.getByLabel('第三方素材与限制（无则明确填写）').fill('None')
+  } else {
+    await page.getByLabel('已知瑕疵（无瑕疵请明确填写）').fill('No known defects')
+    await page.getByLabel('附带物（逗号分隔）').fill('Item shown')
+    await page.getByLabel('功能说明（无异常请明确填写）').fill('Works normally')
   }
   await page.getByRole('button', { name: '立即发布' }).click()
   await waitForText(page, '商品发布成功')
