@@ -49,7 +49,7 @@ export async function createApp(
   const googleAuth = new GoogleAuthService(database.client, config, auth,
     dependencies.googleClient ?? (config.googleOAuth ? new GoogleOidcClient(config.googleOAuth) : null))
   const rates = new RatesService(database.client, dependencies.loadRates)
-  const listings = new ListingService(database.client, rates)
+  const listings = new ListingService(database.client, rates, config.listingCommitmentPolicy)
   const media = new MediaService(
     database.client,
     dependencies.mediaStore ?? (config.mediaStore ? new GarageObjectStore(config.mediaStore) : null)

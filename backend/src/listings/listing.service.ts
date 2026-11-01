@@ -29,7 +29,8 @@ const homeTypeLimit = 5
 export class ListingService {
   constructor(
     private readonly client: PrismaClient,
-    private readonly rates: RatesService
+    private readonly rates: RatesService,
+    private readonly commitmentPolicy: 'compat' | 'enforce' = 'compat'
   ) {}
 
   private view(listing: ListingRow, priceUsd: string | null = null) {
@@ -174,10 +175,15 @@ export class ListingService {
       : idInput(input.replacementOfListingId)
     if (replacementOfListingId && input.saleMode !== 'one_off')
       throw new DomainError('INVALID_INPUT')
-    const commitment = parseCommitment(type, input.commitment, mediaIds.length)
-    if (hasExcludedRightsClaim(JSON.stringify(commitment))) throw new DomainError('INVALID_INPUT')
+    const hasCommitment = 'commitment' in input
+    if (!hasCommitment && this.commitmentPolicy === 'enforce')
+      throw new DomainError('INVALID_INPUT')
+    const commitment = hasCommitment
+      ? parseCommitment(type, input.commitment, mediaIds.length) : null
+    if (commitment && hasExcludedRightsClaim(JSON.stringify(commitment)))
+      throw new DomainError('INVALID_INPUT')
     const data = {
-      commitment, commitmentVersion, replacementOfListingId,
+      ...(commitment ? { commitment, commitmentVersion } : {}), replacementOfListingId,
       sellerId: actorId,
       type,
       saleMode: input.saleMode as 'one_off' | 'repeatable',
@@ -367,25 +373,30 @@ export class ListingService {
         Prisma.sql`(l."title" ILIKE ${`%${keyword}%`} OR l."description" ILIKE ${`%${keyword}%`})`
       )
     }
+    // With one currency, multiplying every amount by the same positive FX factor
+    // cannot change its order. Keep an explicit quoteId meaningful when supplied.
+    const nativePriceSort = sort !== 'newest' && input.currency !== undefined &&
+      input.quoteId === undefined
     if (
       (sort === 'newest' && input.quoteId !== undefined) ||
-      (sort !== 'newest' && page > 1 && input.quoteId === undefined)
+      (sort !== 'newest' && !nativePriceSort && page > 1 && input.quoteId === undefined)
     )
       throw new DomainError('INVALID_INPUT')
     const quote =
-      sort === 'newest'
+      sort === 'newest' || nativePriceSort
         ? null
         : await this.rates.quote(input.quoteId === undefined ? undefined : idInput(input.quoteId))
     const factor = quote
       ? Prisma.sql`((${JSON.stringify(quote.rates)}::jsonb ->> l."currency")::numeric)`
       : Prisma.sql`NULL::numeric`
-    const price = Prisma.sql`(l."priceAmount" * ${factor})`
+    const convertedPrice = Prisma.sql`(l."priceAmount" * ${factor})`
+    const sortPrice = nativePriceSort ? Prisma.sql`l."priceAmount"` : convertedPrice
     const order =
       sort === 'newest'
         ? Prisma.sql`l."createdAt" DESC, l.id DESC`
         : sort === 'price_asc'
-          ? Prisma.sql`${price} ASC, l.id ASC`
-          : Prisma.sql`${price} DESC, l.id DESC`
+          ? Prisma.sql`${sortPrice} ASC, l.id ASC`
+          : Prisma.sql`${sortPrice} DESC, l.id DESC`
     type JsonItem = Omit<ReturnType<typeof this.view>, 'createdAt' | 'updatedAt'> & {
       createdAt: string
       updatedAt: string
@@ -397,7 +408,7 @@ export class ListingService {
       WITH filtered AS NOT MATERIALIZED (
         SELECT l.* FROM "Listing" l WHERE ${Prisma.join(clauses, ' AND ')}
       ), selected AS (
-        SELECT l.*, (${price})::text AS usd FROM filtered l
+        SELECT l.*, (${convertedPrice})::text AS usd FROM filtered l
         ORDER BY ${order} LIMIT ${limit + 1} OFFSET ${(page - 1) * limit}
       )
       SELECT (SELECT count(*)::bigint FROM filtered) AS total,

@@ -5216,6 +5216,7 @@
       "PhysicalListingCreate": {
         "type": "object",
         "additionalProperties": false,
+        "description": "During the compat rollout, commitment may be omitted; the published listing remains visible but purchaseEligible is false until the seller adds it. With LISTING_COMMITMENT_POLICY=enforce, omission returns INVALID_INPUT. A supplied commitment is always validated.",
         "required": [
           "type",
           "saleMode",
@@ -5223,8 +5224,7 @@
           "title",
           "description",
           "category",
-          "price",
-          "commitment"
+          "price"
         ],
         "properties": {
           "type": {
@@ -5278,6 +5278,7 @@
       "DigitalListingCreate": {
         "type": "object",
         "additionalProperties": false,
+        "description": "During the compat rollout, commitment may be omitted; the published listing remains visible but purchaseEligible is false until the seller adds it. With LISTING_COMMITMENT_POLICY=enforce, omission returns INVALID_INPUT. A supplied commitment is always validated.",
         "required": [
           "type",
           "saleMode",
@@ -5287,8 +5288,7 @@
           "category",
           "price",
           "licenseDescription",
-          "contentVersion",
-          "commitment"
+          "contentVersion"
         ],
         "properties": {
           "type": {
@@ -6469,7 +6469,7 @@
           "currency": { "$ref": "#/components/schemas/Currency" },
           "keyword": { "type": "string", "minLength": 1, "maxLength": 100 },
           "sort": { "type": "string", "enum": ["newest", "price_asc", "price_desc"] },
-          "quoteId": { "type": "string", "format": "uuid", "description": "Required for later price-sorted pages; valid until the snapshot expiresAt (one-hour cache lifetime)" },
+          "quoteId": { "type": "string", "format": "uuid", "description": "Required for later price-sorted pages when currency is omitted. With a currency filter and no quoteId, sort uses original-currency amounts, returns quote=null and needs no quoteId on later pages. A supplied quoteId still selects that FX snapshot until expiresAt." },
           "sellerId": { "type": "string", "format": "uuid" }
         }
       },

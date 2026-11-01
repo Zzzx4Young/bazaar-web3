@@ -103,3 +103,47 @@ test('search returns real detail fields and empty-page totals with one database 
     await db.close()
   }
 })
+
+test('single-currency price sorting and later pages do not require an FX quote', async () => {
+  const db = await sandbox()
+  try {
+    const seller = await db.client.account.create({
+      data: { loginName: randomUUID(), displayName: 'Single-currency seller' }
+    })
+    const cny = []
+    for (const amount of ['9', '27', '14']) {
+      cny.push(await db.client.listing.create({ data: {
+        sellerId: seller.id, type: 'digital', saleMode: 'repeatable',
+        title: `CNY ${amount}`, description: 'Single-currency sort fixture',
+        category: 'digital_assets', priceAmount: amount, currency: 'CNY'
+      } }))
+    }
+    await db.client.listing.create({ data: {
+      sellerId: seller.id, type: 'digital', saleMode: 'repeatable',
+      title: 'USD 1', description: 'Different currency',
+      category: 'digital_assets', priceAmount: '1', currency: 'USD'
+    } })
+    let loads = 0
+    const service = new ListingService(db.client, new RatesService(db.client, async () => {
+      loads++
+      throw new Error('FX provider unavailable')
+    }))
+    const first = await service.list({ sort: 'price_desc', currency: 'CNY', limit: '2' })
+    assert.deepEqual(first.items.map((item) => item.id), [cny[1].id, cny[2].id])
+    assert.equal(first.total, 3)
+    assert.equal(first.hasMore, true)
+    assert.equal(first.quote, null)
+    assert.ok(first.items.every((item) => item.priceUsd === null))
+    const second = await service.list({
+      sort: 'price_desc', currency: 'CNY', limit: '2', page: '2'
+    })
+    assert.deepEqual(second.items.map((item) => item.id), [cny[0].id])
+    assert.equal(second.quote, null)
+    assert.equal(loads, 0)
+    await assert.rejects(service.list({ sort: 'price_desc' }),
+      (error) => error.code === 'FX_UNAVAILABLE')
+    assert.equal(loads, 1)
+  } finally {
+    await db.close()
+  }
+})

@@ -10,6 +10,7 @@ import {
 
 export interface AppConfig {
   databaseUrl: string
+  listingCommitmentPolicy: 'compat' | 'enforce'
   host: string
   port: number
   appOrigin: string
@@ -125,6 +126,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error('PORT must be an integer between 1 and 65535')
   }
+  const listingCommitmentPolicy = env.LISTING_COMMITMENT_POLICY ?? 'compat'
+  if (listingCommitmentPolicy !== 'compat' && listingCommitmentPolicy !== 'enforce')
+    throw new Error('LISTING_COMMITMENT_POLICY must be compat or enforce')
   let origin: URL
   try {
     origin = new URL(env.APP_ORIGIN ?? 'http://localhost:3000')
@@ -156,6 +160,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new Error('DEV_EMAIL_BIND_SKIP_REAUTH requires local development configuration')
   return {
     databaseUrl: url.toString(),
+    listingCommitmentPolicy,
     host: env.HOST ?? '127.0.0.1',
     port,
     appOrigin: origin.origin,
