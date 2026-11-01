@@ -35,6 +35,11 @@ test('seller source links reject local and credential bearing hosts', () => {
 })
 test('excluded ownership claims are distinguished from ordinary source file delivery', () => {
   assert.equal(hasExcludedRightsClaim('版权转让后独家持有'), true)
+  assert.equal(hasExcludedRightsClaim('版权\n转让'), true)
+  assert.equal(hasExcludedRightsClaim('版\n权转让'), true)
+  assert.equal(hasExcludedRightsClaim('版\u200b权\n转让'), true)
+  assert.equal(hasExcludedRightsClaim('独 家 产 权'), true)
+  assert.equal(hasExcludedRightsClaim('Copyright\nassignment'), true)
   assert.equal(hasExcludedRightsClaim('交付可编辑源文件'), false)
 })
 test('physical commitment requires actual media and an explicit defect statement', () => {

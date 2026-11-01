@@ -8,5 +8,10 @@ const excludedClaims = [
 ]
 
 export function hasExcludedRightsClaim(...texts: (string | null | undefined)[]) {
-  return excludedClaims.some((pattern) => texts.some((text) => pattern.test(text ?? '')))
+  const normalized = texts.map((text) => (text ?? '')
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/gu, '')
+    .replace(/\s+/gu, ' '))
+  return excludedClaims.some((pattern) => normalized.some((text) =>
+    pattern.test(text) || pattern.test(text.replaceAll(' ', ''))))
 }

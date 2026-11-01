@@ -17,6 +17,8 @@ import { DomainError } from '../common/domain-error.js'
 import { paginationPolicy } from '../common/pagination-policy.js'
 import { idInput, objectInput, positiveInteger, textInput } from '../common/input.js'
 import { DatabaseService } from '../database/database.service.js'
+import { transact } from '../database/transaction.js'
+import { lockListing } from '../listings/listing-lock.js'
 import { OrderCommands, type ActionInput, type OrderAction } from './order-commands.js'
 
 const actions = new Map<string, OrderAction>([
@@ -262,13 +264,20 @@ export class OrderController {
     const input = objectInput(body, ['note'], ['note'])
     const note = textInput(input.note, 2000)
     const order = await this.participantOrder(id, request.auth.account.id)
-    if (!order.transactionPausedAt) throw new DomainError('STATE_CONFLICT')
-    await this.client.orderEvent.create({ data: {
-      orderId: id, actorId: request.auth.account.id, operation: 'listing_review_note',
-      fromState: order.status, toState: order.status,
-      requestId: globalThis.crypto.randomUUID(), note
-    } })
-    return { status: 'recorded' }
+    return transact(this.client, async (tx) => {
+      await lockListing(tx, order.listingId)
+      await tx.$queryRaw`SELECT "id" FROM "Order" WHERE "id" = ${id}::uuid FOR UPDATE`
+      const current = await tx.order.findUniqueOrThrow({ where: { id } })
+      if (current.buyerId !== request.auth.account.id &&
+        current.sellerId !== request.auth.account.id) throw new DomainError('FORBIDDEN')
+      if (!current.transactionPausedAt) throw new DomainError('STATE_CONFLICT')
+      await tx.orderEvent.create({ data: {
+        orderId: id, actorId: request.auth.account.id, operation: 'listing_review_note',
+        fromState: current.status, toState: current.status,
+        requestId: globalThis.crypto.randomUUID(), note
+      } })
+      return { status: 'recorded' }
+    })
   }
 
   @Post('orders/:id/deliveries')

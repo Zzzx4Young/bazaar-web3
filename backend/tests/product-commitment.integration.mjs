@@ -114,6 +114,54 @@ test('paused pending payment still expires and is not resumed by later review', 
   assert.equal(order.transactionPausedAt, null)
 })
 
+test('review note is rejected if review ends after the initial order read', async () => {
+  const f = await fixture(db)
+  const orderId = await db.market.create(f.buyer, randomUUID(), f.input)
+  const review = new ListingReviewController(db.database)
+  const admin = actor(f.other, 'admin')
+  await review.report(actor(f.other), f.listing.id,
+    { kind: 'listing_rule', reason: 'Review note race' })
+  await review.pause(admin, f.listing.id,
+    { kind: 'listing_rule', reason: 'Review note race' })
+
+  const controller = new OrderController(db.database)
+  const originalParticipantOrder = controller.participantOrder.bind(controller)
+  controller.participantOrder = async (...args) => {
+    const order = await originalParticipantOrder(...args)
+    await review.review(admin, f.listing.id,
+      { outcome: 'resume', reason: 'Review completed' })
+    return order
+  }
+  await assert.rejects(controller.reviewNote(actor(f.buyer), orderId,
+    { note: 'Submitted during review' }), (error) => error.code === 'STATE_CONFLICT')
+  assert.equal(await db.client.orderEvent.count({ where: {
+    orderId, operation: 'listing_review_note'
+  } }), 0)
+})
+
+test('review note is rejected if a paused order expires after the initial read', async () => {
+  const f = await fixture(db)
+  const orderId = await db.market.create(f.buyer, randomUUID(), f.input)
+  const review = new ListingReviewController(db.database)
+  await review.report(actor(f.other), f.listing.id,
+    { kind: 'listing_rule', reason: 'Review note expiry race' })
+  await review.pause(actor(f.other, 'admin'), f.listing.id,
+    { kind: 'listing_rule', reason: 'Review note expiry race' })
+
+  const controller = new OrderController(db.database)
+  const originalParticipantOrder = controller.participantOrder.bind(controller)
+  controller.participantOrder = async (...args) => {
+    const order = await originalParticipantOrder(...args)
+    await db.market.expirePendingPaymentOrders(new Date(Date.now() + 31 * 60 * 1000))
+    return order
+  }
+  await assert.rejects(controller.reviewNote(actor(f.buyer), orderId,
+    { note: 'Submitted during review' }), (error) => error.code === 'STATE_CONFLICT')
+  assert.equal(await db.client.orderEvent.count({ where: {
+    orderId, operation: 'listing_review_note'
+  } }), 0)
+})
+
 test('rule violation requires manual cancellation or simulated refund', async () => {
   const f = await fixture(db)
   const orderId = await db.market.create(f.buyer, randomUUID(), f.input)
