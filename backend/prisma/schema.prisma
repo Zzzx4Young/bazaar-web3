@@ -176,6 +176,7 @@ model Listing {
   reviewReason         String?
   reviewKind           String?
   reviewUpdatedAt      DateTime?           @db.Timestamptz(6)
+  testnetPrices        ListingTestnetPrice[]
   reviewRows           ListingReviewEvent[]
   replacesListing      Listing?            @relation("listingReplacement", fields: [replacementOfListingId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   replacementRows      Listing[]           @relation("listingReplacement")
@@ -232,6 +233,7 @@ model Order {
   buyerId                   String                 @db.Uuid
   sellerId                  String                 @db.Uuid
   checkoutId                String?                @db.Uuid
+  testnetSnapshot           TestnetOrderSnapshot?
   settlementMode            String                 @default("simulated")
   status                    String                 @default("pending_payment")
   version                   Int                    @default(1)
@@ -261,6 +263,7 @@ model Order {
   @@unique([id, buyerId])
   @@unique([id, sellerId])
   @@unique([id, listingId])
+  @@unique([id, listingId, sellerId], map: "Order_testnet_listing_seller_key")
   @@index([buyerId, createdAt, id])
   @@index([sellerId, createdAt, id])
   @@index([listingId])
@@ -298,6 +301,7 @@ model Checkout {
 }
 
 model OrderSnapshot {
+  testnetSnapshot         TestnetOrderSnapshot?
   orderId                String             @id @db.Uuid
   listingVersion         Int
   title                  String
@@ -314,6 +318,7 @@ model OrderSnapshot {
   settlementSnapshotRows SettlementRecord[] @relation("settlementSnapshot")
 
   @@unique([orderId, priceAmount, currency])
+  @@unique([orderId, listingVersion])
 }
 
 model OrderShipping {
@@ -558,6 +563,7 @@ model WalletChallenge {
 }
 
 model SellerPayoutConfirmation {
+  testnetOrders TestnetOrderSnapshot[]
   id String @id @default(uuid()) @db.Uuid
   accountId String @db.Uuid
   chainId Int
@@ -572,4 +578,45 @@ model SellerPayoutConfirmation {
   account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@index([accountId, chainId, revokedAt])
+  @@unique([id, accountId, chainId, wallet, escrow, bindingVersion], map: "SellerPayoutConfirmation_terms_key")
+}
+
+model ListingTestnetPrice {
+  id String @id @default(uuid()) @db.Uuid
+  listingId String @db.Uuid
+  listingVersion Int
+  chainId Int
+  token String @db.VarChar(42)
+  escrow String @db.VarChar(42)
+  amountAtoms String @db.VarChar(78)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  orders TestnetOrderSnapshot[]
+
+  @@unique([listingId, listingVersion])
+  @@unique([id, listingId, listingVersion, chainId, token, escrow, amountAtoms], map: "ListingTestnetPrice_terms_key")
+}
+
+model TestnetOrderSnapshot {
+  orderId String @id @db.Uuid
+  listingId String @db.Uuid
+  sellerId String @db.Uuid
+  listingVersion Int
+  priceId String @db.Uuid
+  chainId Int
+  token String @db.VarChar(42)
+  escrow String @db.VarChar(42)
+  amountAtoms String @db.VarChar(78)
+  sellerWallet String @db.VarChar(42)
+  sellerBindingVersion Int
+  payoutConfirmationId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  order Order @relation(fields: [orderId, listingId, sellerId], references: [id, listingId, sellerId], onDelete: Restrict, onUpdate: Restrict)
+  snapshot OrderSnapshot @relation(fields: [orderId, listingVersion], references: [orderId, listingVersion], onDelete: Restrict, onUpdate: Restrict)
+  price ListingTestnetPrice @relation(fields: [priceId, listingId, listingVersion, chainId, token, escrow, amountAtoms], references: [id, listingId, listingVersion, chainId, token, escrow, amountAtoms], onDelete: Restrict, onUpdate: Restrict, map: "TestnetOrderSnapshot_price_terms_fkey")
+  payout SellerPayoutConfirmation @relation(fields: [payoutConfirmationId, sellerId, chainId, sellerWallet, escrow, sellerBindingVersion], references: [id, accountId, chainId, wallet, escrow, bindingVersion], onDelete: Restrict, onUpdate: Restrict, map: "TestnetOrderSnapshot_payout_terms_fkey")
+
+  @@unique([orderId, listingVersion])
+  @@unique([orderId, listingId, sellerId], map: "TestnetOrderSnapshot_order_terms_key")
+  @@index([sellerId, createdAt])
 }

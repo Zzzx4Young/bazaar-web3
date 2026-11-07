@@ -6,9 +6,11 @@ import { requireActiveAccount } from '../accounts/require-active-account.js'
 import { lockListing } from './listing-lock.js'
 import { lockMediaAssets } from '../media/lock-media-assets.js'
 import { commitmentVersion, parseCommitment } from './product-commitment.js'
+import { versionTestnetPrice } from '../web3/testnet-price.js'
+import type { Web3Config } from '../web3/web3-types.js'
 
 export class ListingCommands {
-  constructor(private readonly client: PrismaClient) {}
+  constructor(private readonly client: PrismaClient, private readonly testnetConfig?: Web3Config | null) {}
 
   async edit(
     actorId: string,
@@ -19,6 +21,7 @@ export class ListingCommands {
       description?: string
       category?: string
       priceAmount?: string
+      testnetPriceAmount?: string
       licenseDescription?: string
       contentVersion?: string
       mediaIds?: string[]
@@ -36,7 +39,7 @@ export class ListingCommands {
         if (listing.sellerId !== actorId) throw new DomainError('FORBIDDEN')
         if (listing.version !== version) throw new DomainError('LISTING_CONFLICT')
         if (listing.saleMode === 'one_off' &&
-          Object.keys(patch).some((key) => key !== 'publicationStatus') &&
+          Object.keys(patch).some((key) => !['publicationStatus', 'testnetPriceAmount'].includes(key)) &&
           (await tx.order.count({ where: { listingId } })) > 0)
           throw new DomainError('LISTING_CONFLICT')
         if (patch.commitment && listing.type === 'physical' && !patch.mediaIds &&
@@ -56,6 +59,8 @@ export class ListingCommands {
             listingId, mediaId, position
           })) })
         }
+        await versionTestnetPrice(tx, { ...listing, commitment: patch.commitment ?? listing.commitment },
+          listing.version + 1, patch.testnetPriceAmount, this.testnetConfig)
         return tx.listing.update({
           where: { id: listingId },
           data: {

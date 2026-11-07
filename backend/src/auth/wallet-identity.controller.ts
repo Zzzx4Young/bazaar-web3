@@ -10,7 +10,7 @@ import { DomainError } from '../common/domain-error.js'
 import { idempotencyKey } from '../orders/idempotency-key.js'
 
 class OperationInput {
-  @IsIn(['bind', 'unbind']) purpose!: 'bind' | 'unbind'
+  @IsIn(['bind', 'unbind', 'payout']) purpose!: 'bind' | 'unbind' | 'payout'
   @Matches(/^0x[0-9a-fA-F]{40}$/) address!: string
 }
 class PasswordInput extends OperationInput {

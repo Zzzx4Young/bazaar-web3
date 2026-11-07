@@ -13,6 +13,8 @@ export interface BackendListing {
   description: string
   category: string
   price: { amount: string; currency: Currency }
+  testnetPrice?: { amount: string; amountAtoms: string; currency: 'BZTEST'; decimals: 6;
+    chainId: number; token: string; escrow: string } | null
   priceUsd: string | null
   publicationStatus: 'published' | 'withdrawn' | 'draft' | 'archived'
   availability: string
@@ -135,6 +137,10 @@ export function createListing(csrfToken: string, body: unknown) {
     headers: { 'X-CSRF-Token': csrfToken },
     body: JSON.stringify(body)
   })
+}
+
+export function getTestnetConfig(signal?: AbortSignal) {
+  return backendRequest<{ enabled: boolean }>('/web3/config', { signal })
 }
 export async function uploadListingImage(csrfToken: string, file: File) {
   const intent = await backendRequest<{ assetId: string; uploadUrl: string; expiresIn: number }>(

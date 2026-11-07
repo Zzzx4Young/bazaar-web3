@@ -15,6 +15,8 @@ import type { WalletSecurityLedger } from './auth/wallet-security-ledger.js'
 import type { EvmAddress } from './web3/web3-types.js'
 import { createEoaChecker } from './auth/wallet-account-type.js'
 import { assertWalletLedgerGrants } from './auth/wallet-ledger-grants.js'
+import { SellerPayoutService } from './web3/seller-payout.service.js'
+import { TestnetController } from './web3/testnet.controller.js'
 import { IdentityController } from './auth/identity.controller.js'
 import { EmailAuthService } from './auth/email-auth.service.js'
 import { GoogleAuthService } from './auth/google-auth.service.js'
@@ -77,7 +79,9 @@ export async function createApp(
   const googleAuth = new GoogleAuthService(database.client, config, auth,
     dependencies.googleClient ?? (config.googleOAuth ? new GoogleOidcClient(config.googleOAuth) : null))
   const rates = new RatesService(database.client, dependencies.loadRates)
-  const listings = new ListingService(database.client, rates, config.listingCommitmentPolicy)
+  const listings = new ListingService(database.client, rates, config.listingCommitmentPolicy, config.web3)
+  const sellerPayout = wallets && ledger && config.web3
+    ? new SellerPayoutService(database.client, wallets, ledger, config.web3) : null
   const media = new MediaService(
     database.client,
     dependencies.mediaStore ?? (config.mediaStore ? new GarageObjectStore(config.mediaStore) : null)
@@ -130,6 +134,7 @@ export async function createApp(
         HealthController,
         AuthController,
         WalletIdentityController,
+        TestnetController,
         IdentityController,
         ListingController, ListingReviewController,
         OrderController,
@@ -148,6 +153,7 @@ export async function createApp(
         { provide: EmailAuthService, useValue: emailAuth },
         { provide: GoogleAuthService, useValue: googleAuth },
         { provide: ListingService, useValue: listings },
+        { provide: SellerPayoutService, useValue: sellerPayout },
         { provide: MediaService, useValue: media }
       ]
     },

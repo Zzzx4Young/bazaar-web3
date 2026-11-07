@@ -85,6 +85,31 @@ test('wallet bind, unbind and rebind work with both restricted runtime roles', a
     }
     assert.equal((await service.current(user)).bindingVersion, 3)
     assert.equal(await db.client.walletClaim.count(), 1)
+    // T03: the same restricted roles can confirm payouts and append immutable terms.
+    const config = { chainId: 11155111, tokenDecimals: 6, token: '0x' + '8'.repeat(40),
+      escrow: '0x' + '7'.repeat(40), rpcPrimary: 'https://one.invalid', rpcSecondary: 'https://two.invalid',
+      securityLedgerUrl: db.url.toString(), securityLedgerId: ledger.id }
+    const { SellerPayoutService } = await import('../dist/web3/seller-payout.service.js')
+    const { ListingCommands } = await import('../dist/listings/listing-commands.js')
+    const { OrderCommands } = await import('../dist/orders/order-commands.js')
+    const key = randomUUID(), proof = await service.requestPasswordReauth(user, password, 'payout', w.address, key, '127.0.0.1')
+    const c = await service.createActionChallenge(user, proof.id, 'payout', w.address, key)
+    const payout = new SellerPayoutService(connections[1].client, service, restrictedLedger, config)
+    await payout.confirmSellerPayout(user, c.id, await w.signTypedData(c.typedData))
+    const listing = await db.client.listing.create({ data: { sellerId: user.account.id, type: 'digital',
+      saleMode: 'one_off', title: 'Runtime file', description: 'Virtual file only', category: 'digital_assets',
+      priceAmount: '1', currency: 'CNY', licenseDescription: 'Test license', contentVersion: 'v1',
+      commitment: f.listing.commitment, commitmentVersion: 1 } })
+    await db.client.digitalInventory.create({ data: { listingId: listing.id } })
+    await new ListingCommands(connections[1].client, config).edit(user.account.id, listing.id, 1, { testnetPriceAmount: '2' })
+    const id = await new OrderCommands(connections[1].client, payout).create(f.other, randomUUID(), {
+      listingId: listing.id, version: 2, settlementMode: 'testnet_escrow' })
+    assert.equal((await payout.existingOrderTerms(f.other, id)).amountAtoms, '2000000')
+    await assert.rejects(connections[1].client.testnetOrderSnapshot.update({ where: { orderId: id },
+      data: { amountAtoms: '3000000' } }), /permission denied/)
+    const price = await db.client.listingTestnetPrice.findFirstOrThrow({ where: { listingId: listing.id } })
+    await assert.rejects(connections[1].client.listingTestnetPrice.update({ where: { id: price.id },
+      data: { amountAtoms: '3000000' } }), /permission denied/)
   } finally {
     for (const connection of connections) await connection.onModuleDestroy()
     await db.close()

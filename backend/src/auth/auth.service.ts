@@ -132,6 +132,32 @@ export class AuthService {
       authenticatedAt: session.authenticatedAt }
   }
 
+  // This context is NOT a general authentication bypass. Only the payout
+  // reconciler may use it, and it must match the committed operation and original
+  // session before completing that operation. AuthGuard never calls this path.
+  async payoutRecoverySession(cookie: string | undefined, operationId: string) {
+    if (!this.walletLedger) throw new DomainError('WALLET_UNAVAILABLE')
+    const token = this.token(cookie)
+    if (!token) throw new DomainError('UNAUTHENTICATED')
+    const tokenHash = digest(token)
+    const session = await this.client.session.findUnique({ where: { tokenHash }, include: { account: true } })
+    if (!session || session.revokedAt || session.expiresAt <= new Date() || session.account.status !== 'active')
+      throw new DomainError('UNAUTHENTICATED')
+    if (session.authMethod !== 'wallet_siwe') return { auth: await this.authenticate(cookie), operationId }
+    if (!session.walletChainId || !session.walletAddress || session.walletBindingVersion === null ||
+      (this.config.web3 && session.walletChainId !== this.config.web3.chainId)) throw new DomainError('UNAUTHENTICATED')
+    const head = await this.walletLedger.read(session.accountId, session.walletChainId)
+    if (head.recoveryEpoch !== session.recoveryEpoch || head.address !== session.walletAddress ||
+      head.bindingVersion !== session.walletBindingVersion) throw new DomainError('UNAUTHENTICATED')
+    if (head.pendingOperationId && head.pendingOperationId !== operationId) throw new DomainError('WALLET_UNAVAILABLE')
+    const operation = await this.client.walletSecurityOperation.findUnique({ where: { id: operationId } })
+    if (!operation || operation.operation !== 'payout' || operation.accountId !== session.accountId ||
+      operation.chainId !== session.walletChainId) throw new DomainError('INVALID_CREDENTIALS')
+    const auth: Authenticated = { token, tokenHash, account: session.account, createdAt: session.createdAt,
+      authMethod: 'wallet_siwe', authenticatedAt: session.authenticatedAt }
+    return { auth, operationId }
+  }
+
   async issueSession(tx: Transaction, account: Account, cookie: string | undefined,
     authMethod: AuthMethod, wallet?: { chainId: number; address: string; bindingVersion: number;
       recoveryEpoch: string }): Promise<Authenticated> {

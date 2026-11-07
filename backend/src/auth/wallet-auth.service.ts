@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
+import { isDeepStrictEqual } from 'node:util'
 import { recoverMessageAddress, recoverTypedDataAddress, type Hex } from 'viem'
 import { createSiweMessage, generateSiweNonce } from 'viem/siwe'
 import type { PrismaClient, WalletChallenge, Prisma } from '../generated/prisma/client.js'
@@ -11,7 +12,7 @@ import { AuthService, type Authenticated } from './auth.service.js'
 import type { WalletSecurityLedger } from './wallet-security-ledger.js'
 
 const hash = (value: string) => createHash('sha256').update(value).digest('hex')
-export type WalletPurpose = 'bind' | 'unbind'
+export type WalletPurpose = 'bind' | 'unbind' | 'payout'
 type Purpose = WalletPurpose
 interface Options {
   chainId: number
@@ -68,11 +69,12 @@ export class WalletAuthService {
   }
   private typedData(row: WalletChallenge) {
     if (!row.wallet) throw new DomainError('INVALID_CREDENTIALS')
+    const primaryType = row.purpose === 'payout' ? 'SellerPayoutConfirmation' : 'WalletAction'
     return {
-      domain: { name: 'Bazaar Wallet Action', version: '1', chainId: row.chainId,
+      domain: { name: row.purpose === 'payout' ? 'Bazaar Seller Payout' : 'Bazaar Wallet Action', version: '1', chainId: row.chainId,
         verifyingContract: this.options.escrow },
-      primaryType: 'WalletAction' as const,
-      types: { WalletAction: [
+      primaryType,
+      types: { [primaryType]: [
         { name: 'purpose', type: 'string' }, { name: 'account', type: 'bytes32' },
         { name: 'wallet', type: 'address' }, { name: 'bindingVersion', type: 'uint32' },
         { name: 'authorization', type: 'bytes32' }, { name: 'session', type: 'bytes32' },
@@ -105,7 +107,7 @@ export class WalletAuthService {
   async requestPasswordReauth(auth: Authenticated, password: string, purpose: Purpose,
     address: string, key: string, ip: string) {
     await this.session(auth)
-    if (!['bind', 'unbind'].includes(purpose) || typeof password !== 'string' || password.length > 128)
+    if (!['bind', 'unbind', 'payout'].includes(purpose) || typeof password !== 'string' || password.length > 128)
       throw new DomainError('INVALID_INPUT')
     const wallet = normalizeWalletAddress(address)
     const passwordHash = await this.auth.verifyWalletPassword(auth, password, ip)
@@ -149,7 +151,7 @@ export class WalletAuthService {
       const state = await this.current(auth)
       if (proof.consumedAt || proof.purpose !== purpose || proof.wallet !== wallet ||
         proof.bindingVersion !== state.bindingVersion ||
-        (purpose === 'unbind' && state.address !== wallet)) throw new DomainError('INVALID_CREDENTIALS')
+        (purpose !== 'bind' && state.address !== wallet)) throw new DomainError('INVALID_CREDENTIALS')
       const now = this.now()
       await tx.walletChallenge.update({ where: { id: proof.id }, data: { consumedAt: now } })
       const row = await tx.walletChallenge.create({ data: { accountId: auth.account.id,
@@ -167,7 +169,7 @@ export class WalletAuthService {
   async startProviderProof(auth: Authenticated, purpose: Purpose, address: string, key: string,
     provider: 'email' | 'google', payload: Prisma.InputJsonObject) {
     await this.session(auth)
-    if (!['bind', 'unbind'].includes(purpose)) throw new DomainError('INVALID_INPUT')
+    if (!['bind', 'unbind', 'payout'].includes(purpose)) throw new DomainError('INVALID_INPUT')
     const wallet = normalizeWalletAddress(address)
     const state = await this.current(auth)
     const requestHash = this.request(auth, `provider_${provider}`, key)
@@ -207,9 +209,63 @@ export class WalletAuthService {
   }
 
   async consumeActionChallenge(auth: Authenticated, id: string, signature?: Hex) {
+    return this.consumeOperation(auth, id, signature, false)
+  }
+
+  async consumePayoutChallenge(auth: Authenticated, id: string, signature: Hex) {
+    return this.consumeOperation(auth, id, signature, true)
+  }
+
+  async reconcilePayoutChallenge(cookie: string | undefined, id: string, signature: Hex,
+    csrf: string | string[] | undefined) {
+    const { auth } = await this.auth.payoutRecoverySession(cookie, id)
+    this.auth.checkCsrf(auth, csrf)
+    return this.client.$transaction(async tx => {
+      await this.lock(tx, auth.account.id, auth)
+      const challenge = await tx.walletChallenge.findUnique({ where: { id } })
+      const operation = await tx.walletSecurityOperation.findUnique({ where: { id } })
+      const confirmation = await tx.sellerPayoutConfirmation.findUnique({ where: { id } })
+      if (!challenge || !this.sameScope(challenge) || challenge.kind !== 'action' || challenge.purpose !== 'payout' ||
+        challenge.accountId !== auth.account.id || challenge.sessionHash !== auth.tokenHash || !challenge.consumedAt ||
+        !challenge.result || !operation || operation.operation !== 'payout' || operation.accountId !== auth.account.id ||
+        operation.chainId !== challenge.chainId || operation.requestHash !== challenge.requestHash ||
+        !confirmation || confirmation.revokedAt || confirmation.accountId !== auth.account.id ||
+        confirmation.challengeId !== id || confirmation.signature.toLowerCase() !== signature.toLowerCase())
+        throw new DomainError('INVALID_CREDENTIALS')
+      const identity = await tx.walletIdentity.findUnique({ where: { accountId_chainId: {
+        accountId: auth.account.id, chainId: challenge.chainId } } })
+      const head = await this.ledger.read(auth.account.id, challenge.chainId)
+      if (!identity || identity.lastOperationId !== id || identity.securityRevision !== operation.revision ||
+        identity.address !== challenge.wallet || identity.bindingVersion !== challenge.bindingVersion ||
+        confirmation.wallet !== identity.address || confirmation.bindingVersion !== identity.bindingVersion ||
+        confirmation.chainId !== challenge.chainId || confirmation.escrow !== this.options.escrow ||
+        head.address !== identity.address || head.bindingVersion !== identity.bindingVersion ||
+        head.recoveryEpoch !== challenge.recoveryEpoch ||
+        (head.pendingOperationId ? head.pendingOperationId !== id || BigInt(head.revision) + 1n !== operation.revision
+          : BigInt(head.revision) !== operation.revision || head.payout?.confirmationId !== id))
+        throw new DomainError('WALLET_UNAVAILABLE')
+      const expected = { address: identity.address, bindingVersion: identity.bindingVersion,
+        revision: String(identity.securityRevision) }
+      if (!isDeepStrictEqual(challenge.result, expected) || !isDeepStrictEqual(operation.result, expected) ||
+        !isDeepStrictEqual(confirmation.statement, this.typedData(challenge)))
+        throw new DomainError('WALLET_UNAVAILABLE')
+      try {
+        if (normalizeWalletAddress(await recoverTypedDataAddress({ ...this.typedData(challenge), signature })) !== identity.address)
+          throw new Error('signature')
+      } catch { throw new DomainError('INVALID_CREDENTIALS') }
+      // No new business mutation and no renewed proof: only finish the original
+      // committed authorization, even if its original challenge has since expired.
+      await this.ledger.commit(id)
+      return challenge.result
+    })
+  }
+
+  private async consumeOperation(auth: Authenticated, id: string, signature: Hex | undefined, isPayout: boolean) {
     await this.session(auth)
     const original = await this.client.walletChallenge.findUnique({ where: { id } })
     if (original && !this.sameScope(original)) throw new DomainError('INVALID_CREDENTIALS')
+    if (original && (isPayout ? original.purpose !== 'payout' : !['bind', 'unbind'].includes(original.purpose)))
+      throw new DomainError('INVALID_CREDENTIALS')
     // A retry returns stored evidence only; it cannot authorize a second mutation.
     if (original?.accountId === auth.account.id && original.sessionHash === auth.tokenHash &&
       original.kind === 'action' && original.consumedAt && original.result) {
@@ -217,8 +273,8 @@ export class WalletAuthService {
       return original.result
     }
     const row = await this.valid(original, auth, 'action')
-    if (!row.wallet || !['bind', 'unbind'].includes(row.purpose)) throw new DomainError('INVALID_CREDENTIALS')
-    if (row.purpose === 'bind') {
+    if (!row.wallet || !['bind', 'unbind', 'payout'].includes(row.purpose)) throw new DomainError('INVALID_CREDENTIALS')
+    if (row.purpose !== 'unbind') {
       try {
         if (!signature || normalizeWalletAddress(await recoverTypedDataAddress({ ...this.typedData(row), signature })) !== row.wallet)
           throw new Error('signature')
@@ -227,20 +283,22 @@ export class WalletAuthService {
     }
     const head = await this.ledger.read(auth.account.id, row.chainId)
     const state = head.pendingOperationId === id ? head : await this.current(auth)
-    if (row.bindingVersion !== state.bindingVersion) {
-      const completed = await this.client.walletChallenge.findUnique({ where: { id } })
-      if (completed?.kind === 'action' && completed.accountId === auth.account.id &&
-        completed.sessionHash === auth.tokenHash && completed.consumedAt && completed.result) {
-        await this.ledger.commit(id)
-        return completed.result
-      }
-      throw new DomainError('INVALID_CREDENTIALS')
+    // Read after the ledger state: a newer revision can only be used after its
+    // business commit, including payout operations that do not change bindingVersion.
+    const committed = await this.client.walletChallenge.findUnique({ where: { id } })
+    if (committed?.accountId === auth.account.id && committed.sessionHash === auth.tokenHash &&
+      committed.kind === 'action' && committed.purpose === row.purpose && committed.consumedAt && committed.result) {
+      await this.ledger.commit(id)
+      return committed.result
     }
+    if (row.bindingVersion !== state.bindingVersion) throw new DomainError('INVALID_CREDENTIALS')
     const address = row.purpose === 'unbind' ? null : row.wallet as EvmAddress
+    if (isPayout && address !== state.address) throw new DomainError('INVALID_CREDENTIALS')
     await this.ledger.prepare({ operationId: row.id, operation: row.purpose as Purpose,
       accountId: row.accountId, chainId: row.chainId, expectedRevision: state.revision,
-      expectedBindingVersion: state.bindingVersion, expectedRecoveryEpoch: row.recoveryEpoch, address, payout: null, requestHash: row.requestHash })
-    const result = { address, bindingVersion: state.bindingVersion + 1, revision: String(BigInt(state.revision) + 1n) }
+      expectedBindingVersion: state.bindingVersion, expectedRecoveryEpoch: row.recoveryEpoch, address,
+      payout: isPayout ? { wallet: address!, escrow: this.options.escrow, confirmationId: id } : null, requestHash: row.requestHash })
+    const result = { address, bindingVersion: state.bindingVersion + (isPayout ? 0 : 1), revision: String(BigInt(state.revision) + 1n) }
     let persisted: Prisma.JsonValue
     try {
       persisted = await this.client.$transaction(async (tx) => {
@@ -259,7 +317,7 @@ export class WalletAuthService {
             securityRevision: BigInt(result.revision), lastOperationId: id },
           update: { address, bindingVersion: result.bindingVersion,
             securityRevision: BigInt(result.revision), lastOperationId: id } })
-        if (address) await tx.walletClaim.upsert({ where: { chainId_address: { chainId: row.chainId, address } },
+        if (address && !isPayout) await tx.walletClaim.upsert({ where: { chainId_address: { chainId: row.chainId, address } },
           create: { chainId: row.chainId, address, accountId: row.accountId }, update: {} })
         await tx.walletSecurityOperation.create({ data: { id, accountId: row.accountId,
           chainId: row.chainId, operation: row.purpose, revision: BigInt(result.revision), requestHash: row.requestHash, result } })
@@ -269,10 +327,16 @@ export class WalletAuthService {
         const now = this.now()
         await tx.sellerPayoutConfirmation.updateMany({ where: { accountId: row.accountId,
           chainId: row.chainId, revokedAt: null }, data: { revokedAt: now } })
-        await tx.session.updateMany({ where: { accountId: row.accountId, authMethod: 'wallet_siwe', revokedAt: null },
+        if (isPayout) await tx.sellerPayoutConfirmation.create({ data: {
+          id, accountId: row.accountId, chainId: row.chainId, wallet: address!, escrow: this.options.escrow,
+          bindingVersion: result.bindingVersion, challengeId: id, signature: signature!,
+          statement: this.typedData(row) as unknown as Prisma.InputJsonValue, confirmedAt: now
+        } })
+        else await tx.session.updateMany({ where: { accountId: row.accountId, authMethod: 'wallet_siwe', revokedAt: null },
           data: { revokedAt: now } })
         await tx.walletChallenge.updateMany({ where: { accountId: row.accountId, chainId: row.chainId,
-          id: { not: id }, consumedAt: null, invalidatedAt: null }, data: { invalidatedAt: now } })
+          id: { not: id }, ...(isPayout ? { purpose: 'payout' } : {}),
+          consumedAt: null, invalidatedAt: null }, data: { invalidatedAt: now } })
         await tx.walletChallenge.update({ where: { id }, data: { consumedAt: now, result } })
         return result
       })

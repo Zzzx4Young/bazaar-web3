@@ -15,7 +15,7 @@ export async function grantRuntime(client, schema, role) {
     'OrderMediaSnapshot',
     'AccountIdentityEvent',
     'ListingReviewEvent'
-    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation'
+    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation', 'ListingTestnetPrice', 'TestnetOrderSnapshot'
   ]
   const mutable = [
     'Account',

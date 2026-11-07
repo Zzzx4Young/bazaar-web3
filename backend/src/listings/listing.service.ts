@@ -14,6 +14,8 @@ import { mediaMaxItems } from '../media/media-policy.js'
 import { parseCommitment, canPurchaseCommitment, commitmentVersion } from './product-commitment.js'
 import { hasExcludedRightsClaim } from './prohibited-claims.js'
 import { lockMediaAssets } from '../media/lock-media-assets.js'
+import type { Web3Config } from '../web3/web3-types.js'
+import { testPriceView, versionTestnetPrice } from '../web3/testnet-price.js'
 
 const include = {
   listingSeller: { select: { id: true, displayName: true } },
@@ -21,6 +23,7 @@ const include = {
   digitalInventoryRows: { select: { availability: true } },
   mediaRows: { select: { mediaId: true, position: true }, orderBy: { position: 'asc' } },
   _count: { select: { orderListingRows: true } }
+  , testnetPrices: { orderBy: { listingVersion: 'desc' }, take: 1 }
 } satisfies Prisma.ListingInclude
 type ListingRow = Prisma.ListingGetPayload<{ include: typeof include }>
 const homeFeaturedLimit = 10
@@ -30,10 +33,14 @@ export class ListingService {
   constructor(
     private readonly client: PrismaClient,
     private readonly rates: RatesService,
-    private readonly commitmentPolicy: 'compat' | 'enforce' = 'compat'
+    private readonly commitmentPolicy: 'compat' | 'enforce' = 'compat',
+    private readonly testnetConfig?: Web3Config | null
   ) {}
 
   private view(listing: ListingRow, priceUsd: string | null = null) {
+    const price = listing.testnetPrices[0]
+    const active = price && price.listingVersion === listing.version && this.testnetConfig &&
+      price.chainId === this.testnetConfig.chainId && price.token === this.testnetConfig.token && price.escrow === this.testnetConfig.escrow
     return {
       id: listing.id,
       seller: listing.listingSeller,
@@ -44,6 +51,8 @@ export class ListingService {
       description: listing.description,
       category: listing.category,
       price: { amount: listing.priceAmount.toFixed(), currency: listing.currency },
+      testnetPrice: active ? { amount: testPriceView(price.amountAtoms), amountAtoms: price.amountAtoms,
+        currency: 'BZTEST', decimals: 6, chainId: price.chainId, token: price.token, escrow: price.escrow } : null,
       priceUsd,
       publicationStatus: listing.publicationStatus,
       availability:
@@ -143,7 +152,7 @@ export class ListingService {
   async create(actorId: string, body: unknown) {
     const input = objectInput(
       body,
-      ['type', 'saleMode', 'title', 'description', 'category', 'price', 'licenseDescription', 'contentVersion', 'supplyMode', 'mediaIds', 'commitment', 'replacementOfListingId'],
+      ['type', 'saleMode', 'title', 'description', 'category', 'price', 'testnetPrice', 'licenseDescription', 'contentVersion', 'supplyMode', 'mediaIds', 'commitment', 'replacementOfListingId'],
       ['type', 'saleMode', 'title', 'description', 'category', 'price', 'mediaIds']
     )
     if (input.type !== 'physical' && input.type !== 'digital')
@@ -167,6 +176,9 @@ export class ListingService {
     const mediaIds = input.mediaIds.map((id) => idInput(id))
     if (new Set(mediaIds).size !== mediaIds.length) throw new DomainError('INVALID_INPUT')
     const price = objectInput(input.price, ['amount', 'currency'])
+    const testnetPriceAmount = input.testnetPrice === undefined ? undefined
+      : objectInput(input.testnetPrice, ['amount'], ['amount']).amount
+    if (testnetPriceAmount !== undefined && typeof testnetPriceAmount !== 'string') throw new DomainError('INVALID_INPUT')
     const currency = currencyInput(price.currency)
     if (hasExcludedRightsClaim(String(input.title), String(input.description),
       type === 'digital' ? String(input.licenseDescription ?? '') : null))
@@ -237,6 +249,8 @@ export class ListingService {
           reviewUpdatedAt: new Date()
         } : {})
       } })
+      if (typeof testnetPriceAmount === 'string')
+        await versionTestnetPrice(tx, listing, listing.version, testnetPriceAmount, this.testnetConfig)
       if (listing.reviewStatus === 'paused')
         await tx.listingReviewEvent.create({ data: {
           listingId: listing.id, actorId, action: 'replacement_submitted',
@@ -259,7 +273,7 @@ export class ListingService {
     idInput(id)
     const input = objectInput(
       body,
-      ['version', 'title', 'description', 'category', 'priceAmount',
+      ['version', 'title', 'description', 'category', 'priceAmount', 'testnetPriceAmount',
         'licenseDescription', 'contentVersion', 'mediaIds', 'publicationStatus', 'commitment'],
       ['version']
     )
@@ -273,6 +287,7 @@ export class ListingService {
       description?: string
       category?: string
       priceAmount?: string
+      testnetPriceAmount?: string
       licenseDescription?: string
       contentVersion?: string
       mediaIds?: string[]
@@ -285,6 +300,10 @@ export class ListingService {
     if ('category' in input) patch.category = categoryInput(input.category, listing.type as 'physical' | 'digital')
     if ('priceAmount' in input)
       patch.priceAmount = priceInput(input.priceAmount, currencyInput(listing.currency)).toFixed()
+    if ('testnetPriceAmount' in input) {
+      if (typeof input.testnetPriceAmount !== 'string') throw new DomainError('INVALID_INPUT')
+      patch.testnetPriceAmount = input.testnetPriceAmount
+    }
     if ('licenseDescription' in input || 'contentVersion' in input) {
       if (listing.type !== 'digital') throw new DomainError('INVALID_INPUT')
       if ('licenseDescription' in input)
@@ -319,7 +338,7 @@ export class ListingService {
         throw new DomainError('INVALID_INPUT')
       patch.publicationStatus = input.publicationStatus
     }
-    await new ListingCommands(this.client).edit(actorId, id, version, patch)
+    await new ListingCommands(this.client, this.testnetConfig).edit(actorId, id, version, patch)
     return this.view(await this.client.listing.findUniqueOrThrow({ where: { id }, include }))
   }
 

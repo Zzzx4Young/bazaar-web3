@@ -49,3 +49,15 @@ describe('publish form text contract', () => {
     }
   })
 })
+
+describe('BZTEST independent price', () => {
+  it('accepts positive exact six-decimal prices only for one-off digital files', () => {
+    const base = { ...digital, saleMode: 'one_off' }
+    expect(publishSchema.safeParse({ ...base, testnetPriceAmount: '0.000001' }).success).toBe(true)
+    for (const amount of ['0', '-1', '1e6', '1.0000001', ' 1', '9'.repeat(80)]) {
+      expect(publishSchema.safeParse({ ...base, testnetPriceAmount: amount }).success).toBe(false)
+    }
+    expect(publishSchema.safeParse({ ...digital, testnetPriceAmount: '1' }).success).toBe(false)
+    expect(publishSchema.safeParse({ ...base, testnetPriceAmount: '' }).success).toBe(true)
+  })
+})

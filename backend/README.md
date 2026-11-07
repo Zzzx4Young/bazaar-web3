@@ -316,3 +316,50 @@ sudo docker compose -f infra/compose.yaml --profile test up -d --wait postgres-t
 断线和恢复断言通过。该警告仍需在后续驱动兼容性升级时处理，未在测试中隐藏。
 后端代码位于 `src/`，追加迁移位于 `prisma/migrations/`，数据库与 HTTP 测试位于 `tests/`；
 迁移脚本、种子和观察入口位于 `scripts/`。已执行迁移不改写。
+
+### T03：收款确认与独立 BZTEST 快照
+
+仅配置测试网且开启 Web3 时启用新订单入口。卖家先完成当前钱包绑定，再以
+`purpose: payout` 申请独立重新认证和挑战；专用 EIP-712 domain 为 `Bazaar Seller Payout`，
+类型为 `SellerPayoutConfirmation`。绑定签名和登录签名不能代替收款确认。挑战最多300秒、
+一次消费；保存成功的确认不会每300秒过期，换绑／解绑在同一业务事务中撤销旧确认，
+独立账本也清空payout。换回原钱包必须重新确认，旧请求回放只返回历史结果、不重新激活。
+
+| 接口（`/api` 下） | 约束 |
+|---|---|
+| `GET /web3/config` | 公开测试资产配置，关闭时仅返回enabled=false；不含RPC或账本连接 |
+| `POST /web3/payout/confirm` | 当前会话、Origin、JSON、CSRF、限流和专用签名；body为id/signature |
+| `POST /web3/payout/reconcile` | 仅原有效会话完成原已提交payout；需原请求id、签名和CSRF，不是通用鉴权绕过 |
+| `POST /web3/listings/:id/price` | 卖家以version/amount设置独立价格，生成新商品版本 |
+| `POST /web3/orders` | listingId/version及Idempotency-Key；仅单件数字文件，原子预留并固定卖家/价格条款 |
+| `POST /web3/orders/:id/terms` | 订单双方读取历史条款；不要求当前收款确认，关闭新测试网入口后仍可查询 |
+
+BZTEST价格大于零、最多6位小数，以uint256范围内最小单位整数的十进制字符串存储。
+普通报价仍独立保存，不进行任何汇率换算。发布数字文件时可额外提交
+`testnetPrice: { amount: "1.000001" }`；编辑时用独立testnetPriceAmount字段。
+已下单的一次性商品仍禁止内容编辑，只允许独立测试价和原有上下架操作。
+其他合法内容修改会为新版本沿用原测试价；改为不支持的访问服务则不沿用，显式定价也拒绝。
+
+`ListingTestnetPrice` 与 `TestnetOrderSnapshot` 按版本追加，运行角色只有SELECT/INSERT。
+复合外键固定商品版本、价格原子值、链、代币、托管合约和确认钱包／绑定版本；历史行不改写。
+迁移后需按既有部署流程刷新运行授权。新订单持有账户／商品锁再读取独立账本和有效确认；
+未知账本状态一律拒绝。旧快照读取不重新要求当前钱包确认，避免换绑、改价影响历史条款。
+
+原SIWE会话若因“业务提交成功、账本完成失败”被普通鉴权阻断，可用reconcile入口核对并完成
+同一操作。该入口验证原sessionHash、已消费挑战、已提交操作、存储签名、当前绑定和准确修订，
+只调用账本完成标记，不新增业务变更或延长授权；缺记录、其他会话、错误签名或CSRF均拒绝。
+必须保留原请求上下文；原会话已撤销／过期或备份缺关键记录时仍需受控恢复，不自动解锁。
+
+本阶段只建立订单条款快照和意图签发的读取基线。实际支付意图创建／替换属T04，托管履约
+属后续阶段；新测试网订单不能调用旧模拟pay/deliver/accept/refund/裁决，也不会按服务器时间
+被Alpha过期任务释放。既有模拟订单仍按原流程履约。不能将旧快照可读描述为支付替换已验证。
+
+本地相关测试（先build，专用55435数据库）：
+
+```bash
+npm run check:backend
+node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/testnet-listing.integration.mjs tests/testnet-http.integration.mjs tests/wallet-ledger-roles.integration.mjs
+```
+
+真实Sepolia RPC、钱包浏览器交互、实际代币／托管合约、完整灾难恢复和A29/A31/A32后续子项
+仍待对应阶段验收。本地故障替身与API注入测试不代表已部署或真实链路通过。

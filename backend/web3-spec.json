@@ -5,12 +5,25 @@
   "specDocumentsTracked": false,
   "acceptanceStatus": "pending",
   "localAcceptance": {
-    "runId": "2026-11-07-t02-local-acceptance-r1",
-    "task": "T02",
+    "runId": "2026-11-07-t03-local-acceptance-r1",
+    "task": "T03",
     "status": "passed",
-    "evidenceDirectory": "docs/superpowers/evidence/2026-11-07-t02-local-acceptance-r1",
+    "evidenceDirectory": "docs/superpowers/evidence/2026-11-07-t03-local-acceptance-r1",
     "backendCheckPassed": 131,
-    "databaseHttpPassed": 59,
+    "databaseHttpPassed": 99,
+    "frontendTestsPassed": 307,
+    "frontendProductionBuildPassed": true,
     "actualSepoliaRpcValidated": false
-  }
+  },
+  "localAcceptanceHistory": [
+    {
+      "runId": "2026-11-07-t02-local-acceptance-r1",
+      "task": "T02",
+      "status": "passed",
+      "evidenceDirectory": "docs/superpowers/evidence/2026-11-07-t02-local-acceptance-r1",
+      "backendCheckPassed": 131,
+      "databaseHttpPassed": 59,
+      "actualSepoliaRpcValidated": false
+    }
+  ]
 }
