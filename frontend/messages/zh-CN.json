@@ -350,6 +350,7 @@
     "EMAIL_ACCOUNT_EXISTS": "这个 Gmail 邮箱已注册，请直接登录。",
     "EMAIL_ACCOUNT_NOT_FOUND": "这个 Gmail 邮箱尚未注册，请先注册。",
     "GOOGLE_UNAVAILABLE": "Google 登录暂不可用，请稍后重试。",
+    "WALLET_UNAVAILABLE": "钱包认证暂不可用，请稍后重试。",
     "GOOGLE_INVALID": "Google 登录未完成，请重试。",
     "ACCOUNT_LINK_REQUIRED": "该邮箱已关联其他账号，请先用原方式登录。",
     "FX_UNAVAILABLE": "汇率暂不可用，请稍后重试。",

@@ -1,0 +1,7 @@
+{
+  "specVersion": "web3-testnet-review-2026-11-06-r2",
+  "specManifestSha256": "9ee7535a9ab1bf4c2fba3e5361a60ddb6ef295095b55a570667efcbba9726ef0",
+  "implementationBase": "25fe4fcabd07e3120b83ef73fd16fc8720bf780e",
+  "specDocumentsTracked": false,
+  "acceptanceStatus": "pending"
+}

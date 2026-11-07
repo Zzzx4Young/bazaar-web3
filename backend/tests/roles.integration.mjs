@@ -59,6 +59,17 @@ test('C1: migration owner and restricted runtime support transactions without DD
     const commands = new OrderCommands(app.client)
     const listings = new ListingCommands(app.client)
     const f = await fixture({ client: app.client })
+    const walletAddress = '0x' + '1'.repeat(40)
+    await app.client.walletClaim.create({ data: {
+      chainId: 11155111, address: walletAddress, accountId: f.buyer
+    } })
+    await assert.rejects(app.client.walletClaim.update({
+      where: { chainId_address: { chainId: 11155111, address: walletAddress } },
+      data: { accountId: f.other }
+    }), permissionDenied)
+    await assert.rejects(app.client.walletClaim.delete({
+      where: { chainId_address: { chainId: 11155111, address: walletAddress } }
+    }), permissionDenied)
     await app.client.gmailClaim.create({ data: {
       key: 'runtimebuyer@gmail.com', accountId: f.buyer
     } })

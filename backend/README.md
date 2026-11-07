@@ -19,6 +19,27 @@
 
 ## 运行配置
 
+### 测试网隔离实施
+
+`web3-spec.json` 记录本轮实施依据的规格版本和内容摘要；设计文档位于本地忽略的
+`docs/`，源码提交并不包含这些文档。验收记录需同时关联源码提交、规格摘要和用例编号。
+Web3 默认关闭。启用必须显式配置 `WEB3_ENABLED=1`、`WEB3_CHAIN_ID=11155111`、
+`WEB3_TOKEN_ADDRESS`、`WEB3_ESCROW_ADDRESS`、两家独立来源的 `WEB3_RPC_PRIMARY`/
+`WEB3_RPC_SECONDARY` 和 `WEB3_SECURITY_LEDGER_URL_FILE`（或互斥的同名无 FILE 变量）。
+仅测试环境允许 `WEB3_PROFILE=local` 与 chainId 31337；不接受主网配置。
+声明不同 RPC 主机只是初步检查，不代表已验证供应商独立性或 finalized 能力。
+
+钱包业务投影迁移不创建权威安全账本。账本须独立持久保护，不能与业务旧备份一起回退；
+不可核验时返回 `503 / WALLET_UNAVAILABLE`，不依赖“删掉旧 Session”猜测钱包归属。
+密钥、账本连接、真实部署与公开测试网权限不由这些默认配置自动生成。
+
+专用可销毁测试环境使用项目 `bazaar-web3-web3-local`、端口 55435；从本目录运行
+`node scripts/with-web3-test-db.mjs node --test tests/web3-foundation.integration.mjs`。
+它只读取隔离测试库密码，不读取开发 `.env`，不连接 5432 开发库。
+金额和钱包基础测试入口为 `npm run build && node --test tests/web3-policy.test.mjs`。
+
+### 现有 Alpha 配置
+
 需要 Node.js >=22.12、npm 10.9.8。完整 `infra/compose.alpha.yaml` 会按角色初始化、
 迁移、API、前端的顺序启动。单独在宿主机运行时，先准备持久 `bazaar_dev`、
 迁移账号的 `.tmp/i7-migrate.env` 和运行账号的 `.env`；两者均为已忽略的私有文件。

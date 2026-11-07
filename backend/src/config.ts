@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs'
 import { isIP } from 'node:net'
 import { type GarageStoreConfig } from './media/garage-object-store.js'
 import { readMaxInFlightRequests } from './common/request-policy.js'
+import { readWeb3Config } from './web3/web3-policy.js'
+import type { Web3Config } from './web3/web3-types.js'
 import {
   readDatabasePoolConfig,
   validateDatabaseUrlOptions,
@@ -9,6 +11,7 @@ import {
 } from './database/database-policy.js'
 
 export interface AppConfig {
+  web3: Web3Config | null
   databaseUrl: string
   listingCommitmentPolicy: 'compat' | 'enforce'
   host: string
@@ -160,6 +163,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new Error('DEV_EMAIL_BIND_SKIP_REAUTH requires local development configuration')
   return {
     databaseUrl: url.toString(),
+    web3: readWeb3Config(env),
     listingCommitmentPolicy,
     host: env.HOST ?? '127.0.0.1',
     port,

@@ -32,6 +32,12 @@ model Account {
   identityEvents        AccountIdentityEvent[]
   gmailClaims          GmailClaim[]
   googleAttempts       GoogleOAuthAttempt[]
+  walletIdentities     WalletIdentity[]
+  walletClaims         WalletClaim[]
+  walletChallenges     WalletChallenge[]
+  walletOperations     WalletSecurityOperation[]
+  walletEvents         WalletIdentityEvent[]
+  payoutConfirmations  SellerPayoutConfirmation[]
 }
 
 model AccountIdentity {
@@ -116,6 +122,10 @@ model Session {
   tokenHash String    @id @db.Char(64)
   accountId String    @db.Uuid
   authMethod String?   @db.VarChar(24)
+  walletChainId Int?
+  walletAddress String? @db.VarChar(42)
+  walletBindingVersion Int?
+  recoveryEpoch String? @db.Uuid
   authenticatedAt DateTime? @db.Timestamptz(6)
   createdAt DateTime  @default(now()) @db.Timestamptz(6)
   expiresAt DateTime  @db.Timestamptz(6)
@@ -222,6 +232,7 @@ model Order {
   buyerId                   String                 @db.Uuid
   sellerId                  String                 @db.Uuid
   checkoutId                String?                @db.Uuid
+  settlementMode            String                 @default("simulated")
   status                    String                 @default("pending_payment")
   version                   Int                    @default(1)
   createdAt                 DateTime               @default(now()) @db.Timestamptz(6)
@@ -463,4 +474,102 @@ model ListingReviewEvent {
   actor     Account? @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([listingId, createdAt, id])
+}
+
+
+// Business projections only. The authoritative wallet security ledger is migrated
+// separately and must not be restored with this schema.
+model WalletIdentity {
+  id String @id @default(uuid()) @db.Uuid
+  accountId String @db.Uuid
+  chainId Int
+  address String? @db.VarChar(42)
+  bindingVersion Int @default(0)
+  securityRevision BigInt @default(0)
+  lastOperationId String? @db.Uuid
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([accountId, chainId])
+  @@unique([chainId, address])
+}
+
+model WalletClaim {
+  chainId Int
+  address String @db.VarChar(42)
+  accountId String @db.Uuid
+  claimedAt DateTime @default(now()) @db.Timestamptz(6)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([chainId, address])
+  @@index([accountId])
+}
+
+model WalletSecurityOperation {
+  id String @id @db.Uuid
+  accountId String @db.Uuid
+  chainId Int
+  operation String @db.VarChar(32)
+  revision BigInt
+  requestHash String @db.Char(64)
+  result Json
+  appliedAt DateTime @default(now()) @db.Timestamptz(6)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([accountId, chainId, revision])
+}
+
+model WalletIdentityEvent {
+  id String @id @default(uuid()) @db.Uuid
+  accountId String @db.Uuid
+  chainId Int
+  operationId String @unique @db.Uuid
+  operation String @db.VarChar(32)
+  previousAddress String? @db.VarChar(42)
+  currentAddress String? @db.VarChar(42)
+  bindingVersion Int
+  revision BigInt
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([accountId, createdAt])
+}
+
+model WalletChallenge {
+  id String @id @default(uuid()) @db.Uuid
+  accountId String @db.Uuid
+  chainId Int
+  kind String @db.VarChar(24)
+  purpose String @db.VarChar(32)
+  wallet String? @db.VarChar(42)
+  bindingVersion Int
+  recoveryEpoch String @db.Uuid
+  sessionHash String @db.Char(64)
+  requestHash String @unique @db.Char(64)
+  payload Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  expiresAt DateTime @db.Timestamptz(6)
+  consumedAt DateTime? @db.Timestamptz(6)
+  invalidatedAt DateTime? @db.Timestamptz(6)
+  result Json?
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([accountId, purpose, expiresAt])
+}
+
+model SellerPayoutConfirmation {
+  id String @id @default(uuid()) @db.Uuid
+  accountId String @db.Uuid
+  chainId Int
+  wallet String @db.VarChar(42)
+  escrow String @db.VarChar(42)
+  bindingVersion Int
+  challengeId String @unique @db.Uuid
+  statement Json
+  signature String @db.VarChar(132)
+  confirmedAt DateTime @default(now()) @db.Timestamptz(6)
+  revokedAt DateTime? @db.Timestamptz(6)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([accountId, chainId, revokedAt])
 }

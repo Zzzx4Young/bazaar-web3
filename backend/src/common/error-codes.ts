@@ -31,7 +31,8 @@ export const domainErrorCodes = [
   'SHIPPING_REQUIRED',
   'STATE_CONFLICT',
   'UNAUTHENTICATED',
-  'UNAVAILABLE'
+  'UNAVAILABLE',
+  'WALLET_UNAVAILABLE'
 ] as const
 
 export const publicErrorCodes = [

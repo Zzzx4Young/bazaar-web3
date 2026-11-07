@@ -15,6 +15,7 @@ export async function grantRuntime(client, schema, role) {
     'OrderMediaSnapshot',
     'AccountIdentityEvent',
     'ListingReviewEvent'
+    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation'
   ]
   const mutable = [
     'Account',
@@ -35,6 +36,7 @@ export async function grantRuntime(client, schema, role) {
     'GoogleOAuthAttempt',
     'MediaAsset',
     'ListingMedia'
+    , 'WalletIdentity', 'WalletChallenge', 'SellerPayoutConfirmation'
   ]
   await client.$transaction(async (tx) => {
     const roles = await tx.$queryRaw`

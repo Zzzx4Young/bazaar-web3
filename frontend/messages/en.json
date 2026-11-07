@@ -350,6 +350,7 @@
     "EMAIL_ACCOUNT_EXISTS": "This Gmail address already has an account. Sign in instead.",
     "EMAIL_ACCOUNT_NOT_FOUND": "No account uses this Gmail address. Register first.",
     "GOOGLE_UNAVAILABLE": "Google sign-in is temporarily unavailable. Please try again later.",
+    "WALLET_UNAVAILABLE": "Wallet authentication is temporarily unavailable. Please try again later.",
     "GOOGLE_INVALID": "Google sign-in was not completed. Please try again.",
     "ACCOUNT_LINK_REQUIRED": "This email is linked to another account. Sign in with its existing method.",
     "FX_UNAVAILABLE": "Exchange rates are unavailable. Please try again later.",

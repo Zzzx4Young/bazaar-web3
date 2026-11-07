@@ -4581,6 +4581,20 @@
       }
     },
     "schemas": {
+      "WalletAddress": {
+        "type": "string", "pattern": "^0x[0-9a-f]{40}$",
+        "description": "Normalized 20-byte nonzero address. Historical order addresses never follow current account wallet binding."
+      },
+      "WalletIdentityView": {
+        "type": "object", "additionalProperties": false,
+        "required": ["chainId", "address", "bindingVersion"],
+        "properties": {
+          "chainId": { "type": "integer", "enum": [11155111, 31337] },
+          "address": { "anyOf": [{ "$ref": "#/components/schemas/WalletAddress" }, { "type": "null" }] },
+          "bindingVersion": { "type": "integer", "minimum": 0 }
+        },
+        "description": "Current account binding only. Wallet interfaces remain feature gated during implementation."
+      },
       "Error": {
         "type": "object",
         "description": "Database connectivity or pool availability failures return HTTP 503 with code DATABASE_UNAVAILABLE and retryable=true. Retry writes with the original body and idempotency key; a failed response does not prove the transaction was rolled back. Driver messages and connection details are never returned.",
@@ -4607,7 +4621,7 @@
               "REFUND_REQUIRED", "RESTORE_CONFLICT", "RETRY_EXHAUSTED",
               "RETURN_REQUIRED", "SHIPPING_REQUIRED", "STATE_CONFLICT",
               "UNAUTHENTICATED", "UNAVAILABLE", "BODY_TOO_LARGE", "CONFLICT",
-              "DATABASE_UNAVAILABLE", "INTERNAL_ERROR", "OVERLOADED"
+              "DATABASE_UNAVAILABLE", "INTERNAL_ERROR", "OVERLOADED", "WALLET_UNAVAILABLE"
             ]
           },
           "retryable": {
