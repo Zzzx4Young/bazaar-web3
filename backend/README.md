@@ -38,6 +38,28 @@ Web3 默认关闭。启用必须显式配置 `WEB3_ENABLED=1`、`WEB3_CHAIN_ID=1
 它只读取隔离测试库密码，不读取开发 `.env`，不连接 5432 开发库。
 金额和钱包基础测试入口为 `npm run build && node --test tests/web3-policy.test.mjs`。
 
+钱包身份核心目前仅供隔离服务集成测试，尚未接入 HTTP 或网页入口，不能将配置解析通过
+视为钱包功能已启用。`WalletAuthService` 已实现密码独立重新认证、用途隔离的绑定/解绑
+授权、SIWE 登录和旧钱包会话撤销；无密码账户暂时拒绝钱包变更，不把近期 Google/邮箱
+登录 Session 当作操作重新认证凭据。对应的专用 provider 重新认证流程仍待完成。
+
+`security-ledger/schema.sql` 仅用于单独供应的账本存储，不属于业务迁移或业务恢复。
+实例身份需通过构造器固定 ledgerId；缺失、身份不匹配、维护状态或未决操作均阻断使用。
+流程先在独立账本预占，再事务提交业务变更，最后确认账本；业务提交结果不明时保留
+未决记录，不能因旧备份中没有操作记录就撤销预占。已记录的业务提交可通过原请求重试
+补完账本确认，不能重复绑定。历史钱包归属不会因解绑或换绑删除。
+
+从本目录验证核心及原登录回归：
+
+```bash
+npm run check:backend
+node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/wallet-identity.integration.mjs tests/wallet-security-ledger.integration.mjs tests/auth.integration.mjs tests/roles.integration.mjs
+```
+
+测试使用独立随机业务和账本 schema，仅验证业务投影回退、签名与并发协议；不证明真实
+备份恢复、跨故障域持久性、账本运行角色隔离或实际双源 RPC/EOA 检查已通过。测试中的
+EOA 检查为替身，签名使用临时测试私钥真实生成与验证；不使用真实用户钱包。
+
 ### 现有 Alpha 配置
 
 需要 Node.js >=22.12、npm 10.9.8。完整 `infra/compose.alpha.yaml` 会按角色初始化、

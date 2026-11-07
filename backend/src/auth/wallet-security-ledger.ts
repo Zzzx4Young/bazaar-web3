@@ -34,4 +34,6 @@ export interface WalletSecurityLedger {
   // operation after restoring an old backup is not evidence of rollback.
   abort(operationId: string): Promise<void>
   recoveryEpoch(): Promise<string>
+  assertProjection(projection: Pick<WalletSecuritySnapshot,
+    'accountId' | 'chainId' | 'address' | 'bindingVersion' | 'revision'>): Promise<WalletSecuritySnapshot>
 }

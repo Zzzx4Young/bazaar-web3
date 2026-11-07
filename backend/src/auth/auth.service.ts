@@ -3,6 +3,7 @@ import { type Account, type PrismaClient } from '../generated/prisma/client.js'
 import { type AppConfig } from '../config.js'
 import { type Transaction } from '../database/transaction.js'
 import { DomainError } from '../common/domain-error.js'
+import type { WalletSecurityLedger } from './wallet-security-ledger.js'
 import { dummyHash, normalizeLogin, validatePassword, verifyPassword } from './password.js'
 import {
   loginIpLimit, loginNameLimit, loginWindowSeconds, maxConcurrentHashesPerInstance,
@@ -11,7 +12,7 @@ import {
 
 const digest = (value: string) => createHash('sha256').update(value).digest('hex')
 export const csrfToken = (token: string) => digest(`csrf:${token}`)
-export type AuthMethod = 'password' | 'email_code' | 'email_code_dev' | 'google_oidc'
+export type AuthMethod = 'password' | 'email_code' | 'email_code_dev' | 'google_oidc' | 'wallet_siwe'
 export interface Authenticated {
   token: string
   tokenHash: string
@@ -26,7 +27,8 @@ export class AuthService {
 
   constructor(
     readonly client: PrismaClient,
-    readonly config: AppConfig
+    readonly config: AppConfig,
+    private readonly walletLedger?: WalletSecurityLedger
   ) {}
 
   private async consume(key: string, limit: number) {
@@ -49,6 +51,27 @@ export class AuthService {
 
   async rateLimitGoogleStart(ip: string) {
     await this.consume(`google-start-ip:${ip}`, loginIpLimit)
+  }
+
+  async rateLimitWallet(ip: string) {
+    await this.consume(`wallet-ip:${ip}`, loginIpLimit)
+  }
+
+  async verifyWalletPassword(auth: Authenticated, password: string, ip: string) {
+    await this.rateLimitWallet(ip)
+    await this.consume(`wallet-account:${auth.account.id}`, loginNameLimit)
+    if (this.activeHashes >= maxConcurrentHashesPerInstance) throw new DomainError('RATE_LIMITED')
+    this.activeHashes++
+    try {
+      const credential = await this.client.accountCredential.findUnique({ where: { accountId: auth.account.id } })
+      const correct = await verifyPassword(password, credential?.passwordHash ?? dummyHash)
+      if (!correct || !credential) throw new DomainError('INVALID_CREDENTIALS')
+      return credential.passwordHash
+    } catch (error) {
+      if (error instanceof DomainError && error.code === 'INVALID_INPUT')
+        throw new DomainError('INVALID_CREDENTIALS')
+      throw error
+    } finally { this.activeHashes-- }
   }
 
   token(cookie: string | undefined) {
@@ -85,13 +108,34 @@ export class AuthService {
       session.account.status !== 'active'
     )
       throw new DomainError('UNAUTHENTICATED')
+    if (session.authMethod === 'wallet_siwe' && !this.walletLedger)
+      throw new DomainError('WALLET_UNAVAILABLE')
+    if (this.walletLedger) {
+      if (session.recoveryEpoch !== await this.walletLedger.recoveryEpoch())
+        throw new DomainError('UNAUTHENTICATED')
+      if (session.authMethod === 'wallet_siwe') {
+        if (!session.walletChainId || !session.walletAddress || session.walletBindingVersion === null)
+          throw new DomainError('UNAUTHENTICATED')
+        const head = await this.walletLedger.read(session.accountId, session.walletChainId)
+        if (head.address !== session.walletAddress || head.bindingVersion !== session.walletBindingVersion)
+          throw new DomainError('UNAUTHENTICATED')
+        const row = await this.client.walletIdentity.findUnique({ where: { accountId_chainId: {
+          accountId: session.accountId, chainId: session.walletChainId } } })
+        await this.walletLedger.assertProjection({ accountId: session.accountId, chainId: session.walletChainId,
+          address: row?.address as `0x${string}` | null ?? null, bindingVersion: row?.bindingVersion ?? 0,
+          revision: String(row?.securityRevision ?? 0) })
+      }
+    }
     return { token, tokenHash, account: session.account, createdAt: session.createdAt,
       authMethod: session.authMethod as AuthMethod | null,
       authenticatedAt: session.authenticatedAt }
   }
 
   async issueSession(tx: Transaction, account: Account, cookie: string | undefined,
-    authMethod: AuthMethod): Promise<Authenticated> {
+    authMethod: AuthMethod, wallet?: { chainId: number; address: string; bindingVersion: number }): Promise<Authenticated> {
+    if (authMethod === 'wallet_siwe' && (!wallet || !this.walletLedger))
+      throw new DomainError('WALLET_UNAVAILABLE')
+    const recoveryEpoch = this.walletLedger ? await this.walletLedger.recoveryEpoch() : undefined
     const token = randomBytes(32).toString('base64url')
     const tokenHash = digest(token)
     const now = new Date()
@@ -103,6 +147,8 @@ export class AuthService {
       })
     await tx.session.create({
       data: { tokenHash, accountId: account.id, authMethod, authenticatedAt: now,
+        recoveryEpoch, walletChainId: wallet?.chainId, walletAddress: wallet?.address,
+        walletBindingVersion: wallet?.bindingVersion,
         expiresAt: new Date(now.getTime() + sessionMaxAgeSeconds * 1000) }
     })
     return { token, tokenHash, account, createdAt: now, authMethod, authenticatedAt: now }
