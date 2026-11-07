@@ -16,6 +16,11 @@ import type { EvmAddress } from './web3/web3-types.js'
 import { createEoaChecker } from './auth/wallet-account-type.js'
 import { assertWalletLedgerGrants } from './auth/wallet-ledger-grants.js'
 import { SellerPayoutService } from './web3/seller-payout.service.js'
+import { PaymentIntentService } from './web3/payment-intent.service.js'
+import { PaymentIntentController } from './web3/payment-intent.controller.js'
+import { PostgresPaymentJournal, type PaymentJournal } from './web3/payment-journal.js'
+import { readPaymentSigner, type PaymentSigner } from './web3/payment-signer.js'
+import type { PaymentChainObserver } from './web3/payment-observer.js'
 import { TestnetController } from './web3/testnet.controller.js'
 import { IdentityController } from './auth/identity.controller.js'
 import { EmailAuthService } from './auth/email-auth.service.js'
@@ -53,7 +58,8 @@ export async function createApp(
   dependencies: { loadRates?: RateLoader; logRequest?: RequestLogSink | false;
     mediaStore?: GarageObjectStore; emailSender?: EmailSender; googleClient?: GoogleClient;
     walletLedger?: WalletSecurityLedger; walletEoaCheck?: (address: EvmAddress) => Promise<void>;
-    walletGoogleClient?: GoogleClient } = {}
+    walletGoogleClient?: GoogleClient; paymentSigner?: PaymentSigner;
+    paymentJournal?: PaymentJournal; paymentObserver?: PaymentChainObserver } = {}
 ) {
   if (config.web3 && !dependencies.walletLedger) {
     const business = new URL(config.databaseUrl), security = new URL(config.web3.securityLedgerUrl)
@@ -82,6 +88,12 @@ export async function createApp(
   const listings = new ListingService(database.client, rates, config.listingCommitmentPolicy, config.web3)
   const sellerPayout = wallets && ledger && config.web3
     ? new SellerPayoutService(database.client, wallets, ledger, config.web3) : null
+  const paymentSigner = config.web3 ? dependencies.paymentSigner ?? readPaymentSigner(config.web3.paymentSignerFile) : null
+  const paymentJournal = config.web3 ? dependencies.paymentJournal ?? (ledgerDatabase
+    ? new PostgresPaymentJournal(ledgerDatabase.client, config.web3.securityLedgerId) : null) : null
+  const payments = config.web3 && ledger && sellerPayout && paymentSigner && paymentJournal
+    ? new PaymentIntentService(database.client, auth, sellerPayout, ledger, paymentJournal, paymentSigner,
+      dependencies.paymentObserver ?? null, config.web3, dependencies.walletEoaCheck ?? createEoaChecker(config.web3)) : null
   const media = new MediaService(
     database.client,
     dependencies.mediaStore ?? (config.mediaStore ? new GarageObjectStore(config.mediaStore) : null)
@@ -134,7 +146,7 @@ export async function createApp(
         HealthController,
         AuthController,
         WalletIdentityController,
-        TestnetController,
+        TestnetController, PaymentIntentController,
         IdentityController,
         ListingController, ListingReviewController,
         OrderController,
@@ -154,6 +166,7 @@ export async function createApp(
         { provide: GoogleAuthService, useValue: googleAuth },
         { provide: ListingService, useValue: listings },
         { provide: SellerPayoutService, useValue: sellerPayout },
+        { provide: PaymentIntentService, useValue: payments },
         { provide: MediaService, useValue: media }
       ]
     },

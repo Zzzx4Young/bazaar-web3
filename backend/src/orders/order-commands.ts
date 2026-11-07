@@ -40,7 +40,8 @@ export interface ActionInput {
 // User actions receive actorId from the authenticated HTTP boundary.
 // Expiry uses a separate system path so its event has no user actor.
 export class OrderCommands {
-  constructor(private readonly client: PrismaClient, private readonly testnet?: SellerPayoutService | null) {}
+  constructor(private readonly client: PrismaClient, private readonly testnet?: SellerPayoutService | null,
+    private readonly reservePayment?: (tx: Transaction, order: Order) => Promise<void>) {}
 
   private async createOne(
     tx: Transaction,
@@ -114,6 +115,7 @@ export class OrderCommands {
       }
     })
     if (testnetTerms) await tx.testnetOrderSnapshot.create({ data: { orderId: order.id, ...testnetTerms } })
+    if (testnet && this.reservePayment) await this.reservePayment(tx, order)
     const currentMedia = await tx.listingMedia.findMany({
       where: { listingId: listing.id },
       orderBy: { position: 'asc' },

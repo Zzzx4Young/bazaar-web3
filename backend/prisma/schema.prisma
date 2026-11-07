@@ -620,3 +620,53 @@ model TestnetOrderSnapshot {
   @@unique([orderId, listingId, sellerId], map: "TestnetOrderSnapshot_order_terms_key")
   @@index([sellerId, createdAt])
 }
+
+// Payment evidence is append-only; mutable lifecycle is kept separately.
+model TestnetStock {
+  listingId String @id @db.Uuid
+  stockId String @unique @db.Char(66)
+  generation String @default("0") @db.VarChar(78)
+  previousOrderId String @db.Char(66)
+  activeOrderId String? @unique @db.Uuid
+  lastOrderId String? @db.Uuid
+  state String @default("reserved")
+}
+model PaymentOrderTerms {
+  orderId String @id @db.Uuid
+  listingId String @db.Uuid
+  stockId String @db.Char(66)
+  terms Json
+  termsHash String @db.Char(66)
+  recoveryEpoch String @db.Uuid
+  initialIntentId String @db.Uuid
+}
+model PaymentIntent {
+  id String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  previousIntentId String? @db.Uuid
+  permit Json
+  digest String @db.Char(66)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([orderId, createdAt])
+}
+model PaymentIntentState {
+  intentId String @id @db.Uuid
+  orderId String @db.Uuid
+  status String @default("issued")
+  verification Json?
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  @@index([orderId, status])
+}
+model PaymentSignature {
+  intentId String @id @db.Uuid
+  signature String @db.VarChar(132)
+}
+
+model PaymentIntentRequest {
+  actorId String @db.Uuid
+  operation String
+  key String
+  requestHash String @db.Char(64)
+  intentId String @db.Uuid
+  @@id([actorId, operation, key])
+}

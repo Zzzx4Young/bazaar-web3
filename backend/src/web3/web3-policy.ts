@@ -95,7 +95,7 @@ export function readWeb3Config(env: NodeJS.ProcessEnv): Web3Config | null {
   const ledgerUrl = new URL(ledger)
   if (!['postgres:', 'postgresql:'].includes(ledgerUrl.protocol) || ledgerUrl.pathname === '/' ||
     ledgerUrl.hash) throw new Error('Invalid Web3 security ledger URL')
-  return { chainId, tokenDecimals: 6, token: normalizeWalletAddress(env.WEB3_TOKEN_ADDRESS),
+  return { chainId, tokenDecimals: 6, paymentSignerFile: env.WEB3_PAYMENT_SIGNER_FILE, token: normalizeWalletAddress(env.WEB3_TOKEN_ADDRESS),
     escrow: normalizeWalletAddress(env.WEB3_ESCROW_ADDRESS), rpcPrimary: primary.toString(),
     rpcSecondary: secondary.toString(), securityLedgerUrl: ledger,
     securityLedgerId: env.WEB3_SECURITY_LEDGER_ID.toLowerCase() }

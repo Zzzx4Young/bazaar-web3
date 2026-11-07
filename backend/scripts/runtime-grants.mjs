@@ -15,7 +15,7 @@ export async function grantRuntime(client, schema, role) {
     'OrderMediaSnapshot',
     'AccountIdentityEvent',
     'ListingReviewEvent'
-    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation', 'ListingTestnetPrice', 'TestnetOrderSnapshot'
+    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation', 'ListingTestnetPrice', 'TestnetOrderSnapshot', 'PaymentOrderTerms', 'PaymentIntent', 'PaymentSignature', 'PaymentIntentRequest'
   ]
   const mutable = [
     'Account',
@@ -36,7 +36,7 @@ export async function grantRuntime(client, schema, role) {
     'GoogleOAuthAttempt',
     'MediaAsset',
     'ListingMedia'
-    , 'WalletIdentity', 'WalletChallenge', 'SellerPayoutConfirmation'
+    , 'WalletIdentity', 'WalletChallenge', 'SellerPayoutConfirmation', 'TestnetStock', 'PaymentIntentState'
   ]
   await client.$transaction(async (tx) => {
     const roles = await tx.$queryRaw`
@@ -62,6 +62,8 @@ export async function grantRuntime(client, schema, role) {
           : mutable.includes(table) ? 'SELECT, INSERT, UPDATE' : 'SELECT, INSERT'
       await tx.$executeRawUnsafe(`GRANT ${permissions} ON "${schema}"."${table}" TO "${role}"`)
     }
+    await tx.$executeRawUnsafe(`REVOKE UPDATE ON "${schema}"."TestnetStock" FROM "${role}"`)
+    await tx.$executeRawUnsafe(`GRANT UPDATE ("activeOrderId", "lastOrderId", "state") ON "${schema}"."TestnetStock" TO "${role}"`)
     await tx.$executeRawUnsafe(`GRANT SELECT ON "${schema}"."AccountCredential" TO "${role}"`)
   })
 }

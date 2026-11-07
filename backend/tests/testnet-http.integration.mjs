@@ -6,6 +6,8 @@ import { sandbox, fixture } from './helpers/database.mjs'
 import { isolatedLedger } from './helpers/wallet-ledger.mjs'
 import { createApp } from '../dist/app.js'
 import { readConfig } from '../dist/config.js'
+import { LocalPaymentSigner } from '../dist/web3/payment-signer.js'
+import { PostgresPaymentJournal } from '../dist/web3/payment-journal.js'
 import { hashPassword } from '../dist/auth/password.js'
 const origin = 'http://localhost:3000', password = 'Virtual-T03-http-password-only'
 
@@ -20,7 +22,9 @@ test('T03 HTTP: CSRF, dedicated payout, exact price snapshots and historical rea
     const config = readConfig({ DATABASE_URL: db.url.toString(), APP_ORIGIN: origin })
     config.web3 = { chainId: 11155111, tokenDecimals: 6, token: '0x' + '1'.repeat(40), escrow: '0x' + '2'.repeat(40),
       rpcPrimary: 'https://one.invalid', rpcSecondary: 'https://two.invalid', securityLedgerUrl: db.url.toString(), securityLedgerId: security.id }
-    app = await createApp(config, false, { walletLedger: security.ledger, walletEoaCheck: async () => {} })
+    app = await createApp(config, false, { walletLedger: security.ledger, walletEoaCheck: async () => {},
+      paymentSigner:new LocalPaymentSigner(generatePrivateKey(),'0x'+'a'.repeat(64)),
+      paymentJournal:new PostgresPaymentJournal(security.client,security.id) })
     const post = (path, payload, headers = {}) => app.inject({ method: 'POST', url: '/api/' + path,
       headers: { origin, ...headers }, payload })
     const login = async id => {
@@ -40,6 +44,11 @@ test('T03 HTTP: CSRF, dedicated payout, exact price snapshots and historical rea
         { id: c.json().id, signature: await w.signTypedData(c.json().typedData) }, headers)
       assert.equal(result.statusCode, 200, result.body)
     }
+    const buyerWallet=privateKeyToAccount(generatePrivateKey()), bh={...buyer,'idempotency-key':randomUUID()}
+    const proof=await post('auth/wallet/reauth/password',{password,purpose:'bind',address:buyerWallet.address},bh)
+    const bc=await post('auth/wallet/challenge',{proofId:proof.json().id,purpose:'bind',address:buyerWallet.address},bh)
+    const br=await post('auth/wallet/consume',{id:bc.json().id,signature:await buyerWallet.signTypedData(bc.json().typedData)},bh)
+    assert.equal(br.statusCode,200,br.body)
     const capabilities = await app.inject({ method: 'GET', url: '/api/web3/config' })
     assert.equal(capabilities.json().enabled, true)
     assert.equal(capabilities.json().currency, 'BZTEST')

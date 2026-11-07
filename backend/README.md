@@ -350,7 +350,7 @@ BZTEST价格大于零、最多6位小数，以uint256范围内最小单位整数
 只调用账本完成标记，不新增业务变更或延长授权；缺记录、其他会话、错误签名或CSRF均拒绝。
 必须保留原请求上下文；原会话已撤销／过期或备份缺关键记录时仍需受控恢复，不自动解锁。
 
-本阶段只建立订单条款快照和意图签发的读取基线。实际支付意图创建／替换属T04，托管履约
+T03阶段建立订单条款快照基线；T04的本地意图能力见下节，真实托管履约
 属后续阶段；新测试网订单不能调用旧模拟pay/deliver/accept/refund/裁决，也不会按服务器时间
 被Alpha过期任务释放。既有模拟订单仍按原流程履约。不能将旧快照可读描述为支付替换已验证。
 
@@ -363,3 +363,28 @@ node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/testne
 
 真实Sepolia RPC、钱包浏览器交互、实际代币／托管合约、完整灾难恢复和A29/A31/A32后续子项
 仍待对应阶段验收。本地故障替身与API注入测试不代表已部署或真实链路通过。
+
+
+### Web3 T04：本地支付意图与原子预留
+
+`POST /web3/orders` 现在要求付款签名器及独立签发账本可用，将库存预留、订单快照、固定买家钱包及初始意图在同一事务提交，然后才签名。响应仍包含 orderId，并增加 intentId、固定 permit、JSON 可读 typedData、signature、status 和 protection。未配签名器返回 WALLET_UNAVAILABLE，不生成半成品订单。
+
+- `POST /web3/payment-intents/:id/read`：重读或恢复原凭证，重签必须保持原摘要、keyId 和 1800 秒截止；不隐式创建新意图。
+- `POST /web3/payment-intents/:id/cancel`：仅标记 cancellation_pending 并返回原撤销材料；不代表链上撤销，也不释放库存。
+- `POST /web3/payment-intents/:id/reconcile`：由服务端观察器核对同一 finalized 区块的订单、意图和库存；RPC/账本/依据缺失返回503，库存保持保护。
+- `POST /web3/orders/:id/payment-intents/replace`：提交 previousIntentId 与 Idempotency-Key。旧凭证已永久失效、订单未入金且重新核对通过后，生成唯一新意图。沿用原买家/退款/卖家地址、价格和库存元组，不要求卖家当前收款确认。
+- `POST /web3/orders/:id/cancel`：全部历史意图均永久失效并在同一最终区块核对未入金后，才关闭订单并释放库存；稳定 stockId 不变，未入金取消不推进 generation。
+
+以上均为 POST JSON，要求正常有效 Session、Origin、CSRF；取消、替换与关闭另需 Idempotency-Key。接口不接受客户端自报链上结果或覆盖金额/地址/库存。幂等结果不会恢复过期、撤销会话；迟到操作重新验证会话。
+
+签发使用专用 PaymentPermit EIP-712 domain（Bazaar Testnet Escrow/version 1，绑定 chainId/escrow）。固定订单摘要按 orderId、stockId、generation、previousOrderId、buyer、refund、seller、token、amount、commitmentHash 的 ABI 元组计算，供 T06 共用；账户和意图 UUID 先按命名空间哈希，不将原始账户资料放入凭证。
+
+运行角色对 PaymentOrderTerms、PaymentIntent、PaymentSignature、PaymentIntentRequest 只有 SELECT/INSERT；stockId、generation、前代不能由普通运行角色修改。独立安全库增加 PaymentLedgerIntent/Head/Resolution，签发前写入不可变摘要与稳定库存关联；业务库回退、摘要冲突、已终止旧意图或安全库不可用时停止签发。业务提交后失败只恢复原意图，独立结果先提交而业务投影失败时按原记录核对重试。
+
+独立安全库首次部署使用更新后的 security-ledger/schema.sql；已初始化的 T02/T03 安全库须由所有者显式执行 additive security-ledger/payment-schema.sql，再刷新 wallet-ledger-grants。不能对已有库重新运行整份初始化，更不能替换 ledgerId/recoveryEpoch。仅增量 schema 文件和权限脚本入库，本轮没有升级开发库或实际安全库。
+
+付款私钥仅由显式 WEB3_PAYMENT_SIGNER_FILE 指向的受保护文件加载（普通文件、权限0600，最多1024字节）；内容为 keyId（非零 bytes32）及 key（付款签名专用私钥）。没有自动生成或回退密钥，不得复用网站、交付或裁决密钥，不得提交文件。默认未配置，Alpha 启动行为不变。
+
+T04 的 PaymentChainObserver 是可信服务端接口，本地使用双源故障替身；T07生产观察器尚未接入，默认null，因此实际取消核对、替换和释放保持不可用，不以服务器倒计时或单源结果放行。T06须冻结相同摘要与ABI并验证撤销/入金合约竞态；这里的两种结果测试不代表真实链上交易竞争已验证。退款后库存代次推进及完整恢复归后续任务，T04只释放从未入金的取消订单。
+
+验证：先 npm run check:backend，再通过 scripts/with-web3-test-db.mjs 运行 tests/payment-intent.integration.mjs；具体每项故障/并发/权限测试及日志见本地 T04 验收目录。尚无签发依据的旧测试网快照不能被自动补成可付款意图，保持保护以待受控恢复。

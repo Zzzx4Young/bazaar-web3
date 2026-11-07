@@ -250,6 +250,7 @@ export class ListingReviewController {
       if (!order || order.listingId !== id) throw new DomainError('NOT_FOUND')
       if (!order.transactionPausedAt || !openStatuses.includes(order.status) || !order.snapshot)
         throw new DomainError('STATE_CONFLICT')
+      if (order.settlementMode !== 'simulated') throw new DomainError('STATE_CONFLICT')
       const refund = order.status !== 'pending_payment'
       const next = refund ? 'refunded' : 'cancelled'
       if (refund) {

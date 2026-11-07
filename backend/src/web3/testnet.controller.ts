@@ -6,7 +6,7 @@ import { Public, type AuthRequest } from '../auth/auth.guard.js'
 import { DomainError } from '../common/domain-error.js'
 import { idInput, objectInput, positiveInteger } from '../common/input.js'
 import { DatabaseService } from '../database/database.service.js'
-import { OrderCommands } from '../orders/order-commands.js'
+import { PaymentIntentService } from './payment-intent.service.js'
 import { idempotencyKey } from '../orders/idempotency-key.js'
 import { ListingService } from '../listings/listing.service.js'
 import { SellerPayoutService, existingOrderTerms } from './seller-payout.service.js'
@@ -21,7 +21,8 @@ export class TestnetController {
   constructor(@Inject(AuthService) private readonly auth: AuthService,
     @Inject(DatabaseService) private readonly db: DatabaseService,
     @Inject(ListingService) private readonly listings: ListingService,
-    @Inject(SellerPayoutService) private readonly payout: SellerPayoutService | null) {}
+    @Inject(SellerPayoutService) private readonly payout: SellerPayoutService | null,
+    @Inject(PaymentIntentService) private readonly payments: PaymentIntentService | null) {}
 
   private enabled() {
     if (!this.payout) throw new DomainError('WALLET_UNAVAILABLE')
@@ -56,10 +57,12 @@ export class TestnetController {
   @Post('orders') @HttpCode(200) @Header('Cache-Control', 'no-store')
   async create(@Body() body: unknown, @Req() request: AuthRequest,
     @Headers('idempotency-key') key: string | string[] | undefined) {
-    const payout = this.enabled(), input = objectInput(body, ['listingId', 'version'])
-    return { orderId: await new OrderCommands(this.db.client, payout).create(request.auth.account.id,
-      idempotencyKey(key), { listingId: idInput(input.listingId), version: positiveInteger(input.version),
-        settlementMode: 'testnet_escrow' }) }
+    this.enabled()
+    if (!this.payments) throw new DomainError('WALLET_UNAVAILABLE')
+    await this.auth.rateLimitWallet('payment:'+request.ip)
+    const input = objectInput(body, ['listingId', 'version'])
+    return this.payments.createOrder(request.auth,idempotencyKey(key), {
+      listingId: idInput(input.listingId).toLowerCase(),version: positiveInteger(input.version) })
   }
   @Post('orders/:id/terms') @HttpCode(200) @Header('Cache-Control', 'no-store')
   terms(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthRequest) {

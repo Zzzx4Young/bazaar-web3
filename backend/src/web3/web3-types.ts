@@ -53,6 +53,7 @@ export interface ChainObserver {
 export interface Web3Config {
   chainId: number
   tokenDecimals: 6
+  paymentSignerFile?: string
   token: EvmAddress
   escrow: EvmAddress
   rpcPrimary: string

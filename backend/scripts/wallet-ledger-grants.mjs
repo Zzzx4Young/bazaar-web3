@@ -5,7 +5,9 @@ export async function grantWalletLedger(client, schema, role) {
   const permissions = {
     WalletLedgerMeta: 'SELECT', WalletLedgerAccount: 'SELECT, INSERT, UPDATE',
     WalletLedgerClaim: 'SELECT, INSERT', WalletLedgerReservation: 'SELECT, INSERT, DELETE',
-    WalletLedgerOperation: 'SELECT, INSERT, UPDATE', WalletLedgerEvent: 'SELECT, INSERT'
+    WalletLedgerOperation: 'SELECT, INSERT, UPDATE', WalletLedgerEvent: 'SELECT, INSERT',
+    PaymentLedgerIntent: 'SELECT, INSERT', PaymentLedgerHead: 'SELECT, INSERT, UPDATE',
+    PaymentLedgerResolution: 'SELECT, INSERT'
   }
   await client.$transaction(async tx => {
     const rows = await tx.$queryRaw`
