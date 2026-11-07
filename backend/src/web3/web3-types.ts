@@ -58,4 +58,5 @@ export interface Web3Config {
   rpcPrimary: string
   rpcSecondary: string
   securityLedgerUrl: string
+  securityLedgerId: string
 }

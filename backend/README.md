@@ -25,7 +25,8 @@
 `docs/`，源码提交并不包含这些文档。验收记录需同时关联源码提交、规格摘要和用例编号。
 Web3 默认关闭。启用必须显式配置 `WEB3_ENABLED=1`、`WEB3_CHAIN_ID=11155111`、
 `WEB3_TOKEN_ADDRESS`、`WEB3_ESCROW_ADDRESS`、两家独立来源的 `WEB3_RPC_PRIMARY`/
-`WEB3_RPC_SECONDARY` 和 `WEB3_SECURITY_LEDGER_URL_FILE`（或互斥的同名无 FILE 变量）。
+`WEB3_RPC_SECONDARY`、固定的 `WEB3_SECURITY_LEDGER_ID` 和 `WEB3_SECURITY_LEDGER_URL_FILE`
+（或互斥的同名无 FILE 变量）。
 仅测试环境允许 `WEB3_PROFILE=local` 与 chainId 31337；不接受主网配置。
 声明不同 RPC 主机只是初步检查，不代表已验证供应商独立性或 finalized 能力。
 
@@ -38,27 +39,74 @@ Web3 默认关闭。启用必须显式配置 `WEB3_ENABLED=1`、`WEB3_CHAIN_ID=1
 它只读取隔离测试库密码，不读取开发 `.env`，不连接 5432 开发库。
 金额和钱包基础测试入口为 `npm run build && node --test tests/web3-policy.test.mjs`。
 
-钱包身份核心目前仅供隔离服务集成测试，尚未接入 HTTP 或网页入口，不能将配置解析通过
-视为钱包功能已启用。`WalletAuthService` 已实现密码独立重新认证、用途隔离的绑定/解绑
-授权、SIWE 登录和旧钱包会话撤销；无密码账户暂时拒绝钱包变更，不把近期 Google/邮箱
-登录 Session 当作操作重新认证凭据。对应的专用 provider 重新认证流程仍待完成。
+钱包身份 HTTP 已接入，默认关闭；页面集成属于 T09。认证流程复用现有 Session、Origin、
+JSON 和 CSRF 校验。绑定须账户独立重新认证及新钱包专用 EIP-712 签名；解绑不依赖旧钱包
+签名。SIWE 仅用于登录，不能作为绑定或收款授权。三类重新认证来源分别记录为
+`password`、`google_oidc`、`email_code`／`email_code_dev`，不把近期登录 Session 当作操作证明。
+钱包会话不能自行添加或替换独立恢复身份，开发邮箱绑定快捷开关也不能绕过此限制。
+凭据绑定操作、目标钱包、账户、会话、签发链／托管合约、绑定版本和恢复代次，最多300秒；创建后续挑战不续期。
+链下 EIP-712 授权使用明确的 `expiresAtMilliseconds`，与接口 ISO 截止精确一致；
+不要将其作为 T04／T06 链上凭证的秒级时间字段。
 
-`security-ledger/schema.sql` 仅用于单独供应的账本存储，不属于业务迁移或业务恢复。
-实例身份需通过构造器固定 ledgerId；缺失、身份不匹配、维护状态或未决操作均阻断使用。
-流程先在独立账本预占，再事务提交业务变更，最后确认账本；业务提交结果不明时保留
-未决记录，不能因旧备份中没有操作记录就撤销预占。已记录的业务提交可通过原请求重试
-补完账本确认，不能重复绑定。历史钱包归属不会因解绑或换绑删除。
+| 接口（均在 `/api/auth/wallet` 下） | 用途 |
+|---|---|
+| `POST /current` | 当前绑定摘要，空 JSON 请求及 CSRF |
+| `POST /reauth/password` | 密码独立重新认证 |
+| `POST /reauth/email/request`、`/verify` | 当前已验证邮箱的专用验证码；不接受任意邮箱替换 |
+| `POST /reauth/google/start`、`GET /reauth/google/callback` | 当前已绑定 Google sub 的专用 OAuth；不登录、不关联新身份 |
+| `POST /challenge`、`/consume` | 创建并消费绑定／解绑授权 |
+| `POST /login/challenge`、`/login/verify` | 公开 SIWE 挑战及验证；成功轮换旧 Session |
 
-从本目录验证核心及原登录回归：
+除公开登录两接口外均需当前 Session；所有 POST 需要 Origin 和 JSON，已登录操作还需
+CSRF。重新认证申请及 action challenge 使用现有 `Idempotency-Key` 格式；同键不同目标
+返回 `IDEMPOTENCY_CONFLICT`。公共和签名消费路径使用现有每IP每分钟10次限制；密码证明
+另受每账户每分钟5次及哈希并发限制。邮箱／Google 申请另按账户每15分钟5次，邮箱验证
+每15分钟10次、单凭据最多5次失败。重试不更新凭据截止，也不重复绑定。
+
+Google Cloud 需另外登记 `${APP_ORIGIN}/api/auth/wallet/reauth/google/callback` 作为授权
+回调，沿用现有 Client ID/Secret；专用回调要求原 Session、state、PKCE、OIDC nonce 和独立
+浏览器 Cookie。Google `sub` 必须仍属于原账户，不按邮箱合并。未配置提供方时拒绝相应入口。
+开发期间仍可使用本地收件箱，通过
+`node scripts/read-dev-email-code.mjs --email name@gmail.com --purpose wallet_reauth` 取码；
+该凭据保留开发来源，不能在真实邮件提供方模式下冒充真实投递认证。
+
+`security-ledger/schema.sql` 不属于业务迁移或业务恢复。API 必须连接独立数据库及专用运行
+角色，不能指向业务数据库或使用账本 owner。初始化前由运维单独创建名为 `wallet_security`
+或 `wallet_security_*` 的数据库和无成员关系的运行角色，再显式执行：
+
+```bash
+WEB3_SECURITY_LEDGER_OWNER_URL_FILE=/path/to/owner-url \
+WEB3_SECURITY_LEDGER_RUNTIME_ROLE=wallet_runtime \
+WEB3_SECURITY_LEDGER_ID=<fixed-uuid> \
+node scripts/provision-wallet-ledger.mjs --confirm-independent-ledger
+```
+
+脚本不会替换已有账本或重置恢复代次；owner连接不放入API配置。API启动校验角色最小权限，
+运行角色仅能读取元数据、追加永久归属和事件，不能修改恢复代次或删除归属；业务角色不能
+读取账本。每次核验要求可写主库，缺失、维护、只读来源、实例身份不匹配或未决操作均阻断
+相关授权。独立备份、耐久性和恢复运维仍须 T10／部署演练验证，不能把两个测试schema当作
+跨故障域保障。
+
+流程先账本预占、再提交业务事务、最后确认账本。未知数据库提交结果保留未决状态；成功
+业务提交可按原请求补完账本确认。并发重试读取原结果，不能撤销其他请求已提交的操作。
+已知回滚也须在账户锁内确认尚未提交、失效挑战后才能释放预占。恢复代次变化后，旧操作
+不得继续完成；恢复必须停写并按 T10 的受控流程核对，禁止凭旧备份中没有记录自行清空预占。
+
+绑定及 SIWE 登录会检查两路RPC的目标链ID、latest与finalized执行代码，拒绝合约钱包和
+委托执行；任一RPC失败、响应不合法、来源矛盾均返回 `WALLET_UNAVAILABLE`。请求5秒超时，
+单响应上限65536字节，不重试到单源。此为当前账户准入检查，不是支付的双源同块 finalized
+核验，也不保证钱包以后不改变执行方式；T06的资金入口仍须独立约束执行路径。
+
+从本目录验证本地身份验收及原登录回归：
 
 ```bash
 npm run check:backend
-node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/wallet-identity.integration.mjs tests/wallet-security-ledger.integration.mjs tests/auth.integration.mjs tests/roles.integration.mjs
+node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/wallet-identity.integration.mjs tests/wallet-security-ledger.integration.mjs tests/wallet-ledger-roles.integration.mjs tests/wallet-reauth.integration.mjs tests/wallet-http.integration.mjs tests/wallet-provision.integration.mjs tests/auth.integration.mjs tests/auth-identity.integration.mjs tests/roles.integration.mjs
 ```
 
-测试使用独立随机业务和账本 schema，仅验证业务投影回退、签名与并发协议；不证明真实
-备份恢复、跨故障域持久性、账本运行角色隔离或实际双源 RPC/EOA 检查已通过。测试中的
-EOA 检查为替身，签名使用临时测试私钥真实生成与验证；不使用真实用户钱包。
+测试仅使用独立55435数据库、随机业务／账本schema及临时虚拟身份。RPC和Google提供方
+使用本地故障替身，签名实际生成和验证；不使用真实用户钱包或真实邮件。真实Sepolia RPC、
+部署、完整灾难恢复、资金操作及网页钱包验收仍属于后续任务，不能记作本地T02测试通过。
 
 ### 现有 Alpha 配置
 

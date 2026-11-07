@@ -114,7 +114,8 @@ export class AuthService {
       if (session.recoveryEpoch !== await this.walletLedger.recoveryEpoch())
         throw new DomainError('UNAUTHENTICATED')
       if (session.authMethod === 'wallet_siwe') {
-        if (!session.walletChainId || !session.walletAddress || session.walletBindingVersion === null)
+        if (!session.walletChainId || !session.walletAddress || session.walletBindingVersion === null ||
+          (this.config.web3 && session.walletChainId !== this.config.web3.chainId))
           throw new DomainError('UNAUTHENTICATED')
         const head = await this.walletLedger.read(session.accountId, session.walletChainId)
         if (head.address !== session.walletAddress || head.bindingVersion !== session.walletBindingVersion)
@@ -132,10 +133,13 @@ export class AuthService {
   }
 
   async issueSession(tx: Transaction, account: Account, cookie: string | undefined,
-    authMethod: AuthMethod, wallet?: { chainId: number; address: string; bindingVersion: number }): Promise<Authenticated> {
+    authMethod: AuthMethod, wallet?: { chainId: number; address: string; bindingVersion: number;
+      recoveryEpoch: string }): Promise<Authenticated> {
     if (authMethod === 'wallet_siwe' && (!wallet || !this.walletLedger))
       throw new DomainError('WALLET_UNAVAILABLE')
     const recoveryEpoch = this.walletLedger ? await this.walletLedger.recoveryEpoch() : undefined
+    if (authMethod === 'wallet_siwe' && wallet!.recoveryEpoch !== recoveryEpoch)
+      throw new DomainError('INVALID_CREDENTIALS')
     const token = randomBytes(32).toString('base64url')
     const tokenHash = digest(token)
     const now = new Date()
@@ -167,7 +171,7 @@ export class AuthService {
     if (auth.account.role !== 'participant') throw new DomainError('FORBIDDEN')
     const credential = await this.client.accountCredential.findUnique({ where: { accountId: auth.account.id } })
     if (!credential) {
-      if (!auth.authMethod || !auth.authenticatedAt ||
+      if (!auth.authMethod || auth.authMethod === 'wallet_siwe' || !auth.authenticatedAt ||
           Date.now() - auth.authenticatedAt.getTime() > 300_000)
         throw new DomainError('INVALID_CREDENTIALS')
       return

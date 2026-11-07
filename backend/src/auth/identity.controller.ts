@@ -113,7 +113,7 @@ export class IdentityController {
   @Post('email/bind/request') @HttpCode(202) @Header('Cache-Control', 'no-store')
   async emailBindRequest(@Body() input: EmailBindRequestInput, @Req() request: AuthRequest) {
     if (!this.email.enabled) throw new DomainError('EMAIL_UNAVAILABLE')
-    if (!this.auth.config.devEmailBindSkipReauth)
+    if (!this.auth.config.devEmailBindSkipReauth || request.auth.authMethod === 'wallet_siwe')
       await this.auth.requireRecentAccountProof(request.auth, input.password, request.ip)
     await this.email.request(input.email, input.locale ?? 'zh-CN', request.ip,
       'bind', request.auth.account.id)

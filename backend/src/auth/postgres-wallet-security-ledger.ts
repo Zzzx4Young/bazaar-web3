@@ -22,10 +22,11 @@ export class PostgresWalletSecurityLedger implements WalletSecurityLedger {
   }
 
   private async epoch(tx: Transaction) {
-    const [meta] = await tx.$queryRaw<{ ledgerId: string; recoveryEpoch: string; maintenance: boolean }[]>`
-      SELECT "ledgerId", "recoveryEpoch", "maintenance" FROM "WalletLedgerMeta"
-      WHERE "singleton" = true FOR SHARE`
-    if (!meta || meta.ledgerId !== this.expectedLedgerId || meta.maintenance)
+    const [meta] = await tx.$queryRaw<{ ledgerId: string; recoveryEpoch: string; maintenance: boolean; writable: boolean }[]>`
+      SELECT "ledgerId", "recoveryEpoch", "maintenance", (NOT pg_is_in_recovery()
+        AND current_setting('transaction_read_only') = 'off') AS writable FROM "WalletLedgerMeta"
+      WHERE "singleton" = true`
+    if (!meta || meta.ledgerId !== this.expectedLedgerId || meta.maintenance || !meta.writable)
       throw new DomainError('WALLET_UNAVAILABLE')
     return meta.recoveryEpoch
   }
@@ -93,6 +94,7 @@ export class PostgresWalletSecurityLedger implements WalletSecurityLedger {
       (change.operation === 'unbind' && change.address)) throw new DomainError('INVALID_INPUT')
     return this.available(async (tx) => {
       const recoveryEpoch = await this.epoch(tx)
+      if (change.expectedRecoveryEpoch !== recoveryEpoch) throw new DomainError('WALLET_UNAVAILABLE')
       await this.lock(tx, `account:${change.chainId}:${change.accountId}`)
       const prior = await this.operation(tx, change.operationId)
       if (prior) {
@@ -145,6 +147,7 @@ export class PostgresWalletSecurityLedger implements WalletSecurityLedger {
         if (commit) throw new DomainError('STATE_CONFLICT')
         return { ...state, recoveryEpoch }
       }
+      if (currentOp.change.expectedRecoveryEpoch !== recoveryEpoch) throw new DomainError('WALLET_UNAVAILABLE')
       if (state.pendingOperationId !== operationId || state.revision !== op.change.expectedRevision)
         throw new DomainError('WALLET_UNAVAILABLE')
       const c = currentOp.change

@@ -3,5 +3,14 @@
   "specManifestSha256": "9ee7535a9ab1bf4c2fba3e5361a60ddb6ef295095b55a570667efcbba9726ef0",
   "implementationBase": "25fe4fcabd07e3120b83ef73fd16fc8720bf780e",
   "specDocumentsTracked": false,
-  "acceptanceStatus": "pending"
+  "acceptanceStatus": "pending",
+  "localAcceptance": {
+    "runId": "2026-11-07-t02-local-acceptance-r1",
+    "task": "T02",
+    "status": "passed",
+    "evidenceDirectory": "docs/superpowers/evidence/2026-11-07-t02-local-acceptance-r1",
+    "backendCheckPassed": 131,
+    "databaseHttpPassed": 59,
+    "actualSepoliaRpcValidated": false
+  }
 }

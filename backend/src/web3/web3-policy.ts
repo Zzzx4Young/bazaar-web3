@@ -80,6 +80,8 @@ export function readWeb3Config(env: NodeJS.ProcessEnv): Web3Config | null {
     ? readFileSync(env.WEB3_SECURITY_LEDGER_URL_FILE, 'utf8').trim() : env.WEB3_SECURITY_LEDGER_URL
   if (!env.WEB3_TOKEN_ADDRESS || !env.WEB3_ESCROW_ADDRESS || !env.WEB3_RPC_PRIMARY ||
     !env.WEB3_RPC_SECONDARY || !ledger) throw new Error('Incomplete Web3 configuration')
+  if (!env.WEB3_SECURITY_LEDGER_ID || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(env.WEB3_SECURITY_LEDGER_ID))
+    throw new Error('Invalid Web3 security ledger identity')
   const endpoint = (value: string) => {
     const url = new URL(value)
     if (url.username || url.password || url.hash ||
@@ -95,5 +97,6 @@ export function readWeb3Config(env: NodeJS.ProcessEnv): Web3Config | null {
     ledgerUrl.hash) throw new Error('Invalid Web3 security ledger URL')
   return { chainId, tokenDecimals: 6, token: normalizeWalletAddress(env.WEB3_TOKEN_ADDRESS),
     escrow: normalizeWalletAddress(env.WEB3_ESCROW_ADDRESS), rpcPrimary: primary.toString(),
-    rpcSecondary: secondary.toString(), securityLedgerUrl: ledger }
+    rpcSecondary: secondary.toString(), securityLedgerUrl: ledger,
+    securityLedgerId: env.WEB3_SECURITY_LEDGER_ID.toLowerCase() }
 }

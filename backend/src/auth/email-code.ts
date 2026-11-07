@@ -3,6 +3,7 @@ import { DomainError } from '../common/domain-error.js'
 
 export type EmailCodePurpose = 'register' | 'login' | 'bind'
 export type EmailCodeLocale = 'zh-CN' | 'en'
+export type EmailMessagePurpose = EmailCodePurpose | 'wallet_reauth'
 
 export interface EmailCodeMessage {
   subject: string
@@ -15,7 +16,7 @@ export interface EmailSender {
   send(input: {
     to: string
     locale: EmailCodeLocale
-    purpose: EmailCodePurpose
+    purpose: EmailMessagePurpose
     code: string
     challengeId: string
   }): Promise<void>
@@ -47,7 +48,7 @@ export function codeDigest(
   key: Buffer,
   challengeId: string,
   email: string,
-  purpose: EmailCodePurpose,
+  purpose: EmailMessagePurpose,
   code: string
 ): string {
   return createHmac('sha256', key)
@@ -57,12 +58,13 @@ export function codeDigest(
 
 export function emailCodeMessage(
   locale: EmailCodeLocale,
-  purpose: EmailCodePurpose,
+  purpose: EmailMessagePurpose,
   code: string
 ): EmailCodeMessage {
   const zh = locale === 'zh-CN'
-  const action = zh ? (purpose === 'bind' ? '绑定邮箱' : purpose === 'register' ? '注册' : '登录') :
-    (purpose === 'bind' ? 'link your email' : purpose === 'register' ? 'sign up' : 'sign in')
+  const action = purpose === 'wallet_reauth' ? (zh ? '钱包操作重新认证' : 'reauthenticate a wallet action') :
+    zh ? (purpose === 'bind' ? '绑定邮箱' : purpose === 'register' ? '注册' : '登录') :
+      (purpose === 'bind' ? 'link your email' : purpose === 'register' ? 'sign up' : 'sign in')
   const subject = zh ? `Bazaar Web3 ${action}验证码` : `Bazaar Web3 code to ${action}`
   const text = zh
     ? `你的验证码是 ${code}，5 分钟内有效，仅可使用一次。若非本人操作，请忽略此邮件。`

@@ -7,6 +7,14 @@ import { DatabaseService } from './database/database.service.js'
 import { HealthController } from './health/health.controller.js'
 import { AuthService } from './auth/auth.service.js'
 import { AuthController } from './auth/auth.controller.js'
+import { WalletIdentityController } from './auth/wallet-identity.controller.js'
+import { WalletAuthService } from './auth/wallet-auth.service.js'
+import { WalletReauthService } from './auth/wallet-reauth.service.js'
+import { PostgresWalletSecurityLedger } from './auth/postgres-wallet-security-ledger.js'
+import type { WalletSecurityLedger } from './auth/wallet-security-ledger.js'
+import type { EvmAddress } from './web3/web3-types.js'
+import { createEoaChecker } from './auth/wallet-account-type.js'
+import { assertWalletLedgerGrants } from './auth/wallet-ledger-grants.js'
 import { IdentityController } from './auth/identity.controller.js'
 import { EmailAuthService } from './auth/email-auth.service.js'
 import { GoogleAuthService } from './auth/google-auth.service.js'
@@ -41,10 +49,30 @@ export async function createApp(
   config: AppConfig,
   logger: false | undefined = undefined,
   dependencies: { loadRates?: RateLoader; logRequest?: RequestLogSink | false;
-    mediaStore?: GarageObjectStore; emailSender?: EmailSender; googleClient?: GoogleClient } = {}
+    mediaStore?: GarageObjectStore; emailSender?: EmailSender; googleClient?: GoogleClient;
+    walletLedger?: WalletSecurityLedger; walletEoaCheck?: (address: EvmAddress) => Promise<void>;
+    walletGoogleClient?: GoogleClient } = {}
 ) {
+  if (config.web3 && !dependencies.walletLedger) {
+    const business = new URL(config.databaseUrl), security = new URL(config.web3.securityLedgerUrl)
+    if (business.hostname === security.hostname && (business.port || '5432') === (security.port || '5432') &&
+      business.pathname === security.pathname) throw new Error('Wallet ledger requires an independent database')
+  }
   const database = new DatabaseService(config.databaseUrl, config.databasePool)
-  const auth = new AuthService(database.client, config)
+  const ledgerDatabase = config.web3 && !dependencies.walletLedger
+    ? new DatabaseService(config.web3.securityLedgerUrl, { ...config.databasePool, max: 2 }) : null
+  const ledger = config.web3 ? dependencies.walletLedger ?? new PostgresWalletSecurityLedger(
+    ledgerDatabase!.client, config.web3.securityLedgerId) : undefined
+  const auth = new AuthService(database.client, config, ledger)
+  const wallets = config.web3 && ledger ? new WalletAuthService(database.client, auth, ledger, {
+    chainId: config.web3.chainId, escrow: config.web3.escrow, appOrigin: config.appOrigin,
+    assertEoa: dependencies.walletEoaCheck ?? createEoaChecker(config.web3)
+  }) : null
+  const walletGoogle = dependencies.walletGoogleClient ?? (config.googleOAuth ? new GoogleOidcClient({
+    ...config.googleOAuth, redirectUri: `${config.appOrigin}/api/auth/wallet/reauth/google/callback`
+  }) : null)
+  const walletReauth = wallets ? new WalletReauthService(database.client, auth, wallets, config,
+    dependencies.emailSender ?? null, walletGoogle) : null
   const emailAuth = new EmailAuthService(database.client, config, auth, dependencies.emailSender ?? null)
   const googleAuth = new GoogleAuthService(database.client, config, auth,
     dependencies.googleClient ?? (config.googleOAuth ? new GoogleOidcClient(config.googleOAuth) : null))
@@ -101,6 +129,7 @@ export async function createApp(
       controllers: [
         HealthController,
         AuthController,
+        WalletIdentityController,
         IdentityController,
         ListingController, ListingReviewController,
         OrderController,
@@ -113,6 +142,9 @@ export async function createApp(
       providers: [
         { provide: DatabaseService, useValue: database },
         { provide: AuthService, useValue: auth },
+        { provide: WalletAuthService, useValue: wallets },
+        { provide: WalletReauthService, useValue: walletReauth },
+        ...(ledgerDatabase ? [{ provide: 'WalletLedgerDatabase', useValue: ledgerDatabase }] : []),
         { provide: EmailAuthService, useValue: emailAuth },
         { provide: GoogleAuthService, useValue: googleAuth },
         { provide: ListingService, useValue: listings },
@@ -151,6 +183,8 @@ export async function createApp(
   app.enableShutdownHooks()
   try {
     await app.init()
+    if (ledgerDatabase) await assertWalletLedgerGrants(ledgerDatabase.client)
+    if (ledger) await ledger.recoveryEpoch()
     await app.getHttpAdapter().getInstance().ready()
     return app
   } catch (error) {

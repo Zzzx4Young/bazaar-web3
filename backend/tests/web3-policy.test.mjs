@@ -36,13 +36,22 @@ test('A18: Web3 is off by default; enabled Sepolia cannot silently use mainnet o
   const config = readWeb3Config({ WEB3_ENABLED: '1', WEB3_CHAIN_ID: '11155111',
     WEB3_TOKEN_ADDRESS: address, WEB3_ESCROW_ADDRESS: '0x' + '2'.repeat(40),
     WEB3_RPC_PRIMARY: 'https://rpc-a.invalid', WEB3_RPC_SECONDARY: 'https://rpc-b.invalid',
+    WEB3_SECURITY_LEDGER_ID: '5f37012e-4964-4d68-853f-efabc5568a0c',
     WEB3_SECURITY_LEDGER_URL: 'postgresql://ledger@127.0.0.1:55435/wallet_security' })
   assert.equal(config.chainId, 11155111)
   assert.equal(config.tokenDecimals, 6)
   assert.throws(() => readWeb3Config({ WEB3_ENABLED: '1', WEB3_CHAIN_ID: '11155111',
     WEB3_TOKEN_ADDRESS: address, WEB3_ESCROW_ADDRESS: '0x' + '2'.repeat(40),
     WEB3_RPC_PRIMARY: 'https://same.invalid/a', WEB3_RPC_SECONDARY: 'https://same.invalid/b',
+    WEB3_SECURITY_LEDGER_ID: '5f37012e-4964-4d68-853f-efabc5568a0c',
     WEB3_SECURITY_LEDGER_URL: 'postgresql://ledger@127.0.0.1:55435/wallet_security' }), /independent/)
+})
+
+test('A27: enabled wallets require an explicitly pinned security ledger identity', () => {
+  assert.throws(() => readWeb3Config({ WEB3_ENABLED: '1', WEB3_CHAIN_ID: '11155111',
+    WEB3_TOKEN_ADDRESS: address, WEB3_ESCROW_ADDRESS: '0x' + '2'.repeat(40),
+    WEB3_RPC_PRIMARY: 'https://rpc-a.invalid', WEB3_RPC_SECONDARY: 'https://rpc-b.invalid',
+    WEB3_SECURITY_LEDGER_URL: 'postgresql://ledger@127.0.0.1:55435/wallet_security' }), /ledger identity/)
 })
 
 test('A04/A20: replacement intents cannot change the immutable order tuple', () => {

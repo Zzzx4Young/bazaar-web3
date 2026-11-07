@@ -20,6 +20,7 @@ export interface WalletSecurityChange {
   chainId: number
   expectedRevision: string
   expectedBindingVersion: number
+  expectedRecoveryEpoch: string
   address: EvmAddress | null
   payout: WalletSecuritySnapshot['payout']
   requestHash: string

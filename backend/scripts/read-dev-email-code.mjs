@@ -7,9 +7,9 @@ const emailArg = args[0] === '--email' ? args[1] : undefined
 const purposeArg = args[2] === '--purpose' ? args[3] : undefined
 const validArgs = Boolean(emailArg) && (args.length === 2 ||
   (args.length === 4 && args[2] === '--purpose' &&
-    ['register', 'login', 'bind'].includes(purposeArg)))
+    ['register', 'login', 'bind', 'wallet_reauth'].includes(purposeArg)))
 if (!validArgs) {
-  console.error('Usage: node scripts/read-dev-email-code.mjs --email name@gmail.com [--purpose register|login|bind]')
+  console.error('Usage: node scripts/read-dev-email-code.mjs --email name@gmail.com [--purpose register|login|bind|wallet_reauth]')
   process.exitCode = 1
 } else {
   try {

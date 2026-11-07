@@ -45,3 +45,18 @@ test('local code reader selects the requested Gmail recipient and ignores expire
     assert.doesNotMatch(incomplete.stdout + incomplete.stderr, /111111|222222|333333/)
   } finally { rmSync(dir, { recursive: true, force: true }) }
 })
+
+test('local code reader can explicitly select a wallet reauthentication code', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'bazaar-wallet-email-reader-'))
+  try {
+    const inbox = join(dir, 'inbox')
+    writeFileSync(inbox, JSON.stringify({ email: 'wallet@gmail.com', code: '444444',
+      purpose: 'wallet_reauth', createdAt: new Date().toISOString() }) + '\n')
+    const result = spawnSync(process.execPath, ['scripts/read-dev-email-code.mjs', '--email',
+      'wallet@gmail.com', '--purpose', 'wallet_reauth'], { cwd: new URL('..', import.meta.url),
+      encoding: 'utf8', env: { ...process.env, EMAIL_CODE_DEV_INBOX_FILE: inbox } })
+    assert.equal(result.status, 0, result.stderr)
+    assert.match(result.stdout, /Purpose: wallet_reauth/)
+    assert.match(result.stdout, /444444/)
+  } finally { rmSync(dir, { recursive: true, force: true }) }
+})
