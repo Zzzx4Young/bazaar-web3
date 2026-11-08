@@ -388,3 +388,59 @@ node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/testne
 T04 的 PaymentChainObserver 是可信服务端接口，本地使用双源故障替身；T07生产观察器尚未接入，默认null，因此实际取消核对、替换和释放保持不可用，不以服务器倒计时或单源结果放行。T06须冻结相同摘要与ABI并验证撤销/入金合约竞态；这里的两种结果测试不代表真实链上交易竞争已验证。退款后库存代次推进及完整恢复归后续任务，T04只释放从未入金的取消订单。
 
 验证：先 npm run check:backend，再通过 scripts/with-web3-test-db.mjs 运行 tests/payment-intent.integration.mjs；具体每项故障/并发/权限测试及日志见本地 T04 验收目录。尚无签发依据的旧测试网快照不能被自动补成可付款意图，保持保护以待受控恢复。
+
+### Web3 T05：私有文件与隔离检查（本地）
+
+本阶段新增独立私有文件链路，默认不启用；现有图片、Alpha交付引用和启动方式不变。
+`ready`只表示本次检查通过且版本不可覆盖，不表示已发布、完成链上登记或允许买家下载。
+真正的付款+登记双重finalized下载门槛在T08接入，文件保留／备份／删除台账恢复在T10落实。
+
+认证JSON API：
+
+- `POST /web3/private-files/upload-intents`：提交 orderId、purpose（delivery/evidence）、filename、contentType、byteSize，以及 Idempotency-Key；原子预占容量，返回敏感的一次性uploadToken及独立uploadUrl。
+- `POST /web3/private-files/:id/complete`：空JSON，按固定uploadId幂等进入检查队列，不重复计数、不续期。
+- `POST /web3/private-files/:id/status`：只返回上传者自己的元数据和状态；不返回对象密钥、原始存储URL或下载凭证。
+
+上述接口要求Session、Origin、CSRF及限流。交付上传仅订单卖家；证据附件允许订单双方，容量计入提交者账户。只有测试网数字订单可用。证据互见、正式发布和复核授权属于T08，附件ready不会自动公开。
+
+独立上传网关只接受PUT `/uploads/:id`、精确Origin和Bearer uploadToken，拒绝Cookie；二进制流不进入1MB JSON API，不使用无限制presigned PUT。文件源和网站使用不同主机名（本地localhost网站对应127.0.0.1网关），浏览器须省略credentials；GET不提供内容。T08下载还需attachment/nosniff与独立文件域验证，不能把本阶段无GET入口等同完整下载能力。
+
+允许PDF、PNG、JPEG（20,000,000 bytes）与ZIP（500,000,000 bytes），每版一个对象；十进制单位。账户2GB、最多2个有效未完成意图、滚动每小时10次，意图原期限24小时；幂等重读不计数或续期。全局默认8GB／8个活动上传／每分钟20个新意图，检查并发1、队列4、排队最长300秒。预算指纹持久保存，多实例不能以不同预算悄悄绕过。历史ready文件继续计费，不因容量不足被删。
+
+上传完成前仅有私有隔离对象。Garage适配器用最多8MB内存分片流式接收，入站累计字节，超声明拒绝；最终完成持有原上传状态锁。版本保存唯一opaque对象键、逻辑objectVersion、摘要、字节数、检查依据与固定用途；二次读取核对摘要后创建只读版本，不把同一内容复制成公开图片。该不可覆盖保证来自服务端一次写入协议与私有bucket权限，不宣称Garage提供WORM／S3对象版本锁。
+
+配额在创建意图时预占；成功检查转换实际占用，不重复计费；失败、残留分片及临时对象只在中止和删除得到确认后释放。接收者记录PID、启动标识与boot/PID-namespace，未Ack停止或未证明同一进程退出前，清理保留容量；迟到的初始化／完成不能在释放后恢复对象。未知或远端owner不猜测已死。若停止Ack落库失败而owner仍存活，需恢复该owner确认或受控停止，不承诺自动恢复。
+
+检查在单独只读、无网、无业务密钥的容器执行，明确4,000,000,000字节内存、无额外swap、1CPU、32PID、64,000,000字节临时tmpfs。完整任务120秒包含对象暂存、解析／AV、摘要重读；Docker仅获剩余预算。超时先取消读取并终止容器进程树，持久取消与owner Ack/精确本地退出共同防止迟到启动；清理scratch后才释放名额。宿主暂存受单文件500MB及全局检查并发约束；物理容量和真实部署预算仍需验收。
+
+结构检查与恶意软件检查分别完成后才ready：
+
+- Python标准ZIP/zlib逐条实际解压计量，CRC、结束标记、本地/中央头一致性校验；不解包执行源码。
+- ZIP仅接受Stored/Deflate和明确解析的常见时间、UID/GID、Unicode路径额外字段；Unicode路径必须与已验证主文件名一致，拒绝ZIP64及未知额外字段。拒绝加密、嵌套压缩、路径穿越、符号链接/特殊文件，10,000条目、单条500MB、总2GB及100:1压缩比硬上限。压缩比不计注释/填充。
+- Pillow完整解码PNG/JPEG，像素上限40M；qpdf结构检查并拒绝加密和主动内容。更复杂或不支持的文件保守拒绝，待真实样本调整，不能称为格式全兼容。
+- ClamAV扫描原文件及容器内成员，病毒库超过7天或引擎/完整扫描不可用则拒绝。运行时不联网更新；受控构建刷新签名库并固定新镜像digest。ClamAV格式归一化也消耗递归深度，本地引擎预算10不等于允许嵌套ZIP；预算超限单独记MALWARE_SCAN_LIMIT，不当作clean或实际检出病毒。
+
+上传／检查／删除审计追加保存。已检查版本、检查记录和审计仅SELECT/INSERT；运行角色不能改声明字段、对象键、用途或维护门禁。维护与完整恢复仍需运维授权。失败未完成文件清理不同于90/180天历史保留，不能误删ready、履约或争议引用。
+
+本地构建及验收（仅使用专用隔离数据库和随机Garage项目，不迁移开发库）：
+
+```bash
+sudo docker build -t bazaar-web3-private-check:t05 backend/file-checker
+cd backend
+npm run check:backend
+node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/private-file.integration.mjs
+PRIVATE_FILE_CHECK_IMAGE=bazaar-web3-private-check:t05 node scripts/with-private-file-test.mjs node scripts/with-web3-test-db.mjs node --test tests/private-file-garage.integration.mjs
+```
+
+资源故障测试还需要临时control镜像，具体生成输入、镜像ID、命令及逐项结果保存在本地验收记录；默认未配置镜像的资源/存储测试会明确skip，不能计入通过。
+
+手工启动需先准备专用隔离环境、迁移及runtime授权，私有bucket使用独立凭据，再通过受保护的PRIVATE_FILE_CONFIG_FILE提供uploadOrigin、endpoint、bucket、凭据文件路径、uploadKeyFile（32字节hex）、scratchRoot、budget和checker配置。所有秘密文件权限0600，不提交内容；checker.image必须为实际不可变sha256标识，资源预算由配置校验。不要复用开发库.env或把Docker socket／业务密钥挂进检查容器。
+
+```bash
+node --env-file=/absolute/path/to/isolated-private.env scripts/run-private-upload-gateway.mjs
+node --env-file=/absolute/path/to/isolated-private.env scripts/run-file-check-worker.mjs
+```
+
+当前启动脚本仅支持本地loopback网关；公开独立文件域、TLS入口与部署身份属于部署门禁。检查监督器使用可信的容器管理权限，检查容器自身没有该权限。
+
+本地已覆盖合成格式、恶意/畸形ZIP、真实ClamAV标准无害测试样本、10MB实际Garage流式流程和资源故障；不代表代表性500MB源码包、正式文件域、生产并发或文件绝对安全。另有本轮自建Node worker的SIGKILL后恢复测试；没有据此宣称T04全部资金进程崩溃、数据库连接中断、跨节点恢复或RPO/RTO已通过。

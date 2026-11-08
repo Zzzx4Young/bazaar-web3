@@ -15,7 +15,7 @@ export async function grantRuntime(client, schema, role) {
     'OrderMediaSnapshot',
     'AccountIdentityEvent',
     'ListingReviewEvent'
-    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation', 'ListingTestnetPrice', 'TestnetOrderSnapshot', 'PaymentOrderTerms', 'PaymentIntent', 'PaymentSignature', 'PaymentIntentRequest'
+    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation', 'ListingTestnetPrice', 'TestnetOrderSnapshot', 'PaymentOrderTerms', 'PaymentIntent', 'PaymentSignature', 'PaymentIntentRequest', 'PrivateFileVersion', 'PrivateFileCheck', 'PrivateFileAudit'
   ]
   const mutable = [
     'Account',
@@ -36,7 +36,7 @@ export async function grantRuntime(client, schema, role) {
     'GoogleOAuthAttempt',
     'MediaAsset',
     'ListingMedia'
-    , 'WalletIdentity', 'WalletChallenge', 'SellerPayoutConfirmation', 'TestnetStock', 'PaymentIntentState'
+    , 'WalletIdentity', 'WalletChallenge', 'SellerPayoutConfirmation', 'TestnetStock', 'PaymentIntentState', 'PrivateUpload', 'PrivateFileQuota', 'PrivateFileGlobal'
   ]
   await client.$transaction(async (tx) => {
     const roles = await tx.$queryRaw`
@@ -62,6 +62,10 @@ export async function grantRuntime(client, schema, role) {
           : mutable.includes(table) ? 'SELECT, INSERT, UPDATE' : 'SELECT, INSERT'
       await tx.$executeRawUnsafe(`GRANT ${permissions} ON "${schema}"."${table}" TO "${role}"`)
     }
+    await tx.$executeRawUnsafe(`REVOKE UPDATE ON "${schema}"."PrivateUpload", "${schema}"."PrivateFileQuota", "${schema}"."PrivateFileGlobal" FROM "${role}"`)
+    await tx.$executeRawUnsafe(`GRANT UPDATE ("status","actualBytes","sha256","queuedAt","checkStartedAt","checkId","failureReason","cleanedAt","receiveOwnerScope","receiveOwnerPid","receiveOwnerStart","receiveStopped","checkOwnerScope","checkOwnerPid","checkOwnerStart","checkOwnerStopped","checkCancelRequested","checkDeadlineAt") ON "${schema}"."PrivateUpload" TO "${role}"`)
+    await tx.$executeRawUnsafe(`GRANT UPDATE ("reservedBytes","usedBytes","activeUploads") ON "${schema}"."PrivateFileQuota" TO "${role}"`)
+    await tx.$executeRawUnsafe(`GRANT UPDATE ("reservedBytes","usedBytes","activeUploads","queued","checking") ON "${schema}"."PrivateFileGlobal" TO "${role}"`)
     await tx.$executeRawUnsafe(`REVOKE UPDATE ON "${schema}"."TestnetStock" FROM "${role}"`)
     await tx.$executeRawUnsafe(`GRANT UPDATE ("activeOrderId", "lastOrderId", "state") ON "${schema}"."TestnetStock" TO "${role}"`)
     await tx.$executeRawUnsafe(`GRANT SELECT ON "${schema}"."AccountCredential" TO "${role}"`)

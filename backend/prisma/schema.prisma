@@ -670,3 +670,87 @@ model PaymentIntentRequest {
   intentId String @db.Uuid
   @@id([actorId, operation, key])
 }
+
+model PrivateFileQuota {
+  accountId String @id @db.Uuid
+  reservedBytes BigInt @default(0)
+  usedBytes BigInt @default(0)
+  activeUploads Int @default(0)
+}
+model PrivateFileGlobal {
+  singleton Boolean @id @default(true)
+  policyHash String @db.Char(64)
+  reservedBytes BigInt @default(0)
+  usedBytes BigInt @default(0)
+  activeUploads Int @default(0)
+  queued Int @default(0)
+  checking Int @default(0)
+  maintenance Boolean @default(false)
+}
+model PrivateUpload {
+  id String @id @default(uuid()) @db.Uuid
+  accountId String @db.Uuid
+  orderId String @db.Uuid
+  purpose String
+  key String
+  requestHash String @db.Char(64)
+  tokenHash String @db.Char(64)
+  filename String
+  contentType String
+  declaredBytes Int
+  objectKey String @unique
+  createdAt DateTime @db.Timestamptz(6)
+  expiresAt DateTime @db.Timestamptz(6)
+  status String @default("uploading")
+  actualBytes Int?
+  sha256 String? @db.Char(64)
+  queuedAt DateTime? @db.Timestamptz(6)
+  checkStartedAt DateTime? @db.Timestamptz(6)
+  checkId String? @unique @db.Uuid
+  receiveOwnerScope String? @db.Char(64)
+  receiveOwnerPid Int?
+  receiveOwnerStart String?
+  receiveStopped Boolean @default(true)
+  checkOwnerScope String? @db.Char(64)
+  checkOwnerPid Int?
+  checkOwnerStart String?
+  checkOwnerStopped Boolean @default(false)
+  checkCancelRequested Boolean @default(false)
+  checkDeadlineAt DateTime? @db.Timestamptz(6)
+  failureReason String?
+  cleanedAt DateTime? @db.Timestamptz(6)
+  @@unique([accountId, key])
+  @@index([accountId, createdAt])
+  @@index([status, createdAt])
+}
+model PrivateFileVersion {
+  id String @id @default(uuid()) @db.Uuid
+  uploadId String @unique @db.Uuid
+  orderId String @db.Uuid
+  ownerId String @db.Uuid
+  purpose String
+  objectKey String @unique
+  objectVersion String @db.Uuid
+  sha256 String @db.Char(64)
+  byteSize Int
+  contentType String
+  filename String
+  checkId String @unique @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([orderId, purpose])
+}
+model PrivateFileCheck {
+  id String @id @db.Uuid
+  uploadId String @db.Uuid
+  report Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([uploadId])
+}
+model PrivateFileAudit {
+  id String @id @default(uuid()) @db.Uuid
+  uploadId String @db.Uuid
+  action String
+  details Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([uploadId, createdAt])
+}

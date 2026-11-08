@@ -21,6 +21,10 @@ import { PaymentIntentController } from './web3/payment-intent.controller.js'
 import { PostgresPaymentJournal, type PaymentJournal } from './web3/payment-journal.js'
 import { readPaymentSigner, type PaymentSigner } from './web3/payment-signer.js'
 import type { PaymentChainObserver } from './web3/payment-observer.js'
+import { PrivateFileController } from './delivery-files/private-file.controller.js'
+import { PrivateFileService } from './delivery-files/upload.service.js'
+import { GaragePrivateObjectStore, type PrivateObjectStore } from './delivery-files/object-store.js'
+import type { PrivateFileBudget } from './delivery-files/quota.service.js'
 import { TestnetController } from './web3/testnet.controller.js'
 import { IdentityController } from './auth/identity.controller.js'
 import { EmailAuthService } from './auth/email-auth.service.js'
@@ -59,7 +63,7 @@ export async function createApp(
     mediaStore?: GarageObjectStore; emailSender?: EmailSender; googleClient?: GoogleClient;
     walletLedger?: WalletSecurityLedger; walletEoaCheck?: (address: EvmAddress) => Promise<void>;
     walletGoogleClient?: GoogleClient; paymentSigner?: PaymentSigner;
-    paymentJournal?: PaymentJournal; paymentObserver?: PaymentChainObserver } = {}
+    paymentJournal?: PaymentJournal; paymentObserver?: PaymentChainObserver; privateFiles?: {store:PrivateObjectStore;budget:PrivateFileBudget;uploadKey:Buffer} } = {}
 ) {
   if (config.web3 && !dependencies.walletLedger) {
     const business = new URL(config.databaseUrl), security = new URL(config.web3.securityLedgerUrl)
@@ -98,6 +102,11 @@ export async function createApp(
     database.client,
     dependencies.mediaStore ?? (config.mediaStore ? new GarageObjectStore(config.mediaStore) : null)
   )
+  const privateFileConfig=config.privateFiles
+  const privateFiles=dependencies.privateFiles ? new PrivateFileService(database.client,
+    dependencies.privateFiles.store,dependencies.privateFiles.budget,dependencies.privateFiles.uploadKey)
+    : privateFileConfig ? new PrivateFileService(database.client,new GaragePrivateObjectStore(privateFileConfig.store),
+      privateFileConfig.budget,privateFileConfig.uploadKey) : null
   const telemetry = new RequestTelemetry()
   const admission = new RequestAdmission(config.maxInFlightRequests)
   const requestLogSink =
@@ -146,7 +155,7 @@ export async function createApp(
         HealthController,
         AuthController,
         WalletIdentityController,
-        TestnetController, PaymentIntentController,
+        TestnetController, PaymentIntentController, PrivateFileController,
         IdentityController,
         ListingController, ListingReviewController,
         OrderController,
@@ -167,6 +176,7 @@ export async function createApp(
         { provide: ListingService, useValue: listings },
         { provide: SellerPayoutService, useValue: sellerPayout },
         { provide: PaymentIntentService, useValue: payments },
+        { provide: PrivateFileService, useValue: privateFiles },
         { provide: MediaService, useValue: media }
       ]
     },

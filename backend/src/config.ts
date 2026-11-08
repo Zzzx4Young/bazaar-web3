@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { isIP } from 'node:net'
 import { type GarageStoreConfig } from './media/garage-object-store.js'
 import { readMaxInFlightRequests } from './common/request-policy.js'
+import { readPrivateFileConfig,type PrivateFileConfig } from './delivery-files/config.js'
 import { readWeb3Config } from './web3/web3-policy.js'
 import type { Web3Config } from './web3/web3-types.js'
 import {
@@ -12,6 +13,7 @@ import {
 
 export interface AppConfig {
   web3: Web3Config | null
+  privateFiles: PrivateFileConfig | null
   databaseUrl: string
   listingCommitmentPolicy: 'compat' | 'enforce'
   host: string
@@ -164,6 +166,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   return {
     databaseUrl: url.toString(),
     web3: readWeb3Config(env),
+    privateFiles: readPrivateFileConfig(env, env.APP_ORIGIN ?? 'http://localhost:3000'),
     listingCommitmentPolicy,
     host: env.HOST ?? '127.0.0.1',
     port,

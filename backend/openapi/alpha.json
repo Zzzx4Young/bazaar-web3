@@ -8397,6 +8397,624 @@
           }
         }
       }
+    },
+    "/web3/private-files/upload-intents": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        }
+      ],
+      "post": {
+        "operationId": "createPrivateFileUpload",
+        "summary": "Atomically reserve quota and issue a one-use 24-hour bounded upload credential. Does not publish files.",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "HTTP 400; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "401": {
+            "description": "HTTP 401; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "403": {
+            "description": "HTTP 403; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "409": {
+            "description": "IDEMPOTENCY_CONFLICT or STATE_CONFLICT",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "HTTP 415; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "429": {
+            "description": "FILE_LIMIT_REACHED or RATE_LIMITED; quota and rolling/global limits shared across instances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "500": {
+            "description": "HTTP 500; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "FILE_UNAVAILABLE; do not assume bytes were discarded or reserved capacity released",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateUploadCredential"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found or not accessible to this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Must exactly match configured APP_ORIGIN. Missing/null origin rejected.",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivateFileCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web3/private-files/{id}/complete": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
+        {
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "completePrivateFileUpload",
+        "summary": "Idempotently enqueue this fixed upload for isolated checking; never activates buyer access.",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "HTTP 400; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "401": {
+            "description": "HTTP 401; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "403": {
+            "description": "HTTP 403; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "409": {
+            "description": "IDEMPOTENCY_CONFLICT or STATE_CONFLICT",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "HTTP 415; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "429": {
+            "description": "FILE_LIMIT_REACHED or RATE_LIMITED; quota and rolling/global limits shared across instances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "500": {
+            "description": "HTTP 500; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "FILE_UNAVAILABLE; do not assume bytes were discarded or reserved capacity released",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateFileStatus"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found or not accessible to this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Must exactly match configured APP_ORIGIN. Missing/null origin rejected.",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletEmptyInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web3/private-files/{id}/status": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/RequestId"
+        },
+        {
+          "in": "path",
+          "name": "id",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "readPrivateFileUpload",
+        "summary": "Read uploader-owned metadata only. ready is not publication or permission to download.",
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "HTTP 400; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "401": {
+            "description": "HTTP 401; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "403": {
+            "description": "HTTP 403; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "409": {
+            "description": "IDEMPOTENCY_CONFLICT or STATE_CONFLICT",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "HTTP 415; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "429": {
+            "description": "FILE_LIMIT_REACHED or RATE_LIMITED; quota and rolling/global limits shared across instances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "500": {
+            "description": "HTTP 500; see error code contract",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "503": {
+            "description": "FILE_UNAVAILABLE; do not assume bytes were discarded or reserved capacity released",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateFileStatus"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found or not accessible to this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "description": "Must exactly match configured APP_ORIGIN. Missing/null origin rejected.",
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletEmptyInput"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8465,18 +9083,46 @@
             "minLength": 1,
             "maxLength": 100,
             "enum": [
-              "ACCOUNT_LINK_REQUIRED", "CSRF_REJECTED", "DELIVERY_REQUIRED",
-              "DESCRIPTION_REQUIRED", "EMAIL_ACCOUNT_EXISTS", "EMAIL_ACCOUNT_NOT_FOUND",
-              "EMAIL_UNAVAILABLE", "FORBIDDEN",
-              "FX_SNAPSHOT_EXPIRED", "FX_UNAVAILABLE", "GOOGLE_INVALID",
-              "GOOGLE_UNAVAILABLE", "IDEMPOTENCY_CONFLICT", "INVALID_AMOUNT",
-              "INVALID_CREDENTIALS", "INVALID_INPUT", "INVENTORY_CONFLICT",
-              "JSON_REQUIRED", "LISTING_CONFLICT", "MEDIA_LIMIT_REACHED",
-              "MEDIA_UNAVAILABLE", "NOT_FOUND", "ORIGIN_REJECTED", "RATE_LIMITED",
-              "REFUND_REQUIRED", "RESTORE_CONFLICT", "RETRY_EXHAUSTED",
-              "RETURN_REQUIRED", "SHIPPING_REQUIRED", "STATE_CONFLICT",
-              "UNAUTHENTICATED", "UNAVAILABLE", "BODY_TOO_LARGE", "CONFLICT",
-              "DATABASE_UNAVAILABLE", "INTERNAL_ERROR", "OVERLOADED", "WALLET_UNAVAILABLE"
+              "ACCOUNT_LINK_REQUIRED",
+              "CSRF_REJECTED",
+              "DELIVERY_REQUIRED",
+              "DESCRIPTION_REQUIRED",
+              "EMAIL_ACCOUNT_EXISTS",
+              "EMAIL_ACCOUNT_NOT_FOUND",
+              "EMAIL_UNAVAILABLE",
+              "FORBIDDEN",
+              "FX_SNAPSHOT_EXPIRED",
+              "FX_UNAVAILABLE",
+              "GOOGLE_INVALID",
+              "GOOGLE_UNAVAILABLE",
+              "IDEMPOTENCY_CONFLICT",
+              "INVALID_AMOUNT",
+              "INVALID_CREDENTIALS",
+              "INVALID_INPUT",
+              "INVENTORY_CONFLICT",
+              "JSON_REQUIRED",
+              "LISTING_CONFLICT",
+              "MEDIA_LIMIT_REACHED",
+              "MEDIA_UNAVAILABLE",
+              "NOT_FOUND",
+              "ORIGIN_REJECTED",
+              "RATE_LIMITED",
+              "REFUND_REQUIRED",
+              "RESTORE_CONFLICT",
+              "RETRY_EXHAUSTED",
+              "RETURN_REQUIRED",
+              "SHIPPING_REQUIRED",
+              "STATE_CONFLICT",
+              "UNAUTHENTICATED",
+              "UNAVAILABLE",
+              "BODY_TOO_LARGE",
+              "CONFLICT",
+              "DATABASE_UNAVAILABLE",
+              "INTERNAL_ERROR",
+              "OVERLOADED",
+              "WALLET_UNAVAILABLE",
+              "FILE_LIMIT_REACHED",
+              "FILE_UNAVAILABLE"
             ]
           },
           "retryable": {
@@ -11285,6 +11931,170 @@
           }
         },
         "additionalProperties": false
+      },
+      "PrivateFileCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "orderId",
+          "purpose",
+          "filename",
+          "contentType",
+          "byteSize"
+        ],
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "evidence"
+            ]
+          },
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "application/pdf",
+              "image/png",
+              "image/jpeg",
+              "application/zip"
+            ]
+          },
+          "byteSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500000000,
+            "description": "Decimal bytes. PDF/PNG/JPEG additionally capped at 20000000."
+          }
+        }
+      },
+      "PrivateUploadCredential": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "uploadId",
+          "uploadToken",
+          "uploadPath",
+          "uploadUrl",
+          "method",
+          "contentType",
+          "byteSize",
+          "expiresAt",
+          "status"
+        ],
+        "properties": {
+          "uploadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uploadToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "description": "Sensitive one-use upload bearer credential; never grants download or file publication."
+          },
+          "uploadPath": {
+            "type": "string"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "PUT"
+            ]
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "byteSize": {
+            "type": "integer"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "PrivateFileStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "uploadId",
+          "status",
+          "purpose",
+          "byteSize",
+          "filename",
+          "contentType",
+          "versionId",
+          "failureReason",
+          "downloadEnabled"
+        ],
+        "properties": {
+          "uploadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "uploading",
+              "receiving",
+              "quarantined",
+              "checking",
+              "ready",
+              "rejected",
+              "check_timeout",
+              "cleanup_pending",
+              "expired",
+              "cleaned"
+            ]
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "evidence"
+            ]
+          },
+          "byteSize": {
+            "type": "integer"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "downloadEnabled": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          }
+        }
       }
     },
     "headers": {

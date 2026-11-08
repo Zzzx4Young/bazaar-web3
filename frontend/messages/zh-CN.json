@@ -359,6 +359,8 @@
     "LISTING_CONFLICT": "商品信息已变化，请刷新后重试。",
     "STATE_CONFLICT": "状态已变化，请刷新后重试。",
     "IDEMPOTENCY_CONFLICT": "请求内容与上次操作不一致，请刷新后重试。",
+    "FILE_LIMIT_REACHED": "私有文件配额或请求次数已达上限，请稍后重试。",
+    "FILE_UNAVAILABLE": "私有文件服务暂不可用，请稍后重试。",
     "MEDIA_LIMIT_REACHED": "图片数量已达上限。",
     "MEDIA_UNAVAILABLE": "图片服务暂不可用，请稍后重试。",
     "UPLOAD_FAILED": "图片上传失败，请稍后重试。",

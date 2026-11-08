@@ -359,6 +359,8 @@
     "LISTING_CONFLICT": "The listing has changed. Refresh and try again.",
     "STATE_CONFLICT": "The status has changed. Refresh and try again.",
     "IDEMPOTENCY_CONFLICT": "This request differs from the previous action. Refresh and try again.",
+    "FILE_LIMIT_REACHED": "The private file quota or request limit has been reached. Try again later.",
+    "FILE_UNAVAILABLE": "The private file service is unavailable. Please try again later.",
     "MEDIA_LIMIT_REACHED": "The image limit has been reached.",
     "MEDIA_UNAVAILABLE": "The image service is unavailable. Please try again later.",
     "UPLOAD_FAILED": "Image upload failed. Please try again later.",

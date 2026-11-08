@@ -5,13 +5,15 @@
   "specDocumentsTracked": false,
   "acceptanceStatus": "pending",
   "localAcceptance": {
-    "runId": "2026-11-07-t04-local-acceptance-r1",
-    "task": "T04",
+    "runId": "2026-11-08-t05-local-acceptance-r1",
+    "task": "T05",
     "status": "passed",
-    "evidenceDirectory": "docs/superpowers/evidence/2026-11-07-t04-local-acceptance-r1",
-    "backendCheckPassed": 131,
-    "databaseHttpPassed": 121,
-    "paymentIntentSubcasesPassed": 21,
+    "evidenceDirectory": "docs/superpowers/evidence/2026-11-08-t05-local-acceptance-r1",
+    "backendCheckPassed": 146,
+    "databaseHttpPassed": 135,
+    "privateFileSubcasesPassed": 14,
+    "realResourceTestsPassed": 6,
+    "realGarageJourneyPassed": 1,
     "frontendTestsPassed": 308,
     "frontendProductionBuildPassed": true,
     "actualSepoliaRpcValidated": false
@@ -34,6 +36,18 @@
       "backendCheckPassed": 131,
       "databaseHttpPassed": 99,
       "frontendTestsPassed": 307,
+      "frontendProductionBuildPassed": true,
+      "actualSepoliaRpcValidated": false
+    },
+    {
+      "runId": "2026-11-07-t04-local-acceptance-r1",
+      "task": "T04",
+      "status": "passed",
+      "evidenceDirectory": "docs/superpowers/evidence/2026-11-07-t04-local-acceptance-r1",
+      "backendCheckPassed": 131,
+      "databaseHttpPassed": 121,
+      "paymentIntentSubcasesPassed": 21,
+      "frontendTestsPassed": 308,
       "frontendProductionBuildPassed": true,
       "actualSepoliaRpcValidated": false
     }
