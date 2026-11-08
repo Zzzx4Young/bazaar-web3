@@ -1,3 +1,4 @@
+import type { ChainDeployment } from './chain-observer.js'
 export type EvmAddress = `0x${string}`
 export type Bytes32 = `0x${string}`
 export type AmountAtoms = string
@@ -51,6 +52,7 @@ export interface ChainObserver {
 }
 
 export interface Web3Config {
+  chainDeployment?: ChainDeployment
   chainId: number
   tokenDecimals: 6
   paymentSignerFile?: string

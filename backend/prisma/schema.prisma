@@ -754,3 +754,106 @@ model PrivateFileAudit {
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   @@index([uploadId, createdAt])
 }
+
+// T07 finalized facts are separated from unfinalized transaction hints.
+model ScanCheckpoint {
+  scope String @id @db.VarChar(100)
+  configHash String @db.Char(64)
+  deploymentBlock BigInt
+  height BigInt
+  hash String @db.Char(66)
+  status String @default("recovering")
+  globals Json?
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+}
+model ChainBlock {
+  scope String @db.VarChar(100)
+  hash String @db.Char(66)
+  height BigInt
+  parentHash String @db.Char(66)
+  timestamp BigInt
+  @@id([scope, hash])
+  @@unique([scope, height])
+}
+model ChainEvent {
+  scope String @db.VarChar(100)
+  blockHash String @db.Char(66)
+  txHash String @db.Char(66)
+  logIndex BigInt
+  height BigInt
+  txIndex BigInt
+  name String
+  args Json
+  @@id([scope, blockHash, txHash, logIndex])
+  @@unique([scope, txHash, logIndex])
+  @@index([scope, height, txIndex, logIndex])
+}
+model EscrowProjection {
+  scope String @db.VarChar(100)
+  chainOrderId String @db.Char(66)
+  businessOrderId String? @db.Uuid
+  state String
+  stockId String @db.Char(66)
+  amountAtoms String @db.VarChar(78)
+  data Json
+  height BigInt
+  blockHash String @db.Char(66)
+  holdReason String?
+  downloadEnabled Boolean @default(false)
+  @@id([scope, chainOrderId])
+}
+model ChainStockProjection {
+  scope String @db.VarChar(100)
+  stockId String @db.Char(66)
+  occupant String @db.Char(66)
+  generation String @db.VarChar(78)
+  status String
+  height BigInt
+  blockHash String @db.Char(66)
+  @@id([scope, stockId])
+}
+model ReconciliationIncident {
+  id String @id @default(uuid()) @db.Uuid
+  scope String @db.VarChar(100)
+  kind String
+  reason String
+  evidence Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([scope, createdAt])
+}
+model TransactionAttempt {
+  id String @id @default(uuid()) @db.Uuid
+  scope String @db.VarChar(100)
+  actorId String @db.Uuid
+  orderId String @db.Uuid
+  key String @db.VarChar(100)
+  txHash String @db.Char(66)
+  requestHash String @db.Char(64)
+  status String @default("submitted")
+  observation Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@unique([actorId, key])
+  @@index([scope, txHash])
+  @@index([orderId, createdAt])
+}
+model ChainObservation {
+  id String @id @default(uuid()) @db.Uuid
+  scope String @db.VarChar(100)
+  txHash String @db.Char(66)
+  blockHash String @db.Char(66)
+  status String
+  evidence Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([scope, txHash])
+}
+
+model ChainSnapshot {
+  scope String @db.VarChar(100)
+  height BigInt
+  hash String @db.Char(66)
+  ordersHash String @db.Char(64)
+  stocksHash String @db.Char(64)
+  globals Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@id([scope,height])
+}

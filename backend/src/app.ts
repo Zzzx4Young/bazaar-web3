@@ -1,3 +1,7 @@
+import { CheckpointPaymentObserver } from './web3/payment-observer.js'
+import { DualChainObserver } from './web3/chain-observer.js'
+import { TransactionAttemptService } from './web3/transaction-attempt.js'
+import { TransactionAttemptController } from './web3/transaction-attempt.controller.js'
 import 'reflect-metadata'
 import { Module, ValidationPipe } from '@nestjs/common'
 import { NestFactory, Reflector } from '@nestjs/core'
@@ -63,7 +67,7 @@ export async function createApp(
     mediaStore?: GarageObjectStore; emailSender?: EmailSender; googleClient?: GoogleClient;
     walletLedger?: WalletSecurityLedger; walletEoaCheck?: (address: EvmAddress) => Promise<void>;
     walletGoogleClient?: GoogleClient; paymentSigner?: PaymentSigner;
-    paymentJournal?: PaymentJournal; paymentObserver?: PaymentChainObserver; privateFiles?: {store:PrivateObjectStore;budget:PrivateFileBudget;uploadKey:Buffer} } = {}
+    paymentJournal?: PaymentJournal; paymentObserver?: PaymentChainObserver; chainObserver?: DualChainObserver; privateFiles?: {store:PrivateObjectStore;budget:PrivateFileBudget;uploadKey:Buffer} } = {}
 ) {
   if (config.web3 && !dependencies.walletLedger) {
     const business = new URL(config.databaseUrl), security = new URL(config.web3.securityLedgerUrl)
@@ -95,9 +99,11 @@ export async function createApp(
   const paymentSigner = config.web3 ? dependencies.paymentSigner ?? readPaymentSigner(config.web3.paymentSignerFile) : null
   const paymentJournal = config.web3 ? dependencies.paymentJournal ?? (ledgerDatabase
     ? new PostgresPaymentJournal(ledgerDatabase.client, config.web3.securityLedgerId) : null) : null
+  const chainObserver=config.web3?.chainDeployment ? dependencies.chainObserver ?? new DualChainObserver(config.web3,config.web3.chainDeployment) : null
+  const attempts=chainObserver ? new TransactionAttemptService(database.client,auth,chainObserver) : null
   const payments = config.web3 && ledger && sellerPayout && paymentSigner && paymentJournal
     ? new PaymentIntentService(database.client, auth, sellerPayout, ledger, paymentJournal, paymentSigner,
-      dependencies.paymentObserver ?? null, config.web3, dependencies.walletEoaCheck ?? createEoaChecker(config.web3)) : null
+      dependencies.paymentObserver ?? (chainObserver ? new CheckpointPaymentObserver(database.client,chainObserver) : null), config.web3, dependencies.walletEoaCheck ?? createEoaChecker(config.web3)) : null
   const media = new MediaService(
     database.client,
     dependencies.mediaStore ?? (config.mediaStore ? new GarageObjectStore(config.mediaStore) : null)
@@ -151,7 +157,7 @@ export async function createApp(
   const app = await NestFactory.create<NestFastifyApplication>(
     {
       module: AppModule,
-      controllers: [
+      controllers: [TransactionAttemptController,
         HealthController,
         AuthController,
         WalletIdentityController,
@@ -176,6 +182,7 @@ export async function createApp(
         { provide: ListingService, useValue: listings },
         { provide: SellerPayoutService, useValue: sellerPayout },
         { provide: PaymentIntentService, useValue: payments },
+        { provide: TransactionAttemptService, useValue: attempts },
         { provide: PrivateFileService, useValue: privateFiles },
         { provide: MediaService, useValue: media }
       ]

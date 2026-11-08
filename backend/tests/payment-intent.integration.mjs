@@ -280,10 +280,11 @@ test('A04/A20: missing signing records, unavailable ledger or RPC retain protect
     await t.security.client.$executeRaw`UPDATE "WalletLedgerMeta" SET "maintenance"=true`
     await assert.rejects(t.create(key), /WALLET_UNAVAILABLE/)
     await t.security.client.$executeRaw`UPDATE "WalletLedgerMeta" SET "maintenance"=false`
-    await t.db.client.session.update({
-      where: { tokenHash: t.user.tokenHash },
-      data: { revokedAt: new Date() }
-    })
+    // Model a Node/DB wall-clock skew without changing either system clock.
+    await t.db.client
+      .$executeRaw`UPDATE "Session" SET "createdAt"=GREATEST("createdAt",clock_timestamp()+interval '5 seconds') WHERE "tokenHash"=${t.user.tokenHash}`
+    await t.db.client
+      .$executeRaw`UPDATE "Session" SET "revokedAt"=GREATEST(clock_timestamp(),"createdAt") WHERE "tokenHash"=${t.user.tokenHash}`
     await assert.rejects(t.create(key), /UNAUTHENTICATED/)
     assert.equal(await t.db.client.paymentIntent.count(), 1)
   } finally {
@@ -519,112 +520,437 @@ test('T04 runtime roles can issue immutable permits but cannot rewrite stock ide
   }
 })
 
-
-test('A04: two concurrent distinct order keys cannot reserve or sign the same inventory twice',async()=>{
- const t=await setup()
- try{
-  const results=await Promise.allSettled([t.create(),t.create()])
-  assert.equal(results.filter(x=>x.status==='fulfilled').length,1)
-  assert.equal(await t.db.client.order.count(),1)
-  assert.equal(await t.db.client.paymentIntent.count(),1)
-  assert.equal(await t.db.client.paymentSignature.count(),1)
- }finally{await t.close()}
+test('A04: two concurrent distinct order keys cannot reserve or sign the same inventory twice', async () => {
+  const t = await setup()
+  try {
+    const results = await Promise.allSettled([t.create(), t.create()])
+    assert.equal(results.filter((x) => x.status === 'fulfilled').length, 1)
+    assert.equal(await t.db.client.order.count(), 1)
+    assert.equal(await t.db.client.paymentIntent.count(), 1)
+    assert.equal(await t.db.client.paymentSignature.count(), 1)
+  } finally {
+    await t.close()
+  }
 })
 
-test('A04: independently committed invalidation survives a failed business projection and exact retry repairs it',async()=>{
- const t=await setup()
- try{
-  const a=await t.create();t.setChain({revoked:true})
-  const resolve=t.journal.resolve.bind(t.journal);let fail=true
-  t.journal.resolve=async(...args)=>{await resolve(...args);if(fail){fail=false;throw new Error('business commit lost after independent resolution')}}
-  await assert.rejects(t.service.reconcile(t.user,a.intentId),/WALLET_UNAVAILABLE/)
-  assert.equal((await t.db.client.paymentIntentState.findUniqueOrThrow({where:{intentId:a.intentId}})).status,'reconciling')
-  assert.equal((await t.service.reconcile(t.user,a.intentId)).status,'revoked')
-  assert.equal(await t.security.client.$queryRaw`SELECT 1 FROM "PaymentLedgerResolution"`.then(x=>x.length),1)
- }finally{await t.close()}
+test('A04: independently committed invalidation survives a failed business projection and exact retry repairs it', async () => {
+  const t = await setup()
+  try {
+    const a = await t.create()
+    t.setChain({ revoked: true })
+    const resolve = t.journal.resolve.bind(t.journal)
+    let fail = true
+    t.journal.resolve = async (...args) => {
+      await resolve(...args)
+      if (fail) {
+        fail = false
+        throw new Error('business commit lost after independent resolution')
+      }
+    }
+    await assert.rejects(t.service.reconcile(t.user, a.intentId), /WALLET_UNAVAILABLE/)
+    assert.equal(
+      (await t.db.client.paymentIntentState.findUniqueOrThrow({ where: { intentId: a.intentId } }))
+        .status,
+      'reconciling'
+    )
+    assert.equal((await t.service.reconcile(t.user, a.intentId)).status, 'revoked')
+    assert.equal(
+      await t.security.client.$queryRaw`SELECT 1 FROM "PaymentLedgerResolution"`.then(
+        (x) => x.length
+      ),
+      1
+    )
+  } finally {
+    await t.close()
+  }
 })
 
-test('A04: legacy snapshot without committed payment basis stays reserved and cannot acquire a permit',async()=>{
- const t=await setup()
- try{
-  const key=randomUUID(), input={listingId:t.f.listing.id,version:2,settlementMode:'testnet_escrow'}
-  const id=await t.orders.create(t.f.buyer,key,input)
-  await assert.rejects(t.service.createOrder(t.user,key,input),/WALLET_UNAVAILABLE/)
-  assert.equal((await t.db.client.digitalInventory.findUniqueOrThrow({where:{listingId:t.f.listing.id}})).activeOrderId,id)
-  assert.equal(await t.db.client.paymentSignature.count(),0)
-  assert.equal(await t.db.client.paymentIntent.count(),0)
- }finally{await t.close()}
+test('A04: legacy snapshot without committed payment basis stays reserved and cannot acquire a permit', async () => {
+  const t = await setup()
+  try {
+    const key = randomUUID(),
+      input = { listingId: t.f.listing.id, version: 2, settlementMode: 'testnet_escrow' }
+    const id = await t.orders.create(t.f.buyer, key, input)
+    await assert.rejects(t.service.createOrder(t.user, key, input), /WALLET_UNAVAILABLE/)
+    assert.equal(
+      (
+        await t.db.client.digitalInventory.findUniqueOrThrow({
+          where: { listingId: t.f.listing.id }
+        })
+      ).activeOrderId,
+      id
+    )
+    assert.equal(await t.db.client.paymentSignature.count(), 0)
+    assert.equal(await t.db.client.paymentIntent.count(), 0)
+  } finally {
+    await t.close()
+  }
 })
 
-test('A04 review: reconcile-first after initial journal failure recovers original intent without locking stock forever',async()=>{
- const t=await setup()
- try{
-  const key=randomUUID(), authorize=t.journal.authorize.bind(t.journal)
-  t.journal.authorize=async()=>{throw new Error('journal unavailable before initial commit')}
-  await assert.rejects(t.create(key),/journal unavailable/)
-  const i=await t.db.client.paymentIntent.findFirstOrThrow()
-  t.setChain({timestamp:i.permit.payDeadline})
-  await assert.rejects(t.service.reconcile(t.user,i.id),/WALLET_UNAVAILABLE|journal unavailable/)
-  assert.equal((await t.db.client.paymentIntentState.findUniqueOrThrow({where:{intentId:i.id}})).status,'issued')
-  t.journal.authorize=authorize
-  assert.equal((await t.service.reconcile(t.user,i.id)).status,'expired')
-  await t.service.closeOrder(t.user,i.orderId,randomUUID())
-  assert.equal((await t.db.client.testnetStock.findFirstOrThrow()).state,'free')
-  assert.equal(await t.db.client.paymentIntent.count(),1)
-  assert.equal(await t.db.client.paymentSignature.count(),0)
- }finally{await t.close()}
+test('A04 review: reconcile-first after initial journal failure recovers original intent without locking stock forever', async () => {
+  const t = await setup()
+  try {
+    const key = randomUUID(),
+      authorize = t.journal.authorize.bind(t.journal)
+    t.journal.authorize = async () => {
+      throw new Error('journal unavailable before initial commit')
+    }
+    await assert.rejects(t.create(key), /journal unavailable/)
+    const i = await t.db.client.paymentIntent.findFirstOrThrow()
+    t.setChain({ timestamp: i.permit.payDeadline })
+    await assert.rejects(
+      t.service.reconcile(t.user, i.id),
+      /WALLET_UNAVAILABLE|journal unavailable/
+    )
+    assert.equal(
+      (await t.db.client.paymentIntentState.findUniqueOrThrow({ where: { intentId: i.id } }))
+        .status,
+      'issued'
+    )
+    t.journal.authorize = authorize
+    assert.equal((await t.service.reconcile(t.user, i.id)).status, 'expired')
+    await t.service.closeOrder(t.user, i.orderId, randomUUID())
+    assert.equal((await t.db.client.testnetStock.findFirstOrThrow()).state, 'free')
+    assert.equal(await t.db.client.paymentIntent.count(), 1)
+    assert.equal(await t.db.client.paymentSignature.count(), 0)
+  } finally {
+    await t.close()
+  }
 })
 
 test('A14/A31: buyer rebinding does not rewrite the original payer or refund wallet on replacement', async () => {
   const t = await setup()
   try {
-    const a = await t.create(), next = privateKeyToAccount(generatePrivateKey()), key = randomUUID()
-    const proof = await t.wallets.requestPasswordReauth(t.user,'Virtual-T04-buyer-password','bind',next.address,key,'127.0.0.3')
-    const challenge = await t.wallets.createActionChallenge(t.user,proof.id,'bind',next.address,key)
-    await t.wallets.consumeActionChallenge(t.user,challenge.id,await next.signTypedData(challenge.typedData))
-    t.setChain({revoked:true})
-    await t.service.reconcile(t.user,a.intentId)
-    const b = await t.service.replaceIntent(t.user,a.orderId,randomUUID(),a.intentId)
-    assert.equal(b.permit.buyer,a.permit.buyer)
-    assert.equal(b.permit.refundAddress,a.permit.refundAddress)
-    assert.notEqual(b.permit.buyer,next.address.toLowerCase())
-  } finally { await t.close() }
+    const a = await t.create(),
+      next = privateKeyToAccount(generatePrivateKey()),
+      key = randomUUID()
+    const proof = await t.wallets.requestPasswordReauth(
+      t.user,
+      'Virtual-T04-buyer-password',
+      'bind',
+      next.address,
+      key,
+      '127.0.0.3'
+    )
+    const challenge = await t.wallets.createActionChallenge(
+      t.user,
+      proof.id,
+      'bind',
+      next.address,
+      key
+    )
+    await t.wallets.consumeActionChallenge(
+      t.user,
+      challenge.id,
+      await next.signTypedData(challenge.typedData)
+    )
+    t.setChain({ revoked: true })
+    await t.service.reconcile(t.user, a.intentId)
+    const b = await t.service.replaceIntent(t.user, a.orderId, randomUUID(), a.intentId)
+    assert.equal(b.permit.buyer, a.permit.buyer)
+    assert.equal(b.permit.refundAddress, a.permit.refundAddress)
+    assert.notEqual(b.permit.buyer, next.address.toLowerCase())
+  } finally {
+    await t.close()
+  }
 })
 
-test('A04: changed buyer or stock tuple cannot pass the independent signing history even after business-row tampering',async()=>{
-  const t=await setup()
-  try{
-    const a=await t.create(), original=await t.db.client.paymentOrderTerms.findUniqueOrThrow({where:{orderId:a.orderId}})
-    const {paymentDigest,orderTermsDigest}=await import('../dist/web3/payment-signer.js')
-    const changedBuyer=privateKeyToAccount(generatePrivateKey()).address.toLowerCase()
-    let signs=0; const sign=t.signer.sign.bind(t.signer)
-    t.signer.sign=async p=>{signs++;return sign(p)}
-    for(const change of [{buyer:changedBuyer,refundAddress:changedBuyer},{stockId:'0x'+'e'.repeat(64)}]){
-      const terms={...original.terms,...change}, permit={...a.permit,...change}
-      await t.db.client.$transaction(async tx=>{
-        if(change.stockId)await tx.testnetStock.update({where:{listingId:t.f.listing.id},data:{stockId:change.stockId}})
-        await tx.paymentOrderTerms.update({where:{orderId:a.orderId},data:{stockId:terms.stockId,terms,termsHash:orderTermsDigest(terms)}})
-        await tx.paymentIntent.update({where:{id:a.intentId},data:{permit,digest:paymentDigest(permit)}})
+test('A04: changed buyer or stock tuple cannot pass the independent signing history even after business-row tampering', async () => {
+  const t = await setup()
+  try {
+    const a = await t.create(),
+      original = await t.db.client.paymentOrderTerms.findUniqueOrThrow({
+        where: { orderId: a.orderId }
       })
-      await assert.rejects(t.service.read(t.user,a.intentId),/WALLET_UNAVAILABLE/)
+    const { paymentDigest, orderTermsDigest } = await import('../dist/web3/payment-signer.js')
+    const changedBuyer = privateKeyToAccount(generatePrivateKey()).address.toLowerCase()
+    let signs = 0
+    const sign = t.signer.sign.bind(t.signer)
+    t.signer.sign = async (p) => {
+      signs++
+      return sign(p)
     }
-    assert.equal(signs,0)
-    assert.equal((await t.db.client.digitalInventory.findFirstOrThrow()).activeOrderId,a.orderId)
-  }finally{await t.close()}
+    for (const change of [
+      { buyer: changedBuyer, refundAddress: changedBuyer },
+      { stockId: '0x' + 'e'.repeat(64) }
+    ]) {
+      const terms = { ...original.terms, ...change },
+        permit = { ...a.permit, ...change }
+      await t.db.client.$transaction(async (tx) => {
+        if (change.stockId)
+          await tx.testnetStock.update({
+            where: { listingId: t.f.listing.id },
+            data: { stockId: change.stockId }
+          })
+        await tx.paymentOrderTerms.update({
+          where: { orderId: a.orderId },
+          data: { stockId: terms.stockId, terms, termsHash: orderTermsDigest(terms) }
+        })
+        await tx.paymentIntent.update({
+          where: { id: a.intentId },
+          data: { permit, digest: paymentDigest(permit) }
+        })
+      })
+      await assert.rejects(t.service.read(t.user, a.intentId), /WALLET_UNAVAILABLE/)
+    }
+    assert.equal(signs, 0)
+    assert.equal((await t.db.client.digitalInventory.findFirstOrThrow()).activeOrderId, a.orderId)
+  } finally {
+    await t.close()
+  }
 })
 
-test('A20: account suspension after authentication cannot cause a late cancellation state change',async()=>{
-  const t=await setup()
-  try{
-    const a=await t.create(), authenticate=t.auth.authenticate.bind(t.auth)
-    let suspended=false
-    t.auth.authenticate=async cookie=>{
-      const result=await authenticate(cookie)
-      if(!suspended){suspended=true;await t.db.client.account.update({where:{id:t.f.buyer},data:{status:'disabled'}})}
+test('A20: account suspension after authentication cannot cause a late cancellation state change', async () => {
+  const t = await setup()
+  try {
+    const a = await t.create(),
+      authenticate = t.auth.authenticate.bind(t.auth)
+    let suspended = false
+    t.auth.authenticate = async (cookie) => {
+      const result = await authenticate(cookie)
+      if (!suspended) {
+        suspended = true
+        await t.db.client.account.update({ where: { id: t.f.buyer }, data: { status: 'disabled' } })
+      }
       return result
     }
-    await assert.rejects(t.service.requestIntentCancel(t.user,a.intentId,randomUUID()),/UNAUTHENTICATED|FORBIDDEN/)
-    assert.equal((await t.db.client.paymentIntentState.findUniqueOrThrow({where:{intentId:a.intentId}})).status,'issued')
-    assert.equal(await t.db.client.paymentIntentRequest.count(),0)
-  }finally{await t.close()}
+    await assert.rejects(
+      t.service.requestIntentCancel(t.user, a.intentId, randomUUID()),
+      /UNAUTHENTICATED|FORBIDDEN/
+    )
+    assert.equal(
+      (await t.db.client.paymentIntentState.findUniqueOrThrow({ where: { intentId: a.intentId } }))
+        .status,
+      'issued'
+    )
+    assert.equal(await t.db.client.paymentIntentRequest.count(), 0)
+  } finally {
+    await t.close()
+  }
+})
+
+test('T07 recovery gate blocks existing permit reads and new reservation without changing signed history', async () => {
+  const t = await setup()
+  try {
+    const a = await t.create()
+    const signatureCount = await t.db.client.paymentSignature.count()
+    t.config.chainDeployment = {
+      deploymentBlock: '0',
+      escrowCodeHash: '0x' + '1'.repeat(64),
+      tokenCodeHash: '0x' + '2'.repeat(64),
+      administrator: '0x' + '3'.repeat(40),
+      arbitrator: '0x' + '4'.repeat(40)
+    }
+    await assert.rejects(t.service.read(t.user, a.intentId), /WALLET_UNAVAILABLE/)
+    assert.equal(await t.db.client.paymentSignature.count(), signatureCount)
+    assert.equal((await t.db.client.testnetStock.findFirstOrThrow()).activeOrderId, a.orderId)
+  } finally {
+    await t.close()
+  }
+})
+test('T07 paused finalized projection blocks re-signing but preserves existing cancellation authority', async () => {
+  const t = await setup()
+  try {
+    const a = await t.create()
+    t.config.chainDeployment = {
+      deploymentBlock: '0',
+      escrowCodeHash: '0x' + '1'.repeat(64),
+      tokenCodeHash: '0x' + '2'.repeat(64),
+      administrator: '0x' + '3'.repeat(40),
+      arbitrator: '0x' + '4'.repeat(40)
+    }
+    const { EscrowProjector } = await import('../dist/web3/escrow-projector.js')
+    const p = new EscrowProjector(t.db.client, t.config, t.config.chainDeployment)
+    await p.initialize('recovery')
+    await t.db.client.scanCheckpoint.update({
+      where: { scope: p.scope },
+      data: { height: 1n, status: 'active', globals: { paused: true } }
+    })
+    await t.db.client.paymentSignature.delete({ where: { intentId: a.intentId } })
+    await assert.rejects(t.service.read(t.user, a.intentId), /WALLET_UNAVAILABLE/)
+  } finally {
+    await t.close()
+  }
+})
+test('T07 independent issuance basis cannot be reconstructed from an empty or corrupted business projection', async () => {
+  const { sandbox } = await import('./helpers/database.mjs')
+  const t = await setup()
+  let restored
+  try {
+    const a = await t.create(),
+      scope = t.config.chainId + ':' + t.config.escrow
+    await t.journal.assertBusinessBasis(t.db.client, scope)
+    restored = await sandbox()
+    await assert.rejects(
+      t.journal.assertBusinessBasis(restored.client, scope),
+      /WALLET_UNAVAILABLE/
+    )
+    await t.db.client.paymentIntent.update({
+      where: { id: a.intentId },
+      data: { digest: '0x' + '9'.repeat(64) }
+    })
+    await assert.rejects(t.journal.assertBusinessBasis(t.db.client, scope), /WALLET_UNAVAILABLE/)
+  } finally {
+    if (restored) await restored.close()
+    await t.close()
+  }
+})
+test('T07 review: independent issuance coverage paginates past 2048 retained records', async () => {
+  const { paymentDigest } = await import('../dist/web3/payment-signer.js')
+  const { keccak256, stringToHex } = await import('viem')
+  const t = await setup()
+  try {
+    const a = await t.create(),
+      [original] = await t.security.client
+        .$queryRaw`SELECT * FROM "PaymentLedgerIntent" WHERE "id"=${a.intentId}::uuid`
+    const rows = Array.from({ length: 2048 }, () => {
+      const id = randomUUID(),
+        permit = { ...a.permit, intentId: keccak256(stringToHex(id)) }
+      return { id, permit, digest: paymentDigest(permit) }
+    })
+    await t.db.client.paymentIntent.createMany({
+      data: rows.map((r) => ({ ...r, orderId: a.orderId, previousIntentId: a.intentId }))
+    })
+    await t.security.client
+      .$executeRaw`INSERT INTO "PaymentLedgerIntent" ("id","orderId","listingId","stockId","scope","digest","termsHash","recoveryEpoch","permit","previousIntentId") SELECT j.id::uuid,${original.orderId}::uuid,${original.listingId}::uuid,${original.stockId},${original.scope},j.digest,${original.termsHash},${original.recoveryEpoch}::uuid,j.permit,${a.intentId}::uuid FROM jsonb_to_recordset(${JSON.stringify(rows)}::jsonb) AS j(id text,digest text,permit jsonb)`
+    await t.journal.assertBusinessBasis(t.db.client, original.scope)
+    assert.equal(await t.db.client.paymentIntent.count(), 2049)
+  } finally {
+    await t.close()
+  }
+})
+test('T07 review: independent accepted invalidity prevents a restored index from reviving cancelled funds', async () => {
+  const { EscrowProjector } = await import('../dist/web3/escrow-projector.js')
+  const t = await setup()
+  try {
+    const a = await t.create(),
+      p = a.permit
+    const preflight = await t.journal.assertResolutions(
+      {
+        snapshot: {
+          chainId: t.config.chainId,
+          height: '0',
+          hash: '0x' + '0'.repeat(64),
+          timestamp: p.issuedAt,
+          verifiedBy: [t.config.rpcPrimary, t.config.rpcSecondary],
+          verifiedAt: new Date()
+        },
+        events: []
+      },
+      { config: t.config }
+    )
+    t.setChain({ revoked: true, timestamp: p.payDeadline })
+    await t.service.reconcile(t.user, a.intentId)
+    await t.service.closeOrder(t.user, a.orderId, randomUUID())
+    assert.equal(
+      (await t.db.client.order.findUniqueOrThrow({ where: { id: a.orderId } })).status,
+      'cancelled'
+    )
+    const [resolution] = await t.security.client
+      .$queryRaw`SELECT "evidence" FROM "PaymentLedgerResolution" WHERE "intentId"=${a.intentId}::uuid`
+    const h = (n) => '0x' + n.toString(16).padStart(64, '0'),
+      termsHash = (
+        await t.db.client.paymentOrderTerms.findUniqueOrThrow({ where: { orderId: a.orderId } })
+      ).termsHash
+    const amount = p.amountAtoms,
+      order = {
+        orderId: p.orderId,
+        state: 'Funded',
+        buyer: p.buyer,
+        refundAddress: p.refundAddress,
+        seller: p.seller,
+        amountAtoms: amount,
+        stockId: p.stockId,
+        generation: p.stockGeneration,
+        fundedAt: String(p.issuedAt + 1),
+        deliveredAt: '0',
+        disputedAt: '0',
+        credentialId: h(0),
+        deliveryVersion: h(0),
+        manifestCommitment: h(0),
+        termsHash
+      }
+    const r = {
+      from: '0',
+      snapshot: {
+        ...resolution.evidence.snapshot,
+        height: '5',
+        hash: h(105),
+        timestamp: p.issuedAt + 5,
+        verifiedAt: new Date()
+      },
+      blocks: Array.from({ length: 6 }, (_, n) => ({
+        height: String(n),
+        hash: h(100 + n),
+        parentHash: h(99 + n),
+        timestamp: p.issuedAt + n
+      })),
+      events: [
+        {
+          name: 'Deposited',
+          args: {
+            orderId: p.orderId,
+            intentId: p.intentId,
+            stockId: p.stockId,
+            generation: p.stockGeneration,
+            buyer: p.buyer,
+            refundAddress: p.refundAddress,
+            seller: p.seller,
+            token: p.token,
+            amountAtoms: amount,
+            timestamp: String(p.issuedAt + 1),
+            deliveryDeadline: String(p.issuedAt + 1 + 259200),
+            termsHash
+          },
+          height: '1',
+          blockHash: h(101),
+          txHash: h(201),
+          txIndex: '0',
+          logIndex: '0'
+        }
+      ],
+      orders: [order],
+      stocks: [{ stockId: p.stockId, occupant: p.orderId, generation: p.stockGeneration }],
+      globals: {
+        outstanding: amount,
+        totalDeposited: amount,
+        totalPaid: '0',
+        balance: amount,
+        paused: false
+      }
+    }
+    const deployment = {
+      deploymentBlock: '0',
+      escrowCodeHash: h(1),
+      tokenCodeHash: h(2),
+      administrator: '0x' + '3'.repeat(40),
+      arbitrator: '0x' + '4'.repeat(40)
+    }
+    const observer = {
+      config: t.config,
+      readVerifiedSnapshot: async () => resolution.evidence.snapshot,
+      atHeight: async () => resolution.evidence.snapshot,
+      readIntent: async () => ({
+        ...resolution.evidence,
+        orderState: 'Funded',
+        orderTermsHash: termsHash,
+        stockOccupant: p.orderId
+      })
+    }
+    const stale = new EscrowProjector(t.db.client, t.config, deployment, async () => preflight)
+    await stale.initialize('recovery')
+    await assert.rejects(stale.project(r), (e) => e.kind === 'unavailable')
+    assert.equal(await t.db.client.escrowProjection.count(), 0)
+    const projector = new EscrowProjector(t.db.client, t.config, deployment, (range) =>
+      t.journal.assertResolutions(range, observer)
+    )
+    await assert.rejects(projector.project(r), (e) => e.kind === 'contradiction')
+    assert.equal(
+      (await t.db.client.order.findUniqueOrThrow({ where: { id: a.orderId } })).status,
+      'cancelled'
+    )
+    assert.equal((await t.db.client.scanCheckpoint.findFirstOrThrow()).status, 'isolated')
+  } finally {
+    await t.close()
+  }
 })

@@ -385,7 +385,7 @@ node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/testne
 
 付款私钥仅由显式 WEB3_PAYMENT_SIGNER_FILE 指向的受保护文件加载（普通文件、权限0600，最多1024字节）；内容为 keyId（非零 bytes32）及 key（付款签名专用私钥）。没有自动生成或回退密钥，不得复用网站、交付或裁决密钥，不得提交文件。默认未配置，Alpha 启动行为不变。
 
-T04 的 PaymentChainObserver 是可信服务端接口，本地使用双源故障替身；T07生产观察器尚未接入，默认null，因此实际取消核对、替换和释放保持不可用，不以服务器倒计时或单源结果放行。T06须冻结相同摘要与ABI并验证撤销/入金合约竞态；这里的两种结果测试不代表真实链上交易竞争已验证。退款后库存代次推进及完整恢复归后续任务，T04只释放从未入金的取消订单。
+T04 的 PaymentChainObserver 由 T07 在明确配置固定部署及有效检查点后接入；未配置时仍为null。核对须等待同一共同最终区块的完整投影，不以服务器倒计时或单源结果放行。T06已在本地验证实际T04摘要/ABI及撤销与入金的两种执行顺序，真实Sepolia交易竞争仍待验收。退款后业务库存代次推进及完整恢复归后续任务；T04只释放从未入金的安全取消订单。
 
 验证：先 npm run check:backend，再通过 scripts/with-web3-test-db.mjs 运行 tests/payment-intent.integration.mjs；具体每项故障/并发/权限测试及日志见本地 T04 验收目录。尚无签发依据的旧测试网快照不能被自动补成可付款意图，保持保护以待受控恢复。
 
@@ -444,3 +444,42 @@ node --env-file=/absolute/path/to/isolated-private.env scripts/run-file-check-wo
 当前启动脚本仅支持本地loopback网关；公开独立文件域、TLS入口与部署身份属于部署门禁。检查监督器使用可信的容器管理权限，检查容器自身没有该权限。
 
 本地已覆盖合成格式、恶意/畸形ZIP、真实ClamAV标准无害测试样本、10MB实际Garage流式流程和资源故障；不代表代表性500MB源码包、正式文件域、生产并发或文件绝对安全。另有本轮自建Node worker的SIGKILL后恢复测试；没有据此宣称T04全部资金进程崩溃、数据库连接中断、跨节点恢复或RPO/RTO已通过。
+
+### T07：本地可恢复链上索引（未部署 Sepolia）
+
+可选 `WEB3_CHAIN_DEPLOYMENT_FILE` 固定部署区块、T06 托管及代币运行时代码 hash、管理与裁决地址。启用实际付款签名配置时必须提供该文件；原有 Alpha 默认不启用 Web3。部署配置示例（地址/hash 使用实际隔离部署结果，不能照抄占位值）：
+
+```json
+{
+  "deploymentBlock": "123",
+  "escrowCodeHash": "0x<64 lowercase hex>",
+  "tokenCodeHash": "0x<64 lowercase hex>",
+  "administrator": "0x<40 lowercase hex>",
+  "arbitrator": "0x<40 lowercase hex>"
+}
+```
+
+```bash
+# 明确提供隔离环境的 DATABASE_URL / WEB3_*；脚本不会自动读开发.env。
+npm run build
+node scripts/run-chain-indexer.mjs --initialize-recovery --once
+node scripts/run-chain-indexer.mjs --once
+node scripts/run-chain-indexer.mjs
+```
+
+仅全新部署、独立签发账本无历史且链/业务库均可证明为空时，所有者可用 `--initialize-fresh` 替代恢复初始化。它不能重置既有检查点或批准恢复；旧库、丢失映射及未入链签发记录需要保持 recovering，不能凭空槽重新签发。生产索引器要求业务与安全账本为不同数据库；测试多数使用55435随机独立schema，专用身份库拓扑和完整恢复另验收。
+
+两源先核验各自最终头，在共同高度核验hash与祖先。每批最多128块、4096日志；历史订单按128条分页取得，合约状态最多8单并发读取，独立签发记录按128条分页核验，不将累计2048条当永久停机阈值；较长祖先证明每次最多512步，未完成时保留有界内存证明进度并暂停业务推进。历史状态、代码和余额使用 EIP-1898 `blockHash + requireCanonical`，不回退到latest；全部事件、receipt及同H状态一致后，事件去重、资金/库存投影和进度才在同事务提交。完整范围内先交付后退款只公开退款结果；终态仍保留首次登记。已接受最终区块矛盾进入isolated，不自动重写终态。
+
+暂态交易观测不影响资金；`POST /web3/orders/:id/transaction-attempts` 仅记录txHash线索，`POST /web3/transaction-attempts/:id/refresh` 可更新unknown/included/replaced/reverted/finalized。交易finalized也不等于订单付款成功。接口复用登录、Origin/CSRF、限流及幂等保护；钱包拒绝、RPC暂时查不到或交易替换均不会据此关闭支付意图。
+
+T07保持所有ready文件不可下载；完整资金投影可标识库存应占用/未登记退款/登记后禁售/已售，但业务库存继续保护。T08才接精确版本映射、授权及有完整私有依据的退款代次激活。检查点缺失/恢复/隔离、已核验暂停新入金或独立签发依据缺失时，停止相应新签发；暂停不消除旧签名和用户直接调用合约退出的权利。
+
+```bash
+# contracts/需先npm ci、npm run tools:solc并执行T06构建，Anvil1.5仅安装本目录。
+node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/escrow-projector.integration.mjs tests/transaction-attempt.integration.mjs tests/chain-local.integration.mjs tests/local-escrow-fixture.integration.mjs
+```
+
+本地Anvil背后的两个回环代理共享一个EVM，只证明合约/传输/故障处理，不证明独立供应商或以太坊PoS最终性。验收分别记录双源故障替身、真实本地合约事件、提交前后Node子进程SIGKILL及重建比对；真实Sepolia、网页钱包、大历史/并发容量、数据库/对象一致恢复与RPO/RTO仍未验收。恢复不会补出私有文件、账户或签发记录，也不开放下载。
+
+T07复核补充：每个已接受H保存不可变订单/库存摘要及全局快照，重复范围比较完整事件集合；历史H未保存投影摘要则保持待核对，不假称重放通过。独立最终裁定先核验区块祖先及当时事实，提交锁内再验账本水位；冲突不能复活取消/终态订单。公开交易尝试响应使用字段白名单，不返回RPC URL、供应商Key路径或内部账本字段。

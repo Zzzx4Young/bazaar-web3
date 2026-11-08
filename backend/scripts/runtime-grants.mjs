@@ -15,7 +15,7 @@ export async function grantRuntime(client, schema, role) {
     'OrderMediaSnapshot',
     'AccountIdentityEvent',
     'ListingReviewEvent'
-    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation', 'ListingTestnetPrice', 'TestnetOrderSnapshot', 'PaymentOrderTerms', 'PaymentIntent', 'PaymentSignature', 'PaymentIntentRequest', 'PrivateFileVersion', 'PrivateFileCheck', 'PrivateFileAudit'
+    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation', 'ListingTestnetPrice', 'TestnetOrderSnapshot', 'PaymentOrderTerms', 'PaymentIntent', 'PaymentSignature', 'PaymentIntentRequest', 'PrivateFileVersion', 'PrivateFileCheck', 'PrivateFileAudit', 'ChainBlock', 'ChainEvent', 'ChainSnapshot', 'ReconciliationIncident'
   ]
   const mutable = [
     'Account',
@@ -36,7 +36,7 @@ export async function grantRuntime(client, schema, role) {
     'GoogleOAuthAttempt',
     'MediaAsset',
     'ListingMedia'
-    , 'WalletIdentity', 'WalletChallenge', 'SellerPayoutConfirmation', 'TestnetStock', 'PaymentIntentState', 'PrivateUpload', 'PrivateFileQuota', 'PrivateFileGlobal'
+    , 'WalletIdentity', 'WalletChallenge', 'SellerPayoutConfirmation', 'TestnetStock', 'PaymentIntentState', 'PrivateUpload', 'PrivateFileQuota', 'PrivateFileGlobal', 'ScanCheckpoint', 'EscrowProjection', 'ChainStockProjection', 'TransactionAttempt', 'ChainObservation'
   ]
   await client.$transaction(async (tx) => {
     const roles = await tx.$queryRaw`
@@ -66,6 +66,10 @@ export async function grantRuntime(client, schema, role) {
     await tx.$executeRawUnsafe(`GRANT UPDATE ("status","actualBytes","sha256","queuedAt","checkStartedAt","checkId","failureReason","cleanedAt","receiveOwnerScope","receiveOwnerPid","receiveOwnerStart","receiveStopped","checkOwnerScope","checkOwnerPid","checkOwnerStart","checkOwnerStopped","checkCancelRequested","checkDeadlineAt") ON "${schema}"."PrivateUpload" TO "${role}"`)
     await tx.$executeRawUnsafe(`GRANT UPDATE ("reservedBytes","usedBytes","activeUploads") ON "${schema}"."PrivateFileQuota" TO "${role}"`)
     await tx.$executeRawUnsafe(`GRANT UPDATE ("reservedBytes","usedBytes","activeUploads","queued","checking") ON "${schema}"."PrivateFileGlobal" TO "${role}"`)
+    await tx.$executeRawUnsafe(`REVOKE UPDATE ON "${schema}"."TransactionAttempt", "${schema}"."ChainObservation", "${schema}"."ScanCheckpoint" FROM "${role}"`)
+    await tx.$executeRawUnsafe(`GRANT UPDATE ("status", "observation") ON "${schema}"."TransactionAttempt" TO "${role}"`)
+    await tx.$executeRawUnsafe(`GRANT UPDATE ("status") ON "${schema}"."ChainObservation" TO "${role}"`)
+    await tx.$executeRawUnsafe(`GRANT UPDATE ("height", "hash", "status", "globals", "updatedAt") ON "${schema}"."ScanCheckpoint" TO "${role}"`)
     await tx.$executeRawUnsafe(`REVOKE UPDATE ON "${schema}"."TestnetStock" FROM "${role}"`)
     await tx.$executeRawUnsafe(`GRANT UPDATE ("activeOrderId", "lastOrderId", "state") ON "${schema}"."TestnetStock" TO "${role}"`)
     await tx.$executeRawUnsafe(`GRANT SELECT ON "${schema}"."AccountCredential" TO "${role}"`)

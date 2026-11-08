@@ -1,3 +1,11 @@
+import {
+  ChainVerificationError,
+  contradiction,
+  unavailable,
+  stable,
+  type DualChainObserver
+} from './chain-observer.js'
+import type { VerifiedRange } from './escrow-state.js'
 import { isDeepStrictEqual } from 'node:util'
 import type { PrismaClient } from '../generated/prisma/client.js'
 import type { Transaction } from '../database/transaction.js'
@@ -18,6 +26,7 @@ export interface IssuanceRecord {
   previousIntentId: string | null
 }
 export interface PaymentJournal {
+  assertBusinessBasis?(business: PrismaClient, scope: string): Promise<void>
   authorize(record: IssuanceRecord): Promise<void>
   resolve(
     record: IssuanceRecord,
@@ -30,22 +39,165 @@ export class PostgresPaymentJournal implements PaymentJournal {
     private readonly client: PrismaClient,
     private readonly ledgerId: string
   ) {}
-  private async transaction<T>(work: (tx: Transaction) => Promise<T>) {
+  private async transaction<T>(work: (tx: Transaction) => Promise<T>, snapshot = false) {
     try {
-      return await this.client.$transaction(async (tx) => {
-        const [meta] = await tx.$queryRaw<
-          { ledgerId: string; recoveryEpoch: string; maintenance: boolean; writable: boolean }[]
-        >`
+      return await this.client.$transaction(
+        async (tx) => {
+          const [meta] = await tx.$queryRaw<
+            { ledgerId: string; recoveryEpoch: string; maintenance: boolean; writable: boolean }[]
+          >`
         SELECT *, (NOT pg_is_in_recovery() AND current_setting('transaction_read_only') = 'off') AS writable
         FROM "WalletLedgerMeta" WHERE "singleton" = true`
-        if (!meta || meta.ledgerId !== this.ledgerId || meta.maintenance || !meta.writable)
-          throw new DomainError('WALLET_UNAVAILABLE')
-        return work(tx)
-      })
+          if (!meta || meta.ledgerId !== this.ledgerId || meta.maintenance || !meta.writable)
+            throw new DomainError('WALLET_UNAVAILABLE')
+          return work(tx)
+        },
+        snapshot ? { isolationLevel: 'RepeatableRead', timeout: 10000 } : undefined
+      )
     } catch (e) {
-      if (e instanceof DomainError) throw e
+      if (e instanceof DomainError || e instanceof ChainVerificationError) throw e
       throw new DomainError('WALLET_UNAVAILABLE')
     }
+  }
+  async assertBusinessBasis(business: PrismaClient, scope: string) {
+    await this.transaction(async (tx) => {
+      let last: string | null = null
+      for (;;) {
+        const issued: {
+          id: string
+          orderId: string
+          stockId: string
+          digest: string
+          termsHash: string
+          permit: PaymentPermit
+        }[] = await tx.$queryRaw<
+          {
+            id: string
+            orderId: string
+            stockId: string
+            digest: string
+            termsHash: string
+            permit: PaymentPermit
+          }[]
+        >`SELECT "id","orderId","stockId","digest","termsHash","permit" FROM "PaymentLedgerIntent" WHERE "scope"=${scope} AND (${last}::uuid IS NULL OR "id">${last}::uuid) ORDER BY "id" LIMIT 128`
+        if (!issued.length) break
+        const [intents, terms] = await Promise.all([
+          business.paymentIntent.findMany({ where: { id: { in: issued.map((r) => r.id) } } }),
+          business.paymentOrderTerms.findMany({
+            where: { orderId: { in: issued.map((r) => r.orderId) } }
+          })
+        ])
+        const byIntent = new Map(intents.map((r) => [r.id, r])),
+          byOrder = new Map(terms.map((r) => [r.orderId, r]))
+        for (const r of issued) {
+          const i = byIntent.get(r.id),
+            t = byOrder.get(r.orderId)
+          if (
+            !i ||
+            !t ||
+            i.orderId !== r.orderId ||
+            i.digest !== r.digest ||
+            t.stockId !== r.stockId ||
+            t.termsHash !== r.termsHash ||
+            !isDeepStrictEqual(i.permit, r.permit)
+          )
+            throw new DomainError('WALLET_UNAVAILABLE')
+        }
+        last = issued[issued.length - 1].id
+      }
+    }, true)
+  }
+  private async resolutionWatermark(scope: string) {
+    return this.transaction(async (tx) => {
+      const [row] = await tx.$queryRaw<
+        { count: string; epoch: string }[]
+      >`SELECT count(*)::text AS count,(SELECT "recoveryEpoch"::text FROM "WalletLedgerMeta" WHERE "singleton"=true) AS epoch FROM "PaymentLedgerResolution" r JOIN "PaymentLedgerIntent" i ON i."id"=r."intentId" WHERE i."scope"=${scope}`
+      return row
+    })
+  }
+  async assertResolutions(
+    range: Pick<VerifiedRange, 'snapshot' | 'events'>,
+    observer: DualChainObserver
+  ): Promise<() => Promise<void>> {
+    const scope = range.snapshot.chainId + ':' + observer.config.escrow
+    const initial = await this.resolutionWatermark(scope)
+    const unchanged = async () => {
+      const current = await this.resolutionWatermark(scope)
+      if (stable(current) !== stable(initial))
+        return unavailable('independent resolution watermark changed; retry verification')
+    }
+    if (initial.count !== '0') {
+      const head = await observer.readVerifiedSnapshot()
+      let last: string | null = null
+      for (;;) {
+        const page: {
+          id: string
+          outcome: 'invalid' | 'funded'
+          evidence: VerifiedIntentState
+          permit: PaymentPermit
+        }[] = await this.transaction(
+          (tx) =>
+            tx.$queryRaw`SELECT i."id",i."permit",r."outcome",r."evidence" FROM "PaymentLedgerResolution" r JOIN "PaymentLedgerIntent" i ON i."id"=r."intentId" WHERE i."scope"=${scope} AND (${last}::uuid IS NULL OR i."id">${last}::uuid) ORDER BY i."id" LIMIT 128`
+        )
+        if (!page.length) break
+        for (const row of page) {
+          const expected = row.evidence,
+            at = expected.snapshot
+          if (
+            !at ||
+            at.chainId !== range.snapshot.chainId ||
+            !/^0x[0-9a-f]{64}$/.test(at.hash) ||
+            !/^(0|[1-9][0-9]*)$/.test(at.height)
+          )
+            return unavailable('independent resolution evidence missing')
+          const verified = await observer.atHeight(at.height, head)
+          if (verified.hash !== at.hash)
+            return contradiction('independent accepted finalized resolution block changed', {
+              intentId: row.id,
+              height: at.height,
+              acceptedHash: at.hash,
+              observedHash: verified.hash
+            })
+          const actual = await observer.readIntent(row.permit, verified)
+          const keys = [
+            'intentId',
+            'orderId',
+            'stockId',
+            'orderState',
+            'intentRevoked',
+            'signerRevoked',
+            'stockGeneration',
+            'stockOccupant',
+            'orderTermsHash'
+          ] as const
+          if (keys.some((key) => stable(actual[key]) !== stable(expected[key])))
+            return contradiction('independent accepted finalized resolution facts changed', {
+              intentId: row.id,
+              height: at.height,
+              acceptedHash: at.hash
+            })
+          if (
+            row.outcome === 'invalid' &&
+            range.events.some(
+              (e) =>
+                e.name === 'Deposited' &&
+                e.args.orderId === row.permit.orderId &&
+                (e.args.intentId === row.permit.intentId || BigInt(e.height) <= BigInt(at.height))
+            )
+          )
+            return contradiction('funding contradicts independent accepted invalidity', {
+              intentId: row.id,
+              height: at.height,
+              orderId: row.permit.orderId
+            })
+        }
+        last = page[page.length - 1].id
+      }
+    }
+    await unchanged()
+    // Called again while the business chain lock is held. Expensive RPC validation
+    // happens before that transaction, but a concurrent new decision invalidates it.
+    return unchanged
   }
   private async head(tx: Transaction, r: IssuanceRecord) {
     await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended(${r.scope + ':' + r.listingId}, 0))`

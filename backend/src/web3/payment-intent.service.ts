@@ -1,3 +1,6 @@
+import { ChainVerificationError } from './chain-observer.js'
+import { EscrowProjector } from './escrow-projector.js'
+import { assertChainGate } from './chain-gate.js'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { keccak256, stringToHex } from 'viem'
 import type { Order, PrismaClient, Prisma } from '../generated/prisma/client.js'
@@ -51,6 +54,50 @@ export class PaymentIntentService {
     private readonly now: () => Date = () => new Date()
   ) {}
 
+  private async chainSafe<T>(work: () => Promise<T>): Promise<T> {
+    try {
+      return await work()
+    } catch (e) {
+      if (e instanceof ChainVerificationError) {
+        if (e.kind === 'contradiction' && this.config.chainDeployment) {
+          const projector = new EscrowProjector(
+            this.client,
+            this.config,
+            this.config.chainDeployment
+          )
+          const checkpoint = await this.client.scanCheckpoint.findUnique({
+            where: { scope: projector.scope }
+          })
+          if (checkpoint?.status !== 'isolated') await projector.isolate(e.reason, e.evidence ?? {})
+        }
+        throw new DomainError('WALLET_UNAVAILABLE')
+      }
+      throw e
+    }
+  }
+  createOrder(
+    auth: Authenticated,
+    key: string,
+    input: CreateOrderInput,
+    options: TransactionOptions = {}
+  ) {
+    return this.chainSafe(() => this.createOrderInternal(auth, key, input, options))
+  }
+  read(auth: Authenticated, id: string) {
+    return this.chainSafe(() => this.readInternal(auth, id))
+  }
+  requestIntentCancel(auth: Authenticated, id: string, key: string) {
+    return this.chainSafe(() => this.requestIntentCancelInternal(auth, id, key))
+  }
+  reconcile(auth: Authenticated, id: string) {
+    return this.chainSafe(() => this.reconcileInternal(auth, id))
+  }
+  replaceIntent(auth: Authenticated, orderId: string, key: string, previousIntentId: string) {
+    return this.chainSafe(() => this.replaceIntentInternal(auth, orderId, key, previousIntentId))
+  }
+  closeOrder(auth: Authenticated, orderId: string, key: string) {
+    return this.chainSafe(() => this.closeOrderInternal(auth, orderId, key))
+  }
   private async authenticated(auth: Authenticated) {
     const current = await this.auth.authenticate('bazaar_session=' + auth.token)
     if (current.account.id !== auth.account.id || current.account.role !== 'participant')
@@ -58,21 +105,42 @@ export class PaymentIntentService {
     return current
   }
   private async session(tx: Transaction, auth: Authenticated) {
+    await assertChainGate(tx, this.config)
     await tx.$queryRaw`SELECT "tokenHash" FROM "Session" WHERE "tokenHash" = ${auth.tokenHash} FOR UPDATE`
     const s = await tx.session.findUnique({ where: { tokenHash: auth.tokenHash } })
-    const account = await tx.account.findUnique({where:{id:auth.account.id}})
-    if (!s || s.revokedAt || s.expiresAt <= new Date() || s.accountId !== auth.account.id ||
-      account?.status !== 'active' || account.role !== 'participant' ||
-      s.recoveryEpoch !== await this.wallets.recoveryEpoch())
+    const account = await tx.account.findUnique({ where: { id: auth.account.id } })
+    if (
+      !s ||
+      s.revokedAt ||
+      s.expiresAt <= new Date() ||
+      s.accountId !== auth.account.id ||
+      account?.status !== 'active' ||
+      account.role !== 'participant' ||
+      s.recoveryEpoch !== (await this.wallets.recoveryEpoch())
+    )
       throw new DomainError('UNAUTHENTICATED')
     if (s.authMethod === 'wallet_siwe') {
-      const identity = await tx.walletIdentity.findUnique({where:{accountId_chainId:{
-        accountId:auth.account.id,chainId:this.config.chainId}}})
-      const trusted = await this.wallets.assertProjection({accountId:auth.account.id,chainId:this.config.chainId,
-        address:identity?.address as EvmAddress ?? null,bindingVersion:identity?.bindingVersion??0,
-        revision:String(identity?.securityRevision??0)})
-      if (s.walletChainId !== this.config.chainId || s.walletAddress !== trusted.address ||
-        s.walletBindingVersion !== trusted.bindingVersion) throw new DomainError('UNAUTHENTICATED')
+      const identity = await tx.walletIdentity.findUnique({
+        where: {
+          accountId_chainId: {
+            accountId: auth.account.id,
+            chainId: this.config.chainId
+          }
+        }
+      })
+      const trusted = await this.wallets.assertProjection({
+        accountId: auth.account.id,
+        chainId: this.config.chainId,
+        address: (identity?.address as EvmAddress) ?? null,
+        bindingVersion: identity?.bindingVersion ?? 0,
+        revision: String(identity?.securityRevision ?? 0)
+      })
+      if (
+        s.walletChainId !== this.config.chainId ||
+        s.walletAddress !== trusted.address ||
+        s.walletBindingVersion !== trusted.bindingVersion
+      )
+        throw new DomainError('UNAUTHENTICATED')
     }
   }
   private async lockOrder(tx: Transaction, auth: Authenticated, orderId: string) {
@@ -109,6 +177,7 @@ export class PaymentIntentService {
     return id
   }
   private async reserve(tx: Transaction, order: Order, auth: Authenticated) {
+    await assertChainGate(tx, this.config, true)
     await this.session(tx, auth)
     const snapshot = await tx.testnetOrderSnapshot.findUnique({ where: { orderId: order.id } })
     const contents = await tx.orderSnapshot.findUnique({ where: { orderId: order.id } })
@@ -180,13 +249,19 @@ export class PaymentIntentService {
       update: { activeOrderId: order.id, lastOrderId: order.id, state: 'reserved' }
     })
   }
-  async createOrder(
+  private async createOrderInternal(
     auth: Authenticated,
     key: string,
     input: CreateOrderInput,
     options: TransactionOptions = {}
   ) {
     auth = await this.authenticated(auth)
+    if (this.config.chainDeployment)
+      await this.journal.assertBusinessBasis?.(
+        this.client,
+        this.config.chainId + ':' + this.config.escrow
+      )
+    await transact(this.client, (tx) => assertChainGate(tx, this.config, true))
     const commands = new OrderCommands(this.client, this.payout, (tx, o) =>
       this.reserve(tx, o, auth)
     )
@@ -246,8 +321,13 @@ export class PaymentIntentService {
       previousIntentId: i.previousIntentId
     }
   }
-  async read(auth: Authenticated, id: string) {
+  private async readInternal(auth: Authenticated, id: string) {
     auth = await this.authenticated(auth)
+    if (this.config.chainDeployment)
+      await this.journal.assertBusinessBasis?.(
+        this.client,
+        this.config.chainId + ':' + this.config.escrow
+      )
     const original = await this.client.paymentIntent.findUnique({ where: { id } })
     if (!original) throw new DomainError('NOT_FOUND')
     const loaded = await transact(this.client, async (tx) => {
@@ -271,10 +351,11 @@ export class PaymentIntentService {
       if (!signature) {
         if (loaded.r.permit.signerKeyId !== this.signer.keyId)
           throw new DomainError('WALLET_UNAVAILABLE')
-        const signed = await this.signer.sign(loaded.r.permit)
         await transact(this.client, async (tx) => {
           await this.lockOrder(tx, auth, loaded.r.orderId)
           await this.record(tx, id)
+          await assertChainGate(tx, this.config, true)
+          const signed = await this.signer.sign(loaded.r.permit)
           await tx.paymentSignature.upsert({
             where: { intentId: id },
             create: { intentId: id, signature: signed },
@@ -287,10 +368,13 @@ export class PaymentIntentService {
       }
     }
     await this.authenticated(auth)
+    await transact(this.client, (tx) => assertChainGate(tx, this.config))
     const current = await this.client.paymentIntentState.findUniqueOrThrow({
       where: { intentId: id }
     })
-    const stock = await this.client.testnetStock.findUniqueOrThrow({where:{listingId:loaded.r.listingId}})
+    const stock = await this.client.testnetStock.findUniqueOrThrow({
+      where: { listingId: loaded.r.listingId }
+    })
     return {
       orderId: loaded.r.orderId,
       intentId: id,
@@ -305,7 +389,7 @@ export class PaymentIntentService {
       protection: stock.activeOrderId === loaded.r.orderId ? 'held' : 'released'
     }
   }
-  async requestIntentCancel(auth: Authenticated, id: string, key: string) {
+  private async requestIntentCancelInternal(auth: Authenticated, id: string, key: string) {
     auth = await this.authenticated(auth)
     const i = await this.client.paymentIntent.findUnique({ where: { id } })
     if (!i) throw new DomainError('NOT_FOUND')
@@ -351,7 +435,8 @@ export class PaymentIntentService {
       v.chainId !== r.permit.chainId ||
       !/^0x[0-9a-f]{64}$/.test(v.hash) ||
       !/^[0-9]+$/.test(v.height) ||
-      typeof s.intentRevoked !== 'boolean' || typeof s.signerRevoked !== 'boolean' ||
+      typeof s.intentRevoked !== 'boolean' ||
+      typeof s.signerRevoked !== 'boolean' ||
       !Number.isSafeInteger(v.timestamp) ||
       v.timestamp < 0 ||
       !v.verifiedAt ||
@@ -380,7 +465,7 @@ export class PaymentIntentService {
       return 'invalid'
     throw new DomainError('STATE_CONFLICT')
   }
-  async reconcile(auth: Authenticated, id: string) {
+  private async reconcileInternal(auth: Authenticated, id: string) {
     auth = await this.authenticated(auth)
     const original = await this.client.paymentIntent.findUnique({ where: { id } })
     if (!original) throw new DomainError('NOT_FOUND')
@@ -391,8 +476,14 @@ export class PaymentIntentService {
         const r = await this.record(tx, id),
           state = await tx.paymentIntentState.findUniqueOrThrow({ where: { intentId: id } })
         if (['revoked', 'expired', 'funded'].includes(state.status)) {
-          const stock = await tx.testnetStock.findUniqueOrThrow({where:{listingId:r.listingId}})
-          return { intentId: id, status: state.status, protection: stock.activeOrderId === r.orderId ? 'held' : 'released' }
+          const stock = await tx.testnetStock.findUniqueOrThrow({
+            where: { listingId: r.listingId }
+          })
+          return {
+            intentId: id,
+            status: state.status,
+            protection: stock.activeOrderId === r.orderId ? 'held' : 'released'
+          }
         }
         // An original committed tuple can complete its independent registration,
         // but a failed registration must remain issued and recoverable.
@@ -422,11 +513,16 @@ export class PaymentIntentService {
           where: { intentId: id, status: { in: ['issued', 'cancellation_pending'] } },
           data: { status: 'reconciling' }
         })
-      if (e instanceof DomainError) throw e
+      if (e instanceof DomainError || e instanceof ChainVerificationError) throw e
       throw new DomainError('WALLET_UNAVAILABLE')
     }
   }
-  async replaceIntent(auth: Authenticated, orderId: string, key: string, oldId: string) {
+  private async replaceIntentInternal(
+    auth: Authenticated,
+    orderId: string,
+    key: string,
+    oldId: string
+  ) {
     auth = await this.authenticated(auth)
     const id = await transact(this.client, async (tx) => {
       const order = await this.lockOrder(tx, auth, orderId)
@@ -463,7 +559,7 @@ export class PaymentIntentService {
     })
     return this.read(auth, id)
   }
-  async closeOrder(auth: Authenticated, orderId: string, key: string) {
+  private async closeOrderInternal(auth: Authenticated, orderId: string, key: string) {
     auth = await this.authenticated(auth)
     return transact(this.client, async (tx) => {
       const order = await this.lockOrder(tx, auth, orderId)
@@ -482,8 +578,12 @@ export class PaymentIntentService {
         if (!['revoked', 'expired'].includes(state.status)) throw new DomainError('STATE_CONFLICT')
         const s = await this.observer.readIntent(r.permit)
         if (this.verify(r, s) !== 'invalid') throw new DomainError('STATE_CONFLICT')
-        if (lastEvidence && (lastEvidence.snapshot.height !== s.snapshot.height ||
-          lastEvidence.snapshot.hash !== s.snapshot.hash || lastEvidence.snapshot.timestamp !== s.snapshot.timestamp))
+        if (
+          lastEvidence &&
+          (lastEvidence.snapshot.height !== s.snapshot.height ||
+            lastEvidence.snapshot.hash !== s.snapshot.hash ||
+            lastEvidence.snapshot.timestamp !== s.snapshot.timestamp)
+        )
           throw new DomainError('WALLET_UNAVAILABLE')
         lastEvidence = s
       }

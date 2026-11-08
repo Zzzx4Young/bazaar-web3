@@ -60,4 +60,8 @@ npm run test:mutations
 
 `test:mutations` 在独立 `/tmp` 副本中引入8个已知回归，确认对应行为测试确实失败；不修改本实现，不等价于安全审计。原始RED、GREEN和变更灵敏度日志分别留证。
 
-未验收：真实Sepolia、生产多签及独立治理、代币分发、双源最终性与索引、网页钱包、T05真实交付登记、真实进程强杀／重启／数据库断连、完整灾难恢复或真实资金。以上均不得因本地EVM通过而标记完成。
+未验收：真实Sepolia、生产多签及独立治理、代币分发、双源最终性与索引、网页钱包、T05真实交付登记、整套资金系统的进程强杀／重启／数据库断连、完整灾难恢复或真实资金。T07另有局部索引进程SIGKILL演练，不能替代这些整体验收。以上均不得因本地EVM通过而标记完成。
+
+T07增设同版本本地Anvil1.5.0（package-lock锁定），供 `backend/tests/helpers/local-escrow.mjs` 创建随机身份、真实两套Safe/guard与托管部署；只监听回环并按实例清理。两个测试RPC代理仍是同一EVM，不能认定独立供应商。该夹具token授权额度用于反复本地场景，不代表网站已完成按单金额授权流程。完整后端事件/进程演练见backend README。
+
+本轮`npm audit`报告8个依赖条目（1 low、3 high、4 critical），与T06原锁文件中的Safe1.4.1→ethers5.4.0/elliptic6.5.4/ws7.4.6及solc0.8.30→tmp0.0.33版本一致，非新增Anvil告警。当前流程只读取Safe Solidity源码，使用受核验原生solc/Forge及viem签名，不加载Safe ethers JS SDK或solc JS CLI；这不能认定告警已消除。依赖治理/隔离仍列公开部署前置项，未为此擅自升级既定Safe合约候选。
