@@ -5,19 +5,23 @@
   "specDocumentsTracked": false,
   "acceptanceStatus": "pending",
   "localAcceptance": {
-    "runId": "2026-11-08-t07-local-acceptance-r1",
-    "task": "T07",
-    "status": "passed",
-    "evidenceDirectory": "docs/superpowers/evidence/2026-11-08-t07-local-acceptance-r1",
-    "backendCheckPassed": 160,
-    "databaseHttpPassed": 134,
-    "localChainIntegrationPassed": 4,
+    "runId": "2026-11-09-t08-local-acceptance-r1",
+    "task": "T08",
+    "status": "partial",
+    "fileAndEvidenceAuthorizationStatus": "passed_locally",
+    "evidenceDirectory": "docs/superpowers/evidence/2026-11-09-t08-local-acceptance-r1",
+    "backendCheckPassed": 162,
+    "databaseHttpPassed": 163,
+    "T08AndRuntimeRolePassed": 30,
+    "localChainIntegrationPassed": 1,
     "localEvmContractRegressionPassed": 45,
-    "reviewP2Fixed": 3,
-    "ownP1ResponseExposureFixed": 1,
+    "dependencyVulnerabilities": 0,
     "actualSepoliaRpcValidated": false,
     "fullDisasterRecoveryValidated": false,
-    "buyerDownloadsEnabled": false
+    "buyerDownloadsEnabled": "only exact finalized/published versions through controlled authorization",
+    "blockingGaps": [
+      "T08-R: immutable independent refund exit and safe undelivered-refund resale"
+    ]
   },
   "localAcceptanceHistory": [
     {
@@ -75,6 +79,21 @@
       "mutationRegressionsDetected": 8,
       "actualT04ServiceVectorValidated": true,
       "actualSepoliaRpcValidated": false
+    },
+    {
+      "runId": "2026-11-08-t07-local-acceptance-r1",
+      "task": "T07",
+      "status": "passed",
+      "evidenceDirectory": "docs/superpowers/evidence/2026-11-08-t07-local-acceptance-r1",
+      "backendCheckPassed": 160,
+      "databaseHttpPassed": 134,
+      "localChainIntegrationPassed": 4,
+      "localEvmContractRegressionPassed": 45,
+      "reviewP2Fixed": 3,
+      "ownP1ResponseExposureFixed": 1,
+      "actualSepoliaRpcValidated": false,
+      "fullDisasterRecoveryValidated": false,
+      "buyerDownloadsEnabled": false
     }
   ]
 }

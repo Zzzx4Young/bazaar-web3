@@ -1,3 +1,13 @@
+import { EvidenceService } from './evidence/evidence.service.js'
+import { EvidenceController } from './evidence/evidence.controller.js'
+import {
+  DeliveryPermitService,
+  readDeliverySigner,
+  ChainDeliverySignerVerifier
+} from './delivery-files/delivery-permit.service.js'
+import { DeliveryController } from './delivery-files/delivery.controller.js'
+import { DownloadService } from './delivery-files/download.service.js'
+import { SupplementPublicationService } from './delivery-files/supplement-publication.service.js'
 import { CheckpointPaymentObserver } from './web3/payment-observer.js'
 import { DualChainObserver } from './web3/chain-observer.js'
 import { TransactionAttemptService } from './web3/transaction-attempt.js'
@@ -113,6 +123,21 @@ export async function createApp(
     dependencies.privateFiles.store,dependencies.privateFiles.budget,dependencies.privateFiles.uploadKey)
     : privateFileConfig ? new PrivateFileService(database.client,new GaragePrivateObjectStore(privateFileConfig.store),
       privateFileConfig.budget,privateFileConfig.uploadKey) : null
+  const fileStore = dependencies.privateFiles?.store ??
+    (privateFileConfig ? new GaragePrivateObjectStore(privateFileConfig.store) : null)
+  const fileOrigin = privateFileConfig?.uploadOrigin
+  const downloads = config.web3 && fileStore && fileOrigin && privateFileConfig
+    ? new DownloadService(database.client, config.web3, fileStore, fileOrigin,
+      privateFileConfig.uploadKey) : null
+  const deliverySigner = config.web3
+    ? readDeliverySigner(config.web3.deliverySignerFile, config.web3) : null
+  const deliveryPermits = config.web3 && fileStore && downloads && deliverySigner && chainObserver
+    ? new DeliveryPermitService(database.client, config.web3, fileStore, deliverySigner,
+      new ChainDeliverySignerVerifier(chainObserver)) : null
+  const publications = config.web3 && fileStore && downloads
+    ? new SupplementPublicationService(database.client, config.web3, fileStore) : null
+  const evidence = config.web3 && downloads
+    ? new EvidenceService(database.client, config.web3, downloads) : null
   const telemetry = new RequestTelemetry()
   const admission = new RequestAdmission(config.maxInFlightRequests)
   const requestLogSink =
@@ -157,7 +182,7 @@ export async function createApp(
   const app = await NestFactory.create<NestFastifyApplication>(
     {
       module: AppModule,
-      controllers: [TransactionAttemptController,
+      controllers: [EvidenceController, DeliveryController, TransactionAttemptController,
         HealthController,
         AuthController,
         WalletIdentityController,
@@ -184,6 +209,10 @@ export async function createApp(
         { provide: PaymentIntentService, useValue: payments },
         { provide: TransactionAttemptService, useValue: attempts },
         { provide: PrivateFileService, useValue: privateFiles },
+        { provide: EvidenceService, useValue: evidence },
+        { provide: DeliveryPermitService, useValue: deliveryPermits },
+        { provide: DownloadService, useValue: downloads },
+        { provide: SupplementPublicationService, useValue: publications },
         { provide: MediaService, useValue: media }
       ]
     },

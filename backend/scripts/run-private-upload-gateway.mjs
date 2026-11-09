@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { DownloadService } from '../dist/delivery-files/download.service.js'
 import { readConfig } from '../dist/config.js'
 import { DatabaseService } from '../dist/database/database.service.js'
 import { PrivateFileService } from '../dist/delivery-files/upload.service.js'
@@ -19,7 +20,8 @@ const server = createPrivateUploadGateway(
     files.budget,
     files.uploadKey
   ),
-  config.appOrigin
+  config.appOrigin,
+  config.web3 ? new DownloadService(db.client,config.web3,new GaragePrivateObjectStore(files.store),files.uploadOrigin,files.uploadKey) : undefined
 )
 await new Promise((done, reject) => {
   server.once('error', reject)

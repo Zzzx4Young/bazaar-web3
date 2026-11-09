@@ -1,9 +1,15 @@
+import type { DownloadService } from './download.service.js'
+import { pipeline } from 'node:stream/promises'
 import { randomUUID } from 'node:crypto'
 import { createServer } from 'node:http'
 import { mapApplicationError } from '../common/domain-error.js'
 import type { PrivateFileService } from './upload.service.js'
 
-export function createPrivateUploadGateway(files: PrivateFileService, websiteOrigin: string) {
+export function createPrivateUploadGateway(
+  files: PrivateFileService,
+  websiteOrigin: string,
+  downloads?: DownloadService
+) {
   const attempts = new Map<string, { until: number; count: number }>()
   const server = createServer(async (request, response) => {
     const requestId = randomUUID()
@@ -13,6 +19,44 @@ export function createPrivateUploadGateway(files: PrivateFileService, websiteOri
     const send = (status: number, code: string) => {
       response.writeHead(status, { 'Content-Type': 'application/json', Connection: 'close' })
       response.end(JSON.stringify({ code, retryable: [429, 503].includes(status), requestId }))
+    }
+    // Existing bearer capabilities are checked only against their original
+    // fixed expiry. Business refund/session checks happen when minting them.
+    if (request.method === 'GET' && request.url?.startsWith('/downloads/')) {
+      if (
+        !downloads ||
+        request.headers.cookie ||
+        (request.headers.origin && request.headers.origin !== websiteOrigin)
+      ) {
+        send(403, 'FORBIDDEN')
+        return
+      }
+      const match = request.url.match(/^\/downloads\/([0-9a-f-]{36})\?token=([A-Za-z0-9_-]{43})$/)
+      if (!match) {
+        send(403, 'FORBIDDEN')
+        return
+      }
+      try {
+        const file = await downloads.readCapability(match[1], match[2])
+        response.setHeader('Content-Type', 'application/octet-stream')
+        response.setHeader('Content-Length', file.byteSize)
+        response.setHeader(
+          'Content-Disposition',
+          "attachment; filename=download; filename*=UTF-8''" +
+            encodeURIComponent(file.filename).replace(
+              /[!'()*]/g,
+              (c) => '%' + c.charCodeAt(0).toString(16)
+            )
+        )
+        response.setHeader('Content-Security-Policy', "sandbox; default-src 'none'")
+        response.setHeader('Referrer-Policy', 'no-referrer')
+        await pipeline(file.body, response)
+      } catch (error) {
+        const mapped = mapApplicationError(error)
+        if (!response.headersSent) send(mapped.status, mapped.code)
+        else response.destroy()
+      }
+      return
     }
     const origin = request.headers.origin
     if (origin !== websiteOrigin || request.headers.cookie) {

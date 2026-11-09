@@ -158,13 +158,14 @@ export function readWeb3Config(env: NodeJS.ProcessEnv): Web3Config | null {
   )
     throw new Error('Invalid Web3 security ledger URL')
   const chainDeployment = readChainDeployment(env.WEB3_CHAIN_DEPLOYMENT_FILE)
-  if (env.WEB3_PAYMENT_SIGNER_FILE && !chainDeployment)
+  if ((env.WEB3_PAYMENT_SIGNER_FILE || env.WEB3_DELIVERY_SIGNER_FILE) && !chainDeployment)
     throw new Error('Payment signing requires pinned chain deployment')
   return {
     chainId,
     tokenDecimals: 6,
     chainDeployment,
     paymentSignerFile: env.WEB3_PAYMENT_SIGNER_FILE,
+    deliverySignerFile: env.WEB3_DELIVERY_SIGNER_FILE,
     token: normalizeWalletAddress(env.WEB3_TOKEN_ADDRESS),
     escrow: normalizeWalletAddress(env.WEB3_ESCROW_ADDRESS),
     rpcPrimary: primary.toString(),

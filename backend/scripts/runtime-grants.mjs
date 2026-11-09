@@ -15,7 +15,7 @@ export async function grantRuntime(client, schema, role) {
     'OrderMediaSnapshot',
     'AccountIdentityEvent',
     'ListingReviewEvent'
-    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation', 'ListingTestnetPrice', 'TestnetOrderSnapshot', 'PaymentOrderTerms', 'PaymentIntent', 'PaymentSignature', 'PaymentIntentRequest', 'PrivateFileVersion', 'PrivateFileCheck', 'PrivateFileAudit', 'ChainBlock', 'ChainEvent', 'ChainSnapshot', 'ReconciliationIncident'
+    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation', 'ListingTestnetPrice', 'TestnetOrderSnapshot', 'PaymentOrderTerms', 'PaymentIntent', 'PaymentSignature', 'PaymentIntentRequest', 'PrivateFileVersion', 'PrivateFileCheck', 'PrivateFileAudit', 'ChainBlock', 'ChainEvent', 'ChainSnapshot', 'ReconciliationIncident', 'DeliveryMapping', 'DeliverySignature', 'SupplementChallenge', 'SupplementPublication', 'DownloadGrant', 'FileAccessAudit', 'EvidenceRecord', 'ReviewAuthorization', 'ReviewEvent'
   ]
   const mutable = [
     'Account',
@@ -62,6 +62,7 @@ export async function grantRuntime(client, schema, role) {
           : mutable.includes(table) ? 'SELECT, INSERT, UPDATE' : 'SELECT, INSERT'
       await tx.$executeRawUnsafe(`GRANT ${permissions} ON "${schema}"."${table}" TO "${role}"`)
     }
+    await tx.$executeRawUnsafe(`REVOKE INSERT ON "${schema}"."ReviewAuthorization" FROM "${role}"`)
     await tx.$executeRawUnsafe(`REVOKE UPDATE ON "${schema}"."PrivateUpload", "${schema}"."PrivateFileQuota", "${schema}"."PrivateFileGlobal" FROM "${role}"`)
     await tx.$executeRawUnsafe(`GRANT UPDATE ("status","actualBytes","sha256","queuedAt","checkStartedAt","checkId","failureReason","cleanedAt","receiveOwnerScope","receiveOwnerPid","receiveOwnerStart","receiveStopped","checkOwnerScope","checkOwnerPid","checkOwnerStart","checkOwnerStopped","checkCancelRequested","checkDeadlineAt") ON "${schema}"."PrivateUpload" TO "${role}"`)
     await tx.$executeRawUnsafe(`GRANT UPDATE ("reservedBytes","usedBytes","activeUploads") ON "${schema}"."PrivateFileQuota" TO "${role}"`)

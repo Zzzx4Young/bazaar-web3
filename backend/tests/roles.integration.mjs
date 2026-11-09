@@ -59,6 +59,36 @@ test('C1: migration owner and restricted runtime support transactions without DD
     const commands = new OrderCommands(app.client)
     const listings = new ListingCommands(app.client)
     const f = await fixture({ client: app.client })
+    for (const table of [
+      'DeliveryMapping',
+      'DeliverySignature',
+      'SupplementChallenge',
+      'SupplementPublication',
+      'DownloadGrant',
+      'FileAccessAudit',
+      'EvidenceRecord',
+      'ReviewEvent'
+    ]) {
+      const [grants] = await app.client
+        .$queryRaw`SELECT has_table_privilege(current_user, ${schema + '."'} || ${table} || '"', 'SELECT') AS readable,
+        has_table_privilege(current_user, ${schema + '."'} || ${table} || '"', 'INSERT') AS appendable,
+        has_table_privilege(current_user, ${schema + '."'} || ${table} || '"', 'UPDATE') AS editable,
+        has_table_privilege(current_user, ${schema + '."'} || ${table} || '"', 'DELETE') AS deletable`
+      assert.equal(grants.readable, true, table + ' must be readable')
+      assert.equal(grants.appendable, true, table + ' must be appendable')
+      assert.equal(grants.editable, false, table + ' immutable')
+      assert.equal(grants.deletable, false, table + ' retained')
+    }
+    await assert.rejects(
+      app.client.reviewAuthorization.create({
+        data: {
+          orderId: randomUUID(),
+          accountId: f.buyer,
+          expiresAt: new Date(Date.now() + 300000)
+        }
+      }),
+      permissionDenied
+    )
     const walletAddress = '0x' + '1'.repeat(40)
     await app.client.walletClaim.create({ data: {
       chainId: 11155111, address: walletAddress, accountId: f.buyer

@@ -11,7 +11,7 @@ import { hashPassword } from '../../dist/auth/password.js'
 import { readConfig } from '../../dist/config.js'
 
 const password = 'Virtual-T03-seller-password-only'
-export async function testnetFixture() {
+export async function testnetFixture(overrides = {}) {
   const db = await sandbox(),
     security = await isolatedLedger(),
     f = await fixture(db, 'digital', '10')
@@ -27,7 +27,8 @@ export async function testnetFixture() {
     rpcPrimary: 'https://one.invalid',
     rpcSecondary: 'https://two.invalid',
     securityLedgerUrl: db.url.toString(),
-    securityLedgerId: security.id
+    securityLedgerId: security.id,
+    ...overrides
   }
   const auth = new AuthService(
     db.client,

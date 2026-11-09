@@ -857,3 +857,98 @@ model ChainSnapshot {
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   @@id([scope,height])
 }
+
+// T08 immutable authorization basis; presence never overrides the current full funds projection.
+model DeliveryMapping {
+  id String @id @db.Uuid
+  orderId String @db.Uuid
+  actorId String @db.Uuid
+  key String
+  versionId String @db.Uuid
+  chainId Int
+  escrow String @db.VarChar(42)
+  chainOrderId String @db.Char(66)
+  credentialId String @unique @db.Char(66)
+  deliveryVersion String @db.Char(66)
+  manifestCommitment String @db.Char(66)
+  salt String @db.Char(64)
+  manifest Json
+  permit Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@unique([actorId,key])
+  @@index([orderId,versionId])
+}
+model DeliverySignature {
+  signerAddress String @db.VarChar(42)
+  mappingId String @id @db.Uuid
+  signature String @db.VarChar(132)
+}
+model SupplementChallenge {
+  id String @id @db.Uuid
+  orderId String @db.Uuid
+  actorId String @db.Uuid
+  key String
+  mappingId String @db.Uuid
+  message Json
+  expiresAt DateTime @db.Timestamptz(6)
+  @@unique([actorId,key])
+}
+model SupplementPublication {
+  authorizationId String @id @db.Uuid
+  orderId String @db.Uuid
+  mappingId String @db.Uuid
+  actorId String @db.Uuid
+  signature String @db.VarChar(132)
+  evidence Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+}
+model DownloadGrant {
+  id String @id @db.Uuid
+  orderId String @db.Uuid
+  versionId String @db.Uuid
+  actorId String @db.Uuid
+  purpose String
+  tokenHash String @db.Char(64)
+  issuedAt DateTime @db.Timestamptz(6)
+  expiresAt DateTime @db.Timestamptz(6)
+  basis Json
+}
+model FileAccessAudit {
+  id String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  actorId String @db.Uuid
+  action String
+  details Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+}
+model EvidenceRecord {
+  id String @id @db.Uuid
+  orderId String @db.Uuid
+  submitterId String @db.Uuid
+  key String
+  parentId String? @db.Uuid
+  text String
+  versionId String? @db.Uuid
+  deliveryReferenceId String? @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@unique([submitterId,key])
+  @@index([orderId,createdAt])
+}
+model ReviewAuthorization {
+  id String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  accountId String @db.Uuid
+  expiresAt DateTime @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([orderId,accountId])
+}
+model ReviewEvent {
+  id String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  actorId String @db.Uuid
+  action String
+  key String
+  details Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@unique([actorId,key])
+}

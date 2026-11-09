@@ -31,7 +31,7 @@ export interface DeliveryPermit {
   credentialId: Bytes32
   orderId: Bytes32
   seller: EvmAddress
-  deliveryVersion: string
+  deliveryVersion: Bytes32
   manifestCommitment: Bytes32
   issuedAt: number
   expiresAt: number
@@ -56,6 +56,7 @@ export interface Web3Config {
   chainId: number
   tokenDecimals: 6
   paymentSignerFile?: string
+  deliverySignerFile?: string
   token: EvmAddress
   escrow: EvmAddress
   rpcPrimary: string
