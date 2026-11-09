@@ -377,6 +377,8 @@ export class DualChainObserver {
     ])
     if (typeof revoked !== 'boolean' || !Array.isArray(signer) || typeof signer[3] !== 'boolean')
       return contradiction('intent flags malformed')
+    const predecessor=order.state==='None' && permit.previousOrderId!=='0x'+'0'.repeat(64) && hash32(occupant)===permit.previousOrderId
+      ? await this.readOrder(permit.previousOrderId,snapshot) : undefined
     return {
       snapshot,
       intentId: permit.intentId,
@@ -387,6 +389,7 @@ export class DualChainObserver {
       signerRevoked: signer[3],
       stockGeneration: String(generation),
       stockOccupant: hash32(occupant),
+      ...(predecessor ? {predecessor} : {}),
       orderTermsHash: order.termsHash === '0x' + '0'.repeat(64) ? null : order.termsHash
     }
   }

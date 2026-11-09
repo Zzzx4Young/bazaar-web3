@@ -303,12 +303,10 @@ export class PaymentIntentService {
       p.amountAtoms !== snap.amountAtoms ||
       p.seller !== snap.sellerWallet ||
       p.stockId !== stock.stockId ||
-      p.stockGeneration !== stock.generation ||
-      p.previousOrderId !== stock.previousOrderId ||
       (await this.wallets.recoveryEpoch()) !== t.recoveryEpoch
     )
       throw new DomainError('WALLET_UNAVAILABLE')
-    return {
+    const record: IssuanceRecord = {
       id: i.id,
       orderId: i.orderId,
       listingId: t.listingId,
@@ -320,6 +318,13 @@ export class PaymentIntentService {
       permit: p,
       previousIntentId: i.previousIntentId
     }
+    if (p.stockGeneration !== stock.generation || p.previousOrderId !== stock.previousOrderId) {
+      const state = await tx.paymentIntentState.findUnique({ where: { intentId: id } })
+      if (state?.status !== 'funded' || !this.journal.assertHistoricalRefund)
+        throw new DomainError('WALLET_UNAVAILABLE')
+      await this.journal.assertHistoricalRefund(record)
+    }
+    return record
   }
   private async readInternal(auth: Authenticated, id: string) {
     auth = await this.authenticated(auth)
@@ -427,7 +432,7 @@ export class PaymentIntentService {
       })
     return null
   }
-  private verify(r: IssuanceRecord, s: VerifiedIntentState) {
+  private async verify(r: IssuanceRecord, s: VerifiedIntentState): Promise<'funded' | 'invalid'> {
     const v = s.snapshot,
       now = this.now().getTime()
     if (
@@ -450,16 +455,22 @@ export class PaymentIntentService {
       s.intentId !== r.permit.intentId ||
       s.orderId !== r.permit.orderId ||
       s.stockId !== r.permit.stockId ||
-      s.stockGeneration !== r.permit.stockGeneration ||
       !['None', 'Funded', 'Delivered', 'Disputed', 'Released', 'Refunded'].includes(s.orderState)
     )
       throw new DomainError('WALLET_UNAVAILABLE')
     if (s.orderState !== 'None') {
-      if (s.orderTermsHash !== r.termsHash || s.stockOccupant !== r.permit.orderId)
+      if (s.stockGeneration !== r.permit.stockGeneration ||
+        s.orderTermsHash !== r.termsHash || s.stockOccupant !== r.permit.orderId)
         throw new DomainError('WALLET_UNAVAILABLE')
       return 'funded'
     }
-    if (s.stockOccupant !== zero || (s.orderTermsHash !== null && s.orderTermsHash !== r.termsHash))
+    const empty = r.permit.stockGeneration === '0' && r.permit.previousOrderId === zero &&
+      s.stockGeneration === '0' && s.stockOccupant === zero
+    if (!empty) {
+      if (!this.journal.assertUnfundedSuccessor) throw new DomainError('WALLET_UNAVAILABLE')
+      await this.journal.assertUnfundedSuccessor(r, s)
+    }
+    if (s.orderTermsHash !== null && s.orderTermsHash !== r.termsHash)
       throw new DomainError('WALLET_UNAVAILABLE')
     if (s.intentRevoked === true || s.signerRevoked === true || v.timestamp >= r.permit.payDeadline)
       return 'invalid'
@@ -491,7 +502,7 @@ export class PaymentIntentService {
         canMarkReconciling = true
         if (!this.observer) throw new DomainError('WALLET_UNAVAILABLE')
         const s = await this.observer.readIntent(r.permit),
-          outcome = this.verify(r, s)
+          outcome = await this.verify(r, s)
         // Persist independent outcome first. If this transaction dies, the exact
         // original operation can reconcile again; no new permit is authorized.
         await this.journal.resolve(r, outcome, s)
@@ -551,7 +562,7 @@ export class PaymentIntentService {
       // Re-read finalized state: an old DB projection alone never authorizes replacement.
       if (!this.observer) throw new DomainError('WALLET_UNAVAILABLE')
       const s = await this.observer.readIntent(r.permit)
-      if (this.verify(r, s) !== 'invalid') throw new DomainError('STATE_CONFLICT')
+      if ((await this.verify(r, s)) !== 'invalid') throw new DomainError('STATE_CONFLICT')
       await this.journal.resolve(r, 'invalid', s)
       const next = await this.append(tx, orderId, orderTerms(r.permit), oldId)
       await this.request(tx, auth, 'replace', key, { orderId, oldId }, next)
@@ -577,7 +588,7 @@ export class PaymentIntentService {
           state = await tx.paymentIntentState.findUniqueOrThrow({ where: { intentId: i.id } })
         if (!['revoked', 'expired'].includes(state.status)) throw new DomainError('STATE_CONFLICT')
         const s = await this.observer.readIntent(r.permit)
-        if (this.verify(r, s) !== 'invalid') throw new DomainError('STATE_CONFLICT')
+        if ((await this.verify(r, s)) !== 'invalid') throw new DomainError('STATE_CONFLICT')
         if (
           lastEvidence &&
           (lastEvidence.snapshot.height !== s.snapshot.height ||

@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { RefundJournal } from '../dist/web3/refund-journal.js'
+import { RefundRecoveryService } from '../dist/web3/refund-recovery.service.js'
+import { DomainError } from '../dist/common/domain-error.js'
 import { setTimeout as delay } from 'node:timers/promises'
 import { readConfig } from '../dist/config.js'
 import { DatabaseService } from '../dist/database/database.service.js'
@@ -29,11 +32,29 @@ try {
   await ledger.recoveryEpoch()
   const observer = new DualChainObserver(web3, web3.chainDeployment),
     journal = new PostgresPaymentJournal(security.client, web3.securityLedgerId),
+    refundRecovery = new RefundRecoveryService(
+      db.client,
+      observer,
+      journal,
+      new RefundJournal(security.client, web3.securityLedgerId)
+    ),
     indexer = new ChainIndexer(
       db.client,
       observer,
       () => journal.assertBusinessBasis(db.client, web3.chainId + ':' + web3.escrow),
-      (range) => journal.assertResolutions(range, observer)
+      (range) => journal.assertResolutions(range, observer),
+      async () => {
+        try {
+          return await refundRecovery.runOnce()
+        } catch (e) {
+          if (e instanceof DomainError)
+            throw new ChainVerificationError(
+              'unavailable',
+              'refund recovery basis unavailable; stock retained'
+            )
+          throw e
+        }
+      }
     )
   if (args.includes('--initialize-fresh')) {
     // Owner-controlled, new-deployment-only action; never an automatic reset or recovery approval.

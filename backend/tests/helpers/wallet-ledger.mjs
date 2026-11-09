@@ -17,7 +17,7 @@ export async function isolatedLedger() {
   const id = randomUUID(), epoch = randomUUID()
   await db.client.$executeRaw`INSERT INTO "WalletLedgerMeta" ("singleton", "ledgerId", "recoveryEpoch")
     VALUES (true, ${id}::uuid, ${epoch}::uuid)`
-  return { client: db.client, ledger: new PostgresWalletSecurityLedger(db.client, id), id, epoch,
+  return { url: privateUrl, client: db.client, ledger: new PostgresWalletSecurityLedger(db.client, id), id, epoch,
     async close() {
       await db.onModuleDestroy()
       await admin.client.$executeRawUnsafe(`DROP SCHEMA "${schema}" CASCADE`)

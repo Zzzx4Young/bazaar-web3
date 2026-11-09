@@ -1,3 +1,4 @@
+import type { ObservedOrder } from './escrow-state.js'
 import type { PrismaClient } from '../generated/prisma/client.js'
 import { DualChainObserver, unavailable, contradiction } from './chain-observer.js'
 import { chainScope, deploymentDigest } from './escrow-projector.js'
@@ -16,6 +17,7 @@ export interface VerifiedIntentState {
   stockGeneration: string
   stockOccupant: Bytes32
   orderTermsHash: Bytes32 | null
+  predecessor?: ObservedOrder
 }
 export interface PaymentChainObserver {
   readIntent(permit: PaymentPermit): Promise<VerifiedIntentState>

@@ -6,7 +6,8 @@ export async function assertWalletLedgerGrants(client: PrismaClient) {
     WalletLedgerClaim: ['SELECT', 'INSERT'], WalletLedgerReservation: ['SELECT', 'INSERT', 'DELETE'],
     WalletLedgerOperation: ['SELECT', 'INSERT', 'UPDATE'], WalletLedgerEvent: ['SELECT', 'INSERT'],
     PaymentLedgerIntent: ['SELECT', 'INSERT'], PaymentLedgerHead: ['SELECT', 'INSERT', 'UPDATE'],
-    PaymentLedgerResolution: ['SELECT', 'INSERT']
+    PaymentLedgerResolution: ['SELECT', 'INSERT'],
+    PaymentLedgerRefundExit: ['SELECT', 'INSERT']
   }
   const [role] = await client.$queryRaw<{ privileged: boolean }[]>`
     SELECT (rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication OR rolbypassrls OR

@@ -17,7 +17,8 @@ export class ChainIndexer {
     readonly client: PrismaClient,
     readonly observer: DualChainObserver,
     readonly verifyPrivateBasis?: () => Promise<void>,
-    readonly verifyResolutions?: (range: VerifiedRange) => Promise<() => Promise<void>>
+    readonly verifyResolutions?: (range: VerifiedRange) => Promise<() => Promise<void>>,
+    readonly recoverRefunds?: () => Promise<unknown>
   ) {
     this.projector = new EscrowProjector(
       client,
@@ -76,6 +77,7 @@ export class ChainIndexer {
             data: { updatedAt: new Date() }
           })
         })
+        await this.recoverRefunds?.()
         return { status: cursor.status, height: cursor.height.toString(), events: 0 }
       }
       const tracked: Bytes32[] = []
@@ -100,7 +102,9 @@ export class ChainIndexer {
         after = page[page.length - 1].chainOrderId
       }
       const range = await this.observer.scanAndVerify((cursor.height + 1n).toString(), tracked)
-      return await this.projector.project(range, options)
+      const result = await this.projector.project(range, options)
+      await this.recoverRefunds?.()
+      return result
     } catch (e) {
       if (e instanceof ChainVerificationError && e.kind === 'contradiction') {
         const current = await this.client.scanCheckpoint.findUnique({

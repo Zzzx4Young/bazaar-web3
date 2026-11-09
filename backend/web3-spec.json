@@ -5,23 +5,21 @@
   "specDocumentsTracked": false,
   "acceptanceStatus": "pending",
   "localAcceptance": {
-    "runId": "2026-11-09-t08-local-acceptance-r1",
+    "runId": "2026-11-10-t08-refund-local-acceptance-r1",
     "task": "T08",
-    "status": "partial",
-    "fileAndEvidenceAuthorizationStatus": "passed_locally",
-    "evidenceDirectory": "docs/superpowers/evidence/2026-11-09-t08-local-acceptance-r1",
+    "status": "passed",
+    "scope": "local implementation and targeted acceptance, including independent refund ledger",
+    "evidenceDirectory": "docs/superpowers/evidence/2026-11-10-t08-refund-local-acceptance-r1",
     "backendCheckPassed": 162,
-    "databaseHttpPassed": 163,
-    "T08AndRuntimeRolePassed": 30,
-    "localChainIntegrationPassed": 1,
+    "databaseHttpPassed": 183,
+    "refundAndUpgradeTargetedPassed": 20,
     "localEvmContractRegressionPassed": 45,
-    "dependencyVulnerabilities": 0,
+    "reviewP2Fixed": 1,
+    "refundResaleLocalPathValidated": true,
     "actualSepoliaRpcValidated": false,
     "fullDisasterRecoveryValidated": false,
-    "buyerDownloadsEnabled": "only exact finalized/published versions through controlled authorization",
-    "blockingGaps": [
-      "T08-R: immutable independent refund exit and safe undelivered-refund resale"
-    ]
+    "buyerDownloadsEnabled": "exact registered/published versions; refund checks retained",
+    "allAcceptanceGroupsPassed": false
   },
   "localAcceptanceHistory": [
     {
@@ -94,6 +92,25 @@
       "actualSepoliaRpcValidated": false,
       "fullDisasterRecoveryValidated": false,
       "buyerDownloadsEnabled": false
+    },
+    {
+      "runId": "2026-11-09-t08-local-acceptance-r1",
+      "task": "T08",
+      "status": "partial",
+      "fileAndEvidenceAuthorizationStatus": "passed_locally",
+      "evidenceDirectory": "docs/superpowers/evidence/2026-11-09-t08-local-acceptance-r1",
+      "backendCheckPassed": 162,
+      "databaseHttpPassed": 163,
+      "T08AndRuntimeRolePassed": 30,
+      "localChainIntegrationPassed": 1,
+      "localEvmContractRegressionPassed": 45,
+      "dependencyVulnerabilities": 0,
+      "actualSepoliaRpcValidated": false,
+      "fullDisasterRecoveryValidated": false,
+      "buyerDownloadsEnabled": "only exact finalized/published versions through controlled authorization",
+      "blockingGaps": [
+        "T08-R: immutable independent refund exit and safe undelivered-refund resale"
+      ]
     }
   ]
 }

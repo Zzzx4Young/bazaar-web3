@@ -15,7 +15,7 @@ export async function grantRuntime(client, schema, role) {
     'OrderMediaSnapshot',
     'AccountIdentityEvent',
     'ListingReviewEvent'
-    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation', 'ListingTestnetPrice', 'TestnetOrderSnapshot', 'PaymentOrderTerms', 'PaymentIntent', 'PaymentSignature', 'PaymentIntentRequest', 'PrivateFileVersion', 'PrivateFileCheck', 'PrivateFileAudit', 'ChainBlock', 'ChainEvent', 'ChainSnapshot', 'ReconciliationIncident', 'DeliveryMapping', 'DeliverySignature', 'SupplementChallenge', 'SupplementPublication', 'DownloadGrant', 'FileAccessAudit', 'EvidenceRecord', 'ReviewAuthorization', 'ReviewEvent'
+    , 'WalletClaim', 'WalletIdentityEvent', 'WalletSecurityOperation', 'ListingTestnetPrice', 'TestnetOrderSnapshot', 'PaymentOrderTerms', 'PaymentIntent', 'PaymentSignature', 'PaymentIntentRequest', 'PrivateFileVersion', 'PrivateFileCheck', 'PrivateFileAudit', 'ChainBlock', 'ChainEvent', 'ChainSnapshot', 'ReconciliationIncident', 'RefundInventoryTransition', 'DeliveryMapping', 'DeliverySignature', 'SupplementChallenge', 'SupplementPublication', 'DownloadGrant', 'FileAccessAudit', 'EvidenceRecord', 'ReviewAuthorization', 'ReviewEvent'
   ]
   const mutable = [
     'Account',
@@ -72,7 +72,7 @@ export async function grantRuntime(client, schema, role) {
     await tx.$executeRawUnsafe(`GRANT UPDATE ("status") ON "${schema}"."ChainObservation" TO "${role}"`)
     await tx.$executeRawUnsafe(`GRANT UPDATE ("height", "hash", "status", "globals", "updatedAt") ON "${schema}"."ScanCheckpoint" TO "${role}"`)
     await tx.$executeRawUnsafe(`REVOKE UPDATE ON "${schema}"."TestnetStock" FROM "${role}"`)
-    await tx.$executeRawUnsafe(`GRANT UPDATE ("activeOrderId", "lastOrderId", "state") ON "${schema}"."TestnetStock" TO "${role}"`)
+    await tx.$executeRawUnsafe(`GRANT UPDATE ("activeOrderId", "lastOrderId", "state", "generation", "previousOrderId") ON "${schema}"."TestnetStock" TO "${role}"`)
     await tx.$executeRawUnsafe(`GRANT SELECT ON "${schema}"."AccountCredential" TO "${role}"`)
   })
 }

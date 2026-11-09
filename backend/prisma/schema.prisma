@@ -952,3 +952,17 @@ model ReviewEvent {
   createdAt DateTime @default(now()) @db.Timestamptz(6)
   @@unique([actorId,key])
 }
+
+// Business receipt is a projection only; independent refund exit is authoritative recovery evidence.
+model RefundInventoryTransition {
+  scope String @db.VarChar(100)
+  chainOrderId String @db.Char(66)
+  orderId String @db.Uuid
+  stockId String @db.Char(66)
+  generation String @db.VarChar(78)
+  nextGeneration String @db.VarChar(78)
+  basisHash String @db.Char(64)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@id([scope,chainOrderId])
+  @@unique([scope,stockId,generation])
+}

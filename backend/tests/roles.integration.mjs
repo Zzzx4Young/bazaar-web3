@@ -60,6 +60,7 @@ test('C1: migration owner and restricted runtime support transactions without DD
     const listings = new ListingCommands(app.client)
     const f = await fixture({ client: app.client })
     for (const table of [
+      'RefundInventoryTransition',
       'DeliveryMapping',
       'DeliverySignature',
       'SupplementChallenge',
@@ -89,6 +90,10 @@ test('C1: migration owner and restricted runtime support transactions without DD
       }),
       permissionDenied
     )
+    for (const column of ['generation','previousOrderId']) {
+      const [grant]=await app.client.$queryRaw`SELECT has_column_privilege(current_user, ${schema+'."TestnetStock"'}, ${column}, 'UPDATE') AS allowed`
+      assert.equal(grant.allowed,true,'refund successor column '+column)
+    }
     const walletAddress = '0x' + '1'.repeat(40)
     await app.client.walletClaim.create({ data: {
       chainId: 11155111, address: walletAddress, accountId: f.buyer
