@@ -13,7 +13,6 @@
     "@foundry-rs/anvil": "1.5.0",
     "@foundry-rs/forge": "1.5.0",
     "@openzeppelin/contracts": "5.4.0",
-    "@safe-global/safe-contracts": "1.4.1",
-    "solc": "0.8.30"
+    "@safe-global/safe-contracts": "1.4.1"
   }
 }

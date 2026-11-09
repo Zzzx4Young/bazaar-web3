@@ -9,6 +9,8 @@ T06 本地候选实现，尚未部署到 Sepolia；没有真实资产、生产�
 - OpenZeppelin Contracts 5.4.0、Safe Contracts 1.4.1，版本及完整性记录在 package-lock.json。
 - `scripts/bootstrap-solc.mjs` 从官方 Solidity release 下载 Linux x86_64 编译器，先验证固定 SHA-256 再执行，保存在忽略的 `.tools/`。其他平台需准备对应受验证编译器，不回退到未知版本。
 
+本目录的 `.npmrc` 固定 `legacy-peer-deps=true`，因此标准 `npm ci` 与锁文件采用相同的 peer 解析规则。这里仅消费 Safe 1.4.1 Solidity 源码，不安装其未使用的 ethers JS peer；签名仍使用 viem，编译仍使用受校验的原生 solc/Forge，不支持直接运行 Safe JS SDK 或 solc JS CLI。此配置仅对 `contracts/` 项目生效，不修改根目录、前后端或全局 npm 配置。新增依赖时需重新评估 peer 兼容性。T08 复查已移除未使用的 JS 依赖图，`npm audit` 为零告警；文末八项告警是 T07 历史记录，逐项影响及证据见 `../docs/superpowers/evidence/2026-11-09-t08-dependency-review.md`。
+
 ```bash
 cd contracts
 npm ci
