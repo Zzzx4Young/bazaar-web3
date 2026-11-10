@@ -9,3 +9,7 @@
 
 # Generated Next.js types
 next-env.d.ts
+
+# Isolated Web3 browser acceptance output
+/.next-t09/
+/tsconfig.t09.json

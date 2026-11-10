@@ -174,6 +174,7 @@ export function toItem(listing: BackendListing): Item {
   return {
     id: listing.id,
     backendVersion: listing.version,
+    testnetPrice: listing.testnetPrice,
     sellerId: listing.seller.id,
     sellerDisplayName: listing.seller.displayName,
     title: listing.title,

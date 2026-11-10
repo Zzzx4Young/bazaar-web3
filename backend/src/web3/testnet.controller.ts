@@ -65,8 +65,14 @@ export class TestnetController {
       listingId: idInput(input.listingId).toLowerCase(),version: positiveInteger(input.version) })
   }
   @Post('orders/:id/terms') @HttpCode(200) @Header('Cache-Control', 'no-store')
-  terms(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthRequest) {
+  async terms(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthRequest) {
     objectInput(body, [], [])
-    return existingOrderTerms(this.db.client, request.auth.account.id, idInput(id))
+    const orderId = idInput(id)
+    const snapshot = await existingOrderTerms(this.db.client, request.auth.account.id, orderId)
+    const [terms, intent] = await Promise.all([
+      this.db.client.paymentOrderTerms.findUnique({ where: { orderId } }),
+      this.db.client.paymentIntent.findFirst({ where: { orderId }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] })
+    ])
+    return { ...snapshot, payment: terms?.terms ?? null, intentId: intent?.id ?? null }
   }
 }

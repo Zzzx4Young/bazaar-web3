@@ -10767,6 +10767,13 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "settlementMode": {
+            "type": "string",
+            "enum": [
+              "simulated",
+              "testnet_escrow"
+            ]
           }
         }
       },
@@ -11355,6 +11362,13 @@
             "format": "date-time",
             "nullable": true,
             "description": "Server-recorded buyer accept event, not external access activation."
+          },
+          "settlementMode": {
+            "type": "string",
+            "enum": [
+              "simulated",
+              "testnet_escrow"
+            ]
           }
         }
       },
@@ -12153,6 +12167,70 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "payment": {
+            "type": "object",
+            "nullable": true,
+            "description": "Immutable historical order tuple only; not a payment authorization. Current binding never changes these addresses.",
+            "properties": {
+              "orderId": {
+                "type": "string",
+                "pattern": "^0x[0-9a-f]{64}$"
+              },
+              "stockId": {
+                "type": "string",
+                "pattern": "^0x[0-9a-f]{64}$"
+              },
+              "previousOrderId": {
+                "type": "string",
+                "pattern": "^0x[0-9a-f]{64}$"
+              },
+              "commitmentHash": {
+                "type": "string",
+                "pattern": "^0x[0-9a-f]{64}$"
+              },
+              "buyer": {
+                "type": "string",
+                "pattern": "^0x[0-9a-f]{40}$"
+              },
+              "seller": {
+                "type": "string",
+                "pattern": "^0x[0-9a-f]{40}$"
+              },
+              "refundAddress": {
+                "type": "string",
+                "pattern": "^0x[0-9a-f]{40}$"
+              },
+              "token": {
+                "type": "string",
+                "pattern": "^0x[0-9a-f]{40}$"
+              },
+              "escrow": {
+                "type": "string",
+                "pattern": "^0x[0-9a-f]{40}$"
+              },
+              "stockGeneration": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,77})$"
+              },
+              "amountAtoms": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]{0,77})$"
+              },
+              "chainId": {
+                "type": "integer",
+                "enum": [
+                  11155111,
+                  31337
+                ]
+              }
+            }
+          },
+          "intentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Latest intent identifier; signature and status must be obtained from authenticated read."
           }
         },
         "required": [

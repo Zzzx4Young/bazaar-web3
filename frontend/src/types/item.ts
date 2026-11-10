@@ -29,6 +29,7 @@ export interface MediaItem {
 }
 
 export interface Item {
+  testnetPrice?: { amount: string; amountAtoms: string; chainId: number; token: string; escrow: string; currency: 'BZTEST'; decimals: 6 } | null
   primaryCategory?: import('./category').PrimaryCategory
   id: string
   backendVersion?: number

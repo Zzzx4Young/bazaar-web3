@@ -506,3 +506,7 @@ T07复核补充：每个已接受H保存不可变订单/库存摘要及全局快
 回退前先停止 Web3 新发行与恢复 worker，保留所有独立历史和业务证据；可以维持 Alpha 模拟交易，但不得用旧版代次逻辑继续处理本版后代意图，也不得通过删除退款账本回退。恢复后的重新开放仍需 T10 的隔离、私有映射、资金与权限核对。
 
 本地测试：`node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/refund-recovery.integration.mjs tests/refund-ledger-schema.integration.mjs`。覆盖真实 T04/T06/T07 入金、未交付退款、到期/替换/撤销、下一代入金、五个实际 SIGKILL 阶段、测试连接终止、真实业务 schema 备份恢复、独立记录丢失/冲突和下一代已占用。测试包括同一 PostgreSQL 实例的随机隔离 schema及升级专用独立数据库；生产 worker 仍要求业务与安全库独立。实际备份恢复只验证这条业务/账本链路，不等于完整私有文件灾难恢复或 RPO/RTO 达标。
+
+### T09 页面只读接入
+
+订单列表/详情新增 `settlementMode` 以分离模拟与测试托管页面。现有 `POST /web3/orders/:id/terms` 在原快照字段之外返回 `payment`（原固定地址等不可变订单元组）与最新 `intentId`。接口仍仅订单双方可读；这些历史元数据不是有效付款授权，页面发送前必须通过已有 intent/read 重验，下载必须通过 T08 授权接口。没有新增数据库迁移或后台代持用户密钥。

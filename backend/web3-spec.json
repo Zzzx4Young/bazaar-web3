@@ -5,21 +5,27 @@
   "specDocumentsTracked": false,
   "acceptanceStatus": "pending",
   "localAcceptance": {
-    "runId": "2026-11-10-t08-refund-local-acceptance-r1",
-    "task": "T08",
-    "status": "passed",
-    "scope": "local implementation and targeted acceptance, including independent refund ledger",
-    "evidenceDirectory": "docs/superpowers/evidence/2026-11-10-t08-refund-local-acceptance-r1",
+    "runId": "2026-11-10-t09-local-progress",
+    "task": "T09",
+    "status": "partial",
+    "evidenceDirectory": "docs/superpowers/evidence/2026-11-10-t09-local-progress",
+    "frontendPassed": 328,
     "backendCheckPassed": 162,
-    "databaseHttpPassed": 183,
-    "refundAndUpgradeTargetedPassed": 20,
-    "localEvmContractRegressionPassed": 45,
-    "reviewP2Fixed": 1,
-    "refundResaleLocalPathValidated": true,
+    "relatedHttpPassed": 12,
+    "walletSubstituteBrowserChecks": 8,
+    "localChainWalletBrowserChecks": 8,
+    "browserApiSubstituted": true,
+    "allAcceptanceGroupsPassed": false,
     "actualSepoliaRpcValidated": false,
     "fullDisasterRecoveryValidated": false,
-    "buyerDownloadsEnabled": "exact registered/published versions; refund checks retained",
-    "allAcceptanceGroupsPassed": false
+    "pending": [
+      "Google independent reauthentication UI and SIWE wallet login UI",
+      "full browser journey with real isolated HTTP API, DB, private files/checker, chain indexer and delivery/supplement/evidence flows",
+      "real browser-extension interaction",
+      "real Sepolia and independent provider verification",
+      "T10 independent wallet/refund ledger anti-rollback and complete recovery",
+      "frontend baseline dependency remediation before external deployment"
+    ]
   },
   "localAcceptanceHistory": [
     {
@@ -111,6 +117,23 @@
       "blockingGaps": [
         "T08-R: immutable independent refund exit and safe undelivered-refund resale"
       ]
+    },
+    {
+      "runId": "2026-11-10-t08-refund-local-acceptance-r1",
+      "task": "T08",
+      "status": "passed",
+      "scope": "local implementation and targeted acceptance, including independent refund ledger",
+      "evidenceDirectory": "docs/superpowers/evidence/2026-11-10-t08-refund-local-acceptance-r1",
+      "backendCheckPassed": 162,
+      "databaseHttpPassed": 183,
+      "refundAndUpgradeTargetedPassed": 20,
+      "localEvmContractRegressionPassed": 45,
+      "reviewP2Fixed": 1,
+      "refundResaleLocalPathValidated": true,
+      "actualSepoliaRpcValidated": false,
+      "fullDisasterRecoveryValidated": false,
+      "buyerDownloadsEnabled": "exact registered/published versions; refund checks retained",
+      "allAcceptanceGroupsPassed": false
     }
   ]
 }

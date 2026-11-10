@@ -25,6 +25,7 @@ export type OrderStatus =
   | 'expired'
   | 'refunded'
 export interface OrderSummary {
+  settlementMode?: 'simulated' | 'testnet_escrow'
   id: string
   listingId: string
   buyerId: string

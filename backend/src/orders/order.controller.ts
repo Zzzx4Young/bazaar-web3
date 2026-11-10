@@ -128,6 +128,7 @@ export class OrderController {
         listingId: order.listingId,
         sellerId: order.sellerId,
         status: order.status,
+      settlementMode: order.settlementMode,
         title: order.snapshot?.title,
         price: order.snapshot && {
           amount: order.snapshot.priceAmount.toFixed(), currency: order.snapshot.currency
@@ -184,6 +185,7 @@ export class OrderController {
         sellerId: order.sellerId,
         checkoutId: order.checkoutId,
         status: order.status,
+      settlementMode: order.settlementMode,
         transactionPausedAt: order.transactionPausedAt,
         version: order.version,
         title: order.snapshot?.title,
@@ -218,6 +220,7 @@ export class OrderController {
       sellerId: order.sellerId,
       checkoutId: order.checkoutId,
       status: order.status,
+      settlementMode: order.settlementMode,
       transactionPausedAt: order.transactionPausedAt,
       acceptedAt: acceptance?.createdAt ?? null,
       version: order.version,

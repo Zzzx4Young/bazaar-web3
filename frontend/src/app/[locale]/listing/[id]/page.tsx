@@ -14,6 +14,7 @@ import { MediaCarousel } from '@/components/listing/media-carousel'
 import { MarkdownRenderer } from '@/components/listing/markdown-renderer'
 import { SellerCard } from '@/components/listing/seller-card'
 import { ListingFacts } from '@/components/listing/listing-facts'
+import { TestnetBuy } from '@/components/web3/testnet-buy'
 import { BuyModal } from '@/components/listing/buy-modal'
 import { formatPrice, formatDate } from '@/lib/format'
 import { useFavoriteStore } from '@/stores/use-favorite-store'
@@ -155,6 +156,7 @@ export default function ListingDetailPage({ params }: Props) {
               {item.status !== 'active' && <p className="mt-3 text-sm text-muted-foreground">
                 {tCommitment('unavailable')}
               </p>}
+              <TestnetBuy key={item.id+String(item.backendVersion)} item={item} />
               <div className="mt-4 space-y-2">
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Button
