@@ -692,6 +692,15 @@ test('T08 HTTP: shared authorization, session/CSRF/Origin guards and attachment-
     assert.equal((await post({ ...headers, origin: 'https://evil.invalid' })).statusCode, 403)
     assert.equal((await post({ ...headers, 'x-csrf-token': 'invalid' })).statusCode, 403)
     assert.equal((await post({ ...headers, cookie: '' })).statusCode, 401)
+    // Status polling has its own bounded budget; it cannot consume signing or link grants.
+    const readStatus = () => app.inject({ method: 'POST', url: '/api/web3/orders/' + t.orderId + '/delivery/read', headers, payload: {} })
+    for (let n = 0; n < 30; n++) {
+      const response = await readStatus()
+      assert.equal(response.statusCode, 200, response.body)
+    }
+    const exhaustedRead = await readStatus()
+    assert.equal(exhaustedRead.statusCode, 429)
+    assert.equal(exhaustedRead.json().code, 'RATE_LIMITED')
     const link = await post(headers)
     assert.equal(link.statusCode, 200, link.body)
     const capability = link.json()

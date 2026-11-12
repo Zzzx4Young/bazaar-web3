@@ -6,7 +6,7 @@ import { DomainError } from '../common/domain-error.js'
 import type { WalletSecurityLedger } from './wallet-security-ledger.js'
 import { dummyHash, normalizeLogin, validatePassword, verifyPassword } from './password.js'
 import {
-  loginIpLimit, loginNameLimit, loginWindowSeconds, maxConcurrentHashesPerInstance,
+  loginIpLimit, loginNameLimit, loginWindowSeconds, walletReadAccountLimit, walletReadIpLimit, maxConcurrentHashesPerInstance,
   sessionMaxAgeSeconds
 } from './auth-policy.js'
 
@@ -55,6 +55,11 @@ export class AuthService {
 
   async rateLimitWallet(ip: string) {
     await this.consume(`wallet-ip:${ip}`, loginIpLimit)
+  }
+
+  async rateLimitWalletRead(accountId: string, ip: string, scope: 'delivery' | 'private-file' | 'evidence') {
+    await this.consume(`wallet-read-ip:${scope}:${ip}`, walletReadIpLimit)
+    await this.consume(`wallet-read-account:${scope}:${accountId}`, walletReadAccountLimit)
   }
 
   async verifyWalletPassword(auth: Authenticated, password: string, ip: string) {

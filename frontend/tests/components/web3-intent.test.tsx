@@ -160,3 +160,13 @@ it('an included approval is displayed separately and never as a finalized paymen
   await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('授权已上链'))
   expect(screen.getByRole('status')).not.toHaveTextContent('已通过双源最终确认')
 })
+
+it('complete finalized escrow projection overrides an older issued intent view and disables repayment', () => {
+  render(
+    <NextIntlClientProvider locale="zh-CN" messages={zh}>
+      <IntentPanel orderId="order" intentId="intent" onRefresh={mocks.reload} finalizedFunding />
+    </NextIntlClientProvider>
+  )
+  expect(screen.getByRole('status')).toHaveTextContent('已通过双源最终确认')
+  expect(screen.getByRole('button', { name: '2. 托管入金' })).toBeDisabled()
+})

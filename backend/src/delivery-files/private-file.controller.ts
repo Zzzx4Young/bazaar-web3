@@ -22,9 +22,10 @@ export class PrivateFileController {
     @Inject(PrivateFileService) private readonly files: PrivateFileService | null,
     @Inject(AuthService) private readonly auth: AuthService
   ) {}
-  private async enabled(request: AuthRequest) {
+  private async enabled(request: AuthRequest, read = false) {
     if (!this.files) throw new DomainError('FILE_UNAVAILABLE')
-    await this.auth.rateLimitWallet('private-file:' + request.ip)
+    if (read) await this.auth.rateLimitWalletRead(request.auth.account.id, request.ip, 'private-file')
+    else await this.auth.rateLimitWallet('private-file:' + request.ip)
     return this.files
   }
   @Post('upload-intents')
@@ -67,6 +68,6 @@ export class PrivateFileController {
   @Header('Cache-Control', 'no-store')
   async status(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthRequest) {
     objectInput(body, [], [])
-    return (await this.enabled(request)).status(request.auth.account.id, idInput(id).toLowerCase())
+    return (await this.enabled(request, true)).status(request.auth.account.id, idInput(id).toLowerCase())
   }
 }

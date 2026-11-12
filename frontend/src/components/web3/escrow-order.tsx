@@ -280,7 +280,16 @@ function EscrowOrderContent({
         }
       />
       {account === buyerId && intentId && (
-        <IntentPanel key={intentId} orderId={orderId} intentId={intentId} onRefresh={reload} />
+        <IntentPanel
+          key={intentId}
+          orderId={orderId}
+          intentId={intentId}
+          onRefresh={reload}
+          finalizedFunding={
+            !!state &&
+            ['Funded', 'Delivered', 'Disputed', 'Released', 'Refunded'].includes(state.state)
+          }
+        />
       )}
       <EscrowStatus
         state={state?.state ?? t('pending')}

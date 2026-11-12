@@ -28,9 +28,10 @@ export class DeliveryController {
     private readonly publications: SupplementPublicationService | null,
     @Inject(AuthService) private readonly auth: AuthService
   ) {}
-  private async enabled(request: AuthRequest) {
+  private async enabled(request: AuthRequest, read = false) {
     if (!this.downloads) throw new DomainError('FILE_UNAVAILABLE')
-    await this.auth.rateLimitWallet('delivery:' + request.ip)
+    if (read) await this.auth.rateLimitWalletRead(request.auth.account.id, request.ip, 'delivery')
+    else await this.auth.rateLimitWallet('delivery:' + request.ip)
   }
   @Post(':id/delivery/permit')
   @HttpCode(200)
@@ -56,7 +57,7 @@ export class DeliveryController {
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   async read(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthRequest) {
-    await this.enabled(request)
+    await this.enabled(request, true)
     objectInput(body, [], [])
     return this.downloads!.readDelivery(
       idInput(id).toLowerCase(),

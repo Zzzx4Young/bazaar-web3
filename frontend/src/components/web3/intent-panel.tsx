@@ -18,11 +18,13 @@ import { PaymentSteps, type PaymentStage } from './payment-steps'
 export function IntentPanel({
   orderId,
   intentId,
-  onRefresh
+  onRefresh,
+  finalizedFunding = false
 }: {
   orderId: string
   intentId: string
   onRefresh: () => void
+  finalizedFunding?: boolean
 }) {
   const t = useTranslations('web3'),
     locale = useLocale()
@@ -131,8 +133,13 @@ export function IntentPanel({
   const view = resource.data
   return (
     <section className="space-y-3 rounded-xl border p-4">
-      {resource.error && <p role="alert">{resource.error}</p>}
-      {!view && <p>{t('loading')}</p>}
+      {resource.error && (
+        <>
+          <p role="alert">{resource.error}</p>
+          <p>{t('protection')}</p>
+        </>
+      )}
+      {!view && !resource.error && <p>{t('loading')}</p>}
       {view && (
         <>
           <p>{t('intentDeadline', { value: String(view.permit.payDeadline) })}</p>
@@ -143,12 +150,16 @@ export function IntentPanel({
             {t('fixedSeller')}: {view.permit.seller}
           </p>
           <p>{t('walletBoundary')}</p>
-          <PaymentSteps status={view.status === 'funded' ? 'finalized' : stage} hash={hash} />
+          <PaymentSteps
+            status={view.status === 'funded' || finalizedFunding ? 'finalized' : stage}
+            hash={hash}
+          />
           <div className="flex flex-wrap gap-2">
             <Button
               disabled={
                 busy ||
                 view.status !== 'issued' ||
+                finalizedFunding ||
                 ['submitted', 'included', 'pending'].includes(stage)
               }
               onClick={() => run((g) => send('approve', g))}
@@ -159,6 +170,7 @@ export function IntentPanel({
               disabled={
                 busy ||
                 view.status !== 'issued' ||
+                finalizedFunding ||
                 ['submitted', 'included', 'pending'].includes(stage)
               }
               onClick={() => run((g) => send('deposit', g))}
@@ -166,7 +178,11 @@ export function IntentPanel({
               {t('pay')}
             </Button>
             <Button
-              disabled={busy || !['issued', 'cancellation_pending'].includes(view.status)}
+              disabled={
+                busy ||
+                finalizedFunding ||
+                !['issued', 'cancellation_pending'].includes(view.status)
+              }
               variant="outline"
               onClick={() =>
                 run(async (g) => {
@@ -187,11 +203,13 @@ export function IntentPanel({
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">{t('cancelHint')}</p>
-          <p className="text-sm text-muted-foreground">{t('protection')}</p>
+          {['reconciling', 'cancellation_pending'].includes(view.status) && (
+            <p className="text-sm text-muted-foreground">{t('protection')}</p>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
-              disabled={busy || view.status === 'funded'}
+              disabled={busy || finalizedFunding || view.status === 'funded'}
               onClick={() =>
                 run(async (g) => {
                   await authenticatedPost(
@@ -208,7 +226,7 @@ export function IntentPanel({
             </Button>
             <Button
               variant="outline"
-              disabled={busy || view.status === 'funded'}
+              disabled={busy || finalizedFunding || view.status === 'funded'}
               onClick={() =>
                 run(async (g) => {
                   await authenticatedPost(`/web3/orders/${orderId}/cancel`, {}, key('close'))

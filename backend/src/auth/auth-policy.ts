@@ -1,5 +1,8 @@
 export const loginWindowSeconds = 60
 export const loginIpLimit = 10
+// Authenticated metadata polling never shares signing/upload/link-grant budgets.
+export const walletReadAccountLimit = 30
+export const walletReadIpLimit = 120
 export const loginNameLimit = 5
 export const maxConcurrentHashesPerInstance = 2
 export const sessionMaxAgeSeconds = 12 * 60 * 60

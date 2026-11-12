@@ -530,6 +530,7 @@ test('F03 controller: POST routes validate IDs/keys/body, rate limit and forward
   const { EvidenceController } = await import('../dist/evidence/evidence.controller.js')
   const calls = [],
     limits = [],
+    readLimits = [],
     guardCalls = []
   const account = { id: randomUUID(), role: 'participant', status: 'active' }
   const user = { account, token: 'virtual-session', tokenHash: 'virtual-hash' }
@@ -538,6 +539,7 @@ test('F03 controller: POST routes validate IDs/keys/body, rate limit and forward
     async rateLimitWallet(key) {
       limits.push(key)
     },
+    async rateLimitWalletRead(accountId, ip, scope) { readLimits.push({ accountId, ip, scope }) },
     async authenticate(cookie) {
       assert.equal(cookie, 'bazaar_session=virtual-session')
       return user
@@ -584,7 +586,8 @@ test('F03 controller: POST routes validate IDs/keys/body, rate limit and forward
   assert.equal(calls[0].args[0], orderId)
   assert.deepEqual(calls[1].args, [orderId, account.id, evidenceId, consent, key])
   assert.deepEqual(calls[3].args, [orderId, evidenceId, account.id])
-  assert.equal(limits.length, 6)
+  assert.equal(limits.length, 5)
+  assert.deepEqual(readLimits, [{ accountId: account.id, ip: request.ip, scope: 'evidence' }])
   assert.ok(limits.every((key) => key === 'evidence:127.0.0.1'))
   assert.equal(guardCalls.length, 12, 'each forwarded guard locks Account and Session')
   for (const call of [

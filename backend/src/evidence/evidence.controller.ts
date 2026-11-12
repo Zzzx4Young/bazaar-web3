@@ -24,9 +24,10 @@ export class EvidenceController {
     @Inject(AuthService) private readonly auth: AuthService
   ) {}
 
-  private async enabled(request: AuthRequest) {
+  private async enabled(request: AuthRequest, read = false) {
     if (!this.evidence) throw new DomainError('FILE_UNAVAILABLE')
-    await this.auth.rateLimitWallet('evidence:' + request.ip)
+    if (read) await this.auth.rateLimitWalletRead(request.auth.account.id, request.ip, 'evidence')
+    else await this.auth.rateLimitWallet('evidence:' + request.ip)
     return this.evidence
   }
 
@@ -78,7 +79,7 @@ export class EvidenceController {
   @Header('Cache-Control', 'no-store')
   async read(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthRequest) {
     objectInput(body, [], [])
-    return (await this.enabled(request)).readEvidence(
+    return (await this.enabled(request, true)).readEvidence(
       idInput(id).toLowerCase(),
       request.auth.account.id,
       fileSessionGuard(request.auth, this.auth)
