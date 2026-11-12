@@ -39,7 +39,9 @@
     "test:http-ingress:business": "npm run build && node scripts/with-test-db.mjs node scripts/check-http-ingress-business.mjs",
     "test:capacity:ha": "npm run build && node scripts/check-postgres-ha-auto.mjs --capacity",
     "test:capacity:writes": "npm run build && CAPACITY_WRITES=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
-    "test:capacity:writes:failover": "npm run build && CAPACITY_WRITES=1 CAPACITY_FAULT=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs"
+    "test:capacity:writes:failover": "npm run build && CAPACITY_WRITES=1 CAPACITY_FAULT=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
+    "test:e2e:web3:full": "npm run build && node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node ../frontend/scripts/check-web3-full-browser.mjs",
+    "test:e2e:web3:profile": "npm run build && node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node --test tests/web3-browser.profile.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1152.0",

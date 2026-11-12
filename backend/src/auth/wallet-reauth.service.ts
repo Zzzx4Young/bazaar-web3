@@ -10,7 +10,10 @@ import type { GoogleClient } from './google-client.js'
 const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 const token = () => randomBytes(32).toString('base64url')
 const data = (row: WalletChallenge) => row.payload as Prisma.JsonObject
-const view = (row: WalletChallenge) => ({ id: row.id, expiresAt: row.expiresAt.toISOString() })
+const view = (row: WalletChallenge) => {
+ const locale = (row.payload as Prisma.JsonObject | null)?.browserLocale
+ return { id: row.id, expiresAt: row.expiresAt.toISOString(), ...(['en','zh-CN'].includes(String(locale)) ? {locale: String(locale)} : {}) }
+}
 const cookieName = 'bazaar_wallet_oauth'
 
 export class WalletReauthService {
@@ -107,7 +110,7 @@ export class WalletReauthService {
     ])).digest('base64url')
   }
 
-  async startGoogle(auth: Authenticated, purpose: WalletPurpose, address: string, key: string, ip: string) {
+  async startGoogle(auth: Authenticated, purpose: WalletPurpose, address: string, key: string, ip: string, locale?: 'en' | 'zh-CN') {
     if (!this.google) throw new DomainError('GOOGLE_UNAVAILABLE')
     await this.limit(auth.account.id, ip, 'google-start', 5)
     const identity = await this.client.accountIdentity.findUnique({ where: { accountId_provider: {
@@ -117,6 +120,7 @@ export class WalletReauthService {
     const browserToken = this.browserToken(auth, purpose, address, stateToken)
     const { row } = await this.wallets.startProviderProof(auth, purpose, address, key, 'google', {
       stateToken, cookieHash: hash(browserToken), verifier, nonce,
+      ...(locale ? {browserLocale: locale} : {}),
       identityId: identity.id, subject: identity.subject, identityVerifiedAt: identity.verifiedAt.toISOString()
     })
     // Recover the same cookie on response loss without storing its plaintext.

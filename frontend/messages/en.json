@@ -252,7 +252,7 @@
     }
   },
   "footer": {
-    "tagline": "Internal Alpha · server persistence · simulated settlement"
+    "tagline": "Internal Alpha · Server persistence · Test transactions only"
   },
   "mePage": {
     "loading": "Restoring your session…",
@@ -396,7 +396,7 @@
     "languageLabel": "Language"
   },
   "demo": {
-    "notice": "Internal Alpha · Listings and orders use the shared server · Payment and settlement remain simulated",
+    "notice": "Internal Alpha · Listings and orders are stored server-side. Simulated settlement and testnet escrow are not for real-money trading.",
     "publishNotice": "Listings are stored by the Alpha server and visible to other test accounts. Do not enter real personal or sensitive information."
   },
   "listingFacts": {
@@ -747,7 +747,7 @@
     "uploadHint": "One file: PDF/PNG/JPEG up to 20 MB, ZIP up to 500 MB (decimal). Quarantine checks run first; source code is never executed.",
     "checking": "File status: {value}",
     "intentDeadline": "Payment deadline (Unix seconds): {value}",
-    "googleReauth": "For this wallet operation, use the linked account email or password. Google login alone does not authorize a wallet operation.",
+    "googleReauth": "Reauthenticate independently with Google",
     "coordinates": "Chain / Escrow contract / On-chain order",
     "fileStates": {
       "created": "Awaiting upload",
@@ -768,6 +768,11 @@
       "Refunded": "Principal refunded"
     },
     "restart": "Start a fresh authentication flow",
-    "approvalIncluded": "Approval included. Principal payment is not yet confirmed."
+    "approvalIncluded": "Approval included. Principal payment is not yet confirmed.",
+    "walletSignIn": "Sign in with bound wallet",
+    "walletLoginHint": "Only the currently bound EOA can sign in. Connection or login signatures cannot authorize binding or payout.",
+    "googleComplete": "Complete the Google-reauthenticated wallet operation",
+    "finishWalletOperation": "Sign dedicated authorization and finish",
+    "continuationInvalid": "Operation missing, expired or account changed. Start again from your account."
   }
 }

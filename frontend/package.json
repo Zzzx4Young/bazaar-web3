@@ -24,7 +24,8 @@
     "screenshot": "node scripts/screenshot.mjs",
     "format": "prettier --write \"src/**/*.{ts,tsx,md}\"",
     "test:e2e:web3": "node scripts/check-web3-escrow-browser.mjs",
-    "test:e2e:web3:local-chain": "node scripts/check-web3-escrow-browser.mjs --local-chain"
+    "test:e2e:web3:local-chain": "node scripts/check-web3-escrow-browser.mjs --local-chain",
+    "test:e2e:web3:full": "npm --prefix ../backend run test:e2e:web3:full"
   },
   "packageManager": "npm@10.9.8",
   "dependencies": {

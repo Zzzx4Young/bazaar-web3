@@ -13,3 +13,7 @@ next-env.d.ts
 # Isolated Web3 browser acceptance output
 /.next-t09/
 /tsconfig.t09.json
+
+# Full local Web3 browser profile
+/.next-t09-full/
+/tsconfig.t09-full.json

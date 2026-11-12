@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { authenticatedPost } from '@/lib/authenticated-api'
 import { getTestnetConfig } from '@/lib/backend-api'
+import { googleAuthorizationUrl, walletContinuationKey } from '@/lib/web3/identity-client'
 import { apiErrorCopy } from '@/lib/api-error-copy'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { useApiResource } from '@/hooks/use-api-resource'
@@ -154,6 +155,7 @@ export function WalletControls({ chainId }: { chainId: number }) {
         disabled={busy}
         onClick={() => {
           keys.current.clear()
+          sessionStorage.removeItem(walletContinuationKey)
           setEmailId('')
           setCode('')
           setPassword('')
@@ -205,6 +207,36 @@ export function WalletControls({ chainId }: { chainId: number }) {
           }
         >
           {t('emailProof')}
+        </Button>
+        <Button
+          className="h-auto min-h-10 max-w-full whitespace-normal"
+          variant="outline"
+          onClick={() =>
+            run(async (guard) => {
+              const result = await post<{
+                id: string
+                expiresAt: string
+                authorizationUrl: string
+              }>('/auth/wallet/reauth/google/start', { purpose, address: wallet, locale })
+              guard()
+              const destination = googleAuthorizationUrl(result.authorizationUrl)
+              sessionStorage.setItem(
+                walletContinuationKey,
+                JSON.stringify({
+                  id: result.id,
+                  key: crypto.randomUUID(),
+                  accountId: useAuthStore.getState().view!.account.id,
+                  purpose,
+                  address: wallet,
+                  chainId,
+                  expiresAt: result.expiresAt
+                })
+              )
+              window.location.assign(destination)
+            })
+          }
+        >
+          {t('googleReauth')}
         </Button>
         {emailId && (
           <>

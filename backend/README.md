@@ -39,7 +39,7 @@ Web3 默认关闭。启用必须显式配置 `WEB3_ENABLED=1`、`WEB3_CHAIN_ID=1
 它只读取隔离测试库密码，不读取开发 `.env`，不连接 5432 开发库。
 金额和钱包基础测试入口为 `npm run build && node --test tests/web3-policy.test.mjs`。
 
-钱包身份 HTTP 已接入，默认关闭；页面集成属于 T09。认证流程复用现有 Session、Origin、
+钱包身份 HTTP 已接入，默认关闭；T09已完成本地身份入口与主要浏览器闭环，外部提供方及部署仍待验收。认证流程复用现有 Session、Origin、
 JSON 和 CSRF 校验。绑定须账户独立重新认证及新钱包专用 EIP-712 签名；解绑不依赖旧钱包
 签名。SIWE 仅用于登录，不能作为绑定或收款授权。三类重新认证来源分别记录为
 `password`、`google_oidc`、`email_code`／`email_code_dev`，不把近期登录 Session 当作操作证明。
@@ -510,3 +510,13 @@ T07复核补充：每个已接受H保存不可变订单/库存摘要及全局快
 ### T09 页面只读接入
 
 订单列表/详情新增 `settlementMode` 以分离模拟与测试托管页面。现有 `POST /web3/orders/:id/terms` 在原快照字段之外返回 `payment`（原固定地址等不可变订单元组）与最新 `intentId`。接口仍仅订单双方可读；这些历史元数据不是有效付款授权，页面发送前必须通过已有 intent/read 重验，下载必须通过 T08 授权接口。没有新增数据库迁移或后台代持用户密钥。
+
+### T09 身份与真实本地闭环
+
+Google钱包重新认证start可选locale，首次流程固定；HTML callback清理一次性Cookie后只重定向到APP_ORIGIN/{locale}/wallet/reauth，原JSON客户仍获原id/expiresAt、不续期。客户端在固定完成页以原Account/Session、目的、版本和原到期挑战签署专用WalletAction或SellerPayoutConfirmation。SIWE独立登录仅接受当前有效绑定钱包，复用现有Session。
+
+状态元数据（delivery/read、private-files/status、evidence/read）单独采用60秒固定窗口、每scope每账号30次/每IP120次；签名、上传及链接授权原额度不变，认证、CSRF和审计不变。30读后31次429不会耗尽写授权额度。IP并发与容量另验。
+
+`npm run test:e2e:web3:full`串联真实API、隔离PostgreSQL/Garage、Docker checker及Anvil索引；Google提供方替身、Node钱包签名桥，两RPC同一节点，不能冒充真实外部验收。`test:e2e:web3:profile`为显式环境预检，不加入默认test:db发现范围。生产DeliverySigner仍默认从受保护配置读取，内部依赖适配与PaymentSigner一致，不提供HTTP注入入口。
+
+完整证据位于本地忽略目录docs/superpowers/evidence/2026-11-12-t09-full-local；仅定向子用例通过，A01–A32、Sepolia、扩展、独立账本自身防回退、全量恢复及公开部署继续待验收。

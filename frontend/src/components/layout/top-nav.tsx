@@ -18,6 +18,7 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { useAuthStore } from '@/stores/use-auth-store'
+import {WalletSignIn} from '@/components/web3/wallet-sign-in'
 import { IdentityOptions } from '@/components/auth/identity-options'
 import { LoginMethodPicker, type LoginMethod } from '@/components/auth/login-method-picker'
 import { locales } from '@/i18n/locales'
@@ -226,6 +227,7 @@ export function TopNav() {
               </Button>
             </form>
           )}
+          <WalletSignIn returnTo={emailReturnTo(locale)} onSuccess={()=>setOpen(false)} />
           <IdentityOptions
             returnTo={emailReturnTo(locale)}
             googleReturnTo={

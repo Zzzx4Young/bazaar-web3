@@ -83,3 +83,22 @@ export function walletError(error: unknown) {
     return error.message
   return 'unknown'
 }
+
+export async function signWalletMessage(
+  provider: WalletProvider,
+  chainId: number,
+  address: string,
+  message: string,
+  guard: () => void
+) {
+  if (!message || message.length > 4096) throw new Error('unknown')
+  const account = await assertWallet(provider, chainId, address)
+  guard()
+  const hex =
+    '0x' +
+    Array.from(new TextEncoder().encode(message), (v) => v.toString(16).padStart(2, '0')).join('')
+  const signature = await provider.request({ method: 'personal_sign', params: [hex, account] })
+  if (typeof signature !== 'string' || !/^0x[0-9a-fA-F]{130}$/.test(signature))
+    throw new Error('unknown')
+  return signature
+}

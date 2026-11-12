@@ -2,6 +2,7 @@ import { EvidenceService } from './evidence/evidence.service.js'
 import { EvidenceController } from './evidence/evidence.controller.js'
 import {
   DeliveryPermitService,
+  type DeliverySigner,
   readDeliverySigner,
   ChainDeliverySignerVerifier
 } from './delivery-files/delivery-permit.service.js'
@@ -77,7 +78,7 @@ export async function createApp(
     mediaStore?: GarageObjectStore; emailSender?: EmailSender; googleClient?: GoogleClient;
     walletLedger?: WalletSecurityLedger; walletEoaCheck?: (address: EvmAddress) => Promise<void>;
     walletGoogleClient?: GoogleClient; paymentSigner?: PaymentSigner;
-    paymentJournal?: PaymentJournal; paymentObserver?: PaymentChainObserver; chainObserver?: DualChainObserver; privateFiles?: {store:PrivateObjectStore;budget:PrivateFileBudget;uploadKey:Buffer} } = {}
+    deliverySigner?: DeliverySigner; paymentJournal?: PaymentJournal; paymentObserver?: PaymentChainObserver; chainObserver?: DualChainObserver; privateFiles?: {store:PrivateObjectStore;budget:PrivateFileBudget;uploadKey:Buffer} } = {}
 ) {
   if (config.web3 && !dependencies.walletLedger) {
     const business = new URL(config.databaseUrl), security = new URL(config.web3.securityLedgerUrl)
@@ -130,7 +131,7 @@ export async function createApp(
     ? new DownloadService(database.client, config.web3, fileStore, fileOrigin,
       privateFileConfig.uploadKey) : null
   const deliverySigner = config.web3
-    ? readDeliverySigner(config.web3.deliverySignerFile, config.web3) : null
+    ? dependencies.deliverySigner ?? readDeliverySigner(config.web3.deliverySignerFile, config.web3) : null
   const deliveryPermits = config.web3 && fileStore && downloads && deliverySigner && chainObserver
     ? new DeliveryPermitService(database.client, config.web3, fileStore, deliverySigner,
       new ChainDeliverySignerVerifier(chainObserver)) : null

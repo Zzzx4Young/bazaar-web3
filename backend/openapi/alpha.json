@@ -3,7 +3,7 @@
   "info": {
     "title": "Bazaar internal Alpha API",
     "version": "0.1.0",
-    "description": "Implemented Alpha contract. Provisioned password accounts and optional Google Gmail registration; email-code APIs are unavailable until a sender is installed. Simulated settlement and seller image uploads; no wallet or real payments. Every response returns X-Request-Id; errors contain code, retryable and the same requestId. Private/auth responses no-store. Admission saturation returns 503 OVERLOADED with retryable=true and Cache-Control: no-store before authentication/database work; POST /health/live is exempt. Write retries must preserve the original payload and idempotency key."
+    "description": "Implemented Alpha contract. Provisioned password accounts and optional Google Gmail registration; email-code APIs are unavailable until a sender is installed. Simulated settlement and seller image uploads remain available. Explicitly configured Web3 endpoints support testnet EOA identity and escrow; no real-money deployment is approved. Every response returns X-Request-Id; errors contain code, retryable and the same requestId. Private/auth responses no-store. Admission saturation returns 503 OVERLOADED with retryable=true and Cache-Control: no-store before authentication/database work; POST /health/live is exempt. Write retries must preserve the original payload and idempotency key."
   },
   "servers": [
     {
@@ -5288,7 +5288,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WalletOperationInput"
+                "$ref": "#/components/schemas/WalletGoogleStartInput"
               }
             }
           }
@@ -5341,8 +5341,18 @@
           },
           "409": {
             "description": "IDEMPOTENCY_CONFLICT or STATE_CONFLICT",
-            "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } },
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "415": {
             "description": "HTTP 415; see error code contract",
@@ -6192,8 +6202,18 @@
           },
           "409": {
             "description": "IDEMPOTENCY_CONFLICT or STATE_CONFLICT",
-            "headers": { "X-Request-Id": { "$ref": "#/components/headers/RequestId" } },
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "415": {
             "description": "HTTP 415; see error code contract",
@@ -6250,6 +6270,28 @@
               }
             },
             "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "303": {
+            "description": "Accept: text/html success redirects only to APP_ORIGIN/{stored locale}/wallet/reauth. Original JSON response remains available. No proof, cookie or signature is put into the redirect URL.",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              },
               "X-Request-Id": {
                 "$ref": "#/components/headers/RequestId"
               }
@@ -11762,24 +11804,62 @@
           "code"
         ]
       },
-      "WalletReauthView": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          }
+      "WalletGoogleStartInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "purpose": {
+          "type": "string",
+          "enum": [
+            "bind",
+            "unbind",
+            "payout"
+          ]
         },
-        "required": [
-          "id",
-          "expiresAt"
-        ]
+        "address": {
+          "type": "string",
+          "pattern": "^0x(?!0{40}$)[0-9a-fA-F]{40}$"
+        },
+        "locale": {
+          "type": "string",
+          "enum": [
+            "zh-CN",
+            "en"
+          ],
+          "description": "Optional browser locale, fixed to the original flow on retries."
+        }
       },
+      "required": [
+        "purpose",
+        "address"
+      ]
+    },
+    "WalletReauthView": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "locale": {
+          "type": "string",
+          "enum": [
+            "zh-CN",
+            "en"
+          ],
+          "description": "Present only for a browser-locale flow; never an authorization field."
+        }
+      },
+      "required": [
+        "id",
+        "expiresAt"
+      ]
+    },
       "WalletActionInput": {
         "type": "object",
         "additionalProperties": false,
@@ -11967,6 +12047,14 @@
           "authorizationUrl": {
             "type": "string",
             "format": "uri"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "zh-CN",
+              "en"
+            ],
+            "description": "Present only for a browser-locale flow; never an authorization field."
           }
         },
         "required": [

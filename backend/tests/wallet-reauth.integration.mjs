@@ -97,3 +97,15 @@ test('A30: a different Google sub or revoked session cannot authorize binding', 
     await assert.rejects(t.reauth.verifyEmail(t.user, email.id, t.messages.at(-1).code, '127.0.0.1'), /UNAUTHENTICATED/)
   } finally { await t.close() }
 })
+
+test('T09: Google proof retains the original browser locale without renewing the flow', async () => {
+ const t=await setup()
+ try {
+  const key=randomUUID()
+  const start=await t.reauth.startGoogle(t.user,'bind',t.wallet.address,key,'127.0.0.1','en')
+  const state=new URL(start.authorizationUrl).searchParams.get('state')
+  const proof=await t.reauth.completeGoogle(t.user,state,'test-provider-code',start.cookie.split(';')[0])
+  assert.equal(proof.locale,'en')
+  assert.equal(proof.expiresAt,start.expiresAt)
+ }finally{await t.close()}
+})

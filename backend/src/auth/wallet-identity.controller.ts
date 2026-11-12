@@ -13,6 +13,9 @@ class OperationInput {
   @IsIn(['bind', 'unbind', 'payout']) purpose!: 'bind' | 'unbind' | 'payout'
   @Matches(/^0x[0-9a-fA-F]{40}$/) address!: string
 }
+class GoogleStartInput extends OperationInput {
+  @IsOptional() @IsIn(['zh-CN', 'en']) locale?: 'zh-CN' | 'en'
+}
 class PasswordInput extends OperationInput {
   @IsString() @Length(1, 128) password!: string
 }
@@ -73,10 +76,10 @@ export class WalletIdentityController {
     return this.enabled().reauth.verifyEmail(request.auth, input.id, input.code, request.ip)
   }
   @Post('reauth/google/start') @HttpCode(200) @Header('Cache-Control', 'no-store')
-  async googleStart(@Body() input: OperationInput, @Req() request: AuthRequest,
+  async googleStart(@Body() input: GoogleStartInput, @Req() request: AuthRequest,
     @Res({ passthrough: true }) reply: FastifyReply) {
     const { cookie, ...result } = await this.enabled().reauth.startGoogle(request.auth, input.purpose,
-      input.address, this.key(request), request.ip)
+      input.address, this.key(request), request.ip, input.locale)
     if (cookie) reply.header('Set-Cookie', cookie)
     return result
   }
@@ -86,8 +89,11 @@ export class WalletIdentityController {
     const { reauth } = this.enabled()
     await this.auth.rateLimitWallet(request.ip)
     if (typeof state !== 'string' || typeof code !== 'string') throw new DomainError('GOOGLE_INVALID')
-    try { return await reauth.completeGoogle(request.auth, state, code, request.headers.cookie ?? '') }
-    finally { reply.header('Set-Cookie', reauth.cookie('', true)) }
+    const result = await reauth.completeGoogle(request.auth, state, code, request.headers.cookie ?? '')
+      .finally(() => { reply.header('Set-Cookie', reauth.cookie('', true)) })
+    if (request.headers.accept?.includes('text/html'))
+      return reply.redirect(`${this.auth.config.appOrigin}/${result.locale === 'en' ? 'en' : 'zh-CN'}/wallet/reauth`, 303)
+    return result
   }
   @Post('challenge') @HttpCode(200) @Header('Cache-Control', 'no-store')
   async challenge(@Body() input: ActionInput, @Req() request: AuthRequest) {

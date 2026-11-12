@@ -5,26 +5,34 @@
   "specDocumentsTracked": false,
   "acceptanceStatus": "pending",
   "localAcceptance": {
-    "runId": "2026-11-10-t09-local-progress",
+    "runId": "2026-11-12-t09-full-local",
     "task": "T09",
-    "status": "partial",
-    "evidenceDirectory": "docs/superpowers/evidence/2026-11-10-t09-local-progress",
-    "frontendPassed": 328,
+    "status": "passed",
+    "scope": "local implementation and targeted identity/real-API browser acceptance; Google substitute and Node signing bridge",
+    "evidenceDirectory": "docs/superpowers/evidence/2026-11-12-t09-full-local",
+    "frontendPassed": 335,
     "backendCheckPassed": 162,
-    "relatedHttpPassed": 12,
-    "walletSubstituteBrowserChecks": 8,
-    "localChainWalletBrowserChecks": 8,
-    "browserApiSubstituted": true,
+    "relatedHttpDatabasePassed": 97,
+    "realLocalProfilePassed": 1,
+    "browserIdentityChecks": 7,
+    "browserOrders": 2,
+    "browserWalletTransactions": 8,
+    "browserApiSubstituted": false,
+    "actualGarageAndChecker": true,
+    "googleProviderSubstituted": true,
+    "browserWallet": "Node signing bridge to real local Anvil",
     "allAcceptanceGroupsPassed": false,
     "actualSepoliaRpcValidated": false,
+    "independentProvidersValidated": false,
     "fullDisasterRecoveryValidated": false,
+    "independentLedgerOwnRollbackSolved": false,
     "pending": [
-      "Google independent reauthentication UI and SIWE wallet login UI",
-      "full browser journey with real isolated HTTP API, DB, private files/checker, chain indexer and delivery/supplement/evidence flows",
-      "real browser-extension interaction",
-      "real Sepolia and independent provider verification",
-      "T10 independent wallet/refund ledger anti-rollback and complete recovery",
-      "frontend baseline dependency remediation before external deployment"
+      "Real Google consent, PKCE and ID-token provider integration",
+      "Real browser-extension interaction and account/chain prompt cases",
+      "Sepolia and independent RPC providers",
+      "T10 independent wallet/refund ledger own rollback protection and complete restoration",
+      "A01–A32 full-group and capacity acceptance",
+      "Existing frontend dependency remediation before external deployment"
     ]
   },
   "localAcceptanceHistory": [
@@ -134,6 +142,29 @@
       "fullDisasterRecoveryValidated": false,
       "buyerDownloadsEnabled": "exact registered/published versions; refund checks retained",
       "allAcceptanceGroupsPassed": false
+    },
+    {
+      "runId": "2026-11-10-t09-local-progress",
+      "task": "T09",
+      "status": "partial",
+      "evidenceDirectory": "docs/superpowers/evidence/2026-11-10-t09-local-progress",
+      "frontendPassed": 328,
+      "backendCheckPassed": 162,
+      "relatedHttpPassed": 12,
+      "walletSubstituteBrowserChecks": 8,
+      "localChainWalletBrowserChecks": 8,
+      "browserApiSubstituted": true,
+      "allAcceptanceGroupsPassed": false,
+      "actualSepoliaRpcValidated": false,
+      "fullDisasterRecoveryValidated": false,
+      "pending": [
+        "Google independent reauthentication UI and SIWE wallet login UI",
+        "full browser journey with real isolated HTTP API, DB, private files/checker, chain indexer and delivery/supplement/evidence flows",
+        "real browser-extension interaction",
+        "real Sepolia and independent provider verification",
+        "T10 independent wallet/refund ledger anti-rollback and complete recovery",
+        "frontend baseline dependency remediation before external deployment"
+      ]
     }
   ]
 }

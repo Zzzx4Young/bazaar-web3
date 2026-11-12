@@ -252,7 +252,7 @@
     }
   },
   "footer": {
-    "tagline": "内部 Alpha · 服务端持久化 · 模拟结算"
+    "tagline": "内部 Alpha · 服务端持久化 · 仅测试交易"
   },
   "mePage": {
     "loading": "正在恢复账户会话…",
@@ -396,7 +396,7 @@
     "languageLabel": "语言"
   },
   "demo": {
-    "notice": "内部 Alpha · 商品与订单写入共享服务端 · 付款和结算仍为模拟流程",
+    "notice": "内部 Alpha · 商品与订单由服务端保存；模拟结算与测试网托管均不用于真实资金交易",
     "publishNotice": "发布内容将写入 Alpha 服务端并对其他测试账户可见。请勿填写真实个人或敏感信息。"
   },
   "listingFacts": {
@@ -747,7 +747,7 @@
     "uploadHint": "每次一个文件：PDF/PNG/JPEG 最多 20 MB，ZIP 最多 500 MB；十进制单位。文件先隔离检查，源码不会执行。",
     "checking": "文件状态：{value}",
     "intentDeadline": "付款截止时间（Unix 秒）：{value}",
-    "googleReauth": "Google 重新认证目前请使用已关联账户邮箱或密码方式；Google 登录不等于本次钱包操作授权。",
+    "googleReauth": "使用 Google 独立重新认证",
     "coordinates": "链 / 托管合约 / 链上订单",
     "fileStates": {
       "created": "等待上传",
@@ -768,6 +768,11 @@
       "Refunded": "本金已退款"
     },
     "restart": "重新开始认证",
-    "approvalIncluded": "授权已上链；本金尚未确认支付。"
+    "approvalIncluded": "授权已上链；本金尚未确认支付。",
+    "walletSignIn": "使用已绑定钱包登录",
+    "walletLoginHint": "仅当前有效绑定的 EOA 钱包可登录；连接或登录签名不能替代绑定、收款确认。",
+    "googleComplete": "完成 Google 重新认证的钱包操作",
+    "finishWalletOperation": "签署专用授权并完成操作",
+    "continuationInvalid": "操作记录缺失、已过期或账户已变化，请返回账户页重新开始。"
   }
 }

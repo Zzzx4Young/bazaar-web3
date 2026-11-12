@@ -1,3 +1,4 @@
+import {URLSearchParams} from 'node:url'
 import assert from 'node:assert/strict'
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
@@ -12,7 +13,7 @@ const origin = 'http://localhost:3000', password = 'Wallet-http-test-password-12
 async function setup(enabled = true, eoa = async () => {}, options = {}) {
   const db = await sandbox(), security = await isolatedLedger(), f = await fixture(db, 'digital')
   await db.client.accountCredential.create({ data: { accountId: f.buyer, passwordHash: await hashPassword(password) } })
-  const config = readConfig({ DATABASE_URL: db.url.toString(), APP_ORIGIN: origin })
+  const config = readConfig({ DATABASE_URL: db.url.toString(), APP_ORIGIN: origin, ...(options.google ? { GOOGLE_CLIENT_ID: 't09-http-only-client', GOOGLE_CLIENT_SECRET: 't09-http-only-secret' } : {}) })
   const messages = []
   if (options.email) {
     config.emailCodeKey = Buffer.from('a'.repeat(64), 'hex')
@@ -21,7 +22,9 @@ async function setup(enabled = true, eoa = async () => {}, options = {}) {
   if (enabled) config.web3 = { chainId: 11155111, tokenDecimals: 6, token: '0x' + '1'.repeat(40),
     escrow: '0x' + '2'.repeat(40), rpcPrimary: 'https://one.invalid', rpcSecondary: 'https://two.invalid',
     securityLedgerUrl: db.url.toString(), securityLedgerId: security.id }
-  const app = await createApp(config, false, { walletLedger: security.ledger, walletEoaCheck: eoa,
+  if (options.google) await db.client.accountIdentity.create({data:{accountId:f.buyer,provider:'google',subject:'t09-http-sub',email:'t09-http@gmail.com',verifiedAt:new Date(),verificationSource:'google_oidc'}})
+  const app = await createApp(config, false, {
+    walletGoogleClient: options.google ? {authorizeUrl:({state})=>'https://accounts.google.com/o/oauth2/v2/auth?state='+encodeURIComponent(state),exchange:async()=>({sub:'t09-http-sub',email:'t09-http@gmail.com',name:'Test provider'})} : undefined, walletLedger: security.ledger, walletEoaCheck: eoa,
     emailSender: options.email ? { provenance: 'dev_inbox', send: async message => { messages.push(message) } } : undefined })
   const account = await db.client.account.findUniqueOrThrow({ where: { id: f.buyer } })
   const post = (url, payload, extra = {}) => app.inject({ method: 'POST', url: `/api/auth/wallet/${url}`,
@@ -124,4 +127,27 @@ test('A18: public wallet challenge rate limits apply before challenge persistenc
     assert.equal(blocked.json().code, 'RATE_LIMITED')
     assert.equal(await t.db.client.walletChallenge.count(), 0)
   } finally { await t.close() }
+})
+
+test('T09 Google HTTP: HTML callback uses stored locale and clears cookie; JSON compatibility remains', async () => {
+ const t=await setup(true,async()=>{},{google:true})
+ try {
+  const address=privateKeyToAccount(generatePrivateKey()).address
+  const start=await t.post('reauth/google/start',{purpose:'bind',address,locale:'en'},t.headers)
+  assert.equal(start.statusCode,200,start.body)
+  const state=new URL(start.json().authorizationUrl).searchParams.get('state')
+  const callback=await t.app.inject({method:'GET',url:'/api/auth/wallet/reauth/google/callback?'+new URLSearchParams({state,code:'provider-test-code'}),headers:{accept:'text/html',cookie:t.headers.cookie+'; '+start.headers['set-cookie'].split(';')[0]}})
+  assert.equal(callback.statusCode,303,callback.body)
+  assert.equal(callback.headers.location,origin+'/en/wallet/reauth')
+  assert.match(callback.headers['set-cookie'],/Max-Age=0/)
+  assert.equal(callback.headers['cache-control'],'no-store')
+  const legacy=await t.post('reauth/google/start',{purpose:'bind',address},{...t.headers,'idempotency-key':randomUUID()})
+  assert.equal(legacy.statusCode,200,legacy.body)
+  const legacyState=new URL(legacy.json().authorizationUrl).searchParams.get('state')
+  const json=await t.app.inject({method:'GET',url:'/api/auth/wallet/reauth/google/callback?'+new URLSearchParams({state:legacyState,code:'provider-test-code'}),headers:{accept:'application/json',cookie:t.headers.cookie+'; '+legacy.headers['set-cookie'].split(';')[0]}})
+  assert.equal(json.statusCode,200,json.body)
+  assert.equal(json.json().id,legacy.json().id)
+  assert.equal(json.json().expiresAt,legacy.json().expiresAt)
+  assert.deepEqual(Object.keys(json.json()).sort(),['expiresAt','id'])
+ }finally{await t.close()}
 })
