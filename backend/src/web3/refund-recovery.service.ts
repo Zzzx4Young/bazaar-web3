@@ -31,6 +31,42 @@ export class RefundRecoveryService {
     this.scope = chainScope(observer.config)
   }
   async runOnce(options: TransactionOptions = {}) {
+    try {
+      // Check before early exits: cached free/successor inventory must not hide
+      // rollback of the independent ledger that originally authorized it.
+      await this.exits.assertAvailable()
+    } catch (error) {
+      await transact(this.client, async (tx) => {
+        await lockChain(tx, this.scope)
+        await tx.scanCheckpoint.updateMany({
+          where: { scope: this.scope },
+          data: { status: 'isolated' }
+        })
+        const terms = await tx.paymentOrderTerms.findMany({
+          select: { listingId: true, terms: true }
+        })
+        for (const row of terms) {
+          const t = row.terms as { chainId: number; escrow: string }
+          if (
+            t.chainId === this.observer.config.chainId &&
+            t.escrow === this.observer.config.escrow
+          )
+            await tx.testnetStock.updateMany({
+              where: { listingId: row.listingId },
+              data: { state: 'protected' }
+            })
+        }
+        await tx.reconciliationIncident.create({
+          data: {
+            scope: this.scope,
+            kind: 'security_ledger_unavailable',
+            reason: 'independent ledger could not be verified',
+            evidence: {}
+          }
+        })
+      })
+      throw error
+    }
     const candidates = await this.client.escrowProjection.findMany({
       where: {
         scope: this.scope,

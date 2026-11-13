@@ -1,3 +1,7 @@
+import {LedgerWitness,registerLedgerWitness} from '../dist/auth/ledger-witness.js'
+import {mkdtemp,rm} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 import assert from 'node:assert/strict'
 import { randomBytes, randomUUID } from 'node:crypto'
 import test from 'node:test'
@@ -8,7 +12,8 @@ import { assertWalletLedgerGrants } from '../dist/auth/wallet-ledger-grants.js'
 import { PostgresWalletSecurityLedger } from '../dist/auth/postgres-wallet-security-ledger.js'
 
 test('A27/A30: ledger runtime cannot rewrite metadata or remove permanent claims; business role cannot read ledger', async () => {
-  const ledger = await isolatedLedger(), admin = await connect(testUrl())
+  const witnessRoot = await mkdtemp(join(tmpdir(),'bazaar-role-witness-'))
+  const ledger = await isolatedLedger({witnessDirectory:witnessRoot}), admin = await connect(testUrl())
   const roles = [], connections = []
   try {
     const [{ schema }] = await ledger.client.$queryRaw`SELECT current_schema() AS schema`
@@ -26,6 +31,9 @@ test('A27/A30: ledger runtime cannot rewrite metadata or remove permanent claims
     await grantWalletLedger(ledger.client, schema, roles[0])
     const runtime = await connect(urls[0]), business = await connect(urls[1])
     connections.push(runtime, business)
+    const witness = new LedgerWitness(runtime.client,ledger.id,witnessRoot)
+    registerLedgerWitness(runtime.client,witness)
+    await witness.verify()
     await assertWalletLedgerGrants(runtime.client)
     await assert.rejects(assertWalletLedgerGrants(ledger.client), /privileges/)
     const restricted = new PostgresWalletSecurityLedger(runtime.client, ledger.id)
@@ -33,6 +41,8 @@ test('A27/A30: ledger runtime cannot rewrite metadata or remove permanent claims
       address: '0x' + '3'.repeat(40), expectedRecoveryEpoch: ledger.epoch, expectedRevision: '0', expectedBindingVersion: 0, payout: null, requestHash: 'a'.repeat(64) }
     await restricted.prepare(op)
     await restricted.commit(op.operationId)
+    await witness.verify()
+    await ledger.witness.verify()
     await assert.rejects(runtime.client.$executeRaw`DELETE FROM "WalletLedgerClaim"`, /permission denied/)
     await assert.rejects(runtime.client.$executeRaw`UPDATE "WalletLedgerMeta" SET "maintenance" = true`, /permission denied/)
     await assert.rejects(business.client.$queryRawUnsafe(`SELECT * FROM "${schema}"."WalletLedgerClaim"`), /permission denied/)
@@ -41,6 +51,7 @@ test('A27/A30: ledger runtime cannot rewrite metadata or remove permanent claims
     await ledger.close()
     for (const role of roles) await admin.client.$executeRawUnsafe(`DROP ROLE "${role}"`)
     await admin.onModuleDestroy()
+    await rm(witnessRoot,{recursive:true,force:true})
   }
 })
 

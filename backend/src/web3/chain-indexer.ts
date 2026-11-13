@@ -38,9 +38,26 @@ export class ChainIndexer {
         try {
           await this.verifyPrivateBasis()
         } catch {
-          await this.client.scanCheckpoint.updateMany({
-            where: { scope: this.projector.scope, status: 'active' },
-            data: { status: 'recovering' }
+          await transact(this.client, async (tx) => {
+            await lockChain(tx, this.projector.scope)
+            await tx.scanCheckpoint.updateMany({
+              where: { scope: this.projector.scope, status: 'active' },
+              data: { status: 'recovering' }
+            })
+            const terms = await tx.paymentOrderTerms.findMany({
+              select: { listingId: true, terms: true }
+            })
+            for (const row of terms) {
+              const t = row.terms as { chainId: number; escrow: string }
+              if (
+                t.chainId === this.observer.config.chainId &&
+                t.escrow === this.observer.config.escrow
+              )
+                await tx.testnetStock.updateMany({
+                  where: { listingId: row.listingId },
+                  data: { state: 'protected' }
+                })
+            }
           })
           return unavailable('independent issuance or private recovery basis unavailable')
         }

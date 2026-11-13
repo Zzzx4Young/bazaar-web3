@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { requireLedgerWitness } from '../dist/auth/ledger-witness.js'
 import { RefundJournal } from '../dist/web3/refund-journal.js'
 import { RefundRecoveryService } from '../dist/web3/refund-recovery.service.js'
 import { DomainError } from '../dist/common/domain-error.js'
@@ -28,6 +29,8 @@ const db = new DatabaseService(config.databaseUrl, config.databasePool),
 await db.onModuleInit()
 try {
   await security.onModuleInit()
+  const witness = requireLedgerWitness(security.client, web3)
+  await witness.verify()
   const ledger = new PostgresWalletSecurityLedger(security.client, web3.securityLedgerId)
   await ledger.recoveryEpoch()
   const observer = new DualChainObserver(web3, web3.chainDeployment),

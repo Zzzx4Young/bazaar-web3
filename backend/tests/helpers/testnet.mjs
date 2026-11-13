@@ -11,9 +11,9 @@ import { hashPassword } from '../../dist/auth/password.js'
 import { readConfig } from '../../dist/config.js'
 
 const password = 'Virtual-T03-seller-password-only'
-export async function testnetFixture(overrides = {}) {
+export async function testnetFixture(overrides = {}, securityOptions = {}) {
   const db = await sandbox(),
-    security = await isolatedLedger(),
+    security = await isolatedLedger(securityOptions),
     f = await fixture(db, 'digital', '10')
   await db.client.digitalInventory.create({ data: { listingId: f.listing.id } })
   await db.client.accountCredential.create({

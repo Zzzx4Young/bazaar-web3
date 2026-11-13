@@ -1,3 +1,4 @@
+import { ledgerTransaction } from '../auth/ledger-witness.js'
 import { createHash } from 'node:crypto'
 import type { PrismaClient } from '../generated/prisma/client.js'
 import type { Transaction, TransactionOptions } from '../database/transaction.js'
@@ -136,7 +137,7 @@ export class RefundJournal {
   ) {}
   private async transaction<T>(work: (tx: Transaction) => Promise<T>) {
     try {
-      return await this.client.$transaction(
+      return await ledgerTransaction(this.client,
         async (tx) => {
           const [m] = await tx.$queryRaw<
             { ledgerId: string; recoveryEpoch: string; maintenance: boolean; writable: boolean }[]
@@ -152,6 +153,7 @@ export class RefundJournal {
       throw new DomainError('WALLET_UNAVAILABLE')
     }
   }
+  async assertAvailable() { await this.transaction(async () => undefined) }
   async find(scope: string, chainOrderId: string) {
     return this.transaction(async (tx) => {
       const [row] = await tx.$queryRaw<

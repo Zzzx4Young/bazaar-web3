@@ -1,3 +1,4 @@
+import { requireLedgerWitness } from './auth/ledger-witness.js'
 import { EvidenceService } from './evidence/evidence.service.js'
 import { EvidenceController } from './evidence/evidence.controller.js'
 import {
@@ -81,6 +82,8 @@ export async function createApp(
     deliverySigner?: DeliverySigner; paymentJournal?: PaymentJournal; paymentObserver?: PaymentChainObserver; chainObserver?: DualChainObserver; privateFiles?: {store:PrivateObjectStore;budget:PrivateFileBudget;uploadKey:Buffer} } = {}
 ) {
   if (config.web3 && !dependencies.walletLedger) {
+    if (!config.web3.securityWitnessDirectory)
+      throw new Error('Explicit WEB3_SECURITY_WITNESS_DIR is required')
     const business = new URL(config.databaseUrl), security = new URL(config.web3.securityLedgerUrl)
     if (business.hostname === security.hostname && (business.port || '5432') === (security.port || '5432') &&
       business.pathname === security.pathname) throw new Error('Wallet ledger requires an independent database')
@@ -88,6 +91,7 @@ export async function createApp(
   const database = new DatabaseService(config.databaseUrl, config.databasePool)
   const ledgerDatabase = config.web3 && !dependencies.walletLedger
     ? new DatabaseService(config.web3.securityLedgerUrl, { ...config.databasePool, max: 2 }) : null
+  const witness = ledgerDatabase && config.web3 ? requireLedgerWitness(ledgerDatabase.client, config.web3) : null
   const ledger = config.web3 ? dependencies.walletLedger ?? new PostgresWalletSecurityLedger(
     ledgerDatabase!.client, config.web3.securityLedgerId) : undefined
   const auth = new AuthService(database.client, config, ledger)
@@ -250,6 +254,7 @@ export async function createApp(
   try {
     await app.init()
     if (ledgerDatabase) await assertWalletLedgerGrants(ledgerDatabase.client)
+    if (witness) await witness.verify()
     if (ledger) await ledger.recoveryEpoch()
     await app.getHttpAdapter().getInstance().ready()
     return app

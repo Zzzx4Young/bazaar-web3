@@ -16,13 +16,13 @@ const ledgerImplementation = await import('../dist/web3/refund-journal.js').catc
 })
 const h = (n) => '0x' + n.toString(16).padStart(64, '0'),
   id = (kind, value) => keccak256(stringToHex('bazaar:' + kind + ':' + value))
-export async function setupRefund() {
+export async function setupRefund(securityOptions = {}) {
   assert.equal(
     typeof implementation.RefundRecoveryService,
     'function',
     'T08-R recovery service required'
   )
-  const t = await testnetFixture()
+  const t = await testnetFixture({}, securityOptions)
   try {
     await t.bind()
     await t.confirm()
@@ -410,7 +410,11 @@ test(
     }
     try {
       assert.equal(typeof implementation.RefundRecoveryService, 'function')
-      t = await testnetFixture(f.config)
+      const fs = await import('node:fs/promises'), os = await import('node:os'), path = await import('node:path')
+      backupRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'bazaar-native-refund-'))
+      const witnessDirectory = path.join(backupRoot,'witness')
+      await fs.mkdir(witnessDirectory,{mode:0o700})
+      t = await testnetFixture(f.config,{witnessDirectory})
       t.config.chainDeployment = f.deployment
       await t.bind(f.seller)
       const payout = await t.challenge('payout', f.seller)
@@ -496,10 +500,6 @@ test(
       await finalize(paid.blockNumber)
       await indexer.runOnce()
       await payments.reconcile(user, old.intentId)
-      const fs = await import('node:fs/promises'),
-        os = await import('node:os'),
-        path = await import('node:path')
-      backupRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'bazaar-native-refund-'))
       backupFile = path.join(backupRoot, 'funded.dump')
       await pgTool(t, 'pg_dump', [
         '--format=custom',
@@ -622,6 +622,7 @@ test(
         'Funded'
       )
       await assert.rejects(f.deposit(old.permit, f.buyer, old.signature))
+      await t.security.witness.verify()
       if (process.env.T08R_EVIDENCE_FILE)
         await (
           await import('node:fs/promises')
@@ -631,6 +632,8 @@ test(
             {
               environment:
                 'local single Anvil with two proxies; no independent Sepolia RPC validation',
+              ledgerWitnessActive: true,
+              ledgerWitnessVerifiedAtCompletion: true,
               chainId: f.config.chainId,
               escrow: f.config.escrow,
               token: f.config.token,
@@ -1001,4 +1004,52 @@ test('T08-R/A27: missing refund ledger schema blocks preflight even before any r
   } finally {
     await t.close()
   }
+})
+
+test('T10/A20/A27: native refund-ledger rollback isolates even previously free inventory; matching ledger is necessary but not recovery approval',async()=>{
+  const {mkdtemp,rm}=await import('node:fs/promises'),{tmpdir}=await import('node:os'),{join}=await import('node:path')
+  const root=await mkdtemp(join(tmpdir(),'bazaar-refund-witness-'))
+  let t
+  try{
+    t=await setupRefund({witnessDirectory:root})
+    const schema=t.security.url.searchParams.get('schema'),old=join(root,'before-refund.dump'),latest=join(root,'after-refund.dump')
+    const dump=path=>pgTool(t,'pg_dump',['--format=custom','--no-owner','--no-privileges','--schema='+schema,'--file='+path])
+    const restore=path=>pgTool(t,'pg_restore',['--clean','--if-exists','--exit-on-error','--no-owner','--no-privileges','--schema='+schema,'--dbname='+t.db.url.pathname.slice(1),path])
+    await dump(old)
+    assert.equal((await t.service.runOnce()).applied,1)
+    assert.equal((await t.stock()).state,'free')
+    await dump(latest)
+    const faultAt=new Date().toISOString()
+    await restore(old)
+    await assert.rejects(t.exits.find(t.scope,t.terms.orderId),/WALLET_UNAVAILABLE/)
+    await assert.rejects(t.security.ledger.recoveryEpoch(),/WALLET_UNAVAILABLE/)
+    const {ChainIndexer}=await import('../dist/web3/chain-indexer.js')
+    const worker=new ChainIndexer(t.db.client,t.observer,()=>t.journal.assertBusinessBasis(t.db.client,t.scope))
+    await assert.rejects(worker.runOnce(),/independent issuance or private recovery basis unavailable/)
+    assert.equal((await t.stock()).state,'protected')
+    await assert.rejects(t.service.runOnce(),/WALLET_UNAVAILABLE/)
+    assert.equal((await t.stock()).state,'protected')
+    const held=await t.db.client.scanCheckpoint.findUniqueOrThrow({where:{scope:t.scope}})
+    assert.notEqual(held.status,'active')
+    await restore(latest)
+    await t.security.witness.verify()
+    assert.equal((await t.exits.find(t.scope,t.terms.orderId)).neverRegistered,true)
+    // Do not reopen business state just because the independent ledger matches.
+    assert.notEqual((await t.db.client.scanCheckpoint.findUniqueOrThrow({where:{scope:t.scope}})).status,'active')
+    if(process.env.T10_RECOVERY_EVIDENCE_FILE){
+      const {writeFile}=await import('node:fs/promises')
+      const {evaluateRecovery}=await import('../dist/web3/recovery-report.js')
+      const evidence={faultAt,observedAt:new Date().toISOString(),consistentPointAt:null,openedAt:null,
+        infrastructureAvailable:true,independentRpcAvailable:false,checks:{ledgerWitness:true},
+        missing:['consistent business/object backup','deletion ledger','full identity and file authorization restore','independent RPC recheck']}
+      await writeFile(process.env.T10_RECOVERY_EVIDENCE_FILE,JSON.stringify({
+        schemaVersion:1,scope:'ledger-only safety drill; not full disaster recovery',
+        businessOrderId:t.orderId,chainOrderId:t.terms.orderId,
+        observationSource:'in-process chain observation substitute; real PostgreSQL pg_dump/pg_restore',
+        rollbackRejected:true,workerProtectedInventory:true,matchingLatestLedgerVerified:true,
+        checkpointReopened:false,finalStockState:(await t.stock()).state,
+        evidence,evaluation:evaluateRecovery(evidence)
+      },null,2)+'\n')
+    }
+  }finally{if(t)await t.close();await rm(root,{recursive:true,force:true})}
 })

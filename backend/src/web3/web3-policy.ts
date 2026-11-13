@@ -170,6 +170,7 @@ export function readWeb3Config(env: NodeJS.ProcessEnv): Web3Config | null {
     escrow: normalizeWalletAddress(env.WEB3_ESCROW_ADDRESS),
     rpcPrimary: primary.toString(),
     rpcSecondary: secondary.toString(),
+    securityWitnessDirectory: env.WEB3_SECURITY_WITNESS_DIR,
     securityLedgerUrl: ledger,
     securityLedgerId: env.WEB3_SECURITY_LEDGER_ID.toLowerCase()
   }

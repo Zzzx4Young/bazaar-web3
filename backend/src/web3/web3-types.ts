@@ -61,6 +61,7 @@ export interface Web3Config {
   escrow: EvmAddress
   rpcPrimary: string
   rpcSecondary: string
+  securityWitnessDirectory?: string
   securityLedgerUrl: string
   securityLedgerId: string
 }

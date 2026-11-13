@@ -520,3 +520,24 @@ Google钱包重新认证start可选locale，首次流程固定；HTML callback�
 `npm run test:e2e:web3:full`串联真实API、隔离PostgreSQL/Garage、Docker checker及Anvil索引；Google提供方替身、Node钱包签名桥，两RPC同一节点，不能冒充真实外部验收。`test:e2e:web3:profile`为显式环境预检，不加入默认test:db发现范围。生产DeliverySigner仍默认从受保护配置读取，内部依赖适配与PaymentSigner一致，不提供HTTP注入入口。
 
 完整证据位于本地忽略目录docs/superpowers/evidence/2026-11-12-t09-full-local；仅定向子用例通过，A01–A32、Sepolia、扩展、独立账本自身防回退、全量恢复及公开部署继续待验收。
+
+### T10 第一批：独立账本自身回退保护（整阶段未完成）
+
+非注入的 Web3 API 和索引器现在要求 `WEB3_SECURITY_WITNESS_DIR`。目录须预先创建、属于运行用户、权限0700、绝对真实路径且不是符号链接，并且位于**不会随业务库、安全库或其旧备份恢复的持久存储**。所有钱包、付款签发、退款账本事务共同使用这一目录。摘要覆盖10张权威表，包含永久claim、prepared操作、完整付款签发/失效/退款依据；摘要按页计算，不将全部账本放入内存。事务强制至少RepeatableRead；十表ACCESS SHARE锁阻止并发DROP/TRUNCATE；并发owner DML不进入本事务快照，因此不会被当作本次写入重新封存，下一次核验发现不符即拒绝。摘要固定UTC/ISO及C排序，不受连接时区影响。owner备份恢复仍须先停止所有使用者，这不是授权在线任意改写账本。目录不可由备份恢复脚本覆盖。
+
+首次部署：先按既有脚本初始化一个全新空安全账本；停用所有访问该账本的旧版本进程，创建0700目录。使用受保护的owner URL文件配置 `WEB3_SECURITY_LEDGER_OWNER_URL_FILE`、`WEB3_SECURITY_LEDGER_ID`、`WEB3_SECURITY_WITNESS_DIR`，从backend执行：
+
+```bash
+npm run build
+node scripts/initialize-ledger-witness.mjs --confirm-empty-independent-ledger
+```
+
+该命令不读取.env、不自动创建目录、不接纳非空历史、不重置已存在见证。已投入使用的非空账本**不可删除历史后初始化**；必须保持停机，另行审阅受控升级/导入依据。旧版仍可运行非Web3 Alpha；不得将本版Web3回退到不读取见证的旧进程。
+
+账本变更在数据库提交前先持久化pending前后摘要，提交后持久化新head，再清理pending，最后返回成功。目录与文件均fsync；跨进程锁不会根据PID猜测失效。正常失败且未形成pending不推进head；数据库提交不明、见证写失败、SIGKILL留下的锁/pending均fail closed。失败响应不表示数据库一定未提交。**禁止自动删锁、删pending、重建head或用旧备份重新封存。**应停止所有使用者、保存故障证据，恢复与最新可信见证匹配的完整独立账本；若仍有pending，保持隔离并逐项核对，首批未提供通用自动修复工具。
+
+退款恢复在任何库存早退前核验账本；失败则将该scope扫描状态和相关库存置为保护。恢复匹配的账本只恢复可信依据，不自动开放业务checkpoint。普通测试依赖注入可绕过生产接线，因此无见证的历史测试不能作为本能力验收。
+
+测试：`node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/ledger-witness.integration.mjs tests/refund-recovery.integration.mjs tests/web3-recovery.test.mjs`。`check-web3-recovery.mjs <evidence.json>`仅评估真实检查报告，不授权开放；缺关键依据为blocked，部分恢复没有完整RTO，只有完整检查且基础设施/独立RPC前提满足才评估24小时/4小时目标。工具不验证报告真实性，调用者需链接实际证据。
+
+这是本地独立目录防数据库回退验证，不证明见证卷自身不被回退、WORM/远端耐久、容器重建后的挂载或多主机锁；多API部署须共享同一具备所需POSIX锁/rename/fsync语义的目录，部署前实测。全账本摘要和串行锁的性能尚未验收；本轮不提供公开部署容量背书。保留/删除台账、加密一致备份、14天到期清理、完整恢复和真实RPO/RTO演练仍待后续T10批次。

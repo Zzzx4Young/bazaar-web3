@@ -1,3 +1,4 @@
+import { ledgerTransaction } from '../auth/ledger-witness.js'
 import { deploymentDigest } from './escrow-projector.js'
 import { RefundJournal, validateRefundExit, type RefundExit } from './refund-journal.js'
 import {
@@ -45,7 +46,7 @@ export class PostgresPaymentJournal implements PaymentJournal {
   ) {}
   private async transaction<T>(work: (tx: Transaction) => Promise<T>, snapshot = false) {
     try {
-      return await this.client.$transaction(
+      return await ledgerTransaction(this.client,
         async (tx) => {
           const [meta] = await tx.$queryRaw<
             { ledgerId: string; recoveryEpoch: string; maintenance: boolean; writable: boolean }[]

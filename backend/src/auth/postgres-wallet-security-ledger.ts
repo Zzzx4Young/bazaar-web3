@@ -1,3 +1,4 @@
+import { ledgerTransaction } from './ledger-witness.js'
 import { isDeepStrictEqual } from 'node:util'
 import type { PrismaClient } from '../generated/prisma/client.js'
 import type { Transaction } from '../database/transaction.js'
@@ -14,7 +15,7 @@ export class PostgresWalletSecurityLedger implements WalletSecurityLedger {
   constructor(private readonly client: PrismaClient, private readonly expectedLedgerId: string) {}
 
   private async available<T>(work: (tx: Transaction) => Promise<T>): Promise<T> {
-    try { return await this.client.$transaction(work) }
+    try { return await ledgerTransaction(this.client, work) }
     catch (error) {
       if (error instanceof DomainError) throw error
       throw new DomainError('WALLET_UNAVAILABLE')
