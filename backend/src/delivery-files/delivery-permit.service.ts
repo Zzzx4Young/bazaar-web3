@@ -1,3 +1,5 @@
+import type { PrivateLifecycleLedger } from './deletion-ledger.js'
+import { digest } from './authorization.js'
 import { requireFileActor } from './authorization.js'
 import type { FileGuard } from './authorization.js'
 import { randomUUID, randomBytes } from 'node:crypto'
@@ -83,7 +85,8 @@ export class DeliveryPermitService {
     private readonly store: PrivateObjectStore,
     private readonly signer: DeliverySigner,
     private readonly verifier: DeliverySignerVerifier,
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = () => new Date(),
+    private readonly privateLedger?: PrivateLifecycleLedger
   ) {}
   async issueDeliveryPermit(
     orderId: string,
@@ -149,7 +152,16 @@ export class DeliveryPermitService {
     const saved = await this.client.deliverySignature.findUnique({
       where: { mappingId: mapping.id }
     })
-    if (saved) return { permit: p, signature: saved.signature }
+    if (saved) {
+      await this.privateLedger?.append('delivery', mapping.id, {
+        mappingId: mapping.id,
+        orderId,
+        versionId,
+        permitHash: digest(p),
+        signatureHash: digest(saved.signature)
+      })
+      return { permit: p, signature: saved.signature }
+    }
     const version = await this.client.privateFileVersion.findUniqueOrThrow({
       where: { id: versionId }
     })
@@ -196,6 +208,13 @@ export class DeliveryPermitService {
             digest: hashTypedData(deliveryTypedData(p, this.config))
           }
         }
+      })
+      await this.privateLedger?.append('delivery', mapping.id, {
+        mappingId: mapping.id,
+        orderId,
+        versionId,
+        permitHash: digest(p),
+        signatureHash: digest(s.signature)
       })
       return { permit: p, signature: s.signature }
     })

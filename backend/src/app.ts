@@ -1,3 +1,5 @@
+import { assertPrivateLedgerGrants } from './delivery-files/private-ledger-grants.js'
+import { PrivateLifecycleLedger } from './delivery-files/deletion-ledger.js'
 import { requireLedgerWitness } from './auth/ledger-witness.js'
 import { EvidenceService } from './evidence/evidence.service.js'
 import { EvidenceController } from './evidence/evidence.controller.js'
@@ -75,74 +77,215 @@ class AppModule {}
 export async function createApp(
   config: AppConfig,
   logger: false | undefined = undefined,
-  dependencies: { loadRates?: RateLoader; logRequest?: RequestLogSink | false;
-    mediaStore?: GarageObjectStore; emailSender?: EmailSender; googleClient?: GoogleClient;
-    walletLedger?: WalletSecurityLedger; walletEoaCheck?: (address: EvmAddress) => Promise<void>;
-    walletGoogleClient?: GoogleClient; paymentSigner?: PaymentSigner;
-    deliverySigner?: DeliverySigner; paymentJournal?: PaymentJournal; paymentObserver?: PaymentChainObserver; chainObserver?: DualChainObserver; privateFiles?: {store:PrivateObjectStore;budget:PrivateFileBudget;uploadKey:Buffer} } = {}
+  dependencies: {
+    loadRates?: RateLoader
+    logRequest?: RequestLogSink | false
+    mediaStore?: GarageObjectStore
+    emailSender?: EmailSender
+    googleClient?: GoogleClient
+    walletLedger?: WalletSecurityLedger
+    walletEoaCheck?: (address: EvmAddress) => Promise<void>
+    walletGoogleClient?: GoogleClient
+    paymentSigner?: PaymentSigner
+    privateLedger?: PrivateLifecycleLedger
+    deliverySigner?: DeliverySigner
+    paymentJournal?: PaymentJournal
+    paymentObserver?: PaymentChainObserver
+    chainObserver?: DualChainObserver
+    privateFiles?: { store: PrivateObjectStore; budget: PrivateFileBudget; uploadKey: Buffer }
+  } = {}
 ) {
   if (config.web3 && !dependencies.walletLedger) {
     if (!config.web3.securityWitnessDirectory)
       throw new Error('Explicit WEB3_SECURITY_WITNESS_DIR is required')
-    const business = new URL(config.databaseUrl), security = new URL(config.web3.securityLedgerUrl)
-    if (business.hostname === security.hostname && (business.port || '5432') === (security.port || '5432') &&
-      business.pathname === security.pathname) throw new Error('Wallet ledger requires an independent database')
+    const business = new URL(config.databaseUrl),
+      security = new URL(config.web3.securityLedgerUrl)
+    if (
+      business.hostname === security.hostname &&
+      (business.port || '5432') === (security.port || '5432') &&
+      business.pathname === security.pathname
+    )
+      throw new Error('Wallet ledger requires an independent database')
   }
   const database = new DatabaseService(config.databaseUrl, config.databasePool)
-  const ledgerDatabase = config.web3 && !dependencies.walletLedger
-    ? new DatabaseService(config.web3.securityLedgerUrl, { ...config.databasePool, max: 2 }) : null
-  const witness = ledgerDatabase && config.web3 ? requireLedgerWitness(ledgerDatabase.client, config.web3) : null
-  const ledger = config.web3 ? dependencies.walletLedger ?? new PostgresWalletSecurityLedger(
-    ledgerDatabase!.client, config.web3.securityLedgerId) : undefined
+  const ledgerDatabase =
+    config.web3 && !dependencies.walletLedger
+      ? new DatabaseService(config.web3.securityLedgerUrl, { ...config.databasePool, max: 2 })
+      : null
+  const witness =
+    ledgerDatabase && config.web3 ? requireLedgerWitness(ledgerDatabase.client, config.web3) : null
+  const ledger = config.web3
+    ? (dependencies.walletLedger ??
+      new PostgresWalletSecurityLedger(ledgerDatabase!.client, config.web3.securityLedgerId))
+    : undefined
+  const privateLedgerDatabase =
+    config.privateLifecycle && !dependencies.privateLedger
+      ? new DatabaseService(config.privateLifecycle.url, { ...config.databasePool, max: 2 })
+      : null
+  if (privateLedgerDatabase && config.privateLifecycle) {
+    const a = new URL(config.databaseUrl),
+      b = new URL(config.privateLifecycle.url)
+    if (a.host === b.host && a.pathname === b.pathname)
+      throw new Error('Private lifecycle ledger must not share the business database')
+  }
+  const privateLedger =
+    dependencies.privateLedger ??
+    (privateLedgerDatabase && config.privateLifecycle
+      ? new PrivateLifecycleLedger(
+          privateLedgerDatabase.client,
+          config.privateLifecycle.ledgerId,
+          config.privateLifecycle.witnessDirectory
+        )
+      : undefined)
   const auth = new AuthService(database.client, config, ledger)
-  const wallets = config.web3 && ledger ? new WalletAuthService(database.client, auth, ledger, {
-    chainId: config.web3.chainId, escrow: config.web3.escrow, appOrigin: config.appOrigin,
-    assertEoa: dependencies.walletEoaCheck ?? createEoaChecker(config.web3)
-  }) : null
-  const walletGoogle = dependencies.walletGoogleClient ?? (config.googleOAuth ? new GoogleOidcClient({
-    ...config.googleOAuth, redirectUri: `${config.appOrigin}/api/auth/wallet/reauth/google/callback`
-  }) : null)
-  const walletReauth = wallets ? new WalletReauthService(database.client, auth, wallets, config,
-    dependencies.emailSender ?? null, walletGoogle) : null
-  const emailAuth = new EmailAuthService(database.client, config, auth, dependencies.emailSender ?? null)
-  const googleAuth = new GoogleAuthService(database.client, config, auth,
-    dependencies.googleClient ?? (config.googleOAuth ? new GoogleOidcClient(config.googleOAuth) : null))
+  const wallets =
+    config.web3 && ledger
+      ? new WalletAuthService(database.client, auth, ledger, {
+          chainId: config.web3.chainId,
+          escrow: config.web3.escrow,
+          appOrigin: config.appOrigin,
+          assertEoa: dependencies.walletEoaCheck ?? createEoaChecker(config.web3)
+        })
+      : null
+  const walletGoogle =
+    dependencies.walletGoogleClient ??
+    (config.googleOAuth
+      ? new GoogleOidcClient({
+          ...config.googleOAuth,
+          redirectUri: `${config.appOrigin}/api/auth/wallet/reauth/google/callback`
+        })
+      : null)
+  const walletReauth = wallets
+    ? new WalletReauthService(
+        database.client,
+        auth,
+        wallets,
+        config,
+        dependencies.emailSender ?? null,
+        walletGoogle
+      )
+    : null
+  const emailAuth = new EmailAuthService(
+    database.client,
+    config,
+    auth,
+    dependencies.emailSender ?? null
+  )
+  const googleAuth = new GoogleAuthService(
+    database.client,
+    config,
+    auth,
+    dependencies.googleClient ??
+      (config.googleOAuth ? new GoogleOidcClient(config.googleOAuth) : null)
+  )
   const rates = new RatesService(database.client, dependencies.loadRates)
-  const listings = new ListingService(database.client, rates, config.listingCommitmentPolicy, config.web3)
-  const sellerPayout = wallets && ledger && config.web3
-    ? new SellerPayoutService(database.client, wallets, ledger, config.web3) : null
-  const paymentSigner = config.web3 ? dependencies.paymentSigner ?? readPaymentSigner(config.web3.paymentSignerFile) : null
-  const paymentJournal = config.web3 ? dependencies.paymentJournal ?? (ledgerDatabase
-    ? new PostgresPaymentJournal(ledgerDatabase.client, config.web3.securityLedgerId) : null) : null
-  const chainObserver=config.web3?.chainDeployment ? dependencies.chainObserver ?? new DualChainObserver(config.web3,config.web3.chainDeployment) : null
-  const attempts=chainObserver ? new TransactionAttemptService(database.client,auth,chainObserver) : null
-  const payments = config.web3 && ledger && sellerPayout && paymentSigner && paymentJournal
-    ? new PaymentIntentService(database.client, auth, sellerPayout, ledger, paymentJournal, paymentSigner,
-      dependencies.paymentObserver ?? (chainObserver ? new CheckpointPaymentObserver(database.client,chainObserver) : null), config.web3, dependencies.walletEoaCheck ?? createEoaChecker(config.web3)) : null
+  const listings = new ListingService(
+    database.client,
+    rates,
+    config.listingCommitmentPolicy,
+    config.web3
+  )
+  const sellerPayout =
+    wallets && ledger && config.web3
+      ? new SellerPayoutService(database.client, wallets, ledger, config.web3)
+      : null
+  const paymentSigner = config.web3
+    ? (dependencies.paymentSigner ?? readPaymentSigner(config.web3.paymentSignerFile))
+    : null
+  const paymentJournal = config.web3
+    ? (dependencies.paymentJournal ??
+      (ledgerDatabase
+        ? new PostgresPaymentJournal(ledgerDatabase.client, config.web3.securityLedgerId)
+        : null))
+    : null
+  const chainObserver = config.web3?.chainDeployment
+    ? (dependencies.chainObserver ??
+      new DualChainObserver(config.web3, config.web3.chainDeployment))
+    : null
+  const attempts = chainObserver
+    ? new TransactionAttemptService(database.client, auth, chainObserver)
+    : null
+  const payments =
+    config.web3 && ledger && sellerPayout && paymentSigner && paymentJournal
+      ? new PaymentIntentService(
+          database.client,
+          auth,
+          sellerPayout,
+          ledger,
+          paymentJournal,
+          paymentSigner,
+          dependencies.paymentObserver ??
+            (chainObserver ? new CheckpointPaymentObserver(database.client, chainObserver) : null),
+          config.web3,
+          dependencies.walletEoaCheck ?? createEoaChecker(config.web3)
+        )
+      : null
   const media = new MediaService(
     database.client,
     dependencies.mediaStore ?? (config.mediaStore ? new GarageObjectStore(config.mediaStore) : null)
   )
-  const privateFileConfig=config.privateFiles
-  const privateFiles=dependencies.privateFiles ? new PrivateFileService(database.client,
-    dependencies.privateFiles.store,dependencies.privateFiles.budget,dependencies.privateFiles.uploadKey)
-    : privateFileConfig ? new PrivateFileService(database.client,new GaragePrivateObjectStore(privateFileConfig.store),
-      privateFileConfig.budget,privateFileConfig.uploadKey) : null
-  const fileStore = dependencies.privateFiles?.store ??
+  const privateFileConfig = config.privateFiles
+  const privateFiles = dependencies.privateFiles
+    ? new PrivateFileService(
+        database.client,
+        dependencies.privateFiles.store,
+        dependencies.privateFiles.budget,
+        dependencies.privateFiles.uploadKey
+      )
+    : privateFileConfig
+      ? new PrivateFileService(
+          database.client,
+          new GaragePrivateObjectStore(privateFileConfig.store),
+          privateFileConfig.budget,
+          privateFileConfig.uploadKey
+        )
+      : null
+  const fileStore =
+    dependencies.privateFiles?.store ??
     (privateFileConfig ? new GaragePrivateObjectStore(privateFileConfig.store) : null)
   const fileOrigin = privateFileConfig?.uploadOrigin
-  const downloads = config.web3 && fileStore && fileOrigin && privateFileConfig
-    ? new DownloadService(database.client, config.web3, fileStore, fileOrigin,
-      privateFileConfig.uploadKey) : null
+  const downloads =
+    config.web3 && fileStore && fileOrigin && privateFileConfig
+      ? new DownloadService(
+          database.client,
+          config.web3,
+          fileStore,
+          fileOrigin,
+          privateFileConfig.uploadKey,
+          undefined,
+          privateLedger
+        )
+      : null
   const deliverySigner = config.web3
-    ? dependencies.deliverySigner ?? readDeliverySigner(config.web3.deliverySignerFile, config.web3) : null
-  const deliveryPermits = config.web3 && fileStore && downloads && deliverySigner && chainObserver
-    ? new DeliveryPermitService(database.client, config.web3, fileStore, deliverySigner,
-      new ChainDeliverySignerVerifier(chainObserver)) : null
-  const publications = config.web3 && fileStore && downloads
-    ? new SupplementPublicationService(database.client, config.web3, fileStore) : null
-  const evidence = config.web3 && downloads
-    ? new EvidenceService(database.client, config.web3, downloads) : null
+    ? (dependencies.deliverySigner ??
+      readDeliverySigner(config.web3.deliverySignerFile, config.web3))
+    : null
+  const deliveryPermits =
+    config.web3 && fileStore && downloads && deliverySigner && chainObserver
+      ? new DeliveryPermitService(
+          database.client,
+          config.web3,
+          fileStore,
+          deliverySigner,
+          new ChainDeliverySignerVerifier(chainObserver),
+          undefined,
+          privateLedger
+        )
+      : null
+  const publications =
+    config.web3 && fileStore && downloads
+      ? new SupplementPublicationService(
+          database.client,
+          config.web3,
+          fileStore,
+          undefined,
+          privateLedger
+        )
+      : null
+  const evidence =
+    config.web3 && downloads
+      ? new EvidenceService(database.client, config.web3, downloads, privateLedger)
+      : null
   const telemetry = new RequestTelemetry()
   const admission = new RequestAdmission(config.maxInFlightRequests)
   const requestLogSink =
@@ -187,13 +330,19 @@ export async function createApp(
   const app = await NestFactory.create<NestFastifyApplication>(
     {
       module: AppModule,
-      controllers: [EvidenceController, DeliveryController, TransactionAttemptController,
+      controllers: [
+        EvidenceController,
+        DeliveryController,
+        TransactionAttemptController,
         HealthController,
         AuthController,
         WalletIdentityController,
-        TestnetController, PaymentIntentController, PrivateFileController,
+        TestnetController,
+        PaymentIntentController,
+        PrivateFileController,
         IdentityController,
-        ListingController, ListingReviewController,
+        ListingController,
+        ListingReviewController,
         OrderController,
         DisputeController,
         BalanceController,
@@ -207,6 +356,9 @@ export async function createApp(
         { provide: WalletAuthService, useValue: wallets },
         { provide: WalletReauthService, useValue: walletReauth },
         ...(ledgerDatabase ? [{ provide: 'WalletLedgerDatabase', useValue: ledgerDatabase }] : []),
+        ...(privateLedgerDatabase
+          ? [{ provide: 'PrivateLedgerDatabase', useValue: privateLedgerDatabase }]
+          : []),
         { provide: EmailAuthService, useValue: emailAuth },
         { provide: GoogleAuthService, useValue: googleAuth },
         { provide: ListingService, useValue: listings },
@@ -254,6 +406,19 @@ export async function createApp(
   try {
     await app.init()
     if (ledgerDatabase) await assertWalletLedgerGrants(ledgerDatabase.client)
+    if (privateLedgerDatabase) await assertPrivateLedgerGrants(privateLedgerDatabase.client)
+    if (privateLedger) await privateLedger.verify()
+    if (new URL(config.databaseUrl).pathname.startsWith('/bazaar_web3_restore_')) {
+      const gate = await database.client.privateRecoveryState.findUnique({
+        where: { singleton: true }
+      })
+      if (
+        !gate ||
+        gate.status !== 'active' ||
+        (gate.checks as { database?: string }).database !== new URL(config.databaseUrl).pathname
+      )
+        throw new Error('Recovery database remains isolated')
+    }
     if (witness) await witness.verify()
     if (ledger) await ledger.recoveryEpoch()
     await app.getHttpAdapter().getInstance().ready()

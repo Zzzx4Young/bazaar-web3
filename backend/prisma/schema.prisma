@@ -966,3 +966,21 @@ model RefundInventoryTransition {
   @@id([scope,chainOrderId])
   @@unique([scope,stockId,generation])
 }
+
+// Rebuildable fences; deletion authority remains in the independent private ledger.
+model PrivateFileDisposition {
+  versionId String @id @db.Uuid
+  claimId String @unique @db.Uuid
+  state String
+  deadline DateTime @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+}
+model PrivateRecoveryState {
+  singleton Boolean @id @default(true)
+  runId String @db.Uuid
+  backupId String @db.Uuid
+  downloadEpoch String @db.Uuid
+  status String @default("isolated")
+  checks Json
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+}

@@ -41,6 +41,8 @@ export async function checkedVersion(
   const v = await tx.privateFileVersion.findUnique({ where: { id: versionId } })
   if (!v || v.orderId !== orderId || v.ownerId !== owner || v.purpose !== purpose)
     throw new DomainError('STATE_CONFLICT')
+  if (await tx.privateFileDisposition.findUnique({ where: { versionId: v.id } }))
+    throw new DomainError('FILE_UNAVAILABLE')
   const u = await tx.privateUpload.findUnique({ where: { id: v.uploadId } })
   const check = await tx.privateFileCheck.findUnique({ where: { id: v.checkId } })
   if (
@@ -76,7 +78,12 @@ export async function verifyObject(store: PrivateObjectStore, v: PrivateFileVers
     clearTimeout(timer)
   }
 }
-export async function deliveryContext(tx: Transaction, config: Web3Config, orderId: string) {
+async function projectedContext(
+  tx: Transaction,
+  config: Web3Config,
+  orderId: string,
+  recoveryRunId?: string
+) {
   await lockChain(tx, chainScope(config))
   const order = await tx.order.findUnique({ where: { id: orderId } })
   if (!order || order.settlementMode !== 'testnet_escrow') throw new DomainError('NOT_FOUND')
@@ -85,7 +92,7 @@ export async function deliveryContext(tx: Transaction, config: Web3Config, order
   if (
     !cursor ||
     !config.chainDeployment ||
-    cursor.status !== 'active' ||
+    !(recoveryRunId ? ['active', 'recovering'] : ['active']).includes(cursor.status) ||
     cursor.configHash !== deploymentDigest(config, config.chainDeployment) ||
     !terms
   )
@@ -116,12 +123,29 @@ export async function deliveryContext(tx: Transaction, config: Web3Config, order
     throw new DomainError('FILE_UNAVAILABLE')
   return { order, cursor, terms: t, state, projection }
 }
+export async function deliveryContext(tx: Transaction, config: Web3Config, orderId: string) {
+  return projectedContext(tx, config, orderId)
+}
+// Owner-only retention reconciliation on a fresh isolated restore. This does
+// not grant bytes or mint capabilities; ordinary deliveryContext stays active-only.
+export async function recoveryRetentionContext(
+  tx: Transaction,
+  config: Web3Config,
+  orderId: string,
+  runId: string
+) {
+  const gate = await tx.privateRecoveryState.findUnique({ where: { singleton: true } })
+  if (!gate || gate.runId !== runId || !['isolated', 'verified'].includes(gate.status))
+    throw new DomainError('FILE_UNAVAILABLE')
+  return projectedContext(tx, config, orderId, runId)
+}
+
 export async function exactFirst(tx: Transaction, c: Awaited<ReturnType<typeof deliveryContext>>) {
   if (!['Delivered', 'Disputed', 'Released'].includes(c.state.state))
     throw new DomainError('STATE_CONFLICT')
   return resolveFirstMapping(tx, c)
 }
-export async function resolveFirstMapping(
+export async function resolveFirstMappingIdentity(
   tx: Transaction,
   c: Awaited<ReturnType<typeof deliveryContext>>
 ) {
@@ -159,7 +183,9 @@ export async function resolveFirstMapping(
   } catch {
     throw new DomainError('FILE_UNAVAILABLE')
   }
-  const v = await checkedVersion(tx, c.order.id, m.versionId, c.order.sellerId, 'delivery')
+  const v = await tx.privateFileVersion.findUnique({ where: { id: m.versionId } })
+  if (!v || v.orderId !== c.order.id || v.ownerId !== c.order.sellerId || v.purpose !== 'delivery')
+    throw new DomainError('FILE_UNAVAILABLE')
   if (
     digest(fileManifest(v)) !== digest(m.manifest) ||
     commitment(m.manifest, m.salt) !== m.manifestCommitment ||
@@ -167,6 +193,15 @@ export async function resolveFirstMapping(
   )
     throw new DomainError('FILE_UNAVAILABLE')
   return { mapping: m, version: v, signature: s.signature }
+}
+
+export async function resolveFirstMapping(
+  tx: Transaction,
+  c: Awaited<ReturnType<typeof deliveryContext>>
+) {
+  const result = await resolveFirstMappingIdentity(tx, c)
+  await checkedVersion(tx, c.order.id, result.version.id, c.order.sellerId, 'delivery')
+  return result
 }
 
 export type FileGuard = (tx: Transaction) => Promise<void>
@@ -188,6 +223,8 @@ export async function requireFileActor(tx: Transaction, accountId: string) {
 // or finalized-contradiction isolation. RPC freshness is not an existing ACL.
 export async function assertFileRecovery(tx: Transaction, config: Web3Config) {
   await lockChain(tx, chainScope(config))
+  const recovery = await tx.privateRecoveryState.findUnique({ where: { singleton: true } })
+  if (recovery && recovery.status !== 'active') throw new DomainError('FILE_UNAVAILABLE')
   const cursor = await tx.scanCheckpoint.findUnique({ where: { scope: chainScope(config) } })
   if (
     !config.chainDeployment ||

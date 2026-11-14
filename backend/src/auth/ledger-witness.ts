@@ -55,7 +55,8 @@ export class LedgerWitness {
   constructor(
     readonly client: PrismaClient,
     readonly ledgerId: string,
-    readonly directory: string
+    readonly directory: string,
+    readonly namespace: 'wallet' | 'private-files' = 'wallet'
   ) {
     if (
       !isAbsolute(directory) ||
@@ -63,6 +64,9 @@ export class LedgerWitness {
       !/^[0-9a-f-]{36}$/.test(ledgerId)
     )
       throw new Error('Invalid protected witness configuration')
+  }
+  private get tables(): readonly string[] {
+    return this.namespace === 'wallet' ? tables : ['PrivateLedgerMeta', 'PrivateLedgerEvent']
   }
   private unavailable(): never {
     throw new DomainError('WALLET_UNAVAILABLE')
@@ -166,17 +170,22 @@ export class LedgerWitness {
     // RepeatableRead excludes concurrent owner DML from both fingerprints and
     // callback reads, so it can never be mistaken for this transaction's change.
     await tx.$executeRawUnsafe(
-      `LOCK TABLE ${tables.map((t) => '"' + t + '"').join(',')} IN ACCESS SHARE MODE`
+      `LOCK TABLE ${this.tables.map((t) => '"' + t + '"').join(',')} IN ACCESS SHARE MODE`
     )
   }
   private async fingerprint(tx: Transaction) {
     await tx.$queryRaw`SELECT set_config('TimeZone','UTC',true),
       set_config('DateStyle','ISO, YMD',true), set_config('IntervalStyle','iso_8601',true)`
-    const [meta] = await tx.$queryRaw<{ ledgerId: string }[]>`
-      SELECT "ledgerId" FROM "WalletLedgerMeta" WHERE "singleton"=true`
+    const [meta] = await tx.$queryRawUnsafe<{ ledgerId: string }[]>(
+      `SELECT "ledgerId" FROM "${this.tables[0]}" WHERE "singleton"=true`
+    )
     if (meta?.ledgerId !== this.ledgerId) this.unavailable()
-    const hash = createHash('sha256').update('bazaar-security-ledger-witness-v1\n')
-    for (const table of tables) {
+    const hash = createHash('sha256').update(
+      this.namespace === 'wallet'
+        ? 'bazaar-security-ledger-witness-v1\n'
+        : 'bazaar-private-ledger-witness-v1\n'
+    )
+    for (const table of this.tables) {
       hash.update(table + '\n')
       let after = ''
       for (;;) {
@@ -200,7 +209,7 @@ export class LedgerWitness {
       await this.client.$transaction(
         async (tx) => {
           await this.snapshotLock(tx)
-          for (const table of tables.slice(1)) {
+          for (const table of this.tables.slice(1)) {
             const rows = await tx.$queryRawUnsafe<unknown[]>(`SELECT 1 FROM "${table}" LIMIT 1`)
             if (rows.length) this.unavailable()
           }

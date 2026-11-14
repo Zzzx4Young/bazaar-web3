@@ -6,6 +6,7 @@ import { Transform, type Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import {
   S3Client,
+  GetBucketVersioningCommand,
   GetObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
@@ -23,6 +24,7 @@ export interface ObjectReceipt {
 }
 export type UploadCommit = (receipt: ObjectReceipt, finish: () => Promise<void>) => Promise<void>
 export interface PrivateObjectStore {
+  assertRetentionSafety?(): Promise<void>
   putOnce(
     key: string,
     source: Readable,
@@ -58,6 +60,7 @@ function objectPath(root: string, key: string) {
   return resolve(root, key)
 }
 export class LocalPrivateObjectStore implements PrivateObjectStore {
+  async assertRetentionSafety() {}
   constructor(private readonly root: string) {}
   async putOnce(
     key: string,
@@ -114,6 +117,13 @@ export class GaragePrivateObjectStore implements PrivateObjectStore {
       credentials: { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey },
       requestChecksumCalculation: 'WHEN_REQUIRED'
     })
+  }
+  async assertRetentionSafety() {
+    const v = await this.client.send(
+      new GetBucketVersioningCommand({ Bucket: this.config.bucket }),
+      { abortSignal: AbortSignal.timeout(10000) }
+    )
+    if (v.Status) throw new Error('Versioned bucket requires complete version deletion support')
   }
   async putOnce(
     key: string,

@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { assertPrivateLedgerGrants } from '../dist/delivery-files/private-ledger-grants.js'
+import { PrivateLifecycleLedger } from '../dist/delivery-files/deletion-ledger.js'
+import { persistPrivateFinality } from '../dist/delivery-files/lifecycle-projection.js'
 import { requireLedgerWitness } from '../dist/auth/ledger-witness.js'
 import { RefundJournal } from '../dist/web3/refund-journal.js'
 import { RefundRecoveryService } from '../dist/web3/refund-recovery.service.js'
@@ -26,9 +29,26 @@ if (businessUrl.host === securityUrl.host && businessUrl.pathname === securityUr
   throw new Error('Runtime indexer requires independent security database')
 const db = new DatabaseService(config.databaseUrl, config.databasePool),
   security = new DatabaseService(web3.securityLedgerUrl, { ...config.databasePool, max: 2 })
+const privateDb = config.privateLifecycle
+  ? new DatabaseService(config.privateLifecycle.url, { ...config.databasePool, max: 2 })
+  : null
 await db.onModuleInit()
 try {
   await security.onModuleInit()
+  let privateLedger
+  if (privateDb && config.privateLifecycle) {
+    const u = new URL(config.privateLifecycle.url)
+    if (u.host === businessUrl.host && u.pathname === businessUrl.pathname)
+      throw new Error('Independent private ledger required')
+    await privateDb.onModuleInit()
+    privateLedger = new PrivateLifecycleLedger(
+      privateDb.client,
+      config.privateLifecycle.ledgerId,
+      config.privateLifecycle.witnessDirectory
+    )
+    await assertPrivateLedgerGrants(privateDb.client)
+    await privateLedger.verify()
+  }
   const witness = requireLedgerWitness(security.client, web3)
   await witness.verify()
   const ledger = new PostgresWalletSecurityLedger(security.client, web3.securityLedgerId)
@@ -57,7 +77,10 @@ try {
             )
           throw e
         }
-      }
+      },
+      privateLedger
+        ? persistPrivateFinality(privateLedger, web3.chainId + ':' + web3.escrow)
+        : undefined
     )
   if (args.includes('--initialize-fresh')) {
     // Owner-controlled, new-deployment-only action; never an automatic reset or recovery approval.
@@ -101,6 +124,7 @@ try {
     if (!stopped) await delay(1000)
   } while (!stopped)
 } finally {
+  await privateDb?.onModuleDestroy()
   await security.onModuleDestroy()
   await db.onModuleDestroy()
 }

@@ -1,3 +1,4 @@
+import type { PrivateLifecycleLedger } from './deletion-ledger.js'
 import { assertFileRecovery, requireFileActor } from './authorization.js'
 import type { FileGuard } from './authorization.js'
 import { createHmac, createHash, randomUUID, timingSafeEqual } from 'node:crypto'
@@ -23,7 +24,8 @@ export class DownloadService {
     readonly store: PrivateObjectStore,
     readonly origin: string,
     private readonly secret: Buffer,
-    readonly now: () => Date = () => new Date()
+    readonly now: () => Date = () => new Date(),
+    readonly privateLedger?: PrivateLifecycleLedger
   ) {
     if (secret.length < 32 || new URL(origin).origin !== origin)
       throw new Error('Invalid private download configuration')
@@ -46,6 +48,8 @@ export class DownloadService {
     const version = await tx.privateFileVersion.findUnique({ where: { id: versionId } })
     if (!version || version.orderId !== orderId || version.purpose !== purpose)
       throw new DomainError('FILE_UNAVAILABLE')
+    if (await this.privateLedger?.find('claim', versionId))
+      throw new DomainError('FILE_UNAVAILABLE')
     let stream
     const controller = new AbortController(),
       timer = setTimeout(() => controller.abort(), 2000)
@@ -61,6 +65,10 @@ export class DownloadService {
     }
     await afterProbe?.(tx)
     await requireFileActor(tx, actorId)
+    if (await tx.privateFileDisposition.findUnique({ where: { versionId } }))
+      throw new DomainError('FILE_UNAVAILABLE')
+    const recovery = await tx.privateRecoveryState.findUnique({ where: { singleton: true } })
+    if (recovery) basis = { ...basis, recoveryEpoch: recovery.downloadEpoch }
     const id = randomUUID(),
       issuedAt = this.now(),
       expiresAt = new Date(issuedAt.getTime() + 300000),
@@ -257,6 +265,18 @@ export class DownloadService {
   async readCapability(id: string, token: string) {
     if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new DomainError('FORBIDDEN')
     const row = await this.client.downloadGrant.findUnique({ where: { id } })
+    const recovery = await this.client.privateRecoveryState.findUnique({
+      where: { singleton: true }
+    })
+    if (
+      recovery &&
+      (recovery.status !== 'active' ||
+        (row?.basis as { recoveryEpoch?: string } | undefined)?.recoveryEpoch !==
+          recovery.downloadEpoch)
+    )
+      throw new DomainError('FORBIDDEN')
+    if (row && (await this.privateLedger?.find('claim', row.versionId)))
+      throw new DomainError('FILE_UNAVAILABLE')
     const hash = createHash('sha256').update(token).digest()
     if (
       !row ||
@@ -269,6 +289,8 @@ export class DownloadService {
       where: { id: row.versionId }
     })
     if (!version || version.orderId !== row.orderId || version.purpose !== row.purpose)
+      throw new DomainError('FILE_UNAVAILABLE')
+    if (await this.client.privateFileDisposition.findUnique({ where: { versionId: version.id } }))
       throw new DomainError('FILE_UNAVAILABLE')
     const upload = await this.client.privateUpload.findUnique({ where: { id: version.uploadId } })
     if (upload?.status !== 'ready') throw new DomainError('FILE_UNAVAILABLE')

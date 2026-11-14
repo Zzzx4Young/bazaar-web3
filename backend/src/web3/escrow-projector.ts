@@ -147,7 +147,8 @@ export class EscrowProjector {
       'chainId' | 'token' | 'escrow' | 'rpcPrimary' | 'rpcSecondary'
     >,
     readonly deployment: ChainDeployment,
-    readonly verifyResolutions?: (range: VerifiedRange) => Promise<() => Promise<void>>
+    readonly verifyResolutions?: (range: VerifiedRange) => Promise<() => Promise<void>>,
+    readonly persistPrivateFinality?: (tx: Transaction, range: VerifiedRange) => Promise<void>
   ) {
     this.scope = chainScope(config)
     this.configHash = deploymentDigest(config, deployment)
@@ -507,6 +508,7 @@ export class EscrowProjector {
               status: missing ? 'recovering' : cursor.status
             }
           })
+          await this.persistPrivateFinality?.(tx, r)
           await options.checkpoint?.('before-commit', tx, attempt)
           return {
             status: missing ? 'recovering' : cursor.status,

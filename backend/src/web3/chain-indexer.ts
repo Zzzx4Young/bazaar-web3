@@ -1,3 +1,4 @@
+import type { Transaction } from '../database/transaction.js'
 import { transact } from '../database/transaction.js'
 import { lockChain } from './escrow-projector.js'
 import type { VerifiedRange } from './escrow-state.js'
@@ -18,13 +19,15 @@ export class ChainIndexer {
     readonly observer: DualChainObserver,
     readonly verifyPrivateBasis?: () => Promise<void>,
     readonly verifyResolutions?: (range: VerifiedRange) => Promise<() => Promise<void>>,
-    readonly recoverRefunds?: () => Promise<unknown>
+    readonly recoverRefunds?: () => Promise<unknown>,
+    readonly persistPrivateFinality?: (tx: Transaction, range: VerifiedRange) => Promise<void>
   ) {
     this.projector = new EscrowProjector(
       client,
       observer.config,
       observer.deployment,
-      verifyResolutions
+      verifyResolutions,
+      persistPrivateFinality
     )
   }
   async runOnce(options: TransactionOptions = {}) {

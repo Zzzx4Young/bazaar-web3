@@ -1,8 +1,12 @@
+import {
+  readPrivateLifecycleConfig,
+  type PrivateLifecycleConfig
+} from './delivery-files/lifecycle-config.js'
 import { readFileSync } from 'node:fs'
 import { isIP } from 'node:net'
 import { type GarageStoreConfig } from './media/garage-object-store.js'
 import { readMaxInFlightRequests } from './common/request-policy.js'
-import { readPrivateFileConfig,type PrivateFileConfig } from './delivery-files/config.js'
+import { readPrivateFileConfig, type PrivateFileConfig } from './delivery-files/config.js'
 import { readWeb3Config } from './web3/web3-policy.js'
 import type { Web3Config } from './web3/web3-types.js'
 import {
@@ -14,6 +18,7 @@ import {
 export interface AppConfig {
   web3: Web3Config | null
   privateFiles: PrivateFileConfig | null
+  privateLifecycle?: PrivateLifecycleConfig | null
   databaseUrl: string
   listingCommitmentPolicy: 'compat' | 'enforce'
   host: string
@@ -41,21 +46,32 @@ function readSecret(env: NodeJS.ProcessEnv, valueName: string, fileName: string)
 
 function readMediaStoreConfig(env: NodeJS.ProcessEnv): GarageStoreConfig | null {
   const names = [
-    'GARAGE_HOT_ENDPOINT', 'GARAGE_HOT_PUBLIC_ENDPOINT', 'GARAGE_COLD_ENDPOINT',
-    'GARAGE_HOT_ACCESS_KEY_ID_FILE', 'GARAGE_HOT_SECRET_KEY_FILE',
-    'GARAGE_COLD_ACCESS_KEY_ID_FILE', 'GARAGE_COLD_SECRET_KEY_FILE'
+    'GARAGE_HOT_ENDPOINT',
+    'GARAGE_HOT_PUBLIC_ENDPOINT',
+    'GARAGE_COLD_ENDPOINT',
+    'GARAGE_HOT_ACCESS_KEY_ID_FILE',
+    'GARAGE_HOT_SECRET_KEY_FILE',
+    'GARAGE_COLD_ACCESS_KEY_ID_FILE',
+    'GARAGE_COLD_SECRET_KEY_FILE'
   ] as const
   if (names.every((name) => !env[name])) return null
   if (names.some((name) => !env[name])) throw new Error('Incomplete Garage configuration')
-  const endpoint = (name: typeof names[number]) => {
+  const endpoint = (name: (typeof names)[number]) => {
     const value = env[name]!
     const url = new URL(value)
-    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password ||
-      url.pathname !== '/' || url.search || url.hash || url.origin !== value)
+    if (
+      !['http:', 'https:'].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      url.pathname !== '/' ||
+      url.search ||
+      url.hash ||
+      url.origin !== value
+    )
       throw new Error(`Invalid ${name}`)
     return value
   }
-  const secret = (name: typeof names[number]) => {
+  const secret = (name: (typeof names)[number]) => {
     const value = readFileSync(env[name]!, 'utf8').trim()
     if (!value || /[\r\n]/.test(value)) throw new Error(`Invalid ${name}`)
     return value
@@ -159,12 +175,16 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (env.DEV_EMAIL_BIND_SKIP_REAUTH && !['0', '1'].includes(env.DEV_EMAIL_BIND_SKIP_REAUTH))
     throw new Error('Invalid DEV_EMAIL_BIND_SKIP_REAUTH')
   const devEmailBindSkipReauth = env.DEV_EMAIL_BIND_SKIP_REAUTH === '1'
-  if (devEmailBindSkipReauth && (env.NODE_ENV !== 'development' ||
+  if (
+    devEmailBindSkipReauth &&
+    (env.NODE_ENV !== 'development' ||
       (env.HOST ?? '127.0.0.1') !== '127.0.0.1' ||
-      origin.origin !== 'http://localhost:3000'))
+      origin.origin !== 'http://localhost:3000')
+  )
     throw new Error('DEV_EMAIL_BIND_SKIP_REAUTH requires local development configuration')
   return {
     databaseUrl: url.toString(),
+    privateLifecycle: readPrivateLifecycleConfig(env),
     web3: readWeb3Config(env),
     privateFiles: readPrivateFileConfig(env, env.APP_ORIGIN ?? 'http://localhost:3000'),
     listingCommitmentPolicy,
@@ -176,11 +196,14 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     databasePool: readDatabasePoolConfig(env),
     maxInFlightRequests: readMaxInFlightRequests(env),
     mediaStore: readMediaStoreConfig(env),
-    googleOAuth: googleClientId && googleClientSecret ? {
-      clientId: googleClientId,
-      clientSecret: googleClientSecret,
-      redirectUri: `${origin.origin}/api/auth/google/callback`
-    } : null,
+    googleOAuth:
+      googleClientId && googleClientSecret
+        ? {
+            clientId: googleClientId,
+            clientSecret: googleClientSecret,
+            redirectUri: `${origin.origin}/api/auth/google/callback`
+          }
+        : null,
     emailCodeKey: emailSecret ? Buffer.from(emailSecret) : null,
     devEmailBindSkipReauth
   }

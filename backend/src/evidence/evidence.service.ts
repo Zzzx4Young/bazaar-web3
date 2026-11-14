@@ -1,9 +1,11 @@
+import type { PrivateLifecycleLedger } from '../delivery-files/deletion-ledger.js'
+import { assertOrderFilesMutable } from '../delivery-files/retention.service.js'
 import { randomUUID } from 'node:crypto'
 import type { EvidenceRecord, PrismaClient, ReviewEvent } from '../generated/prisma/client.js'
 import { DomainError } from '../common/domain-error.js'
 import { idInput, objectInput, textInput } from '../common/input.js'
 import { transact, type Transaction } from '../database/transaction.js'
-import { checkedVersion, json, type FileGuard } from '../delivery-files/authorization.js'
+import { checkedVersion, digest, json, type FileGuard } from '../delivery-files/authorization.js'
 import { DownloadService } from '../delivery-files/download.service.js'
 import { idempotencyKey } from '../orders/idempotency-key.js'
 import { chainScope, lockChain } from '../web3/escrow-projector.js'
@@ -59,7 +61,8 @@ export class EvidenceService {
   constructor(
     readonly client: PrismaClient,
     readonly config: Web3Config,
-    readonly downloads: DownloadService
+    readonly downloads: DownloadService,
+    readonly privateLedger?: PrivateLifecycleLedger
   ) {}
 
   private async context(tx: Transaction, orderId: string, actorId: string, guard?: FileGuard) {
@@ -167,6 +170,18 @@ export class EvidenceService {
           existing.deliveryReferenceId !== input.deliveryReferenceId
         )
           throw new DomainError('IDEMPOTENCY_CONFLICT')
+        await this.privateLedger?.append('evidence', existing.id, {
+          id: existing.id,
+          orderId,
+          versionId: existing.versionId,
+          deliveryReferenceId: existing.deliveryReferenceId,
+          bodyHash: digest({
+            text: existing.text,
+            versionId: existing.versionId,
+            deliveryReferenceId: existing.deliveryReferenceId,
+            parentId: existing.parentId
+          })
+        })
         return evidenceResult(existing)
       }
       if (parentId) {
@@ -186,6 +201,7 @@ export class EvidenceService {
           context.order.sellerId,
           'delivery'
         )
+      await assertOrderFilesMutable(tx, orderId)
       const row = await tx.evidenceRecord.create({
         data: {
           id: randomUUID(),
@@ -196,6 +212,18 @@ export class EvidenceService {
           ...input,
           createdAt: new Date()
         }
+      })
+      await this.privateLedger?.append('evidence', row.id, {
+        id: row.id,
+        orderId,
+        versionId: row.versionId,
+        deliveryReferenceId: row.deliveryReferenceId,
+        bodyHash: digest({
+          text: row.text,
+          versionId: row.versionId,
+          deliveryReferenceId: row.deliveryReferenceId,
+          parentId: row.parentId
+        })
       })
       await this.audit(tx, orderId, actorId, parentId ? 'evidence_append' : 'evidence_submit', {
         evidenceId: row.id,
@@ -364,6 +392,7 @@ export class EvidenceService {
         where: { orderId },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }]
       })
+      await assertOrderFilesMutable(tx, orderId)
       const closed = latest?.action === 'close'
       if ((action === 'close') === closed) throw new DomainError('STATE_CONFLICT')
       // PostgreSQL now() is the transaction start, which may precede a lock
@@ -378,6 +407,10 @@ export class EvidenceService {
           createdAt,
           details: { authorizationId: scope.id, fundsAffected: false }
         }
+      })
+      await this.privateLedger?.append('review', row.id, {
+        ...row,
+        createdAt: row.createdAt.toISOString()
       })
       await this.audit(tx, orderId, actorId, 'review_' + action, {
         reviewEventId: row.id,

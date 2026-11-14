@@ -1,3 +1,4 @@
+import type { PrivateLifecycleLedger } from './deletion-ledger.js'
 import { requireFileActor } from './authorization.js'
 import type { FileGuard } from './authorization.js'
 import { randomUUID, randomBytes } from 'node:crypto'
@@ -121,7 +122,8 @@ export class SupplementPublicationService {
     private readonly client: PrismaClient,
     private readonly config: Web3Config,
     private readonly store: PrivateObjectStore,
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = () => new Date(),
+    private readonly privateLedger?: PrivateLifecycleLedger
   ) {}
   async createChallenge(
     orderId: string,
@@ -238,6 +240,12 @@ export class SupplementPublicationService {
       const old = await tx.supplementPublication.findUnique({ where: { authorizationId } })
       if (old) {
         if (old.signature !== signature) throw new DomainError('IDEMPOTENCY_CONFLICT')
+        await this.privateLedger?.append('publication', authorizationId, {
+          orderId,
+          versionId,
+          mappingId: mapping.id,
+          signatureHash: digest(signature)
+        })
         return result
       }
       await exactFirst(tx, c)
@@ -275,6 +283,12 @@ export class SupplementPublicationService {
           action: 'supplement_publish',
           details: { authorizationId, versionId }
         }
+      })
+      await this.privateLedger?.append('publication', authorizationId, {
+        orderId,
+        versionId,
+        mappingId: mapping.id,
+        signatureHash: digest(signature)
       })
       return result
     })
