@@ -1,7 +1,10 @@
+import { isolatedPrivateLedger } from './private-ledger.mjs'
+import { browserRecoveryTools } from './browser-recovery.mjs'
+import { persistPrivateFinality } from '../../dist/delivery-files/lifecycle-projection.js'
 import { URLSearchParams } from 'node:url'
 import assert from 'node:assert/strict'
 import { randomUUID, randomBytes } from 'node:crypto'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createServer } from 'node:net'
@@ -30,13 +33,15 @@ export async function unusedPort() {
 export async function web3BrowserFixture(origin) {
   if (!process.env.PRIVATE_GARAGE_ENDPOINT)
     throw new Error('Run with with-web3-test-db and with-private-file-test wrappers')
-  let db, security, chain, app, gateway, root
+  let db, security, chain, app, gateway, root, privateLedger, recovery
   const close = async () => {
     if (gateway) {
       gateway.closeAllConnections?.()
       await new Promise((resolve) => gateway.close(resolve))
     }
     await app?.close()
+    await recovery?.close()
+    await privateLedger?.close()
     await db?.close()
     await security?.close()
     await chain?.close()
@@ -44,10 +49,17 @@ export async function web3BrowserFixture(origin) {
   }
   try {
     db = await sandbox()
-    security = await isolatedLedger()
+    root = await mkdtemp(join(tmpdir(), 'bazaar-t10-browser-'))
+    if (process.env.T10_RECOVERY === '1') {
+      await mkdir(join(root, 'wallet-witness'), { mode: 0o700 })
+      privateLedger = await isolatedPrivateLedger()
+    }
+    security = await isolatedLedger(
+      privateLedger ? { witnessDirectory: join(root, 'wallet-witness') } : {}
+    )
     chain = await localEscrow()
     await chain.publicClient.request({ method: 'anvil_setBlockTimestampInterval', params: [0] })
-    root = await mkdtemp(join(tmpdir(), 'bazaar-t09-browser-'))
+
     const f = await fixture(db, 'digital', '10', 'USD', 'digital_assets')
     const seed = Object.fromEntries(
       Object.entries(f.listing).filter(([key]) => !['id', 'createdAt', 'updatedAt'].includes(key))
@@ -160,6 +172,7 @@ export async function web3BrowserFixture(origin) {
     const observer = new DualChainObserver(cfg.web3, chain.deployment),
       journal = new PostgresPaymentJournal(security.client, security.id)
     app = await createApp(cfg, false, {
+      privateLedger: privateLedger?.ledger,
       walletLedger: security.ledger,
       walletGoogleClient: google,
       paymentSigner: chain.paymentSigner,
@@ -179,7 +192,14 @@ export async function web3BrowserFixture(origin) {
       db.client,
       observer,
       () => journal.assertBusinessBasis(db.client, cfg.web3.chainId + ':' + cfg.web3.escrow),
-      (range) => journal.assertResolutions(range, observer)
+      (range) => journal.assertResolutions(range, observer),
+      undefined,
+      privateLedger
+        ? persistPrivateFinality(
+            privateLedger.ledger,
+            chain.config.chainId + ':' + chain.config.escrow
+          )
+        : undefined
     )
     await indexer.projector.initialize('fresh')
     const sync = async () => {
@@ -201,8 +221,47 @@ export async function web3BrowserFixture(origin) {
     await app.listen(0, '127.0.0.1')
     const backendOrigin = await app.getUrl()
     const checker = new DockerFileChecker(cfg.privateFiles.checker)
+    if (privateLedger)
+      recovery = await browserRecoveryTools({
+        db,
+        security,
+        privateLedger,
+        chain,
+        cfg,
+        store,
+        root,
+        pause: async () => {
+          gateway.closeAllConnections?.()
+          await new Promise((r) => gateway.close(r))
+          gateway = null
+          await app.close()
+          app = null
+        },
+        resume: async (databaseUrl) => {
+          app = await createApp({ ...cfg, databaseUrl }, false, {
+            privateLedger: privateLedger.ledger,
+            walletLedger: security.ledger,
+            paymentSigner: chain.paymentSigner,
+            deliverySigner: {
+              ...chain.signers.delivery,
+              address: chain.signers.delivery.address.toLowerCase()
+            },
+            paymentJournal: journal,
+            chainObserver: observer,
+            privateFiles: { store, budget, uploadKey: cfg.privateFiles.uploadKey }
+          })
+          await app.listen(Number(new URL(backendOrigin).port), '127.0.0.1')
+          gateway = createPrivateUploadGateway(
+            app.get(PrivateFileService),
+            origin,
+            app.get(DownloadService)
+          )
+          await new Promise((r) => gateway.listen(uploadPort, '127.0.0.1', r))
+        }
+      })
     return {
       db,
+      recovery,
       security,
       chain,
       app,
@@ -223,7 +282,13 @@ export async function web3BrowserFixture(origin) {
       },
       async check() {
         const result = await files.checkNext(checker, root + '/scratch')
-        assert.equal(result?.status, 'ready')
+        const report =
+          result &&
+          (await db.client.privateFileCheck.findFirst({
+            where: { uploadId: result.uploadId },
+            orderBy: { createdAt: 'desc' }
+          }))
+        assert.equal(result?.status, 'ready', JSON.stringify(report?.report ?? result))
         return result
       },
       async orderEvidence(orderId) {

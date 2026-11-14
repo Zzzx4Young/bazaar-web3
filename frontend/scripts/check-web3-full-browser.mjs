@@ -14,6 +14,8 @@ const frontendDirectory = resolve(import.meta.dirname, '..'),
   origin = `http://127.0.0.1:${port}`
 const evidence = process.env.T09_FULL_EVIDENCE_DIR
 const result = {
+  status: 'running',
+  startedAt: new Date().toISOString(),
   api: 'real HTTP; no application API interception',
   database: 'isolated PostgreSQL business and security schemas',
   storage: 'real isolated Garage',
@@ -34,6 +36,10 @@ const diagnosticPages = []
 const step = (value) => console.log('T09 full: ' + value)
 const hash = (b) => createHash('sha256').update(b).digest('hex')
 try {
+  if (evidence) {
+    await mkdir(evidence, { recursive: true })
+    await writeFile(join(evidence, 'result.json'), JSON.stringify(result, null, 2))
+  }
   f = await web3BrowserFixture(origin)
   result.checkerImage = f.checkerImage
   await writeFile(
@@ -480,16 +486,35 @@ try {
   const attachmentVersion = await upload(buyer, second.orderId, 'evidence', 'evidence-attachment')
   await buyer.getByLabel('证据说明').fill('Buyer evidence for ' + second.orderId)
   await buyer.getByLabel('我已了解双方可见及证据保留规则').check()
+  const buyerEvidenceSaved = buyer.waitForResponse(
+    (r) =>
+      new URL(r.url()).pathname.endsWith('/evidence') &&
+      r.request().method() === 'POST' &&
+      r.status() === 200
+  )
   await buyer.getByRole('button', { name: '提交证据', exact: true }).click()
+  await buyerEvidenceSaved
   await buyer.getByText('Buyer evidence for ' + second.orderId, { exact: true }).waitFor()
   await seller.goto(origin + '/zh-CN/me/orders/' + second.orderId)
   await seller.getByLabel('证据说明').fill('Seller evidence for ' + second.orderId)
   await seller.getByLabel('我已了解双方可见及证据保留规则').check()
+  const sellerEvidenceSaved = seller.waitForResponse(
+    (r) =>
+      new URL(r.url()).pathname.endsWith('/evidence') &&
+      r.request().method() === 'POST' &&
+      r.status() === 200
+  )
   await seller.getByRole('button', { name: '提交证据', exact: true }).click()
+  await sellerEvidenceSaved
   await seller.getByText('Seller evidence for ' + second.orderId, { exact: true }).waitFor()
   const terms = await f.db.client.paymentOrderTerms.findUniqueOrThrow({
     where: { orderId: second.orderId }
   })
+  assert.equal(await f.db.client.evidenceRecord.count({ where: { orderId: second.orderId } }), 2)
+  if (f.recovery) {
+    result.recoveryBackup = await f.recovery.prepare(f.app, [first.orderId, second.orderId])
+    step('T10 consistent encrypted pre-refund backup created')
+  }
   await f.chain.safeExecute(
     f.chain.deployment.arbitrator,
     f.chain.owners.arbitrator,
@@ -537,13 +562,77 @@ try {
   second.final = await f.orderEvidence(second.orderId)
   assert.equal(second.final.state, 'Refunded')
   result.orders.push(second)
-  result.status = 'passed'
+  result.status = f.recovery ? 'recovery_pending' : 'passed'
   if (evidence) {
     await mkdir(evidence, { recursive: true })
     await buyer.screenshot({ path: join(evidence, 'refund.png'), fullPage: true })
     await writeFile(join(evidence, 'result.json'), JSON.stringify(result, null, 2))
   }
   step('refund revocation and bilateral evidence complete')
+  if (f.recovery) {
+    result.recoveryStart = await f.recovery.restore()
+    const previousDb = f.db
+    f.db = f.recovery.database
+    for (const page of [buyer, seller]) {
+      const old = await page.evaluate(async () => {
+        const r = await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}'
+        })
+        return r.status
+      })
+      assert.equal(old, 401)
+    }
+    await login(buyer, 'buyer')
+    await login(seller, 'seller')
+    const restoredNormal = await post(buyer, `web3/orders/${first.orderId}/delivery/read`)
+    assert.equal(restoredNormal.status, 200)
+    assert.equal(restoredNormal.data.firstVersionId, firstVersion)
+    assert.ok(restoredNormal.data.publishedVersionIds.includes(supplement))
+    const normalGrant = await post(buyer, `web3/orders/${first.orderId}/delivery/download`, {
+      versionId: firstVersion
+    })
+    assert.equal(normalGrant.status, 200)
+    const normalBytes = await buyer.context().request.get(normalGrant.data.url)
+    assert.equal(normalBytes.status(), 200)
+    assert.equal(hash(await normalBytes.body()), hash(samples['delivery-first']))
+    const refundedGrant = await post(buyer, `web3/orders/${second.orderId}/delivery/download`, {
+      versionId: secondVersion
+    })
+    assert.equal(refundedGrant.status, 409)
+    const be = await post(buyer, `web3/orders/${second.orderId}/evidence/read`),
+      se = await post(seller, `web3/orders/${second.orderId}/evidence/read`)
+    assert.equal(be.status, 200)
+    assert.equal(se.status, 200)
+    assert.equal(be.data.evidence.length, 2)
+    assert.equal(se.data.evidence.length, 2)
+    const eg = await post(seller, `web3/orders/${second.orderId}/evidence/attachments/authorize`, {
+      evidenceId: attachment.id
+    })
+    assert.equal(eg.status, 200)
+    const eb = await seller.context().request.get(eg.data.url)
+    assert.equal(eb.status(), 200)
+    assert.equal(hash(await eb.body()), hash(samples['evidence-attachment']))
+    result.recovery = await f.recovery.complete({
+      oldBuyerSession: 401,
+      oldSellerSession: 401,
+      normalExactVersion: firstVersion,
+      normalSha256: hash(await normalBytes.body()),
+      refundNewGrant: 409,
+      buyerEvidence: 200,
+      sellerEvidence: 200,
+      evidenceSha256: hash(await eb.body())
+    })
+    assert.equal(result.recovery.evaluation.status, 'full')
+    assert.equal(result.recovery.evaluation.targetsMet, false)
+    f.db = previousDb
+    if (evidence)
+      await writeFile(join(evidence, 'recovery.json'), JSON.stringify(result.recovery, null, 2))
+    step('T10 local recovery browser gates complete; independent-provider qualification pending')
+  }
+  result.status = 'passed'
+  if (evidence) await writeFile(join(evidence, 'result.json'), JSON.stringify(result, null, 2))
   console.log(
     JSON.stringify({
       identityChecks: result.identity.length,
@@ -563,6 +652,7 @@ try {
       JSON.stringify(
         {
           ...result,
+          status: 'failed',
           error: String(error.message)
             .replace(/Virtual-T09-browser-only-[a-f0-9-]+/g, '[test-secret]')
             .slice(0, 1000)

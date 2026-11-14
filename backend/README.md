@@ -541,3 +541,38 @@ node scripts/initialize-ledger-witness.mjs --confirm-empty-independent-ledger
 测试：`node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/ledger-witness.integration.mjs tests/refund-recovery.integration.mjs tests/web3-recovery.test.mjs`。`check-web3-recovery.mjs <evidence.json>`仅评估真实检查报告，不授权开放；缺关键依据为blocked，部分恢复没有完整RTO，只有完整检查且基础设施/独立RPC前提满足才评估24小时/4小时目标。工具不验证报告真实性，调用者需链接实际证据。
 
 这是本地独立目录防数据库回退验证，不证明见证卷自身不被回退、WORM/远端耐久、容器重建后的挂载或多主机锁；多API部署须共享同一具备所需POSIX锁/rename/fsync语义的目录，部署前实测。全账本摘要和串行锁的性能尚未验收；本轮不提供公开部署容量背书。保留/删除台账、加密一致备份、14天到期清理、完整恢复和真实RPO/RTO演练仍待后续T10批次。
+
+
+### T10 第二批：私有文件保留、加密备份与隔离恢复
+
+本批仍是本地实现，T10 整体及公开测试网部署尚未验收。配置 `PRIVATE_LIFECYCLE_CONFIG_FILE` 后，API、交付签发、补交发布、证据与索引器共用独立生命周期账本；缺失、回退、未知 pending 均保持保护。未配置的历史 Alpha 不获得这一恢复能力，不能把它用于有此保障要求的 Web3 部署。
+
+业务迁移 `202611140001_private_lifecycle` 只增加删除门禁和恢复状态；普通 API 对两表只读。独立账本不在业务 Prisma 迁移或备份内。部署所有者先创建独立 `private_lifecycle` 或 `wallet_security` 数据库、预建受限角色和专用 schema，再使用 `scripts/provision-private-ledger.mjs --confirm-independent-private-ledger` 初始化全新账本；该命令不能修复、清空或重新封存已有账本。运行角色仅有 Meta/Event 的 SELECT 和 Event 的 INSERT。账本、见证、加密密钥均须独立于业务恢复点保护。
+
+普通文件从首次可靠的结算/退款核验起保留90天；争议相关文件从链上终态核验与最新复核结案的较晚时间起保留180天，多条件取最晚期限。未终结、复核重开、引用或映射缺失时保护。删除先写独立 claim，再在业务库设门禁，确认对象删除、写独立完成记录后才释放配额。跨库部分失败保留保护并幂等重试，不按计时自动解除 claim。新的证据引用、补交和下载不得绕过门禁。底层桶启用/曾启用版本或无法查询版本状态时，维护拒绝声明物理删除成功；副本清理仍需部署验收。
+
+以下命令从 backend 执行，先 `npm run build`，再通过受控环境/保护文件提供 `.env.example` 中列出的参数；不要将 owner URL 或密钥放入命令行、日志或仓库。
+
+```bash
+node scripts/run-private-retention.mjs --once
+node scripts/backup-web3-state.mjs --create
+node scripts/backup-web3-state.mjs --expire
+node scripts/restore-web3-state.mjs --confirm-isolated-restore BACKUP_UUID
+```
+
+备份使用 PostgreSQL 原生 exported snapshot 与不可变对象清单；逐对象核对字节数/摘要，AES-256-GCM 加密数据库、对象和清单，独立账本提交成功后才成为可用恢复点。每份为独立全量，创建起14天到期，不随恢复续期。备份调度器每日运行 create/expire 并监控失败仍是部署前置条件；“已有命令”不代表24小时RPO已经成立。原生 pg 工具需预先安装；当前路径在本地回环 PostgreSQL 验证，远程 TLS/客户端证书参数须另行接入核验，不应用于未经核验的远程数据库。
+
+恢复必须停止原业务写入者，使用全新 `bazaar_web3_restore_<随机十六进制>` 数据库及独立私有桶，不覆盖业务库，也不连接失效源库。命令只恢复至 isolated，不能开放。它作废旧会话、未用身份挑战及旧下载 epoch，应用最新独立删除记录与钱包永久归属，缺失依据列入 missing；链上补扫不能补造私有文件、证据或未入链签发。
+
+受控开放使用 `PrivateRecoveryService.reconcile → validate → open`：同一最终区块资金核验、精确首次/补交版本与证据摘要核验、账本新鲜度、删除水位及并发门禁均须通过。开启动作与删除账本变化互斥，响应丢失仅重试原 runId。未提供通用线上开放 CLI；隔离浏览器演练由受控协调器执行开放后再验证真实 HTTP 权限。不能通过手改 status 或使用报告评估脚本代替核验。
+
+本地验证命令（不迁移开发库）：
+
+```bash
+node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/private-retention.integration.mjs tests/private-backup.integration.mjs tests/private-recovery.integration.mjs
+T10_RECOVERY=1 node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node ../frontend/scripts/check-web3-full-browser.mjs
+```
+
+浏览器使用新建结算/退款订单、真实本地 API/PostgreSQL/Garage/文件检查器/Anvil，Google 交换与网页钱包由明确替身驱动，两路 RPC 指向同一 Anvil。恢复为原 API 停止、隔离桶对象丢失、新数据库导入场景；原源库离线保留供取证，未模拟整机/密钥丢失。独立账本和密钥不在故障范围，因此该结果不能证明独立介质恢复、真实供应商、全套灾难恢复或4小时目标已达标。
+
+仍需验收：见证介质自身回退与 pending 受控恢复；崩溃留下的恢复临时副本清理；独立存储及备份到期执行/审计；代表性大文件、并发与摘要锁预算；真实 Sepolia 双供应商/Google/扩展；完整开放运维流程与恢复材料演练。保留和备份到期不等于已证明所有内部副本物理擦除。

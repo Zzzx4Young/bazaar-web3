@@ -5,34 +5,37 @@
   "specDocumentsTracked": false,
   "acceptanceStatus": "pending",
   "localAcceptance": {
-    "runId": "2026-11-13-t10-ledger-witness",
+    "runId": "2026-11-14-t10-private-recovery",
     "task": "T10",
     "status": "partial",
-    "scope": "local independent-ledger rollback witness and safety gates; full retention/backup/restoration pending",
-    "sourceBase": "e14af38ba3a7fbf57a7021179bb65f675954f549",
-    "evidenceDirectory": "docs/superpowers/evidence/2026-11-13-t10-ledger-witness",
-    "backendCheckPassed": 166,
-    "runtimeWitnessAndRolePassed": 13,
-    "nativeChainAndRecoveryEvidencePassed": 2,
-    "reviewRegressionsPassed": 3,
-    "ledgerDatabaseRollbackDetectedLocally": true,
+    "scope": "second batch local retention, encrypted consistent backup and two-order isolated DB/object-loss restore; whole T10 pending",
+    "sourceBase": "5319979bc741f7b5df97d71b74933dcd36c3f3f7",
+    "evidenceDirectory": "docs/superpowers/evidence/2026-11-14-t10-private-recovery",
+    "backendCheckPassed": 167,
+    "coreDatabasePassed": 15,
+    "relatedDatabasePassed": 180,
+    "relatedDatabaseSkipped": 1,
+    "separateGaragePassed": 1,
+    "browserIdentityChecks": 7,
+    "browserOrders": 2,
+    "localScopedRecoveryStatus": "full",
+    "measuredLocalScopedRpoSeconds": 2.42,
+    "measuredLocalScopedRtoSeconds": 7.763,
+    "postRecoveryPointAccessAuditRowsLost": 5,
+    "recoveryTargetsQualified": false,
+    "fullDisasterRecoveryValidated": false,
     "ledgerWitnessIndependentVolumeValidated": false,
     "googleProviderValidated": false,
     "actualSepoliaRpcValidated": false,
     "independentProvidersValidated": false,
-    "fullDisasterRecoveryValidated": false,
     "allAcceptanceGroupsPassed": false,
-    "measuredFullRecoveryRpoSeconds": null,
-    "measuredFullRecoveryRtoSeconds": null,
     "pending": [
-      "T10 deletion ledger, retention/reference fencing and guarded object deletion",
-      "T10 consistent encrypted database/private-object backups and 14-day expiry",
-      "T10 full isolated identity/version/download/evidence restore for both T09 order archetypes",
-      "T10 pending witness owner-led recovery and protected storage failure-domain validation",
-      "Actual complete RPO/RTO exercise and capacity acceptance",
-      "Real Google, browser extension, Sepolia independent RPC and A01–A32 full-group acceptance"
-    ],
-    "relatedDatabasePassed": 128
+      "Witness medium rollback and owner-controlled pending recovery",
+      "Independent storage/key recovery and crash temporary-copy deletion audit",
+      "Daily backup/expiry scheduler and capacity/RPO/RTO qualification",
+      "Remote PostgreSQL TLS and controlled operational opening interface",
+      "Real Google, extension, Sepolia independent RPC and A01-A32 full-group acceptance"
+    ]
   },
   "localAcceptanceHistory": [
     {
@@ -195,6 +198,36 @@
         "A01–A32 full-group and capacity acceptance",
         "Existing frontend dependency remediation before external deployment"
       ]
+    },
+    {
+      "runId": "2026-11-13-t10-ledger-witness",
+      "task": "T10",
+      "status": "partial",
+      "scope": "local independent-ledger rollback witness and safety gates; full retention/backup/restoration pending",
+      "sourceBase": "e14af38ba3a7fbf57a7021179bb65f675954f549",
+      "evidenceDirectory": "docs/superpowers/evidence/2026-11-13-t10-ledger-witness",
+      "backendCheckPassed": 166,
+      "runtimeWitnessAndRolePassed": 13,
+      "nativeChainAndRecoveryEvidencePassed": 2,
+      "reviewRegressionsPassed": 3,
+      "ledgerDatabaseRollbackDetectedLocally": true,
+      "ledgerWitnessIndependentVolumeValidated": false,
+      "googleProviderValidated": false,
+      "actualSepoliaRpcValidated": false,
+      "independentProvidersValidated": false,
+      "fullDisasterRecoveryValidated": false,
+      "allAcceptanceGroupsPassed": false,
+      "measuredFullRecoveryRpoSeconds": null,
+      "measuredFullRecoveryRtoSeconds": null,
+      "pending": [
+        "T10 deletion ledger, retention/reference fencing and guarded object deletion",
+        "T10 consistent encrypted database/private-object backups and 14-day expiry",
+        "T10 full isolated identity/version/download/evidence restore for both T09 order archetypes",
+        "T10 pending witness owner-led recovery and protected storage failure-domain validation",
+        "Actual complete RPO/RTO exercise and capacity acceptance",
+        "Real Google, browser extension, Sepolia independent RPC and A01–A32 full-group acceptance"
+      ],
+      "relatedDatabasePassed": 128
     }
   ]
 }
