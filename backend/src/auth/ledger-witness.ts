@@ -1,3 +1,4 @@
+import { createWitnessCheckpointGuard } from './recovery-authority.js'
 import { createHash, randomUUID } from 'node:crypto'
 import { constants } from 'node:fs'
 import { open, lstat, realpath, mkdir, rename, unlink, rmdir } from 'node:fs/promises'
@@ -56,7 +57,8 @@ export class LedgerWitness {
     readonly client: PrismaClient,
     readonly ledgerId: string,
     readonly directory: string,
-    readonly namespace: 'wallet' | 'private-files' = 'wallet'
+    readonly namespace: 'wallet' | 'private-files' = 'wallet',
+    readonly checkpointGuard?: (head: Head, tx: Transaction) => Promise<void>
   ) {
     if (
       !isAbsolute(directory) ||
@@ -202,6 +204,30 @@ export class LedgerWitness {
     }
     return hash.digest('hex')
   }
+  // Maintenance only: no nonce consumption, head write, unlock or application opening.
+  // The caller must stop consumers before activating a staged candidate directory.
+  async withOwnerRecoverySnapshot<T>(
+    work: (digest: string, tx: Transaction) => Promise<T>
+  ): Promise<T> {
+    return this.client.$transaction(
+      async (tx) => {
+        const [authority] = await tx.$queryRaw<{ count: bigint; allowed: boolean }[]>`
+        SELECT count(*)::bigint AS count,
+          bool_and(c.relowner=r.oid OR r.rolsuper) AS allowed
+        FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+        CROSS JOIN pg_roles r WHERE n.nspname=current_schema()
+          AND c.relname=ANY(${[...this.tables]}::text[]) AND r.rolname=current_user`
+        if (authority?.count !== BigInt(this.tables.length) || !authority.allowed)
+          throw new Error('OWNER_RECOVERY_REQUIRED')
+        await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended('ledger-witness-v1',0))`
+        await tx.$executeRawUnsafe(
+          `LOCK TABLE ${this.tables.map((t) => '"' + t + '"').join(',')} IN ACCESS EXCLUSIVE MODE`
+        )
+        return work(await this.fingerprint(tx), tx)
+      },
+      { isolationLevel: 'ReadCommitted', timeout: 30000 }
+    )
+  }
   async initializeFresh() {
     return this.mutex(async () => {
       if ((await this.exists('head.json')) || (await this.exists('pending.json')))
@@ -237,6 +263,7 @@ export class LedgerWitness {
         async (tx) => {
           await this.snapshotLock(tx)
           if ((await this.fingerprint(tx)) !== head.digest) this.unavailable()
+          await this.checkpointGuard?.(head, tx)
           const value = await work(tx)
           const digest = await this.fingerprint(tx)
           if (digest !== head.digest) {
@@ -246,6 +273,7 @@ export class LedgerWitness {
             // process crash or uncertain commit leaves protection in place.
             await this.exclusiveWrite('pending.json', { version: 1, before: head, after: next })
           }
+          await this.checkpointGuard?.(next ?? head, tx)
           return value
         },
         {
@@ -270,7 +298,7 @@ export class LedgerWitness {
 
 export function requireLedgerWitness(
   client: PrismaClient,
-  config: Pick<Web3Config, 'securityLedgerId' | 'securityWitnessDirectory'>
+  config: Pick<Web3Config, 'securityLedgerId' | 'securityWitnessDirectory' | 'securityCheckpoint'>
 ) {
   if (!config.securityWitnessDirectory)
     throw new Error(
@@ -279,7 +307,9 @@ export function requireLedgerWitness(
   const witness = new LedgerWitness(
     client,
     config.securityLedgerId,
-    config.securityWitnessDirectory
+    config.securityWitnessDirectory,
+    'wallet',
+    config.securityCheckpoint ? createWitnessCheckpointGuard(config.securityCheckpoint) : undefined
   )
   registerLedgerWitness(client, witness)
   return witness

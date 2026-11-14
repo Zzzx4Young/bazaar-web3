@@ -580,6 +580,7 @@ export class PrivateRecoveryService {
       missing.push('private lifecycle changed during validation')
     const checked = {
       watermark,
+      controlledRecovery:this.config.controlledRecovery===true||(gate.checks as {controlledRecovery?:boolean}).controlledRecovery===true,
       database: (gate.checks as { database?: string }).database ?? '',
       missing: [...new Set(missing)],
       height: h.height,

@@ -18,9 +18,10 @@ export class PrivateLifecycleLedger {
     readonly client: PrismaClient,
     readonly id: string,
     readonly directory: string,
-    readonly now: () => Date = () => new Date()
+    readonly now: () => Date = () => new Date(),
+    checkpointGuard?: ConstructorParameters<typeof LedgerWitness>[4]
   ) {
-    this.witness = new LedgerWitness(client, id, directory, 'private-files')
+    this.witness = new LedgerWitness(client, id, directory, 'private-files',checkpointGuard)
   }
   async verify() {
     await this.witness.verify()

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { assertStoredRecoveryProfile } from '../dist/auth/recovery-profile.js'
+import { createWitnessCheckpointGuard } from '../dist/auth/recovery-authority.js'
 import { assertPrivateLedgerGrants } from '../dist/delivery-files/private-ledger-grants.js'
 import { PrivateLifecycleLedger } from '../dist/delivery-files/deletion-ledger.js'
 import { persistPrivateFinality } from '../dist/delivery-files/lifecycle-projection.js'
@@ -33,6 +35,7 @@ const privateDb = config.privateLifecycle
   ? new DatabaseService(config.privateLifecycle.url, { ...config.databasePool, max: 2 })
   : null
 await db.onModuleInit()
+await assertStoredRecoveryProfile(db.client,config)
 try {
   await security.onModuleInit()
   let privateLedger
@@ -44,7 +47,9 @@ try {
     privateLedger = new PrivateLifecycleLedger(
       privateDb.client,
       config.privateLifecycle.ledgerId,
-      config.privateLifecycle.witnessDirectory
+      config.privateLifecycle.witnessDirectory,
+          undefined,
+          config.privateLifecycle.checkpoint ? createWitnessCheckpointGuard(config.privateLifecycle.checkpoint) : undefined
     )
     await assertPrivateLedgerGrants(privateDb.client)
     await privateLedger.verify()

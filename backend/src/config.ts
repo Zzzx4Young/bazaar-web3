@@ -1,3 +1,4 @@
+import { assertControlledRecoveryConfig } from './auth/recovery-profile.js'
 import {
   readPrivateLifecycleConfig,
   type PrivateLifecycleConfig
@@ -182,7 +183,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       origin.origin !== 'http://localhost:3000')
   )
     throw new Error('DEV_EMAIL_BIND_SKIP_REAUTH requires local development configuration')
-  return {
+  const config:AppConfig = {
     databaseUrl: url.toString(),
     privateLifecycle: readPrivateLifecycleConfig(env),
     web3: readWeb3Config(env),
@@ -207,4 +208,6 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     emailCodeKey: emailSecret ? Buffer.from(emailSecret) : null,
     devEmailBindSkipReauth
   }
+  assertControlledRecoveryConfig(config)
+  return config
 }

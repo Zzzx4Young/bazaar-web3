@@ -1,3 +1,5 @@
+import { assertControlledRecoveryConfig,assertStoredRecoveryProfile } from '../dist/auth/recovery-profile.js'
+import { createWitnessCheckpointGuard } from '../dist/auth/recovery-authority.js'
 import { Buffer } from 'node:buffer'
 import { readConfig } from '../dist/config.js'
 import { DatabaseService } from '../dist/database/database.service.js'
@@ -6,6 +8,7 @@ import { GaragePrivateObjectStore } from '../dist/delivery-files/object-store.js
 import { protectedText } from '../dist/delivery-files/lifecycle-config.js'
 export async function lifecycleRuntime(options = {}) {
   const config = options.config ?? readConfig(process.env)
+  assertControlledRecoveryConfig(config)
   if (
     !config.web3 ||
     !config.privateFiles ||
@@ -22,12 +25,14 @@ export async function lifecycleRuntime(options = {}) {
   const source = new DatabaseService(sourceUrl.toString()),
     ledgerDb = new DatabaseService(ledgerUrl.toString())
   try {
-    if (options.connectSource !== false) await source.onModuleInit()
+    if (options.connectSource !== false) {await source.onModuleInit();await assertStoredRecoveryProfile(source.client,config)}
     await ledgerDb.onModuleInit()
     const ledger = new PrivateLifecycleLedger(
       ledgerDb.client,
       config.privateLifecycle.ledgerId,
-      config.privateLifecycle.witnessDirectory
+      config.privateLifecycle.witnessDirectory,
+          undefined,
+          config.privateLifecycle.checkpoint ? createWitnessCheckpointGuard(config.privateLifecycle.checkpoint) : undefined
     )
     await ledger.verify()
     return {

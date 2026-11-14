@@ -1,3 +1,4 @@
+import { readCheckpointConfig } from '../auth/recovery-authority.js'
 import { readChainDeployment } from './chain-config.js'
 import { readFileSync } from 'node:fs'
 import { DomainError } from '../common/domain-error.js'
@@ -107,6 +108,8 @@ export function assertOrderTermsMatch(original: OrderTerms, replacement: OrderTe
 export function readWeb3Config(env: NodeJS.ProcessEnv): Web3Config | null {
   if (env.WEB3_ENABLED && !['0', '1'].includes(env.WEB3_ENABLED))
     throw new Error('Invalid WEB3_ENABLED')
+  if(env.WEB3_RECOVERY_PROFILE&&env.WEB3_RECOVERY_PROFILE!=='controlled')throw new Error('Invalid WEB3_RECOVERY_PROFILE')
+  if(env.WEB3_RECOVERY_PROFILE==='controlled'&&(!env.WEB3_SECURITY_CHECKPOINT_CONFIG_FILE||env.WEB3_ENABLED!=='1'))throw new Error('CONTROLLED_CHECKPOINT_CONFIG_REQUIRED')
   if (env.WEB3_ENABLED !== '1') return null
   const local = env.WEB3_PROFILE === 'local' && env.NODE_ENV === 'test'
   const chainId = Number(env.WEB3_CHAIN_ID ?? web3Policy.chainId)
@@ -162,6 +165,7 @@ export function readWeb3Config(env: NodeJS.ProcessEnv): Web3Config | null {
     throw new Error('Payment signing requires pinned chain deployment')
   return {
     chainId,
+    controlledRecovery: env.WEB3_RECOVERY_PROFILE==='controlled',
     tokenDecimals: 6,
     chainDeployment,
     paymentSignerFile: env.WEB3_PAYMENT_SIGNER_FILE,
@@ -171,6 +175,7 @@ export function readWeb3Config(env: NodeJS.ProcessEnv): Web3Config | null {
     rpcPrimary: primary.toString(),
     rpcSecondary: secondary.toString(),
     securityWitnessDirectory: env.WEB3_SECURITY_WITNESS_DIR,
+    securityCheckpoint: readCheckpointConfig(env.WEB3_SECURITY_CHECKPOINT_CONFIG_FILE,env.WEB3_SECURITY_LEDGER_ID.toLowerCase(),'wallet'),
     securityLedgerUrl: ledger,
     securityLedgerId: env.WEB3_SECURITY_LEDGER_ID.toLowerCase()
   }

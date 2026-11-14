@@ -1,3 +1,5 @@
+import { assertControlledRecoveryConfig,assertStoredRecoveryProfile } from './auth/recovery-profile.js'
+import { createWitnessCheckpointGuard } from './auth/recovery-authority.js'
 import { assertPrivateLedgerGrants } from './delivery-files/private-ledger-grants.js'
 import { PrivateLifecycleLedger } from './delivery-files/deletion-ledger.js'
 import { requireLedgerWitness } from './auth/ledger-witness.js'
@@ -95,6 +97,7 @@ export async function createApp(
     privateFiles?: { store: PrivateObjectStore; budget: PrivateFileBudget; uploadKey: Buffer }
   } = {}
 ) {
+  assertControlledRecoveryConfig(config)
   if (config.web3 && !dependencies.walletLedger) {
     if (!config.web3.securityWitnessDirectory)
       throw new Error('Explicit WEB3_SECURITY_WITNESS_DIR is required')
@@ -134,7 +137,9 @@ export async function createApp(
       ? new PrivateLifecycleLedger(
           privateLedgerDatabase.client,
           config.privateLifecycle.ledgerId,
-          config.privateLifecycle.witnessDirectory
+          config.privateLifecycle.witnessDirectory,
+          undefined,
+          config.privateLifecycle.checkpoint ? createWitnessCheckpointGuard(config.privateLifecycle.checkpoint) : undefined
         )
       : undefined)
   const auth = new AuthService(database.client, config, ledger)
@@ -405,6 +410,7 @@ export async function createApp(
   app.enableShutdownHooks()
   try {
     await app.init()
+    await assertStoredRecoveryProfile(database.client,config)
     if (ledgerDatabase) await assertWalletLedgerGrants(ledgerDatabase.client)
     if (privateLedgerDatabase) await assertPrivateLedgerGrants(privateLedgerDatabase.client)
     if (privateLedger) await privateLedger.verify()

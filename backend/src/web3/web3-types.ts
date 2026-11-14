@@ -1,3 +1,4 @@
+import type { CheckpointOptions } from '../auth/recovery-authority.js'
 import type { ChainDeployment } from './chain-observer.js'
 export type EvmAddress = `0x${string}`
 export type Bytes32 = `0x${string}`
@@ -62,6 +63,8 @@ export interface Web3Config {
   rpcPrimary: string
   rpcSecondary: string
   securityWitnessDirectory?: string
+  securityCheckpoint?: CheckpointOptions
+  controlledRecovery?: boolean
   securityLedgerUrl: string
   securityLedgerId: string
 }
