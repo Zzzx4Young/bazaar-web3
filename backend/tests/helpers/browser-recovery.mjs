@@ -19,8 +19,13 @@ export async function browserRecoveryTools({
   store,
   root,
   pause,
+  apiPort,
   resume
 }) {
+  const controlledFactory =
+    process.env.T10_CUSTODY === '1'
+      ? (await import('./controlled-browser-recovery.mjs')).createControlledBrowserRecovery
+      : null
   const backupRoot = join(root, 'backups')
   await mkdir(backupRoot, { mode: 0o700 })
   const backup = new PrivateBackupService(
@@ -34,6 +39,17 @@ export async function browserRecoveryTools({
   const observer = new DualChainObserver(cfg.web3, chain.deployment)
   const recovery = new PrivateRecoveryService(backup, security.witness, cfg.web3, observer)
   let manifest, oldGrant, restored, admin, createdName, faultAt, sourceStates
+  const controlled = controlledFactory
+    ? await controlledFactory({
+        db,
+        security,
+        privateLedger,
+        chain,
+        cfg,
+        backupRoot,
+        backupKey: backup.key
+      })
+    : null
   return {
     async prepare(app, orders) {
       const adminAccount = await db.client.account.create({
@@ -68,6 +84,7 @@ export async function browserRecoveryTools({
         sourceStates.map((s) => s.state),
         ['Released', 'Disputed']
       )
+      if (controlled) await controlled.captureC1(manifest)
       return {
         id: manifest.id,
         consistentPointAt: manifest.consistentPointAt,
@@ -76,6 +93,7 @@ export async function browserRecoveryTools({
     },
     async restore() {
       assert.ok(manifest)
+      if (controlled) await controlled.captureC2()
       faultAt = new Date().toISOString()
       await pause()
       for (const v of manifest.objects) await store.deleteAndConfirm(v.objectKey)
@@ -89,6 +107,27 @@ export async function browserRecoveryTools({
       url.pathname = '/' + createdName
       restored = new DatabaseService(url.toString())
       await restored.onModuleInit()
+      if (controlled) {
+        const report = await controlled.restore({
+          targetDatabaseName: createdName,
+          apiPort,
+          uploadPort: Number(new URL(cfg.privateFiles.uploadOrigin).port)
+        })
+        assert.ok(Date.now() < Date.parse(oldGrant.expiresAt), 'old link still within300 seconds')
+        const oldUrl = new URL(oldGrant.url)
+        oldUrl.hostname = '127.0.0.1'
+        const denied = await fetch(oldUrl, { signal: AbortSignal.timeout(5000) })
+        assert.ok(denied.status >= 400)
+        return {
+          runId: report.runId,
+          backupId: manifest.id,
+          faultAt,
+          coordinatorOpenedAt: report.coordinatorOpenedAt,
+          finalizedHeight: report.finalizedHeight,
+          finalizedHash: report.finalizedHash,
+          thirdCustody: await controlled.evidence()
+        }
+      }
       const result = await recovery.restoreIsolated(manifest.id, restored.client, url, store)
       assert.deepEqual(result.missing, [])
       const gate = await restored.client.privateRecoveryState.findUniqueOrThrow({
@@ -180,9 +219,11 @@ export async function browserRecoveryTools({
         (await restored.client.fileAccessAudit.findMany({ select: { id: true } })).map((r) => r.id)
       )
       const postPointAuditLoss = (
-        await db.client.fileAccessAudit.findMany({
-          select: { id: true, orderId: true, action: true, createdAt: true }
-        })
+        controlled
+          ? controlled.audits
+          : await db.client.fileAccessAudit.findMany({
+              select: { id: true, orderId: true, action: true, createdAt: true }
+            })
       )
         .filter((r) => !restoredAuditIds.has(r.id))
         .map((r) => ({
@@ -191,10 +232,13 @@ export async function browserRecoveryTools({
           createdAt: r.createdAt.toISOString()
         }))
       return {
-        scope:
-          'local API-stop/private-object-loss recovery to a fresh database; original business schema retained offline for forensics',
-        keyRecovery:
-          'keys/config and independent ledgers remain available outside fault scope; not a key-loss recovery exercise',
+        scope: controlled
+          ? 'local C1 business and independent ledger/witness co-rollback; signed C2 owner restoration from separate encrypted custody; fresh runtime OS user'
+          : 'local API-stop/private-object-loss recovery to a fresh database; original business schema retained offline for forensics',
+        keyRecovery: controlled
+          ? 'fresh owner and runtime processes load independently encrypted C2 materials; original runtime directory inaccessible; local OS/custody simulation only'
+          : 'keys/config and independent ledgers remain available outside fault scope; not a key-loss recovery exercise',
+        ...(controlled ? { thirdCustody: await controlled.evidence() } : {}),
         rpc: 'two local proxies to SAME Anvil; independent-provider prerequisite unvalidated',
         postPointAuditLoss,
         dataLossScope:
@@ -211,6 +255,7 @@ export async function browserRecoveryTools({
       }
     },
     async close() {
+      await controlled?.close()
       if (restored) await restored.onModuleDestroy()
       if (admin) {
         if (createdName) await admin.client.$executeRawUnsafe(`DROP DATABASE "${createdName}"`)

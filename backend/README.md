@@ -540,7 +540,7 @@ node scripts/initialize-ledger-witness.mjs --confirm-empty-independent-ledger
 
 测试：`node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/ledger-witness.integration.mjs tests/refund-recovery.integration.mjs tests/web3-recovery.test.mjs`。`check-web3-recovery.mjs <evidence.json>`仅评估真实检查报告，不授权开放；缺关键依据为blocked，部分恢复没有完整RTO，只有完整检查且基础设施/独立RPC前提满足才评估24小时/4小时目标。工具不验证报告真实性，调用者需链接实际证据。
 
-这是本地独立目录防数据库回退验证，不证明见证卷自身不被回退、WORM/远端耐久、容器重建后的挂载或多主机锁；多API部署须共享同一具备所需POSIX锁/rename/fsync语义的目录，部署前实测。全账本摘要和串行锁的性能尚未验收；本轮不提供公开部署容量背书。保留/删除台账、加密一致备份、14天到期清理、完整恢复和真实RPO/RTO演练仍待后续T10批次。
+这是本地独立目录防数据库回退验证，不证明见证卷自身不被回退、WORM/远端耐久、容器重建后的挂载或多主机锁；多API部署须共享同一具备所需POSIX锁/rename/fsync语义的目录，部署前实测。全账本摘要和串行锁的性能尚未验收；本轮不提供公开部署容量背书。第二、三批已补充保留/删除台账、加密一致备份、14天到期清理及本地限定恢复；真实独立介质与完整RPO/RTO仍待验收。
 
 
 ### T10 第二批：私有文件保留、加密备份与隔离恢复
@@ -576,3 +576,27 @@ T10_RECOVERY=1 node scripts/with-web3-test-db.mjs node scripts/with-private-file
 浏览器使用新建结算/退款订单、真实本地 API/PostgreSQL/Garage/文件检查器/Anvil，Google 交换与网页钱包由明确替身驱动，两路 RPC 指向同一 Anvil。恢复为原 API 停止、隔离桶对象丢失、新数据库导入场景；原源库离线保留供取证，未模拟整机/密钥丢失。独立账本和密钥不在故障范围，因此该结果不能证明独立介质恢复、真实供应商、全套灾难恢复或4小时目标已达标。
 
 仍需验收：见证介质自身回退与 pending 受控恢复；崩溃留下的恢复临时副本清理；独立存储及备份到期执行/审计；代表性大文件、并发与摘要锁预算；真实 Sepolia 双供应商/Google/扩展；完整开放运维流程与恢复材料演练。保留和备份到期不等于已证明所有内部副本物理擦除。
+
+### T10 第三批：本地模拟的第三处材料与受控恢复
+
+本批将钱包/私有账本及见证的共同回退纳入恢复门禁。验证公钥和当前检查点配置来自第三处保管位置，由受信任的启动配置固定，不能从业务旧备份或待解密包中自选。角色包只包含已授权的运行材料，不包含裁决多签成员私钥。尚未接入远端保管、WORM、完整运维恢复 CLI 或真实独立 RPC，不能据此宣称 T10 整体通过。
+
+启用 `WEB3_RECOVERY_PROFILE=controlled` 后，必须同时提供钱包与私有账本的检查点描述文件。钱包描述通过 `WEB3_SECURITY_CHECKPOINT_CONFIG_FILE` 指定；私有生命周期配置增加 `checkpointConfigFile`。每份公开描述包含 `environmentId`、`checkpointFile`、`historyFile`、`publicKeyFile`；钱包描述另用 `pairedPrivateConfigurationFile` 固定配对的私有描述，旧材料包不能选择旧的私有检查点。描述、公钥、检查点、历史承诺文件及可替换它们的目录边界都不能由运行 UID 写入；共享验证会检查实际写权限、所有权、符号链接和父目录，根用户不能作为这一受控运行身份。复制到应用自己的可写目录不构成可信保管。已有数据库门禁中的受控标记也不能靠遗漏启动参数解除。
+
+检查点由独立保管角色用专用 Ed25519 密钥签名，绑定环境、账本、namespace、递增序号、完整摘要及历史承诺；验证公钥不接受包自带值。较大序号本身不是后代证明：钱包永久归属/事件/支付意图/资金退出等不可变记录、私有账本事件必须保留检查点承诺的成员，元数据也须匹配。历史承诺只保存行摘要，不公开账本正文。当前实现每份历史最多4,000,000字节、累计40,000行承诺，超预算拒绝，不据此认定生产容量已验收。
+
+保管角色使用 `publishWitnessCheckpoint` 在所有者独占锁下采集真实已提交记录；不能用摘要补出丢失记录。发布配置路径由可信启动环境固定。发布新基线、切换描述及重启核验仍需受控操作；持续发布调度、切换和远端耐久尚待部署验证。两个本地位置彼此匹配不代表最新：第三处保留 C2 时，共同回退到 C1 仍应拒绝；三处一起回到 C1 且没有外部更新记录时，本地方案无法证明 C2 曾存在。
+
+`stageWitnessRecovery` 是所有者离线维护函数：精确比较独立签名检查点的 before/after 和数据库记录，只生成全新候选目录，保留原 head、lock、pending，不修改原历史，也不开放应用。所有者事务先获得独占锁，再读取当前已提交状态，避免旧快照误认成功。提交前/后的真实 SIGKILL 分别验证明确的回滚/提交结果；不能凭 PID 消失或删除锁猜测事务结果。
+
+角色材料采用独立的 manifest/config/payment/delivery/access/ledger-records 包装密钥，认证环境和配置版本。普通材料单文件64KiB、账本记录单文件1MiB、最多16个文件、总量16MiB；它们是恢复材料限制，不是交付 ZIP 的限制。解密先消费300秒内、绑定恢复编号/C2/环境/配置版本/包摘要/目标目录的一次性授权；失败不能自动退回未消费状态。只恢复到空的私有目录，文件、密钥、环境或版本不符时拒绝并清理未完成明文。消费记录保存在第三处保护域，不随业务回退。
+
+本地演练以正常结算和争议退款两类新订单完成：保存 C1 后退款得到 C2，实际恢复业务库/独立账本/见证到 C1，保持第三处 C2，先证明被拦截；新保管进程从密文恢复完整记录和运行材料，不能读取已隔离的原密钥目录。已授权的安全代次更新后，由保管角色发布绑定 C2 前驱的 C3，再启动独立运行用户的全新 API。网页登录、旧钱包拒绝、退款下载撤权和证据接口均走实际 API/数据库/Garage/本地链。运行用户只验证公开信任材料，不能读取包装/签名私钥或改写保管目录。
+
+```bash
+# 仅专用55435测试环境，不能替代真实部署演练
+T10_RECOVERY=1 T10_CUSTODY=1 node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node ../frontend/scripts/check-web3-full-browser.mjs
+node scripts/with-web3-test-db.mjs node --test tests/controlled-witness-recovery.integration.mjs
+```
+
+本地文件夹与同一主机上的不同 UID 只是角色/故障模拟，密钥包装与签名保管仍依赖该主机和受信任保管者。独立介质、防三方共同回退、保管者本身失联、真实供应商和代表性数据恢复继续待验收。完整结论、时间、原始公开签名与测试来源见本地忽略目录 `docs/superpowers/evidence/2026-11-14-t10-controlled-recovery/acceptance.md`。

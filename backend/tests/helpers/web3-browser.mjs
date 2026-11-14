@@ -230,6 +230,7 @@ export async function web3BrowserFixture(origin) {
         cfg,
         store,
         root,
+        apiPort: Number(new URL(backendOrigin).port),
         pause: async () => {
           gateway.closeAllConnections?.()
           await new Promise((r) => gateway.close(r))

@@ -614,6 +614,24 @@ try {
     const eb = await seller.context().request.get(eg.data.url)
     assert.equal(eb.status(), 200)
     assert.equal(hash(await eb.body()), hash(samples['evidence-attachment']))
+    if (process.env.T10_CUSTODY === '1') {
+      const restoredOldPage = await pageFor('buyer', () => oldWallet)
+      await restoredOldPage.goto(origin + '/en/login')
+      await pace('restored old wallet SIWE rejection')
+      await restoredOldPage.getByRole('button', { name: 'Sign in with bound wallet' }).click()
+      await restoredOldPage.getByRole('alert').waitFor()
+      const denied = await restoredOldPage.evaluate(async (address) => {
+        const r = await fetch('/api/auth/wallet/login/challenge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address })
+        })
+        return { status: r.status, body: await r.json() }
+      }, oldWallet.address)
+      assert.equal(denied.body.code, 'INVALID_CREDENTIALS')
+      result.restoredOldWallet = { status: denied.status, code: denied.body.code }
+      await restoredOldPage.close()
+    }
     result.recovery = await f.recovery.complete({
       oldBuyerSession: 401,
       oldSellerSession: 401,

@@ -277,7 +277,8 @@ export async function localEscrow() {
     const escrow = escrowDeployment.address
     const paymentKey = generatePrivateKey()
     const paymentAccount = privateKeyToAccount(paymentKey)
-    const deliveryAccount = account()
+    const deliveryKey = generatePrivateKey()
+    const deliveryAccount = privateKeyToAccount(deliveryKey)
     const paymentKeyId = identifier(),
       deliveryKeyId = identifier()
     const paymentSigner = new LocalPaymentSigner(paymentKey, paymentKeyId)
@@ -388,6 +389,14 @@ export async function localEscrow() {
         delivery: { address: deliveryAccount.address, keyId: deliveryKeyId, sign: signDelivery }
       },
       paymentSigner,
+      recoverySignerMaterials() {
+        if (process.env.T10_CUSTODY !== '1')
+          throw new Error('Explicit isolated custody profile required')
+        return {
+          payment: { key: paymentKey, keyId: paymentKeyId },
+          delivery: { key: deliveryKey, keyId: deliveryKeyId }
+        }
+      },
       paymentPermit,
       deliveryPermit,
       orderTermsDigest,
