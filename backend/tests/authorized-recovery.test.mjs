@@ -89,7 +89,11 @@ test('T10 owner: consume C2/run/config bound authorization before decryption, ne
       publicKeyFile,
       usedDirectory: used
     }
-    const out = await m.restoreAuthorizedCustody(o)
+    await assert.rejects(m.restoreAuthorizedCustody({ ...o, requireConsumptionGuard: true }), /RECOVERY_CONSUMPTION_GUARD_REQUIRED/)
+    let calls = 0
+    const protectedOptions = { ...o, requireConsumptionGuard: true, consumptionGuard: { consume: async () => { calls++ } } }
+    const out = await m.restoreAuthorizedCustody(protectedOptions)
+    assert.equal(calls, 1)
     assert.equal(out.files.length, 1)
     assert.equal(out.applicationOpened, false)
     await rm(join(destination, 'config-runtime'))

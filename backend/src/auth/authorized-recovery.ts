@@ -1,3 +1,4 @@
+import type { RecoveryConsumptionGuard } from './recovery-authorization-publication.js'
 import { rm } from 'node:fs/promises'
 import { encryptedPartHash } from '../delivery-files/backup-crypto.js'
 import { restoreRoleCustody, type CustodyKeys } from './recovery-custody.js'
@@ -16,7 +17,11 @@ export async function restoreAuthorizedCustody(o: {
   authorizationFile: string
   publicKeyFile: string
   usedDirectory: string
+  consumptionGuard?: RecoveryConsumptionGuard
+  requireConsumptionGuard?: boolean
 }) {
+  if (o.requireConsumptionGuard && !o.consumptionGuard)
+    throw new Error('RECOVERY_CONSUMPTION_GUARD_REQUIRED')
   if (o.publicKeyFile !== o.checkpoint.publicKeyFile)
     throw new Error('PINNED_RECOVERY_AUTHORITY_REQUIRED')
   const c = await readSignedCheckpoint(o.checkpoint),
@@ -25,6 +30,7 @@ export async function restoreAuthorizedCustody(o: {
     authorizationFile: o.authorizationFile,
     publicKeyFile: o.publicKeyFile,
     usedDirectory: o.usedDirectory,
+    consumptionGuard: o.consumptionGuard,
     expected: {
       environmentId: o.checkpoint.environmentId,
       recoveryId: o.recoveryId,

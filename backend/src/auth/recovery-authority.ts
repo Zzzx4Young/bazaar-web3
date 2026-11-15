@@ -1,3 +1,4 @@
+import type { RecoveryConsumptionGuard } from './recovery-authorization-publication.js'
 import { assertRuntimeTrustFiles } from './checkpoint-trust.js'
 import type { Transaction } from '../database/transaction.js'
 import { verifyCheckpointHistory } from './checkpoint-history.js'
@@ -195,6 +196,8 @@ export async function consumeRecoveryAuthorization(o: {
   publicKeyFile: string
   usedDirectory: string
   expected: RecoveryBinding
+  // Required for the local fourth-batch protected flow; omitted only by legacy callers.
+  consumptionGuard?: RecoveryConsumptionGuard
   now?: () => Date
 }) {
   const signedDocument = await signed(o.authorizationFile, o.publicKeyFile),
@@ -260,6 +263,17 @@ export async function consumeRecoveryAuthorization(o: {
     root.mode & 0o077
   )
     throw new Error('UNSAFE_AUTHORIZATION_RECEIPTS')
+  const consumptionReceipt = {
+    nonce: p.nonce,
+    recoveryId: p.recoveryId,
+    checkpointHash: p.checkpointHash,
+    configurationVersion: p.configurationVersion as string,
+    authorizationHash: signedDocument.hash,
+    consumedAt: new Date(now).toISOString()
+  }
+  // Reserve externally first. Lost acknowledgements and local write failures
+  // burn the grant; no restore may proceed until both durable writes succeed.
+  await o.consumptionGuard?.consume(consumptionReceipt)
   const target = join(o.usedDirectory, p.nonce)
   let receipt
   try {
@@ -278,11 +292,7 @@ export async function consumeRecoveryAuthorization(o: {
       JSON.stringify({
         version: 1,
         status: 'consumed',
-        recoveryId: p.recoveryId,
-        checkpointHash: p.checkpointHash,
-        configurationVersion: p.configurationVersion,
-        authorizationHash: signedDocument.hash,
-        consumedAt: new Date(now).toISOString()
+        ...consumptionReceipt
       })
     )
     await receipt.sync()
