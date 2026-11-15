@@ -289,5 +289,29 @@
     "runtimeDeploymentEnabled": false,
     "fullRecoveryRpoSeconds": null,
     "fullRecoveryRtoSeconds": null
+  },
+  "servicePublicationAcceptance": {
+    "task": "T10",
+    "status": "local-service-entrypoint-and-publication-gap-tests-complete",
+    "run": "2026-11-15-t10-service-publication",
+    "runtimeOptIn": true,
+    "defaultEnvironmentChanged": false,
+    "reconciliationIntervalMs": 60000,
+    "realIndependentCustodyVerified": false,
+    "targetsMet": false,
+    "fullRecoveryRpoSeconds": null,
+    "fullRecoveryRtoSeconds": null,
+    "checks": {
+      "backendUnit": 289,
+      "serviceIntegration": 29,
+      "relatedDatabase": 51,
+      "restrictedRoleHttpRerun": 1,
+      "overlap": true
+    },
+    "apiWalletExecution": "node-signature-bridge",
+    "apiEoaCheck": "substitute",
+    "indexerRpcRequestsWhileUnknown": 0,
+    "privateObjectRecoveryVerifiedThisBatch": false,
+    "realTimerCaseDurationMs": 60465.260227
   }
 }

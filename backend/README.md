@@ -613,7 +613,7 @@ node scripts/with-web3-test-db.mjs node --test tests/controlled-witness-recovery
 - `LocalRecoveryAuthorizationJournal` 将消费事实留在不同的预配置私有目录。`PublishedRecoveryConsumptionGuard` 把每个 nonce 作为不可变单事件流（序号 0），通过全局递增的签名检查点串联并纳入位置向量；nonce 文件本身即持久待发布记录。签名保管回读前不得继续解密，补发不会重新执行已消费授权。原消费日志回退后，保留的签名记录仍拒绝重用；缺失的消费历史需要受控恢复，不能自动忽略。
 - `restoreAuthorizedCustody` 显式使用 `requireConsumptionGuard: true` 和上述 guard 才启用本批受保护路径。历史调用保持兼容，不能把未传保护参数的旧入口称作本批能力。签名/加密密钥仅归保管进程，不能注入网站运行账户。
 
-独立进程的跨主机唤醒、服务托管、检查点持续发布配置切换、已有账本迁移和真实保管服务接入尚未完成。本地组件允许显式注入唤醒和数据源；本批测试并未部署常驻发布服务。需要隔离本地环境执行：
+第四批当时只验证组件。下方第五批已补齐本地常驻进程、服务入口和非空账本登记；跨主机唤醒、系统服务托管、真实保管服务及完整部署接管仍待验收。需要隔离本地环境执行：
 
 ```bash
 cd backend
@@ -623,3 +623,39 @@ npm run test:recovery:publication
 测试使用专用 Web3 测试 PostgreSQL（默认 55435）及随机 schema，不读取持久开发库。包含事务提交前后 SIGKILL、保管提交后回执前 SIGKILL、丢回执重试、完整钱包/退款记录、删除事件、授权消费回退和目录同步故障。容量限制是本地初始保护：单快照最多 40,000 行、原始行内容 16 MiB；加密包另限制序列化后 16,000,000 字节、每条链 1,000 个检查点，达到限制即隔离，不能据此声称生产容量达标。
 
 恢复时若原主机及未发布站内记录丢失，仅剩 C2，必须显式标记站内历史完整性未知；`offchainHistoryVerified` 门禁返回 false 时发布协调器保持隔离。链上退款补扫不能证明钱包换绑历史完整，不能据此解除身份保护。检查点摘要不能补出未留存的记录。真实部署还必须将该门禁接入完整开放检查；本批没有自动放开任何业务入口。
+
+
+### T10 常驻发布与恢复开放入口（第五批本地接入）
+
+API、索引器与私有生命周期现在可显式接入发布；主环境默认不启用。设置 `WEB3_PUBLICATION_RUNTIME_CONFIG_FILE` 指向只包含公开定位信息的配置：`environmentId`、`configurationVersion`、`recoveryRunId`、`walletLedgerId`、可选 `privateLedgerId`、`wakeSocket`、`publicKeyFile` 和 `openingFile`。文件及其父目录必须由独立保管身份控制，网站 UID 不能改写或替换。不要在该配置中加入签名私钥、包装密钥或数据库 URL，解析器会拒绝额外字段。
+
+独立保管进程通过 `WEB3_PUBLICATION_CUSTODY_CONFIG_FILE` 读取自己的 0600 配置：环境、配置版本、`custodyDirectory`、`publicKeyFile`、`privateKeyFile`、`encryptionKeyFile`（原始 32 字节文件）、`ledgerSources`（`namespace/ledgerId/urlFile`）、可选 `wakeSocket/wakeSocketMode`、`baselineCheckpoints` 及 `authorizationJournal`（`directory/usedDirectory/recoveryId/checkpointHash`）。每个密钥或 URL 文件都需独立保管身份所有且为 0600。消费日志参与共享向量时必须配置它，不能因为网站数据库没有该行就忽略签名消费历史。
+
+```bash
+cd backend
+npm run build
+WEB3_PUBLICATION_CUSTODY_CONFIG_FILE=/absolute/owner-only/config.json node scripts/run-checkpoint-publisher.mjs
+# 一次性核对并退出：同一命令追加 --once
+```
+
+进程启动补发、提交唤醒和每 60000 毫秒核对共用同一持久队列。Unix socket 只请求唤醒，不接收业务记录或签名参数；连接失败不撤销原事务。socket 默认 0600，配置 0660 时需预先为受信任服务组设置合适的目录遍历权限（例如独立保管者所有、组可遍历但不可写的目录）。网站进程不得因此获得密钥目录权限。服务拒绝删除预先存在的未知 socket；SIGKILL 遗留 socket 时需所有者确认并处理，或使用受控的新 socket 配置，不能把此情况记作自动恢复能力。
+
+**已有非空账本不能直接改参数重新初始化。** 在维护窗口停止旧消费者、完成并提交独立所有者 DDL/权限更新后，使用 `enrollPublication`：核对预先固定的 C2 签名、完整历史与真实数据库，原序号和原见证文件不变，只生成新候选见证。保管配置以 `baselineCheckpoints` 固定旧锚点，后续签名记录保留其哈希、序号和摘要，不从零重建。确认完整候选后才切换运行配置；记录不完整保持保护。
+
+已有第四批发布表可单独应用 `publication-outbox/fence.sql`，新建账本的 schema 已包含它。重新执行相应最小权限授权。该所有者 DDL 必须在升级后的消费者重新准入前提交；不能期待未升级的旧二进制理解新保护。登记使用非 MVCC 序列 `LedgerPublicationFence`，运行角色仅有 SELECT，无 USAGE/UPDATE。即使旧请求的 Repeatable Read 快照早于登记提交，也能观察激活并被拒绝。登记回滚不会清除激活，必须通过受控重试处理，不自动开放旧配置。
+
+**恢复开放声明是独立保管者的结果，不能从旧业务备份选择。** JSON 为 `{payload, signature}`，Ed25519 签名域是 `bazaar-publication-opening-v1\n` 加现有 canonical stable JSON。payload 包含：`version:1`、`kind:publication-opening`、环境、配置版本、本次 `recoveryRunId`、钱包及可选私有账本 ID、核验检查点哈希，以及 `offchainHistory:unknown|verified`。它是当前运行配置的站立开放声明，不是复用登录、付款或交付签名，也不会自动证明记录完整。
+
+恢复顺序为：保持 unknown → 离线重建与验证完整记录 → 保管者核验结果并签发绑定本次恢复的 verified 声明 → `PrivateRecoveryService.open` 再验证并开放。`open` 在进入和最终事务内都检查声明；站内数据库的 active 标记不能绕过它。只有 C2、无法核实之后是否换绑时不得签发 verified；退款补扫不改变这条规则。API 会逐请求重新检查声明，未知/缺失/篡改/恢复编号不符均返回 `WALLET_UNAVAILABLE`。存活检查仍可成功，但就绪检查和业务入口保持隔离。新文件授权和下载入口同样执行检查；正常清理被暂停，受控离线恢复核对仍可运行。
+
+本地服务验收命令（专用 PostgreSQL 55435，需当前主机可用的免交互 sudo 来切换测试 UID）：
+
+```bash
+npm run test:recovery:services
+```
+
+包含真实 60 秒漏唤醒核对、独立子进程重启、非空 C2 受控登记、旧快照/登记并发、不同 UID 的实际 HTTP 钱包绑定与发布、C2 账本/见证回退后的拒绝，以及实际索引器和文件生命周期脚本的受限角色接入。不同命令也须串行使用同一个测试数据库，避免全局见证 advisory lock 导致维护检查正确拒绝并行测试。
+
+这批没有部署系统服务单元或修改 `start.sh`，没有完成生产接管、真实 RPC/钱包扩展、Garage 实际大文件或整机恢复演练。HTTP 使用 Node 钱包签名和 EOA 检查替身；脚本测试在 unknown 状态拒绝 RPC，因此不计为链上补扫通过。文件生命周期入口可创建实际私有账本待发布记录，但构造对象客户端不代表存储可用性已验证。T10 整体继续待验收、`targetsMet=false`；本批 RPO/RTO 均为 null。
+
+第五批最终检查：后端 289/289、服务组合 29/29、相关数据库回归 51/51；受限业务/钱包角色的 HTTP 又独立复跑 1/1。结果有重叠。验收报告见本地 `docs/superpowers/evidence/2026-11-15-t10-service-publication/acceptance.md`。
