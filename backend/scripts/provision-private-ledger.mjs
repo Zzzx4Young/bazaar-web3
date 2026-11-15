@@ -38,6 +38,7 @@ try {
       `GRANT SELECT ON "${schema}"."PrivateLedgerMeta", "${schema}"."PrivateLedgerEvent" TO "${role}"`
     )
     await tx.$executeRawUnsafe(`GRANT INSERT ON "${schema}"."PrivateLedgerEvent" TO "${role}"`)
+    await tx.$executeRawUnsafe(`GRANT SELECT, INSERT ON "${schema}"."LedgerPublicationOutbox", "${schema}"."LedgerPublicationReceipt" TO "${role}"`)
   })
   await new PrivateLifecycleLedger(db.client, id, root).witness.initializeFresh()
   console.log(JSON.stringify({ event: 'independent_private_ledger_created', ledgerId: id }))

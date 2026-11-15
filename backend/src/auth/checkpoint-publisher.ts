@@ -102,7 +102,7 @@ export async function publishWitnessCheckpoint(o: {
       environmentId: o.environmentId,
       namespace: o.witness.namespace,
       ledgerId: o.witness.ledgerId,
-      head: h,
+      head: { version: h.version, ledgerId: h.ledgerId, sequence: h.sequence, digest: h.digest },
       historyHash: sha(history),
       ...(o.parentCheckpointHash ? { parentCheckpointHash: o.parentCheckpointHash } : {})
     }

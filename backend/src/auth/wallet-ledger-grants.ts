@@ -1,7 +1,8 @@
 import type { PrismaClient } from '../generated/prisma/client.js'
 
-export async function assertWalletLedgerGrants(client: PrismaClient) {
+export async function assertWalletLedgerGrants(client: PrismaClient, publication = false) {
   const allowed: Record<string, string[]> = {
+    ...(publication ? { LedgerPublicationOutbox: ['SELECT', 'INSERT'], LedgerPublicationReceipt: ['SELECT', 'INSERT'] } : {}),
     WalletLedgerMeta: ['SELECT'], WalletLedgerAccount: ['SELECT', 'INSERT', 'UPDATE'],
     WalletLedgerClaim: ['SELECT', 'INSERT'], WalletLedgerReservation: ['SELECT', 'INSERT', 'DELETE'],
     WalletLedgerOperation: ['SELECT', 'INSERT', 'UPDATE'], WalletLedgerEvent: ['SELECT', 'INSERT'],

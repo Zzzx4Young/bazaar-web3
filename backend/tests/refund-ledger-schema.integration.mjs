@@ -13,7 +13,11 @@ const hash = digit => '0x' + digit.repeat(64)
 
 test('source: fresh ledger contains the exact standalone additive refund schema', async () => {
   const [fresh, refund] = await Promise.all([readFile(schemaUrl, 'utf8'), readFile(refundUrl, 'utf8')])
-  assert.ok(fresh.endsWith(refund), 'fresh provisioning must mirror the standalone schema verbatim')
+  const start = fresh.indexOf('-- Append-only refund exits')
+  const publication = fresh.indexOf('-- Owner-only installation')
+  assert.ok(start >= 0 && publication > start, 'refund block must precede publication SQL')
+  assert.equal(fresh.slice(start, publication), refund + '\n',
+    'embedded refund block must mirror the standalone schema verbatim')
   assert.match(refund, /CREATE TABLE "PaymentLedgerRefundExit"/)
   assert.doesNotMatch(refund, /IF NOT EXISTS/)
 })

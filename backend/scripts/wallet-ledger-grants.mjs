@@ -20,7 +20,16 @@ export async function grantWalletLedger(client, schema, role) {
       throw new Error('Ledger runtime must be unprivileged without ownership or memberships')
     await tx.$executeRawUnsafe(`REVOKE ALL ON SCHEMA "${schema}" FROM PUBLIC, "${role}"`)
     await tx.$executeRawUnsafe(`GRANT USAGE ON SCHEMA "${schema}" TO "${role}"`)
-    for (const [table, grants] of Object.entries(permissions)) {
+    // Additive refund upgrades also support legacy ledgers without publication.
+    // Installing publication tables is a separate owner action, never runtime DDL.
+    const [publication] = await tx.$queryRaw`SELECT count(*)::integer AS count FROM pg_class c
+      JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=${schema}
+      AND c.relname IN ('LedgerPublicationOutbox','LedgerPublicationReceipt')`
+    if (publication.count !== 0 && publication.count !== 2) throw new Error('Incomplete publication schema')
+    const effective = { ...permissions, ...(publication.count === 2 ? {
+      LedgerPublicationOutbox: 'SELECT, INSERT', LedgerPublicationReceipt: 'SELECT, INSERT'
+    } : {}) }
+    for (const [table, grants] of Object.entries(effective)) {
       await tx.$executeRawUnsafe(`REVOKE ALL ON "${schema}"."${table}" FROM PUBLIC, "${role}"`)
       await tx.$executeRawUnsafe(`GRANT ${grants} ON "${schema}"."${table}" TO "${role}"`)
     }

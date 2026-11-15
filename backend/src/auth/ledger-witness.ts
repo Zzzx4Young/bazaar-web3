@@ -1,3 +1,10 @@
+import {
+  assertPublicationBudget,
+  appendPublication,
+  capturePublication,
+  verifyPublicationHead,
+  type PublicationOptions
+} from './publication-outbox.js'
 import { createWitnessCheckpointGuard } from './recovery-authority.js'
 import { createHash, randomUUID } from 'node:crypto'
 import { constants } from 'node:fs'
@@ -29,6 +36,7 @@ interface Head {
   ledgerId: string
   sequence: number
   digest: string
+  publicationEnvironmentId?: string
 }
 type Options = {
   isolationLevel?: 'ReadCommitted' | 'RepeatableRead' | 'Serializable'
@@ -58,7 +66,8 @@ export class LedgerWitness {
     readonly ledgerId: string,
     readonly directory: string,
     readonly namespace: 'wallet' | 'private-files' = 'wallet',
-    readonly checkpointGuard?: (head: Head, tx: Transaction) => Promise<void>
+    readonly checkpointGuard?: (head: Head, tx: Transaction) => Promise<void>,
+    readonly publication?: PublicationOptions
   ) {
     if (
       !isAbsolute(directory) ||
@@ -66,6 +75,13 @@ export class LedgerWitness {
       !/^[0-9a-f-]{36}$/.test(ledgerId)
     )
       throw new Error('Invalid protected witness configuration')
+    if (
+      publication &&
+      (typeof publication.environmentId !== 'string' ||
+        !publication.environmentId.length ||
+        publication.environmentId.length > 200)
+    )
+      throw new Error('Invalid publication environment')
   }
   private get tables(): readonly string[] {
     return this.namespace === 'wallet' ? tables : ['PrivateLedgerMeta', 'PrivateLedgerEvent']
@@ -132,7 +148,8 @@ export class LedgerWitness {
         h.ledgerId !== this.ledgerId ||
         !Number.isSafeInteger(h.sequence) ||
         h.sequence < 0 ||
-        !/^[0-9a-f]{64}$/.test(h.digest)
+        !/^[0-9a-f]{64}$/.test(h.digest) ||
+        h.publicationEnvironmentId !== this.publication?.environmentId
       )
         this.unavailable()
       return h
@@ -166,6 +183,15 @@ export class LedgerWitness {
       if (owned) await rmdir(join(this.directory, 'lock'))
     }
   }
+  private wakePublication() {
+    // Wake only: no external work is awaited and rejection cannot undo a commit.
+    if (this.publication?.notify) {
+      const notify = this.publication.notify
+      void Promise.resolve()
+        .then(() => notify())
+        .catch(() => undefined)
+    }
+  }
   private async snapshotLock(tx: Transaction) {
     await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended('ledger-witness-v1',0))`
     // SELECT privileges suffice; block concurrent DROP/TRUNCATE/restore DDL.
@@ -174,10 +200,15 @@ export class LedgerWitness {
     await tx.$executeRawUnsafe(
       `LOCK TABLE ${this.tables.map((t) => '"' + t + '"').join(',')} IN ACCESS SHARE MODE`
     )
+    if (this.publication)
+      await tx.$executeRawUnsafe(
+        'LOCK TABLE "LedgerPublicationOutbox", "LedgerPublicationReceipt" IN ACCESS SHARE MODE'
+      )
   }
   private async fingerprint(tx: Transaction) {
     await tx.$queryRaw`SELECT set_config('TimeZone','UTC',true),
       set_config('DateStyle','ISO, YMD',true), set_config('IntervalStyle','iso_8601',true)`
+    if (this.publication) await assertPublicationBudget(tx, this.namespace)
     const [meta] = await tx.$queryRawUnsafe<{ ledgerId: string }[]>(
       `SELECT "ledgerId" FROM "${this.tables[0]}" WHERE "singleton"=true`
     )
@@ -240,15 +271,37 @@ export class LedgerWitness {
             if (rows.length) this.unavailable()
           }
           const digest = await this.fingerprint(tx)
-          await this.exclusiveWrite('head.json', {
+          const head: Head = {
             version: 1,
             ledgerId: this.ledgerId,
             sequence: 0,
-            digest
-          })
+            digest,
+            ...(this.publication
+              ? { publicationEnvironmentId: this.publication.environmentId }
+              : {})
+          }
+          if (this.publication) {
+            // Genesis must not silently adopt an existing queue or restored enrolment.
+            const rows = await tx.$queryRaw<
+              unknown[]
+            >`SELECT 1 FROM "LedgerPublicationOutbox" LIMIT 1`
+            if (rows.length) this.unavailable()
+            await appendPublication(
+              tx,
+              await capturePublication(tx, {
+                environmentId: this.publication.environmentId,
+                namespace: this.namespace,
+                ledgerId: this.ledgerId,
+                sequence: 0,
+                digest
+              })
+            )
+          }
+          await this.exclusiveWrite('head.json', head)
         },
         { isolationLevel: 'RepeatableRead', timeout: 10000 }
       )
+      if (this.publication) this.wakePublication()
     })
   }
   async verify() {
@@ -263,12 +316,25 @@ export class LedgerWitness {
         async (tx) => {
           await this.snapshotLock(tx)
           if ((await this.fingerprint(tx)) !== head.digest) this.unavailable()
+          if (this.publication)
+            await verifyPublicationHead(tx, head, this.namespace, this.publication.environmentId)
           await this.checkpointGuard?.(head, tx)
           const value = await work(tx)
           const digest = await this.fingerprint(tx)
           if (digest !== head.digest) {
             if (head.sequence === Number.MAX_SAFE_INTEGER) this.unavailable()
             next = { ...head, sequence: head.sequence + 1, digest }
+            if (this.publication)
+              await appendPublication(
+                tx,
+                await capturePublication(tx, {
+                  environmentId: this.publication.environmentId,
+                  namespace: this.namespace,
+                  ledgerId: this.ledgerId,
+                  sequence: next.sequence,
+                  digest
+                })
+              )
             // Durable ambiguity marker precedes DB commit. Any later exception,
             // process crash or uncertain commit leaves protection in place.
             await this.exclusiveWrite('pending.json', { version: 1, before: head, after: next })
@@ -284,6 +350,7 @@ export class LedgerWitness {
         }
       )
       if (next) {
+        if (this.publication) this.wakePublication()
         const tmp = 'head-' + randomUUID() + '.tmp'
         await this.exclusiveWrite(tmp, next)
         await rename(join(this.directory, tmp), join(this.directory, 'head.json'))
