@@ -272,5 +272,22 @@
         "Real Google, extension, Sepolia independent RPC and A01-A32 full-group acceptance"
       ]
     }
-  ]
+  ],
+  "publicationGapAcceptance": {
+    "task": "T10",
+    "status": "local-component-and-fault-tests-only",
+    "run": "2026-11-15-t10-publication-gap",
+    "reconciliationIntervalMs": 60000,
+    "protectedMutations": [
+      "wallet-ledger",
+      "refund-ledger",
+      "private-deletion-ledger",
+      "recovery-authorization-consumption"
+    ],
+    "targetsMet": false,
+    "realIndependentCustodyVerified": false,
+    "runtimeDeploymentEnabled": false,
+    "fullRecoveryRpoSeconds": null,
+    "fullRecoveryRtoSeconds": null
+  }
 }

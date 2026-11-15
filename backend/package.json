@@ -41,7 +41,8 @@
     "test:capacity:writes": "npm run build && CAPACITY_WRITES=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
     "test:capacity:writes:failover": "npm run build && CAPACITY_WRITES=1 CAPACITY_FAULT=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
     "test:e2e:web3:full": "npm run build && node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node ../frontend/scripts/check-web3-full-browser.mjs",
-    "test:e2e:web3:profile": "npm run build && node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node --test tests/web3-browser.profile.mjs"
+    "test:e2e:web3:profile": "npm run build && node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node --test tests/web3-browser.profile.mjs",
+    "test:recovery:publication": "npm run build && node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/publication-outbox.integration.mjs tests/publication-pipeline.integration.mjs tests/checkpoint-publication.test.mjs tests/publication-worker.test.mjs tests/recovery-authorization-publication.test.mjs tests/recovery-consumption-checkpoint.test.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1152.0",
