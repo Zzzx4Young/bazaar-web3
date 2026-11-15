@@ -1,3 +1,4 @@
+import { assertPublicationOpening } from '../auth/publication-runtime.js'
 import { randomUUID } from 'node:crypto'
 import type { PrismaClient, PrivateFileVersion } from '../generated/prisma/client.js'
 import type { Transaction } from '../database/transaction.js'
@@ -31,6 +32,7 @@ export class RetentionService {
     readonly recoveryRunId?: string
   ) {}
   private async lock(tx: Transaction) {
+    if (!this.recoveryRunId) await assertPublicationOpening(this.config.publication)
     await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended('private-files:' || current_schema(),0))`
     await lockChain(tx, chainScope(this.config))
     const gate = await tx.privateRecoveryState.findUnique({ where: { singleton: true } })

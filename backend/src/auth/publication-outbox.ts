@@ -160,8 +160,10 @@ export async function verifyPublicationHead(
   tx: Transaction,
   head: { ledgerId: string; sequence: number; digest: string },
   namespace: PublicationEntry['namespace'],
-  environmentId: string
+  environmentId: string,
+  baseline?: { sequence: number; digest: string }
 ) {
+  const start = baseline?.sequence ?? 0
   // PK uniqueness plus count/min/max proves there are no holes or future rows.
   const [r] = await tx.$queryRaw<
     { count: bigint; first: bigint | null; last: bigint | null; digest: string | null }[]
@@ -171,12 +173,20 @@ export async function verifyPublicationHead(
     FROM "LedgerPublicationOutbox" WHERE "environmentId"=${environmentId} AND "namespace"=${namespace} AND "ledgerId"=${head.ledgerId}::uuid`
   if (
     !r ||
-    r.count !== BigInt(head.sequence) + 1n ||
-    r.first !== 0n ||
+    r.count !== BigInt(head.sequence - start) + 1n ||
+    r.first !== BigInt(start) ||
     r.last !== BigInt(head.sequence) ||
     r.digest !== head.digest
   )
     fail()
+  if (baseline) {
+    const [first] = await tx.$queryRaw<
+      { digest: string }[]
+    >`SELECT "digest" FROM "LedgerPublicationOutbox"
+      WHERE "environmentId"=${environmentId} AND "namespace"=${namespace}
+      AND "ledgerId"=${head.ledgerId}::uuid AND "sequence"=${start}`
+    if (first?.digest !== baseline.digest) fail()
+  }
   // Missing receipt relation also denies runtime use; never recreate it here.
   await tx.$queryRaw`SELECT 1 FROM "LedgerPublicationReceipt" LIMIT 1`
 }
@@ -222,9 +232,7 @@ export async function readPendingPublications(client: PrismaClient): Promise<Pub
     { isolationLevel: 'RepeatableRead' }
   )
 }
-export async function readCommittedPublicationHeads(
-  client: PrismaClient
-): Promise<
+export async function readCommittedPublicationHeads(client: PrismaClient): Promise<
   Array<{
     namespace: PublicationEntry['namespace']
     ledgerId: string

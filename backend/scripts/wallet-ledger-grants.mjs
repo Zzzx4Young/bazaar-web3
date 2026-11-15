@@ -3,13 +3,18 @@ export async function grantWalletLedger(client, schema, role) {
   for (const value of [schema, role])
     if (!/^[a-z][a-z0-9_]{0,62}$/.test(value)) throw new Error('Invalid SQL identifier')
   const permissions = {
-    WalletLedgerMeta: 'SELECT', WalletLedgerAccount: 'SELECT, INSERT, UPDATE',
-    WalletLedgerClaim: 'SELECT, INSERT', WalletLedgerReservation: 'SELECT, INSERT, DELETE',
-    WalletLedgerOperation: 'SELECT, INSERT, UPDATE', WalletLedgerEvent: 'SELECT, INSERT',
-    PaymentLedgerIntent: 'SELECT, INSERT', PaymentLedgerHead: 'SELECT, INSERT, UPDATE',
-    PaymentLedgerResolution: 'SELECT, INSERT', PaymentLedgerRefundExit: 'SELECT, INSERT'
+    WalletLedgerMeta: 'SELECT',
+    WalletLedgerAccount: 'SELECT, INSERT, UPDATE',
+    WalletLedgerClaim: 'SELECT, INSERT',
+    WalletLedgerReservation: 'SELECT, INSERT, DELETE',
+    WalletLedgerOperation: 'SELECT, INSERT, UPDATE',
+    WalletLedgerEvent: 'SELECT, INSERT',
+    PaymentLedgerIntent: 'SELECT, INSERT',
+    PaymentLedgerHead: 'SELECT, INSERT, UPDATE',
+    PaymentLedgerResolution: 'SELECT, INSERT',
+    PaymentLedgerRefundExit: 'SELECT, INSERT'
   }
-  await client.$transaction(async tx => {
+  await client.$transaction(async (tx) => {
     const rows = await tx.$queryRaw`
       SELECT r.rolsuper, r.rolcreatedb, r.rolcreaterole, r.rolreplication, r.rolbypassrls,
         pg_has_role(r.oid, n.nspowner, 'MEMBER') AS owns_schema,
@@ -25,13 +30,30 @@ export async function grantWalletLedger(client, schema, role) {
     const [publication] = await tx.$queryRaw`SELECT count(*)::integer AS count FROM pg_class c
       JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=${schema}
       AND c.relname IN ('LedgerPublicationOutbox','LedgerPublicationReceipt')`
-    if (publication.count !== 0 && publication.count !== 2) throw new Error('Incomplete publication schema')
-    const effective = { ...permissions, ...(publication.count === 2 ? {
-      LedgerPublicationOutbox: 'SELECT, INSERT', LedgerPublicationReceipt: 'SELECT, INSERT'
-    } : {}) }
+    if (publication.count !== 0 && publication.count !== 2)
+      throw new Error('Incomplete publication schema')
+    const effective = {
+      ...permissions,
+      ...(publication.count === 2
+        ? {
+            LedgerPublicationOutbox: 'SELECT, INSERT',
+            LedgerPublicationReceipt: 'SELECT, INSERT'
+          }
+        : {})
+    }
     for (const [table, grants] of Object.entries(effective)) {
       await tx.$executeRawUnsafe(`REVOKE ALL ON "${schema}"."${table}" FROM PUBLIC, "${role}"`)
       await tx.$executeRawUnsafe(`GRANT ${grants} ON "${schema}"."${table}" TO "${role}"`)
+    }
+    const [fence] =
+      await tx.$queryRaw`SELECT to_regclass(format('%I.%I',${schema}::text,'LedgerPublicationFence')) IS NOT NULL AS present`
+    if (fence?.present) {
+      await tx.$executeRawUnsafe(
+        `REVOKE ALL ON SEQUENCE "${schema}"."LedgerPublicationFence" FROM PUBLIC, "${role}"`
+      )
+      await tx.$executeRawUnsafe(
+        `GRANT SELECT ON SEQUENCE "${schema}"."LedgerPublicationFence" TO "${role}"`
+      )
     }
     // Table ACLs do not erase inherited/column privileges. Verify effective access.
     const [exit] = await tx.$queryRaw`

@@ -1,3 +1,4 @@
+import { assertPublicationOpening } from './publication-runtime.js'
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { type Account, type PrismaClient } from '../generated/prisma/client.js'
 import { type AppConfig } from '../config.js'
@@ -114,6 +115,7 @@ export class AuthService {
 
   private async assertRecovery(tx: Transaction | PrismaClient = this.client) {
     if (!this.config.web3) return
+    await assertPublicationOpening(this.config.web3.publication)
     const gate = await tx.privateRecoveryState.findUnique({ where: { singleton: true } })
     if (gate && gate.status !== 'active') throw new DomainError('WALLET_UNAVAILABLE')
   }

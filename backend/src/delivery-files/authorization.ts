@@ -1,3 +1,4 @@
+import { assertPublicationOpening } from '../auth/publication-runtime.js'
 import { recoverTypedDataAddress } from 'viem'
 import { deliveryTypedData } from './delivery-signing.js'
 import type { DeliveryPermit } from '../web3/web3-types.js'
@@ -222,6 +223,7 @@ export async function requireFileActor(tx: Transaction, accountId: string) {
 // Evidence bytes have an independent refund policy, but never bypass recovery
 // or finalized-contradiction isolation. RPC freshness is not an existing ACL.
 export async function assertFileRecovery(tx: Transaction, config: Web3Config) {
+  await assertPublicationOpening(config.publication)
   await lockChain(tx, chainScope(config))
   const recovery = await tx.privateRecoveryState.findUnique({ where: { singleton: true } })
   if (recovery && recovery.status !== 'active') throw new DomainError('FILE_UNAVAILABLE')

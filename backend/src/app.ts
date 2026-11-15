@@ -1,4 +1,12 @@
-import { assertControlledRecoveryConfig,assertStoredRecoveryProfile } from './auth/recovery-profile.js'
+import {
+  PublicationAccessGuard,
+  readPublicationOpening,
+  runtimePublicationOptions
+} from './auth/publication-runtime.js'
+import {
+  assertControlledRecoveryConfig,
+  assertStoredRecoveryProfile
+} from './auth/recovery-profile.js'
 import { createWitnessCheckpointGuard } from './auth/recovery-authority.js'
 import { assertPrivateLedgerGrants } from './delivery-files/private-ledger-grants.js'
 import { PrivateLifecycleLedger } from './delivery-files/deletion-ledger.js'
@@ -139,7 +147,14 @@ export async function createApp(
           config.privateLifecycle.ledgerId,
           config.privateLifecycle.witnessDirectory,
           undefined,
-          config.privateLifecycle.checkpoint ? createWitnessCheckpointGuard(config.privateLifecycle.checkpoint) : undefined
+          config.privateLifecycle.checkpoint
+            ? createWitnessCheckpointGuard(config.privateLifecycle.checkpoint)
+            : undefined,
+          runtimePublicationOptions(
+            config.privateLifecycle.publication,
+            'private-files',
+            config.privateLifecycle.ledgerId
+          )
         )
       : undefined)
   const auth = new AuthService(database.client, config, ledger)
@@ -397,7 +412,10 @@ export async function createApp(
     ],
     exposedHeaders: ['X-Request-Id']
   })
-  app.useGlobalGuards(new AuthGuard(auth, new Reflector()))
+  app.useGlobalGuards(
+    new PublicationAccessGuard(config.web3?.publication),
+    new AuthGuard(auth, new Reflector())
+  )
   app.useGlobalFilters(new ApiErrorFilter(telemetry))
   app.useGlobalPipes(
     new ValidationPipe({
@@ -410,9 +428,15 @@ export async function createApp(
   app.enableShutdownHooks()
   try {
     await app.init()
-    await assertStoredRecoveryProfile(database.client,config)
-    if (ledgerDatabase) await assertWalletLedgerGrants(ledgerDatabase.client)
-    if (privateLedgerDatabase) await assertPrivateLedgerGrants(privateLedgerDatabase.client)
+    await assertStoredRecoveryProfile(database.client, config)
+    if (config.web3?.publication) await readPublicationOpening(config.web3.publication)
+    if (ledgerDatabase)
+      await assertWalletLedgerGrants(ledgerDatabase.client, Boolean(config.web3?.publication))
+    if (privateLedgerDatabase)
+      await assertPrivateLedgerGrants(
+        privateLedgerDatabase.client,
+        Boolean(config.privateLifecycle?.publication)
+      )
     if (privateLedger) await privateLedger.verify()
     if (new URL(config.databaseUrl).pathname.startsWith('/bazaar_web3_restore_')) {
       const gate = await database.client.privateRecoveryState.findUnique({

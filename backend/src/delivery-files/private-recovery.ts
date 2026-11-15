@@ -1,3 +1,4 @@
+import { assertPublicationOpening } from '../auth/publication-runtime.js'
 import { RetentionService } from './retention.service.js'
 import { randomUUID, createHash } from 'node:crypto'
 import { createReadStream } from 'node:fs'
@@ -580,7 +581,9 @@ export class PrivateRecoveryService {
       missing.push('private lifecycle changed during validation')
     const checked = {
       watermark,
-      controlledRecovery:this.config.controlledRecovery===true||(gate.checks as {controlledRecovery?:boolean}).controlledRecovery===true,
+      controlledRecovery:
+        this.config.controlledRecovery === true ||
+        (gate.checks as { controlledRecovery?: boolean }).controlledRecovery === true,
       database: (gate.checks as { database?: string }).database ?? '',
       missing: [...new Set(missing)],
       height: h.height,
@@ -594,6 +597,7 @@ export class PrivateRecoveryService {
     return checked
   }
   async open(target: PrismaClient, store: PrivateObjectStore) {
+    await assertPublicationOpening(this.config.publication)
     const before = await target.privateRecoveryState.findUniqueOrThrow({
       where: { singleton: true }
     })
@@ -633,6 +637,7 @@ export class PrivateRecoveryService {
             where: { scope: cursor.scope },
             data: { status: 'active' }
           })
+          await assertPublicationOpening(this.config.publication)
           await tx.privateRecoveryState.update({
             where: { singleton: true },
             data: { status: 'active' }

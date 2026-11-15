@@ -1,3 +1,4 @@
+import { assertPublicationOpening } from '../auth/publication-runtime.js'
 import type { PrivateLifecycleLedger } from './deletion-ledger.js'
 import { assertFileRecovery, requireFileActor } from './authorization.js'
 import type { FileGuard } from './authorization.js'
@@ -263,6 +264,7 @@ export class DownloadService {
   // A previously minted capability has fixed expiry and intentionally survives
   // a later refund until then; no new grant, sliding expiry or ambient cookies.
   async readCapability(id: string, token: string) {
+    await assertPublicationOpening(this.config.publication)
     if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new DomainError('FORBIDDEN')
     const row = await this.client.downloadGrant.findUnique({ where: { id } })
     const recovery = await this.client.privateRecoveryState.findUnique({

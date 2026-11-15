@@ -1,3 +1,4 @@
+import type { PublicationRuntimeConfig } from '../auth/publication-runtime.js'
 import type { CheckpointOptions } from '../auth/recovery-authority.js'
 import type { ChainDeployment } from './chain-observer.js'
 export type EvmAddress = `0x${string}`
@@ -63,6 +64,7 @@ export interface Web3Config {
   rpcPrimary: string
   rpcSecondary: string
   securityWitnessDirectory?: string
+  publication?: PublicationRuntimeConfig
   securityCheckpoint?: CheckpointOptions
   controlledRecovery?: boolean
   securityLedgerUrl: string

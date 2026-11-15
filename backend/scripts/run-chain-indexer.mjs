@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+import {
+  assertPublicationOpening,
+  readPublicationOpening,
+  runtimePublicationOptions
+} from '../dist/auth/publication-runtime.js'
+import { assertWalletLedgerGrants } from '../dist/auth/wallet-ledger-grants.js'
 import { assertStoredRecoveryProfile } from '../dist/auth/recovery-profile.js'
 import { createWitnessCheckpointGuard } from '../dist/auth/recovery-authority.js'
 import { assertPrivateLedgerGrants } from '../dist/delivery-files/private-ledger-grants.js'
@@ -35,7 +41,8 @@ const privateDb = config.privateLifecycle
   ? new DatabaseService(config.privateLifecycle.url, { ...config.databasePool, max: 2 })
   : null
 await db.onModuleInit()
-await assertStoredRecoveryProfile(db.client,config)
+await assertStoredRecoveryProfile(db.client, config)
+if (web3.publication) await readPublicationOpening(web3.publication)
 try {
   await security.onModuleInit()
   let privateLedger
@@ -48,12 +55,20 @@ try {
       privateDb.client,
       config.privateLifecycle.ledgerId,
       config.privateLifecycle.witnessDirectory,
-          undefined,
-          config.privateLifecycle.checkpoint ? createWitnessCheckpointGuard(config.privateLifecycle.checkpoint) : undefined
+      undefined,
+      config.privateLifecycle.checkpoint
+        ? createWitnessCheckpointGuard(config.privateLifecycle.checkpoint)
+        : undefined,
+      runtimePublicationOptions(
+        config.privateLifecycle.publication,
+        'private-files',
+        config.privateLifecycle.ledgerId
+      )
     )
-    await assertPrivateLedgerGrants(privateDb.client)
+    await assertPrivateLedgerGrants(privateDb.client, Boolean(config.privateLifecycle?.publication))
     await privateLedger.verify()
   }
+  if (web3.publication) await assertWalletLedgerGrants(security.client, true)
   const witness = requireLedgerWitness(security.client, web3)
   await witness.verify()
   const ledger = new PostgresWalletSecurityLedger(security.client, web3.securityLedgerId)
@@ -113,12 +128,26 @@ try {
   })
   do {
     try {
+      await assertPublicationOpening(web3.publication)
       const result = await indexer.runOnce()
       console.log(JSON.stringify({ event: 'chain_scan', ...result }))
     } catch (e) {
-      if (!(e instanceof ChainVerificationError)) throw e
+      if (e instanceof DomainError && e.code === 'WALLET_UNAVAILABLE') {
+        console.error(
+          JSON.stringify({ event: 'publication_opening_isolated', code: 'WALLET_UNAVAILABLE' })
+        )
+        if (args.includes('--once')) {
+          process.exitCode = 1
+          break
+        }
+      } else if (!(e instanceof ChainVerificationError)) throw e
       console.error(
-        JSON.stringify({ event: 'chain_verification_paused', kind: e.kind, reason: e.reason })
+        JSON.stringify({
+          event: 'chain_verification_paused',
+          ...(e instanceof ChainVerificationError
+            ? { kind: e.kind, reason: e.reason }
+            : { kind: 'unavailable', reason: 'publication opening remains isolated' })
+        })
       )
       if (args.includes('--once')) {
         process.exitCode = 1

@@ -183,7 +183,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       origin.origin !== 'http://localhost:3000')
   )
     throw new Error('DEV_EMAIL_BIND_SKIP_REAUTH requires local development configuration')
-  const config:AppConfig = {
+  const config: AppConfig = {
     databaseUrl: url.toString(),
     privateLifecycle: readPrivateLifecycleConfig(env),
     web3: readWeb3Config(env),
@@ -208,6 +208,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     emailCodeKey: emailSecret ? Buffer.from(emailSecret) : null,
     devEmailBindSkipReauth
   }
+  if (env.WEB3_PUBLICATION_RUNTIME_CONFIG_FILE && !config.web3)
+    throw new Error('PUBLICATION_REQUIRES_WEB3')
   assertControlledRecoveryConfig(config)
   return config
 }

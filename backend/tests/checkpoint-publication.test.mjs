@@ -3,7 +3,7 @@ import { syncBuiltinESMExports } from 'node:module'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { Buffer } from 'node:buffer'
-import { generateKeyPairSync, randomBytes, randomUUID, createHash } from 'node:crypto'
+import { generateKeyPairSync, randomBytes, randomUUID, createHash, sign } from 'node:crypto'
 import { mkdtemp, mkdir, writeFile, readFile, rm, readdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -212,4 +212,93 @@ test('concurrent retry establishes its own durable root sync before returning wi
     fsPromises.open = original
     syncBuiltinESMExports()
   }
+})
+
+async function baseline(t) {
+  const f = await fixture(t),
+    e = f.entry(2)
+  const { stable } = await import('../dist/web3/chain-observer.js')
+  const { recoveryDocumentContext } = await import('../dist/auth/recovery-authority.js')
+  const { createPrivateKey } = await import('node:crypto')
+  const payload = {
+    version: 1,
+    kind: 'witness-checkpoint',
+    checkpointId: randomUUID(),
+    environmentId: f.options.environmentId,
+    namespace: e.namespace,
+    ledgerId: e.ledgerId,
+    head: { version: 1, ledgerId: e.ledgerId, sequence: e.sequence, digest: e.digest }
+  }
+  const checkpointFile = join(f.root, 'C2.json')
+  const document = JSON.stringify({
+    payload,
+    signature: sign(
+      null,
+      Buffer.from(recoveryDocumentContext + stable(payload)),
+      createPrivateKey(await readFile(f.options.privateKeyFile))
+    ).toString('base64')
+  })
+  await writeFile(checkpointFile, document, { mode: 0o600 })
+  const pin = {
+    checkpointFile,
+    publicKeyFile: f.options.publicKeyFile,
+    environmentId: f.options.environmentId,
+    namespace: e.namespace,
+    ledgerId: e.ledgerId
+  }
+  return { ...f, e, pin, hash: createHash('sha256').update(document).digest('hex') }
+}
+test('nonzero stream binds externally pinned C2 origin and requires same baseline on recovery', async (t) => {
+  const { options, e, pin, hash, entry } = await baseline(t)
+  const store = new mod.LocalCheckpointPublicationStore({ ...options, baselineCheckpoints: [pin] })
+  const receipt = await store.publish(e)
+  assert.deepEqual(receipt.checkpoint.origins, [
+    {
+      namespace: e.namespace,
+      ledgerId: e.ledgerId,
+      checkpointHash: hash,
+      sequence: 2,
+      digest: e.digest
+    }
+  ])
+  await store.publish(entry(3))
+  assert.equal((await store.recover()).entries.length, 2)
+  await assert.rejects(new mod.LocalCheckpointPublicationStore(options).recover(), /BASELINE|GAP/)
+  await assert.rejects(store.publish(entry(5)), /GAP/)
+})
+test('nonzero bootstrap rejects unpinned sequence, conflicting digest, signature and duplicate baselines', async (t) => {
+  const { options, e, pin, entry } = await baseline(t)
+  await assert.rejects(new mod.LocalCheckpointPublicationStore(options).publish(e), /GAP/)
+  const store = new mod.LocalCheckpointPublicationStore({ ...options, baselineCheckpoints: [pin] })
+  await assert.rejects(store.publish(entry(3)), /GAP/)
+  await assert.rejects(store.publish({ ...entry(1), sequence: 2 }), /BASELINE|GAP/)
+  await assert.rejects(
+    new mod.LocalCheckpointPublicationStore({
+      ...options,
+      baselineCheckpoints: [pin, pin]
+    }).recover(),
+    /BASELINE/
+  )
+  const doc = JSON.parse(await readFile(pin.checkpointFile, 'utf8'))
+  doc.signature = 'A'.repeat(86) + '=='
+  await writeFile(pin.checkpointFile, JSON.stringify(doc))
+  await assert.rejects(store.publish(e), /SIGNATURE/)
+})
+
+test('recovery rejects a different valid signed C2 even when its head is identical', async (t) => {
+  const { options, e, pin } = await baseline(t)
+  const store = new mod.LocalCheckpointPublicationStore({ ...options, baselineCheckpoints: [pin] })
+  await store.publish(e)
+  const { createPrivateKey } = await import('node:crypto')
+  const { stable } = await import('../dist/web3/chain-observer.js')
+  const { recoveryDocumentContext } = await import('../dist/auth/recovery-authority.js')
+  const doc = JSON.parse(await readFile(pin.checkpointFile, 'utf8'))
+  doc.payload.checkpointId = randomUUID()
+  doc.signature = sign(
+    null,
+    Buffer.from(recoveryDocumentContext + stable(doc.payload)),
+    createPrivateKey(await readFile(options.privateKeyFile))
+  ).toString('base64')
+  await writeFile(pin.checkpointFile, JSON.stringify(doc))
+  await assert.rejects(store.recover(), /PUBLICATION_BASELINE_MISMATCH/)
 })

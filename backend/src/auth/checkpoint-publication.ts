@@ -1,3 +1,4 @@
+import { readSignedCheckpoint, type CheckpointOptions } from './recovery-authority.js'
 import { validatePublicationEntry } from './publication-outbox.js'
 import {
   createHash,
@@ -31,6 +32,9 @@ interface LedgerPosition {
   sequence: number
   digest: string
 }
+interface PublicationOrigin extends LedgerPosition {
+  checkpointHash: string
+}
 interface PublicationCheckpoint {
   version: 1
   kind: 'recovery-publication'
@@ -41,6 +45,7 @@ interface PublicationCheckpoint {
   entryHash: string
   encryptedHash: string
   ledgers: LedgerPosition[]
+  origins?: PublicationOrigin[]
 }
 export interface PublicationReceipt {
   checkpointHash: string
@@ -53,10 +58,11 @@ interface Options {
   encryptionKey: Buffer
   environmentId: string
   configurationVersion: string
+  baselineCheckpoints?: CheckpointOptions[]
 }
 const context = 'bazaar-recovery-publication-v1\n'
 const sha = (b: string | Buffer) => createHash('sha256').update(b).digest('hex')
-const keyOf = (r: LedgerPosition) => r.namespace + ':' + r.ledgerId
+const keyOf = (r: Pick<LedgerPosition, 'namespace' | 'ledgerId'>) => r.namespace + ':' + r.ledgerId
 const name = (n: number) => 'checkpoint-' + String(n).padStart(12, '0')
 async function read(path: string, limit: number) {
   if (resolve(path) !== path || (await realpath(path)) !== path)
@@ -140,9 +146,17 @@ function validate(r: PublicationRecord, environmentId: string) {
     throw new Error('INVALID_PUBLICATION_RECORD')
   if (Buffer.byteLength(stable(r)) > 16000000) throw new Error('PUBLICATION_BUDGET')
 }
-function advance(positions: LedgerPosition[], entry: PublicationRecord) {
+function advance(
+  positions: LedgerPosition[],
+  entry: PublicationRecord,
+  baselines: PublicationOrigin[]
+) {
   const previous = positions.find((x) => keyOf(x) === keyOf(entry))
-  if (entry.sequence !== (previous ? previous.sequence + 1 : 0)) throw new Error('PUBLICATION_GAP')
+  const baseline = baselines.find((x) => keyOf(x) === keyOf(entry))
+  if (entry.sequence !== (previous ? previous.sequence + 1 : (baseline?.sequence ?? 0)))
+    throw new Error('PUBLICATION_GAP')
+  if (!previous && baseline && entry.digest !== baseline.digest)
+    throw new Error('PUBLICATION_BASELINE_MISMATCH')
   return [
     ...positions.filter((x) => keyOf(x) !== keyOf(entry)),
     {
@@ -176,8 +190,31 @@ export class LocalCheckpointPublicationStore {
     )
       throw new Error('UNSAFE_PUBLICATION_DIRECTORY')
   }
+  private async baselines(): Promise<PublicationOrigin[]> {
+    const origins: PublicationOrigin[] = []
+    for (const pin of this.o.baselineCheckpoints ?? []) {
+      if (pin.environmentId !== this.o.environmentId || pin.publicKeyFile !== this.o.publicKeyFile)
+        throw new Error('PUBLICATION_BASELINE_AUTHORITY')
+      const { payload, hash } = await readSignedCheckpoint(pin)
+      if (
+        payload.pending ||
+        payload.head.sequence <= 0 ||
+        origins.some((x) => keyOf(x) === keyOf(payload))
+      )
+        throw new Error('PUBLICATION_BASELINE_CONFLICT')
+      origins.push({
+        namespace: payload.namespace,
+        ledgerId: payload.ledgerId,
+        sequence: payload.head.sequence,
+        digest: payload.head.digest,
+        checkpointHash: hash
+      })
+    }
+    return origins.sort((a, b) => keyOf(a).localeCompare(keyOf(b)))
+  }
   async recover(): Promise<{ entries: PublicationRecord[]; receipts: PublicationReceipt[] }> {
     await this.root()
+    const baselines = await this.baselines()
     const key = createPublicKey(await read(this.o.publicKeyFile, 16384))
     if (key.asymmetricKeyType !== 'ed25519') throw new Error('INVALID_PUBLICATION_KEY')
     const files = (await readdir(this.o.directory)).filter((x) => !x.startsWith('.staging-')).sort()
@@ -238,7 +275,10 @@ export class LocalCheckpointPublicationStore {
       } finally {
         plain.fill(0)
       }
-      positions = advance(positions, entry)
+      positions = advance(positions, entry, baselines)
+      const origins = baselines.filter((b) => positions.some((x) => keyOf(x) === keyOf(b)))
+      if (stable(p.origins ?? []) !== stable(origins))
+        throw new Error('PUBLICATION_BASELINE_MISMATCH')
       if (stable(positions) !== stable(p.ledgers)) throw new Error('PUBLICATION_VECTOR_MISMATCH')
       parentHash = sha(docBytes)
       entries.push(entry)
@@ -264,8 +304,9 @@ export class LocalCheckpointPublicationStore {
         throw new Error('PUBLICATION_READBACK_MISMATCH')
       return confirmed.receipts[matching]
     }
+    const baselines = await this.baselines()
     const previous = current.receipts.at(-1),
-      positions = advance(previous?.checkpoint.ledgers ?? [], entry),
+      positions = advance(previous?.checkpoint.ledgers ?? [], entry, baselines),
       ordinal = current.entries.length
     if (ordinal >= 1000) throw new Error('PUBLICATION_BUDGET')
     const signer = createPrivateKey(await read(this.o.privateKeyFile, 16384)),
@@ -300,7 +341,10 @@ export class LocalCheckpointPublicationStore {
       parentHash: previous?.checkpointHash ?? null,
       entryHash,
       encryptedHash: sha(encrypted),
-      ledgers: positions
+      ledgers: positions,
+      ...(baselines.length
+        ? { origins: baselines.filter((b) => positions.some((x) => keyOf(x) === keyOf(b))) }
+        : {})
     }
     const document = JSON.stringify({
       payload,

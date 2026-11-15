@@ -1,3 +1,4 @@
+import { runtimePublicationOptions } from './publication-runtime.js'
 import {
   assertPublicationBudget,
   appendPublication,
@@ -37,6 +38,7 @@ interface Head {
   sequence: number
   digest: string
   publicationEnvironmentId?: string
+  publicationBaseline?: { sequence: number; digest: string; checkpointHash: string }
 }
 type Options = {
   isolationLevel?: 'ReadCommitted' | 'RepeatableRead' | 'Serializable'
@@ -149,7 +151,14 @@ export class LedgerWitness {
         !Number.isSafeInteger(h.sequence) ||
         h.sequence < 0 ||
         !/^[0-9a-f]{64}$/.test(h.digest) ||
-        h.publicationEnvironmentId !== this.publication?.environmentId
+        h.publicationEnvironmentId !== this.publication?.environmentId ||
+        (h.publicationBaseline !== undefined &&
+          (!this.publication ||
+            !Number.isSafeInteger(h.publicationBaseline.sequence) ||
+            h.publicationBaseline.sequence <= 0 ||
+            h.publicationBaseline.sequence > h.sequence ||
+            !/^[0-9a-f]{64}$/.test(h.publicationBaseline.digest) ||
+            !/^[0-9a-f]{64}$/.test(h.publicationBaseline.checkpointHash)))
       )
         this.unavailable()
       return h
@@ -238,7 +247,8 @@ export class LedgerWitness {
   // Maintenance only: no nonce consumption, head write, unlock or application opening.
   // The caller must stop consumers before activating a staged candidate directory.
   async withOwnerRecoverySnapshot<T>(
-    work: (digest: string, tx: Transaction) => Promise<T>
+    work: (digest: string, tx: Transaction) => Promise<T>,
+    options: { stoppedWriter?: boolean } = {}
   ): Promise<T> {
     return this.client.$transaction(
       async (tx) => {
@@ -250,9 +260,16 @@ export class LedgerWitness {
           AND c.relname=ANY(${[...this.tables]}::text[]) AND r.rolname=current_user`
         if (authority?.count !== BigInt(this.tables.length) || !authority.allowed)
           throw new Error('OWNER_RECOVERY_REQUIRED')
-        await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended('ledger-witness-v1',0))`
+        if (options.stoppedWriter) {
+          const [lock] = await tx.$queryRaw<
+            { ok: boolean }[]
+          >`SELECT pg_try_advisory_xact_lock(hashtextextended('ledger-witness-v1',0)) AS ok`
+          if (!lock?.ok) throw new Error('STOPPED_WRITER_REQUIRED')
+        } else {
+          await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtextextended('ledger-witness-v1',0))`
+        }
         await tx.$executeRawUnsafe(
-          `LOCK TABLE ${this.tables.map((t) => '"' + t + '"').join(',')} IN ACCESS EXCLUSIVE MODE`
+          `LOCK TABLE ${this.tables.map((t) => '"' + t + '"').join(',')} IN ACCESS EXCLUSIVE MODE${options.stoppedWriter ? ' NOWAIT' : ''}`
         )
         return work(await this.fingerprint(tx), tx)
       },
@@ -315,9 +332,35 @@ export class LedgerWitness {
       const result = await this.client.$transaction(
         async (tx) => {
           await this.snapshotLock(tx)
+          if (!this.publication) {
+            const [fence] = await tx.$queryRaw<
+              { present: boolean }[]
+            >`SELECT to_regclass(format('%I.%I',current_schema(),'LedgerPublicationFence')) IS NOT NULL AS present`
+            if (fence?.present) {
+              const [activation] = await tx.$queryRaw<
+                { active: boolean }[]
+              >`SELECT is_called AS active FROM "LedgerPublicationFence"`
+              if (activation?.active) this.unavailable()
+            }
+            const [relation] = await tx.$queryRaw<
+              { present: boolean }[]
+            >`SELECT to_regclass(format('%I.%I',current_schema(),'LedgerPublicationOutbox')) IS NOT NULL AS present`
+            if (relation?.present) {
+              const enrolled = await tx.$queryRaw<
+                unknown[]
+              >`SELECT 1 FROM "LedgerPublicationOutbox" WHERE "namespace"=${this.namespace} AND "ledgerId"=${this.ledgerId}::uuid LIMIT 1`
+              if (enrolled.length) this.unavailable()
+            }
+          }
           if ((await this.fingerprint(tx)) !== head.digest) this.unavailable()
           if (this.publication)
-            await verifyPublicationHead(tx, head, this.namespace, this.publication.environmentId)
+            await verifyPublicationHead(
+              tx,
+              head,
+              this.namespace,
+              this.publication.environmentId,
+              head.publicationBaseline
+            )
           await this.checkpointGuard?.(head, tx)
           const value = await work(tx)
           const digest = await this.fingerprint(tx)
@@ -365,7 +408,10 @@ export class LedgerWitness {
 
 export function requireLedgerWitness(
   client: PrismaClient,
-  config: Pick<Web3Config, 'securityLedgerId' | 'securityWitnessDirectory' | 'securityCheckpoint'>
+  config: Pick<
+    Web3Config,
+    'securityLedgerId' | 'securityWitnessDirectory' | 'securityCheckpoint' | 'publication'
+  >
 ) {
   if (!config.securityWitnessDirectory)
     throw new Error(
@@ -376,7 +422,8 @@ export function requireLedgerWitness(
     config.securityLedgerId,
     config.securityWitnessDirectory,
     'wallet',
-    config.securityCheckpoint ? createWitnessCheckpointGuard(config.securityCheckpoint) : undefined
+    config.securityCheckpoint ? createWitnessCheckpointGuard(config.securityCheckpoint) : undefined,
+    runtimePublicationOptions(config.publication, 'wallet', config.securityLedgerId)
   )
   registerLedgerWitness(client, witness)
   return witness

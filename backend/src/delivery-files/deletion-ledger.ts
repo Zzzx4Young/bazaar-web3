@@ -19,9 +19,17 @@ export class PrivateLifecycleLedger {
     readonly id: string,
     readonly directory: string,
     readonly now: () => Date = () => new Date(),
-    checkpointGuard?: ConstructorParameters<typeof LedgerWitness>[4]
+    checkpointGuard?: ConstructorParameters<typeof LedgerWitness>[4],
+    publication?: ConstructorParameters<typeof LedgerWitness>[5]
   ) {
-    this.witness = new LedgerWitness(client, id, directory, 'private-files',checkpointGuard)
+    this.witness = new LedgerWitness(
+      client,
+      id,
+      directory,
+      'private-files',
+      checkpointGuard,
+      publication
+    )
   }
   async verify() {
     await this.witness.verify()

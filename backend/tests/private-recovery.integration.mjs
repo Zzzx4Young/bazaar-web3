@@ -156,3 +156,26 @@ test('T10 review P1: restore runtime initializes usable ledgers even when the so
     await rm(root, { recursive: true, force: true })
   }
 })
+test('publication recovery refuses explicit opening when independent offchain declaration is unavailable', async () => {
+  const t = await openingFixture()
+  try {
+    t.r.config.publication = {
+      environmentId: 'isolated',
+      configurationVersion: 'C5',
+      configurationFile: '/missing-publication-config',
+      configurationHash: 'a'.repeat(64),
+      wakeSocket: '/missing-wake',
+      openingFile: '/missing-opening',
+      publicKeyFile: '/missing-pin',
+      recoveryRunId: randomUUID(),
+      walletLedgerId: randomUUID()
+    }
+    await assert.rejects(t.r.open(t.db.client, t.store), (e) => e.code === 'WALLET_UNAVAILABLE')
+    assert.equal(
+      (await t.db.client.privateRecoveryState.findUnique({ where: { singleton: true } })).status,
+      'isolated'
+    )
+  } finally {
+    await t.close()
+  }
+})
