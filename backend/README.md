@@ -1,5 +1,24 @@
 # Bazaar 后端
 
+## 2026-11-17 独立审查返工边界
+
+返工从 `afb1bfa63e63d8db6b252aa70125aa8679bde11c` 开始，冻结规格仍为
+`web3-testnet-review-2026-11-06-r2`。R01/R02/R03/R04/R05 和清理诊断/隔离保护已补修；
+R08 原始首单 500 的历史根因尚未确定，新增的是白名单脱敏诊断，不能称为根因修复。
+R07 原始三个清理超时没有稳定复现；新夹具区分主断言和清理错误，按集群、数据库 OID/owner
+及本次成功创建记录清理，不终止未知会话、不强制删除。不要把有界 DDL 预算当作历史根因结论。
+
+R06 三项分别验收：附件上传被实际 API 拒绝后仍可在原窗口链上争议；控制镜像的超时/OOM
+实测；实际字节容量采样。500 MB ZIP 在当前 64 MB 临时盘预算下无法完整扫描，容量专项保持
+未通过。1 GB 临时盘仅用于诊断，不改变产品配置。控制镜像与可复跑命令见
+[file-checker/control/README.md](file-checker/control/README.md)。
+
+本地测试应显式注入 `WEB3_TEST_PORT`，使用专属 `bazaar_test` 实例和私有对象桶。
+受控恢复只接受显式 `TEST_DATABASE_URL` 的同一端点和本次夹具确切 schema；无默认端口回退。
+T10 整体待验收，`targetsMet=false`，第五批 RPO/RTO 仍为 `null`；真实独立保管、外部 RPC、
+真实提供方及整机丢失恢复未因本轮返工而通过。
+
+
 独立 NestJS/Fastify + Prisma/PostgreSQL 服务。负责认证、商品、购物车订单、
 模拟结算、交付、争议与退款、管理员裁决、卖家评价及审计。
 接口字段以 [OpenAPI](openapi/alpha.json) 为准；完整项目启动见[根 README](../README.md)。
