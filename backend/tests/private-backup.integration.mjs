@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { retentionFixture } from './helpers/retention.mjs'
 import { PrivateBackupService } from '../dist/delivery-files/private-backup.js'
+import { createOwnedDatabase, withTestCleanup } from './helpers/owned-database.mjs'
 import { decryptBackupPart } from '../dist/delivery-files/backup-crypto.js'
 
 test('T10/A27/A28: native exported database snapshot and immutable objects form one encrypted authenticated backup', async () => {
@@ -74,13 +75,13 @@ test('T10: native restore creates the archived schema in a fresh database and im
     { PrivateRecoveryService } = await import('../dist/delivery-files/private-recovery.js'),
     { LocalPrivateObjectStore } = await import('../dist/delivery-files/object-store.js')
   const { randomUUID } = await import('node:crypto')
-  let target, name
-  try {
+  let target, name, owned
+  await withTestCleanup(async () => {
     const v = await t.version(),
       b = new PrivateBackupService(t.db.client, t.db.url, t.store, t.p.ledger, key, root),
       m = await b.create()
     name = 'bazaar_web3_restore_' + randomUUID().replaceAll('-', '')
-    await t.db.client.$executeRawUnsafe(`CREATE DATABASE "${name}"`)
+    owned = await createOwnedDatabase(t.db, name)
     const url = new URL(t.db.url)
     url.pathname = '/' + name
     target = new DatabaseService(url.toString())
@@ -112,10 +113,10 @@ test('T10: native restore creates the archived schema in a fresh database and im
     const { createHash } = await import('node:crypto')
     assert.equal(createHash('sha256').update(Buffer.concat(chunks)).digest('hex'), v.sha256)
     assert.equal(await target.client.session.count({ where: { revokedAt: null } }), 0)
-  } finally {
-    if (target) await target.onModuleDestroy()
-    if (name) await t.db.client.$executeRawUnsafe(`DROP DATABASE "${name}"`)
-    await t.close()
-    await rm(root, { recursive: true, force: true })
-  }
+  }, [
+    ['restore target disconnect', async () => target?.onModuleDestroy()],
+    ['owned restore database', async () => owned?.drop()],
+    ['retention fixtures', () => t.close()],
+    ['backup directory', () => rm(root, { recursive: true, force: true })]
+  ])
 })

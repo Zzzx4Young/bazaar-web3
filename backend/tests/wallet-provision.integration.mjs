@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { spawn } from 'node:child_process'
 import test from 'node:test'
 import { sandbox, fixture, connect, testUrl } from './helpers/database.mjs'
+import { createOwnedDatabase, withTestCleanup } from './helpers/owned-database.mjs'
 import { createApp } from '../dist/app.js'
 import { readConfig } from '../dist/config.js'
 import { hashPassword } from '../dist/auth/password.js'
@@ -30,10 +31,9 @@ test('T02: explicit independent ledger provisioning and real runtime connection 
   const db = await sandbox(), admin = await connect(testUrl())
   const suffix = randomUUID().replaceAll('-', ''), database = `wallet_security_test_${suffix}`, role = `wp_${suffix}`
   const dir = await mkdtemp(join(tmpdir(), 'bazaar-wallet-provision-'))
-  let createdDatabase = false, createdRole = false, app, security
-  try {
-    await admin.client.$executeRawUnsafe(`CREATE DATABASE "${database}"`)
-    createdDatabase = true
+  let owned, createdRole = false, app, security
+  await withTestCleanup(async () => {
+    owned = await createOwnedDatabase(admin, database)
     const rolePassword = randomBytes(24).toString('hex')
     await admin.client.$executeRawUnsafe(`CREATE ROLE "${role}" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD '${rolePassword}'`)
     createdRole = true
@@ -83,13 +83,15 @@ test('T02: explicit independent ledger provisioning and real runtime connection 
     assert.equal(held.json().code,'WALLET_UNAVAILABLE')
     await app.close();app=null
     await assert.rejects(createApp(config,false,{walletEoaCheck:async()=>{}}),/WALLET_UNAVAILABLE/)
-  } finally {
-    if (app) await app.close()
-    if (security) await security.onModuleDestroy()
-    await db.close()
-    if (createdDatabase) await admin.client.$executeRawUnsafe(`DROP DATABASE "${database}"`)
-    if (createdRole) await admin.client.$executeRawUnsafe(`DROP ROLE "${role}"`)
-    await admin.onModuleDestroy()
-    await rm(dir, { recursive: true, force: true })
-  }
+  }, [
+    ['wallet app close', async () => app?.close()],
+    ['security disconnect', async () => security?.onModuleDestroy()],
+    ['business fixture', () => db.close()],
+    ['owned wallet database', async () => owned?.drop()],
+    ['owned wallet role', async () => {
+      if (createdRole) await admin.client.$executeRawUnsafe(`DROP ROLE "${role}"`)
+    }],
+    ['admin disconnect', () => admin.onModuleDestroy()],
+    ['wallet directory', () => rm(dir, { recursive: true, force: true })]
+  ])
 })

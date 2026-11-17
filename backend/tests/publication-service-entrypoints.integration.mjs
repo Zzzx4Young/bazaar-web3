@@ -9,6 +9,7 @@ import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { connect, sandbox, testUrl } from './helpers/database.mjs'
+import { createOwnedDatabase, withTestCleanup } from './helpers/owned-database.mjs'
 import { grantWalletLedger } from '../scripts/wallet-ledger-grants.mjs'
 import { stable } from '../dist/web3/chain-observer.js'
 
@@ -231,14 +232,13 @@ else
       const root = await mkdtemp(join(tmpdir(), 't10-entrypoint-'))
       let business,
         owner,
-        createdDatabase = false,
+        owned,
         createdRole = false,
         privateOwner,
         privateRoleCreated = false
-      try {
+      await withTestCleanup(async () => {
         business = await sandbox(base, false)
-        await admin.client.$executeRawUnsafe(`CREATE DATABASE "${database}"`)
-        createdDatabase = true
+        owned = await createOwnedDatabase(admin, database)
         const ownerUrl = new URL(base)
         ownerUrl.pathname = '/' + database
         ownerUrl.searchParams.set('schema', 'public')
@@ -455,17 +455,29 @@ else
         )
         assert.equal(rows[1].payload.namespace, 'private-files')
         assert.equal(JSON.parse(rows[1].payload.records.PrivateLedgerEvent[0]).kind, 'restore')
-      } finally {
-        await privateOwner?.onModuleDestroy()
-        await owner?.onModuleDestroy()
-        await business?.close()
-        // Only the successfully created, invocation-owned random resources are removed.
-        if (createdDatabase) await admin.client.$executeRawUnsafe(`DROP DATABASE "${database}"`)
-        if (privateRoleCreated) await admin.client.$executeRawUnsafe(`DROP ROLE "${role}_p"`)
-        if (createdRole) await admin.client.$executeRawUnsafe(`DROP ROLE "${role}"`)
-        await admin.onModuleDestroy()
-        await privileged(['chown', '-R', `${process.getuid()}:${process.getgid()}`, root])
-        await rm(root, { recursive: true, force: true })
-      }
+      }, [
+        ['private owner disconnect', async () => privateOwner?.onModuleDestroy()],
+        ['wallet owner disconnect', async () => owner?.onModuleDestroy()],
+        ['business fixture', async () => business?.close()],
+        ['owned entrypoint database', async () => owned?.drop()],
+        [
+          'owned private role',
+          async () => {
+            if (privateRoleCreated) await admin.client.$executeRawUnsafe(`DROP ROLE "${role}_p"`)
+          }
+        ],
+        [
+          'owned wallet role',
+          async () => {
+            if (createdRole) await admin.client.$executeRawUnsafe(`DROP ROLE "${role}"`)
+          }
+        ],
+        ['admin disconnect', () => admin.onModuleDestroy()],
+        [
+          'restore directory ownership',
+          () => privileged(['chown', '-R', `${process.getuid()}:${process.getgid()}`, root])
+        ],
+        ['entrypoint directory', () => rm(root, { recursive: true, force: true })]
+      ])
     }
   )
