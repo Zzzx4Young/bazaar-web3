@@ -36,16 +36,40 @@ async function dump(url, path) {
   await pipeline(p.stdout, createWriteStream(path, { flags: 'wx', mode: 0o600 }))
   await p.done
 }
-async function restore(url, path) {
-  const u = new URL(url),
-    schema = u.searchParams.get('schema')
-  if (
-    u.hostname !== '127.0.0.1' ||
-    u.port !== '55435' ||
-    u.pathname !== '/bazaar_test' ||
-    !/^(wl|pl|v2)_[a-f0-9]{32}$/.test(schema)
-  )
+// Both the configured endpoint and the exact URL captured from this invocation's
+// fixtures must agree. A schema-shaped string alone is not ownership evidence.
+export function assertControlledRestoreTarget(value, ownedValue, configuredValue) {
+  try {
+    const configured = new URL(configuredValue)
+    const target = new URL(value)
+    const owned = new URL(ownedValue)
+    const port = Number(configured.port)
+    if (
+      !['postgres:', 'postgresql:'].includes(configured.protocol) ||
+      configured.hostname !== '127.0.0.1' ||
+      !configured.port ||
+      port < 1024 ||
+      port > 65535 ||
+      [5432, 55432, 55433].includes(port) ||
+      configured.pathname !== '/bazaar_test' ||
+      target.protocol !== configured.protocol ||
+      target.host !== configured.host ||
+      target.pathname !== configured.pathname ||
+      target.username !== configured.username ||
+      target.password !== configured.password ||
+      target.href !== owned.href ||
+      target.searchParams.getAll('schema').length !== 1 ||
+      !/^(wl|pl|v2)_[a-f0-9]{32}$/.test(target.searchParams.get('schema'))
+    )
+      throw new Error()
+    return target
+  } catch {
     throw new Error('Dedicated isolated restore only')
+  }
+}
+async function restore(url, path, ownedUrl, configuredUrl) {
+  const u = assertControlledRestoreTarget(url, ownedUrl, configuredUrl),
+    schema = u.searchParams.get('schema')
   const p = pgChild(
     'pg_restore',
     [
@@ -93,6 +117,13 @@ export async function createControlledBrowserRecovery({
   backupRoot,
   backupKey
 }) {
+  const configuredUrl = process.env.TEST_DATABASE_URL
+  const ownedUrls = new Map([
+    ['business', db.url.toString()],
+    ['wallet', security.url.toString()],
+    ['private', privateLedger.url.toString()]
+  ])
+  for (const url of ownedUrls.values()) assertControlledRestoreTarget(url, url, configuredUrl)
   const base = await mkdtemp(join(tmpdir(), 'bazaar-t10-controls-')),
     original = join(base, 'original'),
     custody = join(base, 'custody'),
@@ -280,7 +311,7 @@ export async function createControlledBrowserRecovery({
         ['wallet', security.url],
         ['private', privateLedger.url]
       ])
-        await restore(url, join(archives, name + '-C1.dump'))
+        await restore(url, join(archives, name + '-C1.dump'), ownedUrls.get(name), configuredUrl)
       await writeFile(join(security.witness.directory, 'head.json'), JSON.stringify(c1.wallet), {
         mode: 0o600
       })
