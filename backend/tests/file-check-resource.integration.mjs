@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdtemp, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { observeFileCheck } from '../scripts/observe-file-check.mjs'
 import { DockerFileChecker } from '../dist/delivery-files/check-worker.js'
 const image = process.env.PRIVATE_FILE_CHECK_IMAGE,
   control = process.env.PRIVATE_FILE_CONTROL_IMAGE
@@ -53,18 +54,23 @@ async function check(bytes, type, options = {}) {
     file = join(dir, 'object')
   try {
     await writeFile(file, bytes, { mode: 0o444 })
-    const started = Date.now()
-    const report = await new DockerFileChecker({ ...runtime, ...options }).check(
-      file,
-      type,
-      randomUUID()
-    )
+    const started = Date.now(),
+      id = randomUUID()
+    const finishObservation = observeFileCheck(id)
+    let report, observation
+    try {
+      report = await new DockerFileChecker({ ...runtime, ...options }).check(file, type, id)
+    } finally {
+      observation = await finishObservation()
+    }
     if (process.env.PRIVATE_FILE_EVIDENCE_DIR) {
       await writeFile(
         join(process.env.PRIVATE_FILE_EVIDENCE_DIR, 'resource-' + randomUUID() + '.json'),
         JSON.stringify(
           {
             requestedType: type,
+            id,
+            observation,
             inputBytes: bytes.length,
             elapsedMs: Date.now() - started,
             runtime: { ...runtime, ...options },
@@ -76,6 +82,12 @@ async function check(bytes, type, options = {}) {
         { mode: 0o600 }
       )
     }
+    assert.equal(observation.removed, true)
+    if (options.image === control && bytes.toString() === 'sleep')
+      assert.ok(
+        observation.samples.some((s) => s.pid1Children),
+        'live spawned child must be observed before timeout'
+      )
     return report
   } finally {
     await rm(dir, { recursive: true, force: true })
