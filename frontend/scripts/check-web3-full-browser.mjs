@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { spawn, execFileSync } from 'node:child_process'
 import { once } from 'node:events'
-import { readFile, writeFile, mkdir } from 'node:fs/promises'
+import { readFile, writeFile, mkdir, rm } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { randomUUID, createHash } from 'node:crypto'
 import { chromium } from '@playwright/test'
@@ -11,7 +11,10 @@ import { web3BrowserFixture, unusedPort } from '../../backend/tests/helpers/web3
 
 const frontendDirectory = resolve(import.meta.dirname, '..'),
   port = await unusedPort(),
-  origin = `http://127.0.0.1:${port}`
+  origin = `http://127.0.0.1:${port}`,
+  browserRun = randomUUID(),
+  distDirectory = '.next-t09-full-' + browserRun,
+  tsConfigName = 'tsconfig.t09-full-' + browserRun + '.json'
 const evidence = process.env.T09_FULL_EVIDENCE_DIR
 const result = {
   status: 'running',
@@ -30,6 +33,7 @@ const result = {
   transactions: [],
   cooldowns: [],
   serverRequests: [],
+  coldStart: { freshNextOutput: distDirectory, newAccountsAndOrders: true },
   requests: []
 }
 let f, frontend, browser
@@ -44,10 +48,10 @@ try {
   f = await web3BrowserFixture(origin, { logRequest: (entry) => result.serverRequests.push(entry) })
   result.checkerImage = f.checkerImage
   await writeFile(
-    resolve(frontendDirectory, 'tsconfig.t09-full.json'),
+    resolve(frontendDirectory, tsConfigName),
     JSON.stringify({
       extends: './tsconfig.json',
-      include: ['next-env.d.ts', 'src/**/*.ts', 'src/**/*.tsx', '.next-t09-full/types/**/*.ts'],
+      include: ['next-env.d.ts', 'src/**/*.ts', 'src/**/*.tsx', distDirectory + '/types/**/*.ts'],
       exclude: ['node_modules']
     })
   )
@@ -59,8 +63,8 @@ try {
       env: {
         ...process.env,
         BACKEND_ORIGIN: f.backendOrigin,
-        NEXT_DIST_DIR: '.next-t09-full',
-        NEXT_TS_CONFIG: 'tsconfig.t09-full.json',
+        NEXT_DIST_DIR: distDirectory,
+        NEXT_TS_CONFIG: tsConfigName,
         NEXT_TELEMETRY_DISABLED: '1'
       },
       stdio: ['ignore', 'pipe', 'pipe']
@@ -360,6 +364,45 @@ try {
     assert.ok(checked.versionId)
     return checked.versionId
   }
+  async function failedEvidenceUpload(page, orderId) {
+    const group = page.getByRole('group', { name: '上传私有文件' }).first()
+    await group.getByLabel('上传私有文件').setInputFiles(zip('failed-evidence-upload'))
+    step('R06 evidence upload validation failure begins')
+    // Alter only this outgoing attachment declaration. The real API validates
+    // the invalid size and generates the error; no response is mocked.
+    const match = '**/api/web3/private-files/upload-intents'
+    const rejectCapability = (route) => route.continue({
+      postData: JSON.stringify({ ...JSON.parse(route.request().postData()), byteSize: 0 })
+    })
+    await page.route(match, rejectCapability)
+    try {
+      const [response] = await Promise.all([
+        page.waitForResponse((r) => new URL(r.url()).pathname.endsWith('/private-files/upload-intents') && r.request().method() === 'POST', { timeout: 15000 }),
+        group.locator('button').filter({ hasText: /^上传私有文件$/ }).click()
+      ])
+      assert.equal(response.status(), 400)
+      const body = await response.json()
+      assert.equal(body.code, 'INVALID_INPUT')
+      step('R06 actual upload intent rejected with 400')
+      await group.getByRole('alert').waitFor({ timeout: 15000 })
+      assert.equal(await f.db.client.evidenceRecord.count({ where: { orderId } }), 0)
+      const before = await f.orderEvidence(orderId)
+      const projection = await f.db.client.escrowProjection.findFirstOrThrow({ where: { businessOrderId: orderId } })
+      assert.equal(before.state, 'Delivered')
+      result.failedEvidenceUpload = {
+        orderId, stateBefore: before.state, fixedBuyer: projection.data.buyer,
+        originalDeliveredAt: projection.data.deliveredAt,
+        originalAcceptanceDeadline: (BigInt(projection.data.deliveredAt) + 604800n).toString(),
+        failure: { method: 'POST', path: new URL(response.url()).pathname,
+          observedAt: new Date().toISOString(), status: response.status(), code: body.code,
+          requestId: response.headers()['x-request-id'] ?? body.requestId },
+        fault: 'attachment byteSize corrupted; actual API validation response, no response interception',
+        evidenceRecordsBeforeDispute: 0
+      }
+    } finally {
+      await page.unroute(match, rejectCapability)
+    }
+  }
   async function refresh(page) {
     await page.getByRole('button', { name: '重新核对', exact: true }).last().click()
   }
@@ -483,11 +526,19 @@ try {
   await refresh(buyer)
   await buyer.getByText('托管状态：已登记交付', { exact: true }).waitFor()
   second.downloads = [await download(buyer, 0, 'delivery-refund', secondVersion)]
+  await failedEvidenceUpload(buyer, second.orderId)
   await buyer.getByRole('button', { name: '发起链上争议', exact: true }).click()
   await buyer.getByText('等待双源最终确认；原截止时间继续计时。', { exact: true }).waitFor()
   second.steps.push({ action: 'disputed', block: await f.sync() })
   await refresh(buyer)
   await buyer.getByText('托管状态：链上争议已生效', { exact: true }).waitFor()
+  result.failedEvidenceUpload.stateAfter = (await f.orderEvidence(second.orderId)).state
+  assert.equal(result.failedEvidenceUpload.stateAfter, 'Disputed')
+  result.failedEvidenceUpload.disputeBlock = second.steps.at(-1).block
+  const disputedProjection = await f.db.client.escrowProjection.findFirstOrThrow({ where: { businessOrderId: second.orderId } })
+  assert.equal(disputedProjection.data.deliveredAt, result.failedEvidenceUpload.originalDeliveredAt)
+  assert.ok(BigInt(disputedProjection.data.disputedAt) < BigInt(result.failedEvidenceUpload.originalAcceptanceDeadline))
+  result.failedEvidenceUpload.contractAcceptedAt = disputedProjection.data.disputedAt
   const attachmentVersion = await upload(buyer, second.orderId, 'evidence', 'evidence-attachment')
   await buyer.getByLabel('证据说明').fill('Buyer evidence for ' + second.orderId)
   await buyer.getByLabel('我已了解双方可见及证据保留规则').check()
@@ -698,5 +749,11 @@ try {
     frontend.kill('SIGTERM')
     await done
   }
-  await f?.close()
+  try {
+    await f?.close()
+  } finally {
+    // These two paths are generated from this process's random browserRun only.
+    await rm(resolve(frontendDirectory, distDirectory), { recursive: true, force: true })
+    await rm(resolve(frontendDirectory, tsConfigName), { force: true })
+  }
 }
