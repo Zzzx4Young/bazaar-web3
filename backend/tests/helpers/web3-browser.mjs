@@ -30,7 +30,7 @@ export async function unusedPort() {
   await new Promise((resolve) => s.close(resolve))
   return p
 }
-export async function web3BrowserFixture(origin) {
+export async function web3BrowserFixture(origin, diagnostics = {}) {
   if (!process.env.PRIVATE_GARAGE_ENDPOINT)
     throw new Error('Run with with-web3-test-db and with-private-file-test wrappers')
   let db, security, chain, app, gateway, root, privateLedger, recovery
@@ -172,6 +172,7 @@ export async function web3BrowserFixture(origin) {
     const observer = new DualChainObserver(cfg.web3, chain.deployment),
       journal = new PostgresPaymentJournal(security.client, security.id)
     app = await createApp(cfg, false, {
+      logRequest: diagnostics.logRequest,
       privateLedger: privateLedger?.ledger,
       walletLedger: security.ledger,
       walletGoogleClient: google,
@@ -240,6 +241,7 @@ export async function web3BrowserFixture(origin) {
         },
         resume: async (databaseUrl) => {
           app = await createApp({ ...cfg, databaseUrl }, false, {
+            logRequest: diagnostics.logRequest,
             privateLedger: privateLedger.ledger,
             walletLedger: security.ledger,
             paymentSigner: chain.paymentSigner,

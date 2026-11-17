@@ -1,3 +1,4 @@
+import { safeFailure } from './failure-diagnostics.js'
 import { randomUUID } from 'node:crypto'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
@@ -12,6 +13,7 @@ export interface RequestLogEntry {
   status: number
   durationMs: number
   errorCode?: string
+  failure?: ReturnType<typeof safeFailure>
 }
 
 export type RequestLogSink = (entry: RequestLogEntry) => void
@@ -19,6 +21,7 @@ export type RequestLogSink = (entry: RequestLogEntry) => void
 interface RequestState {
   startedAt: bigint
   errorCode?: string
+  failure?: ReturnType<typeof safeFailure>
 }
 
 export class RequestTelemetry {
@@ -31,9 +34,12 @@ export class RequestTelemetry {
     reply.header('X-Request-Id', request.id)
   }
 
-  setError(request: FastifyRequest, code: string) {
+  setError(request: FastifyRequest, code: string, error?: unknown) {
     const state = this.states.get(request)
-    if (state) state.errorCode = code
+    if (state) {
+      state.errorCode = code
+      if (code === 'INTERNAL_ERROR') state.failure = safeFailure(error)
+    }
   }
 
   finish(request: FastifyRequest, reply: FastifyReply, sink: RequestLogSink | false) {
@@ -50,7 +56,8 @@ export class RequestTelemetry {
       route: request.routeOptions?.url ?? 'unmatched',
       status: reply.statusCode,
       durationMs,
-      ...(state?.errorCode ? { errorCode: state.errorCode } : {})
+      ...(state?.errorCode ? { errorCode: state.errorCode } : {}),
+      ...(state?.failure ? { failure: state.failure } : {})
     }
     try {
       sink(entry)

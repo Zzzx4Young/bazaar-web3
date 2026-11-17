@@ -30,7 +30,7 @@ export class ApiErrorFilter implements ExceptionFilter {
     const http = host.switchToHttp()
     const request = http.getRequest<FastifyRequest>()
     const reply = http.getResponse<FastifyReply>()
-    this.telemetry.setError(request, result.code)
+    this.telemetry.setError(request, result.code, error)
     reply.header('Cache-Control', 'no-store')
     if (result.status === 429) reply.header('Retry-After', String(
       error instanceof DomainError ? error.retryAfterSeconds ?? loginWindowSeconds

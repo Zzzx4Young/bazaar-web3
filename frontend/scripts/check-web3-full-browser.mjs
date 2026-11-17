@@ -29,6 +29,7 @@ const result = {
   orders: [],
   transactions: [],
   cooldowns: [],
+  serverRequests: [],
   requests: []
 }
 let f, frontend, browser
@@ -40,7 +41,7 @@ try {
     await mkdir(evidence, { recursive: true })
     await writeFile(join(evidence, 'result.json'), JSON.stringify(result, null, 2))
   }
-  f = await web3BrowserFixture(origin)
+  f = await web3BrowserFixture(origin, { logRequest: (entry) => result.serverRequests.push(entry) })
   result.checkerImage = f.checkerImage
   await writeFile(
     resolve(frontendDirectory, 'tsconfig.t09-full.json'),
@@ -100,11 +101,15 @@ try {
       result.browserErrors ??= []
       result.browserErrors.push(error.message.slice(0, 500))
     })
+    const starts = new WeakMap()
+    page.on('request', (r) => starts.set(r, new Date().toISOString()))
     page.on('response', (r) => {
       const u = new URL(r.url())
       if (u.origin === origin && u.pathname.startsWith('/api/'))
         result.requests.push({
           role,
+          startedAt: starts.get(r.request()) ?? null,
+          observedAt: new Date().toISOString(),
           method: r.request().method(),
           path: u.pathname,
           status: r.status(),
