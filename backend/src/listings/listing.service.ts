@@ -18,7 +18,12 @@ import type { Web3Config } from '../web3/web3-types.js'
 import { testPriceView, versionTestnetPrice } from '../web3/testnet-price.js'
 
 const include = {
-  listingSeller: { select: { id: true, displayName: true } },
+  listingSeller: { select: { id: true, displayName: true,
+    walletIdentities: { select: { chainId: true, address: true, bindingVersion: true } },
+    payoutConfirmations: { where: { revokedAt: null }, select: {
+      chainId: true, wallet: true, escrow: true, bindingVersion: true
+    } }
+  } },
   inventoryListingRows: { select: { availability: true } },
   digitalInventoryRows: { select: { availability: true } },
   mediaRows: { select: { mediaId: true, position: true }, orderBy: { position: 'asc' } },
@@ -41,9 +46,20 @@ export class ListingService {
     const price = listing.testnetPrices[0]
     const active = price && price.listingVersion === listing.version && this.testnetConfig &&
       price.chainId === this.testnetConfig.chainId && price.token === this.testnetConfig.token && price.escrow === this.testnetConfig.escrow
+    // Public projection only. Order creation still checks the authoritative ledger
+    // inside its transaction, including concurrent changes and recovery uncertainty.
+    const identity = listing.listingSeller.walletIdentities.find(row => row.chainId === this.testnetConfig?.chainId)
+    const confirmed = identity?.address && listing.listingSeller.payoutConfirmations.some(row =>
+      row.chainId === this.testnetConfig?.chainId && row.escrow === this.testnetConfig?.escrow &&
+      row.wallet === identity.address && row.bindingVersion === identity.bindingVersion)
+    const testnetPurchaseBlockReason = !canPurchaseCommitment(listing) ? 'missing_commitment'
+      : !this.testnetConfig ? 'testnet_unavailable' : !active ? 'price_unavailable'
+        : !confirmed ? 'payout_unconfirmed' : null
     return {
       id: listing.id,
-      seller: listing.listingSeller,
+      seller: { id: listing.listingSeller.id, displayName: listing.listingSeller.displayName },
+      testnetPurchaseEligible: testnetPurchaseBlockReason === null,
+      testnetPurchaseBlockReason,
       type: listing.type,
       saleMode: listing.saleMode,
       canEdit: listing.saleMode !== 'one_off' || listing._count.orderListingRows === 0,
@@ -416,6 +432,22 @@ export class ListingService {
         : sort === 'price_asc'
           ? Prisma.sql`${sortPrice} ASC, l.id ASC`
           : Prisma.sql`${sortPrice} DESC, l.id DESC`
+    const testnetBlockReason = Prisma.sql`CASE
+      WHEN l."reviewStatus" <> 'clear' OR l."commitmentVersion" IS DISTINCT FROM 1 OR l.commitment IS NULL
+        THEN 'missing_commitment'
+      WHEN ${!this.testnetConfig} THEN 'testnet_unavailable'
+      WHEN NOT EXISTS (SELECT 1 FROM "ListingTestnetPrice" tp
+        WHERE tp."listingId" = l.id AND tp."listingVersion" = l.version
+          AND tp."chainId" = ${this.testnetConfig?.chainId ?? 0}
+          AND tp.token = ${this.testnetConfig?.token ?? ''} AND tp.escrow = ${this.testnetConfig?.escrow ?? ''})
+        THEN 'price_unavailable'
+      WHEN NOT EXISTS (SELECT 1 FROM "WalletIdentity" wi
+        JOIN "SellerPayoutConfirmation" pc ON pc."accountId" = wi."accountId"
+          AND pc."chainId" = wi."chainId" AND pc.wallet = wi.address
+          AND pc."bindingVersion" = wi."bindingVersion" AND pc."revokedAt" IS NULL
+        WHERE wi."accountId" = l."sellerId" AND wi."chainId" = ${this.testnetConfig?.chainId ?? 0}
+          AND pc.escrow = ${this.testnetConfig?.escrow ?? ''}) THEN 'payout_unconfirmed'
+      ELSE NULL END`
     type JsonItem = Omit<ReturnType<typeof this.view>, 'createdAt' | 'updatedAt'> & {
       createdAt: string
       updatedAt: string
@@ -441,6 +473,8 @@ export class ListingService {
           'title', l.title, 'description', l.description,
           'category', l.category,
           'price', jsonb_build_object('amount', l."priceAmount"::text, 'currency', l.currency),
+          'testnetPurchaseEligible', (${testnetBlockReason}) IS NULL,
+          'testnetPurchaseBlockReason', ${testnetBlockReason},
           'priceUsd', l.usd, 'publicationStatus', l."publicationStatus",
           'availability', CASE WHEN l.type = 'digital' THEN coalesce(di.availability, 'unlimited')
             ELSE coalesce(pi.availability, 'unavailable') END,

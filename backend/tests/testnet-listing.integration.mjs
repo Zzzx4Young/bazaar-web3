@@ -7,6 +7,8 @@ import { isolatedLedger } from './helpers/wallet-ledger.mjs'
 import { AuthService } from '../dist/auth/auth.service.js'
 import { WalletAuthService } from '../dist/auth/wallet-auth.service.js'
 import { SellerPayoutService } from '../dist/web3/seller-payout.service.js'
+import { ListingService } from '../dist/listings/listing.service.js'
+import { RatesService } from '../dist/pricing/rates.service.js'
 import { ListingCommands } from '../dist/listings/listing-commands.js'
 import { OrderCommands } from '../dist/orders/order-commands.js'
 import { hashPassword } from '../dist/auth/password.js'
@@ -190,5 +192,56 @@ test('A29: switching a priced file to access drops the new-version test price; e
     await assert.rejects(t.listings.edit(t.f.seller, l.id, l.version, { commitment: access, testnetPriceAmount: '2' }), /INVALID_INPUT/)
     const next = await t.listings.edit(t.f.seller, l.id, l.version, { commitment: access })
     assert.equal(await t.db.client.listingTestnetPrice.count({ where: { listingId: l.id, listingVersion: next.version } }), 0)
+  } finally { await t.close() }
+})
+
+test('A31: public eligibility pauses on rebind and switchback until exact-version reconfirmation', async () => {
+  const t = await setup()
+  const service = new ListingService(t.db.client, new RatesService(t.db.client), 'compat', t.config)
+  const check = async (eligible, reason) => {
+    const detail = await service.detail(t.f.listing.id)
+    const page = await service.list({})
+    for (const view of [detail, page.items[0]]) {
+      assert.equal(view.testnetPurchaseEligible, eligible)
+      assert.equal(view.testnetPurchaseBlockReason, reason)
+      assert.deepEqual(view.seller, { id: t.f.seller, displayName: 'Fixture 0' })
+      assert.ok(!JSON.stringify(view).includes('bindingVersion'))
+    }
+  }
+  try {
+    await t.db.client.listing.update({ where: { id: t.f.listing.id }, data: { currency: 'USD' } })
+    await t.price('1.25')
+    await check(false, 'payout_unconfirmed')
+    await t.bind(); await check(false, 'payout_unconfirmed')
+    await t.confirm(); await check(true, null)
+    const id = await t.create(), original = await t.payout.existingOrderTerms(t.f.buyer, id)
+    const old = await t.db.client.sellerPayoutConfirmation.findFirstOrThrow()
+    await t.bind(privateKeyToAccount(generatePrivateKey()))
+    await t.price('8.5'); await check(false, 'payout_unconfirmed')
+    await assert.rejects(t.create(), /STATE_CONFLICT/)
+    await t.bind(t.w)
+    await t.db.client.sellerPayoutConfirmation.update({ where: { id: old.id }, data: { revokedAt: null } })
+    await check(false, 'payout_unconfirmed')
+    await assert.rejects(t.create(), /STATE_CONFLICT/)
+    await t.confirm(); await check(true, null)
+    assert.deepEqual(await t.payout.existingOrderTerms(t.f.buyer, id), original)
+  } finally { await t.close() }
+})
+
+test('A31: public eligibility pauses after unbind and existing seller address stays fixed', async () => {
+  const t = await setup()
+  const service = new ListingService(t.db.client, new RatesService(t.db.client), 'compat', t.config)
+  try {
+    await t.db.client.listing.update({ where: { id: t.f.listing.id }, data: { currency: 'USD' } })
+    await t.bind(); await t.confirm(); await t.price('1')
+    const id = await t.create(), original = await t.payout.existingOrderTerms(t.f.buyer, id)
+    const c = await t.challenge('unbind')
+    await t.wallets.consumeActionChallenge(t.user, c.id, await t.w.signTypedData(c.typedData))
+    for (const view of [await service.detail(t.f.listing.id), (await service.list({})).items[0]]) {
+      assert.equal(view.testnetPurchaseEligible, false)
+      assert.equal(view.testnetPurchaseBlockReason, 'payout_unconfirmed')
+    }
+    await assert.rejects(t.create(), /STATE_CONFLICT/)
+    assert.deepEqual(await t.payout.existingOrderTerms(t.f.buyer, id), original)
   } finally { await t.close() }
 })

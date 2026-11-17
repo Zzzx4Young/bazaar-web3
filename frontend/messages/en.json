@@ -662,6 +662,7 @@
     "sellerArrangesCourierThePlatformRecordsTheCarrierReferenceAndSubm": "Seller arranges courier. The platform records the carrier, reference and submission time; it does not ship or track parcels."
   },
   "web3": {
+    "payoutPaused": "New testnet orders are paused until the seller confirms their current payout wallet.",
     "title": "Testnet order escrow",
     "testnet": "Test assets only. No real-money transactions.",
     "connect": "Connect wallet",

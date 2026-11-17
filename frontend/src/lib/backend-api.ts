@@ -13,6 +13,8 @@ export interface BackendListing {
   description: string
   category: string
   price: { amount: string; currency: Currency }
+  testnetPurchaseEligible?: boolean
+  testnetPurchaseBlockReason?: string | null
   testnetPrice?: { amount: string; amountAtoms: string; currency: 'BZTEST'; decimals: 6;
     chainId: number; token: string; escrow: string } | null
   priceUsd: string | null
@@ -175,6 +177,8 @@ export function toItem(listing: BackendListing): Item {
     id: listing.id,
     backendVersion: listing.version,
     testnetPrice: listing.testnetPrice,
+    testnetPurchaseEligible: listing.testnetPurchaseEligible === true,
+    testnetPurchaseBlockReason: listing.testnetPurchaseBlockReason,
     sellerId: listing.seller.id,
     sellerDisplayName: listing.seller.displayName,
     title: listing.title,

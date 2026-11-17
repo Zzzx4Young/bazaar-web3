@@ -17,7 +17,7 @@ export function TestnetBuy({ item }: { item: Item }) {
   const key = useRef(crypto.randomUUID())
   if (!item.testnetPrice) return null
   const buy = async () => {
-    if (busy) return
+    if (busy || item.testnetPurchaseEligible !== true) return
     setBusy(true)
     setError('')
     const token = useAuthStore.getState().view?.csrfToken
@@ -40,9 +40,11 @@ export function TestnetBuy({ item }: { item: Item }) {
       <p className="text-sm">{t('testnet')}</p>
       <p className="text-sm text-muted-foreground">{t('gas')}</p>
       <p className="text-sm text-muted-foreground">{t('downloadWarning')}</p>
+      {item.testnetPurchaseEligible !== true && <p role="status">{t('payoutPaused')}</p>}
       <Button
         disabled={
           busy ||
+          item.testnetPurchaseEligible !== true ||
           item.status !== 'active' ||
           item.purchaseEligible === false ||
           !account ||

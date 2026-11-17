@@ -76,3 +76,19 @@ describe('backend request correlation', () => {
     expect(sentRequestId).toMatch(/^[0-9a-f-]{36}$/)
   })
 })
+
+it('maps current testnet eligibility conservatively without changing Alpha purchase eligibility', () => {
+  const listing = {
+    id: 'listing', seller: { id: 'seller', displayName: 'Seller' }, type: 'digital',
+    saleMode: 'one_off', title: 'File', description: 'File', category: 'digital_assets',
+    price: { amount: '1', currency: 'USD' }, priceUsd: null, publicationStatus: 'published',
+    availability: 'available', version: 2, media: [], createdAt: '', updatedAt: '',
+    purchaseEligible: true, testnetPurchaseEligible: true, testnetPurchaseBlockReason: null
+  } as BackendListing
+  expect(toItem(listing).testnetPurchaseEligible).toBe(true)
+  expect(toItem({ ...listing, testnetPurchaseEligible: undefined }).testnetPurchaseEligible).toBe(false)
+  const paused = toItem({ ...listing, testnetPurchaseEligible: false,
+    testnetPurchaseBlockReason: 'payout_unconfirmed' })
+  expect(paused.testnetPurchaseBlockReason).toBe('payout_unconfirmed')
+  expect(paused.purchaseEligible).toBe(true)
+})

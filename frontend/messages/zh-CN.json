@@ -662,6 +662,7 @@
     "sellerArrangesCourierThePlatformRecordsTheCarrierReferenceAndSubm": "卖家自行安排快递；平台只记录提交的公司、单号和时间，不提供寄件或物流查询。"
   },
   "web3": {
+    "payoutPaused": "卖家尚未确认当前收款钱包，测试网新订单已暂停。",
     "title": "测试网订单托管",
     "testnet": "测试资产，无真实资金交易",
     "connect": "连接钱包",

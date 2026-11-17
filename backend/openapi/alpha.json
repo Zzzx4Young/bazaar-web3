@@ -10080,6 +10080,15 @@
           "reviewPending": {
             "type": "boolean"
           },
+          "testnetPurchaseEligible": {
+            "type": "boolean",
+            "description": "Current public new-testnet-order eligibility hint. Unknown must disable purchase; order creation rechecks authoritatively."
+          },
+          "testnetPurchaseBlockReason": {
+            "type": "string",
+            "nullable": true,
+            "enum": ["missing_commitment", "testnet_unavailable", "price_unavailable", "payout_unconfirmed", null]
+          },
           "purchaseEligible": {
             "type": "boolean"
           },
