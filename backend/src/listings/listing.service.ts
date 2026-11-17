@@ -475,6 +475,14 @@ export class ListingService {
           'price', jsonb_build_object('amount', l."priceAmount"::text, 'currency', l.currency),
           'testnetPurchaseEligible', (${testnetBlockReason}) IS NULL,
           'testnetPurchaseBlockReason', ${testnetBlockReason},
+          'testnetPrice', (SELECT jsonb_build_object(
+            'amount', (tp."amountAtoms"::numeric * 0.000001)::text,
+            'amountAtoms', tp."amountAtoms", 'currency', 'BZTEST', 'decimals', 6,
+            'chainId', tp."chainId", 'token', tp.token, 'escrow', tp.escrow
+          ) FROM "ListingTestnetPrice" tp WHERE ${Boolean(this.testnetConfig)}
+            AND tp."listingId" = l.id AND tp."listingVersion" = l.version
+            AND tp."chainId" = ${this.testnetConfig?.chainId ?? 0}
+            AND tp.token = ${this.testnetConfig?.token ?? ''} AND tp.escrow = ${this.testnetConfig?.escrow ?? ''}),
           'priceUsd', l.usd, 'publicationStatus', l."publicationStatus",
           'availability', CASE WHEN l.type = 'digital' THEN coalesce(di.availability, 'unlimited')
             ELSE coalesce(pi.availability, 'unavailable') END,
@@ -501,6 +509,9 @@ export class ListingService {
       items: result.items.slice(0, limit).map(item => ({
         ...item,
         price: { ...item.price, amount: new Prisma.Decimal(item.price.amount).toFixed() },
+        testnetPrice: item.testnetPrice ? {
+          ...item.testnetPrice, amount: testPriceView(item.testnetPrice.amountAtoms)
+        } : null,
         createdAt: new Date(item.createdAt),
         updatedAt: new Date(item.updatedAt)
       })),

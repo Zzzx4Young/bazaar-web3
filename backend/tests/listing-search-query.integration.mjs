@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import test, { mock } from 'node:test'
 import pg from 'pg'
+import Ajv from 'ajv'
+import { readFile } from 'node:fs/promises'
 import { ListingService } from '../dist/listings/listing.service.js'
 import { RatesService } from '../dist/pricing/rates.service.js'
 import { sandbox } from './helpers/database.mjs'
@@ -146,4 +148,55 @@ test('single-currency price sorting and later pages do not require an FX quote',
   } finally {
     await db.close()
   }
+})
+
+test('list and detail expose identical nullable testnet prices for the active deployment in one query', async () => {
+  const db = await sandbox()
+  const api = JSON.parse(await readFile(new URL('../openapi/alpha.json', import.meta.url), 'utf8'))
+  const validatePrice = new Ajv({ strict: false }).compile(api.components.schemas.TestnetPriceView)
+  const config = { chainId: 11155111, token: '0x' + '1'.repeat(40), escrow: '0x' + '2'.repeat(40) }
+  try {
+    const seller = await db.client.account.create({ data: { loginName: randomUUID(), displayName: 'Price seller' } })
+    const rows = []
+    for (const [index, atoms] of [null, '1', '1250000', '123456789012345678901234567890'].entries()) {
+      const row = await db.client.listing.create({ data: { sellerId: seller.id,
+        type: 'digital', saleMode: 'one_off', title: `Price ${index}`, description: 'Price projection',
+        category: 'digital_assets', priceAmount: '1', currency: 'USD' } })
+      rows.push(row)
+      if (atoms) await db.client.listingTestnetPrice.create({ data: {
+        listingId: row.id, listingVersion: row.version, ...config, amountAtoms: atoms
+      } })
+    }
+    const expected = [null, '0.000001', '1.25', '123456789012345678901234.56789']
+    for (const [deployment, visible] of [[config, true], [null, false],
+      [{ ...config, chainId: 31337 }, false], [{ ...config, token: '0x' + '3'.repeat(40) }, false],
+      [{ ...config, escrow: '0x' + '4'.repeat(40) }, false]]) {
+      const service = new ListingService(db.client, new RatesService(db.client), 'compat', deployment)
+      const details = await Promise.all(rows.map(row => service.detail(row.id)))
+      const query = pg.Client.prototype.query
+      let roundTrips = 0
+      const trace = mock.method(pg.Client.prototype, 'query', function (...args) {
+        roundTrips++
+        return query.apply(this, args)
+      })
+      let page
+      try {
+        page = await service.list({})
+        assert.equal(roundTrips, 1)
+      } finally { trace.mock.restore() }
+      for (const [index, row] of rows.entries()) {
+        const item = page.items.find(item => item.id === row.id)
+        assert.deepEqual(item.testnetPrice, details[index].testnetPrice)
+        assert.equal(validatePrice(item.testnetPrice), true, JSON.stringify(validatePrice.errors))
+        assert.equal(item.testnetPrice?.amount ?? null, visible ? expected[index] : null)
+        assert.equal(Object.hasOwn(item, 'testnetPrice'), true)
+        assert.deepEqual(JSON.parse(JSON.stringify(item)), JSON.parse(JSON.stringify(details[index])))
+      }
+    }
+    // A price belonging to a prior listing version is not a current offer.
+    await db.client.listing.update({ where: { id: rows[1].id }, data: { version: 2 } })
+    const service = new ListingService(db.client, new RatesService(db.client), 'compat', config)
+    assert.equal((await service.detail(rows[1].id)).testnetPrice, null)
+    assert.equal((await service.list({})).items.find(item => item.id === rows[1].id).testnetPrice, null)
+  } finally { await db.close() }
 })

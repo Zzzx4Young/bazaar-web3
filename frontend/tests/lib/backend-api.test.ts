@@ -92,3 +92,17 @@ it('maps current testnet eligibility conservatively without changing Alpha purch
   expect(paused.testnetPurchaseBlockReason).toBe('payout_unconfirmed')
   expect(paused.purchaseEligible).toBe(true)
 })
+
+it('maps missing and null testnet prices consistently and preserves integer-priced values', () => {
+  const listing = {
+    id: 'listing', seller: { id: 'seller', displayName: 'Seller' }, type: 'digital',
+    title: 'File', description: 'File', category: 'digital_assets',
+    price: { amount: '1', currency: 'USD' }, priceUsd: null, publicationStatus: 'published',
+    availability: 'available', version: 1, media: [], createdAt: '', updatedAt: ''
+  } as BackendListing
+  expect(toItem(listing).testnetPrice).toBeNull()
+  expect(toItem({ ...listing, testnetPrice: null }).testnetPrice).toBeNull()
+  const price = { amount: '0.000001', amountAtoms: '1', currency: 'BZTEST' as const,
+    decimals: 6 as const, chainId: 11155111, token: '0x' + '1'.repeat(40), escrow: '0x' + '2'.repeat(40) }
+  expect(toItem({ ...listing, testnetPrice: price }).testnetPrice).toEqual(price)
+})

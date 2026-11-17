@@ -176,7 +176,7 @@ export function toItem(listing: BackendListing): Item {
   return {
     id: listing.id,
     backendVersion: listing.version,
-    testnetPrice: listing.testnetPrice,
+    testnetPrice: listing.testnetPrice ?? null,
     testnetPurchaseEligible: listing.testnetPurchaseEligible === true,
     testnetPurchaseBlockReason: listing.testnetPurchaseBlockReason,
     sellerId: listing.seller.id,

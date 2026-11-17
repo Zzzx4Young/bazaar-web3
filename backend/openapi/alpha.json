@@ -12120,6 +12120,8 @@
       },
       "TestnetPriceView": {
         "type": "object",
+        "nullable": true,
+        "description": "Null when Web3 is disabled or no price matches the current listing version and chain/token/escrow deployment. Identical semantics in list, search and detail views.",
         "additionalProperties": false,
         "properties": {
           "amount": {
