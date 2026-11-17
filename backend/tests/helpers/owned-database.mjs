@@ -50,7 +50,11 @@ export async function withTestCleanup(main, steps) {
 
 // Only successful CREATEs in this invocation produce a cleanup capability. The
 // name pattern is an additional guard, not proof that an existing DB is ours.
-export async function createOwnedDatabase(admin, name) {
+export async function createOwnedDatabase(
+  admin,
+  name,
+  { databaseFactory = (url, pool) => new DatabaseService(url, pool) } = {}
+) {
   const base = testUrl()
   if (
     base.hostname !== '127.0.0.1' ||
@@ -61,8 +65,24 @@ export async function createOwnedDatabase(admin, name) {
     )
   )
     throw new Error('Explicit isolated owned database required')
-  const [source] = await admin.client.$queryRaw`SELECT current_database() AS database`
-  if (source.database !== 'bazaar_test') throw new Error('Unexpected cleanup admin database')
+  const [source] = await admin.client.$queryRaw`
+    SELECT current_database() AS database, system_identifier::text AS cluster FROM pg_control_system()
+  `
+  if (source?.database !== 'bazaar_test') throw new Error('Unexpected cleanup admin database')
+  if (typeof source.cluster !== 'string' || !/^\d+$/.test(source.cluster))
+    throw new Error('Missing source cluster identity')
+  const cleanupPool = { ...defaultDatabasePool, max: 1, statementTimeoutMs: 15000 }
+  const configured = databaseFactory(base.toString(), cleanupPool)
+  try {
+    await configured.onModuleInit()
+    const [endpoint] = await configured.client.$queryRaw`
+      SELECT current_database() AS database, system_identifier::text AS cluster FROM pg_control_system()
+    `
+    if (endpoint?.database !== 'bazaar_test' || endpoint.cluster !== source.cluster)
+      throw new Error('Configured cluster identity differs from CREATE admin; refusing creation')
+  } finally {
+    await configured.onModuleDestroy()
+  }
   await admin.client.$executeRawUnsafe(`CREATE DATABASE "${name}"`)
   const [identity] = await admin.client
     .$queryRaw`SELECT oid::text AS oid, datdba::text AS owner FROM pg_database WHERE datname=${name}`
@@ -73,14 +93,15 @@ export async function createOwnedDatabase(admin, name) {
       if (dropped) return
       // DDL gets an explicit bounded budget on its own admin client. Never relax
       // the production query budget, FORCE a drop, or terminate unknown sessions.
-      const cleanup = new DatabaseService(base.toString(), {
-        ...defaultDatabasePool,
-        max: 1,
-        statementTimeoutMs: 15000
-      })
+      const cleanup = databaseFactory(base.toString(), cleanupPool)
       const started = Date.now()
       try {
         await cleanup.onModuleInit()
+        const [endpoint] = await cleanup.client.$queryRaw`
+          SELECT current_database() AS database, system_identifier::text AS cluster FROM pg_control_system()
+        `
+        if (endpoint?.database !== 'bazaar_test' || endpoint.cluster !== source.cluster)
+          throw new Error('Owned database cluster identity changed; refusing cleanup')
         const [current] = await cleanup.client
           .$queryRaw`SELECT oid::text AS oid, datdba::text AS owner FROM pg_database WHERE datname=${name}`
         if (!current || current.oid !== identity.oid || current.owner !== identity.owner)
@@ -93,6 +114,7 @@ export async function createOwnedDatabase(admin, name) {
             phase: 'before',
             database: name,
             oid: identity.oid,
+            cluster: source.cluster,
             sessions,
             statementTimeoutMs: 15000
           })
