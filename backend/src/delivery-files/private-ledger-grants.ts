@@ -16,7 +16,12 @@ export async function assertPrivateLedgerGrants(client: PrismaClient, publicatio
       if (row?.granted !== (p === 'SELECT' || (p === 'INSERT' && table !== 'PrivateLedgerMeta')))
         throw new Error('Unsafe private ledger privileges')
     }
-  if (publication) {
+  // Legacy (unpublished) witnesses also inspect an installed publication fence
+  // to prevent silent downgrade after enrollment.
+  const [dependency] = await client.$queryRaw<
+    { installed: boolean }[]
+  >`SELECT to_regclass(format('%I.%I',current_schema(),'LedgerPublicationFence')) IS NOT NULL AS installed`
+  if (publication || dependency?.installed) {
     const [fence] = await client.$queryRaw<
       { readable: boolean; mutable: boolean }[]
     >`SELECT has_sequence_privilege(current_user,format('%I.%I',current_schema(),'LedgerPublicationFence'),'SELECT') AS readable,has_sequence_privilege(current_user,format('%I.%I',current_schema(),'LedgerPublicationFence'),'USAGE,UPDATE') AS mutable`

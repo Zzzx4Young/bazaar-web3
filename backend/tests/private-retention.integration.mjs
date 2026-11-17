@@ -130,57 +130,94 @@ test('T10/A27: append-only deletion evidence remains verifiable and rollback is 
   }
 })
 
-test('T10: restricted lifecycle role appends evidence but cannot rewrite metadata, delete or truncate records', async () => {
-  const { connect, testUrl } = await import('./helpers/database.mjs'),
-    { randomBytes } = await import('node:crypto')
-  const { assertPrivateLedgerGrants } =
-    await import('../dist/delivery-files/private-ledger-grants.js')
-  const p = await isolatedPrivateLedger(),
-    admin = await connect(testUrl()),
-    role = 'plr_' + randomUUID().replaceAll('-', ''),
-    secret = randomBytes(24).toString('hex')
-  let runtime,
-    created = false
-  try {
-    const schema = p.url.searchParams.get('schema')
-    await admin.client.$executeRawUnsafe(
-      `CREATE ROLE "${role}" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD '${secret}'`
-    )
-    created = true
-    await p.db.client.$executeRawUnsafe(`GRANT USAGE ON SCHEMA "${schema}" TO "${role}"`)
-    await p.db.client.$executeRawUnsafe(
-      `GRANT SELECT ON ALL TABLES IN SCHEMA "${schema}" TO "${role}"`
-    )
-    await p.db.client.$executeRawUnsafe(
-      `GRANT INSERT ON "${schema}"."PrivateLedgerEvent" TO "${role}"`
-    )
-    const url = new URL(p.url)
-    url.username = role
-    url.password = secret
-    runtime = await connect(url)
-    await assertPrivateLedgerGrants(runtime.client)
-    const ledger = new m.PrivateLifecycleLedger(runtime.client, p.id, p.root)
-    await ledger.append('claim', randomUUID(), { id: randomUUID() })
-    await ledger.verify()
-    await assert.rejects(
-      runtime.client.$executeRaw`DELETE FROM "PrivateLedgerEvent"`,
-      /permission denied/
-    )
-    await assert.rejects(
-      runtime.client.$executeRaw`TRUNCATE "PrivateLedgerEvent"`,
-      /permission denied/
-    )
-    await assert.rejects(
-      runtime.client.$executeRaw`UPDATE "PrivateLedgerMeta" SET "maintenance"=true`,
-      /permission denied/
-    )
-  } finally {
-    if (runtime) await runtime.onModuleDestroy()
-    await p.close()
-    if (created) await admin.client.$executeRawUnsafe(`DROP ROLE "${role}"`)
-    await admin.onModuleDestroy()
-  }
-})
+for (const publication of [false, true])
+  test(`T10: restricted lifecycle role appends evidence with publication=${publication} but cannot mutate its fence or records`, async () => {
+    const { connect, testUrl } = await import('./helpers/database.mjs'),
+      { randomBytes } = await import('node:crypto')
+    const { assertPrivateLedgerGrants } =
+      await import('../dist/delivery-files/private-ledger-grants.js')
+    const p = await isolatedPrivateLedger(),
+      admin = await connect(testUrl()),
+      role = 'plr_' + randomUUID().replaceAll('-', ''),
+      secret = randomBytes(24).toString('hex')
+    let runtime,
+      created = false
+    try {
+      const schema = p.url.searchParams.get('schema')
+      await admin.client.$executeRawUnsafe(
+        `CREATE ROLE "${role}" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD '${secret}'`
+      )
+      created = true
+      await p.db.client.$executeRawUnsafe(`GRANT USAGE ON SCHEMA "${schema}" TO "${role}"`)
+      await p.db.client.$executeRawUnsafe(
+        `GRANT SELECT ON ALL TABLES IN SCHEMA "${schema}" TO "${role}"`
+      )
+      await p.db.client.$executeRawUnsafe(
+        `GRANT INSERT ON "${schema}"."PrivateLedgerEvent" TO "${role}"`
+      )
+      const url = new URL(p.url)
+      url.username = role
+      url.password = secret
+      runtime = await connect(url)
+      if (publication)
+        await p.db.client.$executeRawUnsafe(
+          `GRANT INSERT ON "${schema}"."LedgerPublicationOutbox", "${schema}"."LedgerPublicationReceipt" TO "${role}"`
+        )
+      // Both modes use the publication fence whenever the installed schema has it.
+      await assert.rejects(
+        assertPrivateLedgerGrants(runtime.client, publication),
+        /Unsafe publication fence privileges/
+      )
+      await p.db.client.$executeRawUnsafe(
+        `GRANT SELECT ON SEQUENCE "${schema}"."LedgerPublicationFence" TO "${role}"`
+      )
+      await assertPrivateLedgerGrants(runtime.client, publication)
+      for (const privilege of ['USAGE', 'UPDATE']) {
+        await p.db.client.$executeRawUnsafe(
+          `GRANT ${privilege} ON SEQUENCE "${schema}"."LedgerPublicationFence" TO "${role}"`
+        )
+        await assert.rejects(
+          assertPrivateLedgerGrants(runtime.client, publication),
+          /Unsafe publication fence privileges/
+        )
+        await p.db.client.$executeRawUnsafe(
+          `REVOKE ${privilege} ON SEQUENCE "${schema}"."LedgerPublicationFence" FROM "${role}"`
+        )
+      }
+      await assertPrivateLedgerGrants(runtime.client, publication)
+      await assert.rejects(
+        runtime.client.$queryRaw`SELECT nextval('"LedgerPublicationFence"')`,
+        /permission denied/
+      )
+      await assert.rejects(
+        runtime.client.$queryRaw`SELECT setval('"LedgerPublicationFence"', 2)`,
+        /permission denied/
+      )
+      const ledger = new m.PrivateLifecycleLedger(runtime.client, p.id, p.root)
+      const key = randomUUID(),
+        payload = { id: randomUUID() }
+      await ledger.append('claim', key, payload)
+      await ledger.verify()
+      assert.deepEqual((await ledger.find('claim', key)).payload, payload)
+      await assert.rejects(
+        runtime.client.$executeRaw`DELETE FROM "PrivateLedgerEvent"`,
+        /permission denied/
+      )
+      await assert.rejects(
+        runtime.client.$executeRaw`TRUNCATE "PrivateLedgerEvent"`,
+        /permission denied/
+      )
+      await assert.rejects(
+        runtime.client.$executeRaw`UPDATE "PrivateLedgerMeta" SET "maintenance"=true`,
+        /permission denied/
+      )
+    } finally {
+      if (runtime) await runtime.onModuleDestroy()
+      await p.close()
+      if (created) await admin.client.$executeRawUnsafe(`DROP ROLE "${role}"`)
+      await admin.onModuleDestroy()
+    }
+  })
 
 test('T10: a durable claim with a rolled-back business fence still blocks a new download grant', async () => {
   const t = await retentionFixture(),
