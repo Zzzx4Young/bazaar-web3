@@ -1,3 +1,4 @@
+import { attachRequestLogChannel } from './request-log-channel.mjs'
 import { publishWitnessCheckpoint } from '../../dist/auth/checkpoint-publisher.js'
 import { Buffer } from 'node:buffer'
 // Owns synthetic isolated recovery resources only. Never reads development .env.
@@ -115,7 +116,8 @@ export async function createControlledBrowserRecovery({
   chain,
   cfg,
   backupRoot,
-  backupKey
+  backupKey,
+  logRequest
 }) {
   const configuredUrl = process.env.TEST_DATABASE_URL
   const ownedUrls = new Map([
@@ -400,8 +402,7 @@ export async function createControlledBrowserRecovery({
         { env: { PATH: process.env.PATH }, stdio: ['pipe', 'pipe', 'pipe'] }
       )
       runtimeProof = await new Promise((yes, no) => {
-        let stdout = '',
-          diagnostic = ''
+        let diagnostic = ''
         const timer = setTimeout(
           () => no(new Error('Recovered runtime timeout ' + diagnostic.slice(-200))),
           45000
@@ -413,28 +414,15 @@ export async function createControlledBrowserRecovery({
           clearTimeout(timer)
           no(new Error('Recovered runtime exited ' + code + ' ' + diagnostic.slice(-200)))
         })
-        runtime.stdout.on('data', (b) => {
-          stdout += b
-          for (;;) {
-            const at = stdout.indexOf('\n')
-            if (at < 0) break
-            const line = stdout.slice(0, at)
-            stdout = stdout.slice(at + 1)
-            let r
-            try {
-              r = JSON.parse(line)
-            } catch {
-              continue
-            }
-            if (r.ready) {
-              clearTimeout(timer)
-              yes(r)
-            } else if (r.error || r.errorCode) {
-              clearTimeout(timer)
-              no(new Error('Recovered runtime ' + JSON.stringify(r)))
-            }
+        attachRequestLogChannel(runtime.stdout, logRequest, (r) => {
+          if (r.ready) {
+            clearTimeout(timer)
+            yes(r)
+          } else if (r.error || r.errorCode) {
+            clearTimeout(timer)
+            no(new Error('Recovered runtime control failure'))
           }
-        })
+        }).catch(no)
         runtime.stdin.write(
           JSON.stringify({
             root: restoredBase,

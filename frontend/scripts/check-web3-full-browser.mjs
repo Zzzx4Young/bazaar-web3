@@ -1,3 +1,4 @@
+import { attachRequestLogChannel } from '../../backend/tests/helpers/request-log-channel.mjs'
 import assert from 'node:assert/strict'
 import { spawn, execFileSync } from 'node:child_process'
 import { once } from 'node:events'
@@ -33,6 +34,7 @@ const result = {
   transactions: [],
   cooldowns: [],
   serverRequests: [],
+  proxyRequests: [],
   coldStart: { freshNextOutput: distDirectory, newAccountsAndOrders: true },
   requests: []
 }
@@ -70,6 +72,10 @@ try {
       stdio: ['ignore', 'pipe', 'pipe']
     }
   )
+  // Proxy JSON is structured and contains no request payload or exception text.
+  attachRequestLogChannel(frontend.stdout, false, (entry) => {
+    if (entry?.event === 'proxy_request') result.proxyRequests.push(entry)
+  }).catch(() => { result.proxyLogChannelFailed = true })
   let output = ''
   for (const s of [frontend.stdout, frontend.stderr])
     s.on('data', (x) => {
@@ -117,7 +123,10 @@ try {
           method: r.request().method(),
           path: u.pathname,
           status: r.status(),
-          requestId: r.headers()['x-request-id'] ?? null
+          requestId: r.headers()['x-request-id'] ?? null,
+          proxyRequestId: r.headers()['x-proxy-request-id'] ?? null,
+          applicationRequestId: r.headers()['x-application-request-id'] ?? null,
+          statusSource: r.headers()['x-status-source'] ?? null
         })
     })
     await page.exposeFunction('t09Wallet', async ({ method, params }) => {

@@ -1,3 +1,4 @@
+import { requestLogMessage } from './request-log-channel.mjs'
 // Isolated browser-test child. Backend imports finish before an optional UID drop;
 // configuration comes only from the recovered bootstrap, never readConfig/.env.
 import 'reflect-metadata'
@@ -333,7 +334,7 @@ async function start(message) {
   diagnostic = 'APP_OPEN_FAILED'
   const store = new GaragePrivateObjectStore(config.privateFiles.store)
   app = await createApp(config, false, {
-    logRequest: false,
+    logRequest: (entry) => send(requestLogMessage(entry)),
     walletLedger,
     privateLedger,
     paymentSigner,

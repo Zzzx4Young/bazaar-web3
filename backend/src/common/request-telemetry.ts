@@ -8,6 +8,11 @@ export interface RequestLogEntry {
   event: 'http_request'
   timestamp: string
   requestId: string
+  applicationRequestId: string
+  proxyRequestId: string | null
+  statusSource: 'application'
+  pid: number
+  uid: number | null
   method: string
   route: string
   status: number
@@ -19,6 +24,7 @@ export interface RequestLogEntry {
 export type RequestLogSink = (entry: RequestLogEntry) => void
 
 interface RequestState {
+  proxyRequestId: string | null
   startedAt: bigint
   errorCode?: string
   failure?: ReturnType<typeof safeFailure>
@@ -29,8 +35,17 @@ export class RequestTelemetry {
 
   start(request: FastifyRequest, reply: FastifyReply) {
     const supplied = request.headers['x-request-id']
-    request.id = typeof supplied === 'string' && requestIdPattern.test(supplied) ? supplied : randomUUID()
-    this.states.set(request, { startedAt: process.hrtime.bigint() })
+    request.id =
+      typeof supplied === 'string' && requestIdPattern.test(supplied) ? supplied : randomUUID()
+    const proxyId = request.headers['x-proxy-request-id']
+    const proxyRequestId =
+      typeof proxyId === 'string' &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(proxyId)
+        ? proxyId
+        : null
+    this.states.set(request, { startedAt: process.hrtime.bigint(), proxyRequestId })
+    reply.header('X-Application-Request-Id', request.id)
+    reply.header('X-Status-Source', 'application')
     reply.header('X-Request-Id', request.id)
   }
 
@@ -52,6 +67,11 @@ export class RequestTelemetry {
       event: 'http_request',
       timestamp: new Date().toISOString(),
       requestId: request.id,
+      applicationRequestId: request.id,
+      proxyRequestId: state?.proxyRequestId ?? null,
+      statusSource: 'application',
+      pid: process.pid,
+      uid: process.getuid?.() ?? null,
       method: request.method,
       route: request.routeOptions?.url ?? 'unmatched',
       status: reply.statusCode,

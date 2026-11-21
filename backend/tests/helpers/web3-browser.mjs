@@ -224,6 +224,7 @@ export async function web3BrowserFixture(origin, diagnostics = {}) {
     const checker = new DockerFileChecker(cfg.privateFiles.checker)
     if (privateLedger)
       recovery = await browserRecoveryTools({
+        logRequest: diagnostics.logRequest,
         db,
         security,
         privateLedger,

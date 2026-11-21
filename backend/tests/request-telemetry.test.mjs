@@ -118,3 +118,22 @@ test('diagnostic traversal handles cycles and rejects arbitrary codes and error 
   const e = Object.assign(new Error('secret'), { name: 'secret', code: 'secret' }); e.cause = e
   assert.deepEqual(safeFailure(e), { class: 'Unknown', codes: [] })
 })
+
+test('application telemetry identifies process and correlates a validated proxy ID', () => {
+  const telemetry = new RequestTelemetry(), response = reply(), logs = []
+  const proxyId = '12345678-1234-4234-8234-123456789abc'
+  const request = { headers: { 'x-proxy-request-id': proxyId }, method: 'POST', routeOptions: { url: '/api/auth/session' } }
+  telemetry.start(request, response)
+  telemetry.finish(request, response, (entry) => logs.push(entry))
+  assert.equal(response.headers['x-application-request-id'], request.id)
+  assert.equal(logs[0].applicationRequestId, request.id)
+  assert.equal(logs[0].proxyRequestId, proxyId)
+  assert.equal(logs[0].statusSource, 'application')
+  assert.equal(logs[0].pid, process.pid)
+  assert.equal(logs[0].uid, process.getuid())
+  const invalid = { ...request, headers: { 'x-proxy-request-id': 'SECRET' } }
+  telemetry.start(invalid, reply())
+  telemetry.finish(invalid, reply(), (entry) => logs.push(entry))
+  assert.equal(logs[1].proxyRequestId, null)
+  assert.equal(JSON.stringify(logs).includes('SECRET'), false)
+})

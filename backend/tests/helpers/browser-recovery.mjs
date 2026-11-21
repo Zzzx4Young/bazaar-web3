@@ -20,7 +20,8 @@ export async function browserRecoveryTools({
   root,
   pause,
   apiPort,
-  resume
+  resume,
+  logRequest
 }) {
   const controlledFactory =
     process.env.T10_CUSTODY === '1'
@@ -47,7 +48,8 @@ export async function browserRecoveryTools({
         chain,
         cfg,
         backupRoot,
-        backupKey: backup.key
+        backupKey: backup.key,
+        logRequest
       })
     : null
   return {
