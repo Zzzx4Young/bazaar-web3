@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 evidence=${1:?Usage: bash scripts/run-file-capacity.sh ABSOLUTE_EVIDENCE_DIR}
 [[ "$evidence" = /* && "$evidence" != *,* ]] || exit 1
-image=sha256:1cca08651d855df02dca36b7a6347da847c41be4ecae2b01ff2733adb4316498
+image=${PRIVATE_FILE_CHECK_IMAGE:-sha256:1cca08651d855df02dca36b7a6347da847c41be4ecae2b01ff2733adb4316498}
 sudo -n docker image inspect "$image" >/dev/null
 mkdir -p "$evidence/samples"
 sudo -n docker run --pull=never --rm --network=none --read-only \

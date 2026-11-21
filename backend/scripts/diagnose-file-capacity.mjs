@@ -8,7 +8,7 @@ import { resolve, join } from 'node:path'
 import { observeFileCheck } from './observe-file-check.mjs'
 const exec = promisify(execFile)
 const root = resolve(process.argv[2])
-const image = 'sha256:1cca08651d855df02dca36b7a6347da847c41be4ecae2b01ff2733adb4316498'
+const image = process.env.PRIVATE_FILE_CHECK_IMAGE ?? 'sha256:1cca08651d855df02dca36b7a6347da847c41be4ecae2b01ff2733adb4316498'
 for (const tmpBytes of [64_000_000, 1_000_000_000]) {
   const id = randomUUID(),
     name = 'bazaar-private-check-' + id,
