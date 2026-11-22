@@ -70,7 +70,58 @@ export async function proxyApiRequest(
   let statusSource: ProxyLogEntry['statusSource'] = 'proxy'
   let failure: ProxyLogEntry['failure']
   let response: Response
-  const timeout = AbortSignal.timeout(30000)
+  // Match the previous proxy's inactivity budget for streamed bodies.
+  const idle = new AbortController()
+  let expired = false
+  let completed = false
+  let timer: ReturnType<typeof setTimeout>
+  const cleanup = () => {
+    completed = true
+    clearTimeout(timer)
+    request.signal.removeEventListener('abort', cleanup)
+  }
+  const activity = () => {
+    if (completed) return
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      expired = true
+      idle.abort()
+    }, 30000)
+    timer.unref?.()
+  }
+  const tracked = (body: ReadableStream<Uint8Array>, responseBody = false) => {
+    const reader = body.getReader()
+    return new ReadableStream<Uint8Array>({
+      async pull(controller) {
+        try {
+          const part = await reader.read()
+          activity()
+          if (part.done) {
+            if (responseBody) cleanup()
+            reader.releaseLock()
+            controller.close()
+          } else controller.enqueue(part.value)
+        } catch {
+          cleanup()
+          controller.error(new Error('Upstream transfer interrupted'))
+        }
+      },
+      async cancel() {
+        if (responseBody) {
+          cleanup()
+          idle.abort()
+        }
+        try {
+          await reader.cancel()
+        } catch {
+          /* Already aborted by fetch. */
+        }
+        reader.releaseLock()
+      }
+    })
+  }
+  activity()
+  request.signal.addEventListener('abort', cleanup, { once: true })
   try {
     // Assign pathname rather than resolving user input as a URL: //host can never change upstream.
     const incoming = new URL(request.url),
@@ -89,11 +140,14 @@ export async function proxyApiRequest(
       headers,
       redirect: 'manual',
       cache: 'no-store',
-      signal: AbortSignal.any([request.signal, timeout]),
+      signal: AbortSignal.any([request.signal, idle.signal]),
       duplex: 'half',
-      ...(request.method !== 'GET' && request.method !== 'HEAD' ? { body: request.body } : {})
+      ...(request.method !== 'GET' && request.method !== 'HEAD'
+        ? { body: request.body ? tracked(request.body) : null }
+        : {})
     }
     const upstream = await fetch(target, options)
+    activity()
     const appId = upstream.headers.get('x-application-request-id')
     applicationRequestId = appId && uuid.test(appId) ? appId : null
     statusSource = applicationRequestId ? 'application' : 'upstream'
@@ -109,11 +163,14 @@ export async function proxyApiRequest(
     outgoing.delete('x-request-id')
     outgoing.delete('x-application-request-id')
     if (applicationRequestId) outgoing.set('x-application-request-id', applicationRequestId)
-    response = new Response(upstream.body, { status: upstream.status, headers: outgoing })
+    const body = upstream.body ? tracked(upstream.body, true) : null
+    if (!body) cleanup()
+    response = new Response(body, { status: upstream.status, headers: outgoing })
   } catch (error) {
+    cleanup()
     statusSource = 'proxy'
     applicationRequestId = null
-    failure = timeout.aborted
+    failure = expired
       ? { class: 'TimeoutError', codes: ['ETIMEDOUT'] }
       : safeTransportFailure(error)
     response = Response.json(

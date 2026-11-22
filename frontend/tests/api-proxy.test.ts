@@ -1,11 +1,15 @@
 // @vitest-environment node
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import { createServer, type Server } from 'node:http'
 import { once } from 'node:events'
 import { proxyApiRequest } from '../src/lib/api-proxy'
 
 const servers: Server[] = []
 afterEach(async () => {
+  vi.clearAllTimers()
+  vi.useRealTimers()
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
   for (const s of servers.splice(0)) {
     s.closeAllConnections()
     await new Promise<void>((resolve) => s.close(() => resolve()))
@@ -193,4 +197,76 @@ test('unattributed upstream response cannot spoof application attribution; sink 
   expect(response.headers.get('x-request-id')).toBe(response.headers.get('x-proxy-request-id'))
   expect(JSON.stringify(logs)).not.toContain('SECRET')
   expect(await response.text()).toBe('upstream unavailable')
+})
+
+test('progressing response survives beyond 30 seconds; only idle time expires', async () => {
+  vi.useFakeTimers()
+  vi.spyOn(AbortSignal, 'timeout').mockImplementation((ms) => {
+    const controller = new AbortController()
+    setTimeout(() => controller.abort(), ms)
+    return controller.signal
+  })
+  let source!: ReadableStreamDefaultController<Uint8Array>
+  let signal!: AbortSignal
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (_url, options) => {
+      signal = options.signal
+      const body = new ReadableStream<Uint8Array>({
+        start(c) {
+          source = c
+        }
+      })
+      signal.addEventListener('abort', () => source.error(new Error('PRIVATE upstream error')), {
+        once: true
+      })
+      return new Response(body)
+    })
+  )
+  const response = await proxyApiRequest(
+    new Request('http://front/api/media'),
+    'http://upstream',
+    () => {}
+  )
+  const reader = response.body!.getReader()
+  for (let n = 0; n < 4; n++) {
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(signal.aborted).toBe(false)
+    source.enqueue(new TextEncoder().encode('part'))
+    expect(new TextDecoder().decode((await reader.read()).value)).toBe('part')
+  }
+  source.close()
+  expect((await reader.read()).done).toBe(true)
+  await vi.advanceTimersByTimeAsync(30_001)
+  expect(signal.aborted).toBe(false)
+})
+
+test('stalled response is aborted after 30 idle seconds and hides the upstream message', async () => {
+  vi.useFakeTimers()
+  let signal!: AbortSignal
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (_url, options) => {
+      signal = options.signal
+      const body = new ReadableStream<Uint8Array>({
+        start(source) {
+          signal.addEventListener(
+            'abort',
+            () => source.error(new Error('PRIVATE upstream error')),
+            { once: true }
+          )
+        }
+      })
+      return new Response(body)
+    })
+  )
+  const response = await proxyApiRequest(
+    new Request('http://front/api/media'),
+    'http://upstream',
+    () => {}
+  )
+  const failure = response.text().catch((error: Error) => error)
+  await vi.advanceTimersByTimeAsync(30_001)
+  expect(signal.aborted).toBe(true)
+  expect((await failure).message).toBe('Upstream transfer interrupted')
 })
