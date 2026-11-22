@@ -24,7 +24,7 @@ services:
     cpus: 1
     mem_limit: 4000000000
     memswap_limit: 4000000000
-    tmpfs: ['/tmp:rw,noexec,nosuid,size=64000000']
+    tmpfs: ['/tmp:rw,noexec,nosuid,size=2200000000']
     volumes: ['${PRIVATE_CHECK_INPUT_FILE:?set isolated input file}:/input/object:ro']
     command: ['/input/object', 'application/zip']
 volumes:
