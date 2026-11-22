@@ -141,7 +141,7 @@ export async function web3BrowserFixture(origin, diagnostics = {}) {
         memoryBytes: 4000000000,
         cpus: 1,
         pids: 32,
-        tmpBytes: 64000000,
+        tmpBytes: 2200000000,
         wallSeconds: 120,
         sudo: true
       },

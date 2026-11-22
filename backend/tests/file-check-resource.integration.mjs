@@ -22,7 +22,7 @@ const runtime = {
   memoryBytes: 4_000_000_000,
   cpus: 1,
   pids: 32,
-  tmpBytes: 64_000_000,
+  tmpBytes: 2_200_000_000,
   wallSeconds: 120,
   sudo: true
 }

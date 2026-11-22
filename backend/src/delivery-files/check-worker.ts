@@ -27,7 +27,7 @@ export class DockerFileChecker implements PrivateFileChecker {
       config.pids > 32 ||
       !Number.isSafeInteger(config.tmpBytes) ||
       config.tmpBytes < 1_000_000 ||
-      config.tmpBytes > 64_000_000 ||
+      config.tmpBytes > 2_200_000_000 ||
       !Number.isInteger(config.wallSeconds) ||
       config.wallSeconds < 1 ||
       config.wallSeconds > 120
@@ -106,6 +106,7 @@ export class DockerFileChecker implements PrivateFileChecker {
     const cmd = this.command(
       [
         'run',
+        '--pull=never',
         '--name',
         name,
         '--network',
@@ -183,6 +184,7 @@ export class DockerFileChecker implements PrivateFileChecker {
           NetworkMode: string
           ReadonlyRootfs: boolean
           Privileged: boolean
+          Tmpfs: Record<string, string>
         }
         State: { Running: boolean; OOMKilled: boolean }
       }
@@ -194,6 +196,9 @@ export class DockerFileChecker implements PrivateFileChecker {
         network: row.HostConfig.NetworkMode,
         readOnly: row.HostConfig.ReadonlyRootfs,
         privileged: row.HostConfig.Privileged,
+        tmpBytes: Number(
+          row.HostConfig.Tmpfs?.['/tmp']?.match(/(?:^|,)size=(\d+)(?:,|$)/)?.[1] ?? 0
+        ),
         oomKilled: row.State.OOMKilled
       }
     } catch {
@@ -208,7 +213,8 @@ export class DockerFileChecker implements PrivateFileChecker {
       resource.pids === c.pids &&
       resource.network === 'none' &&
       resource.readOnly === true &&
-      resource.privileged === false
+      resource.privileged === false &&
+      resource.tmpBytes === c.tmpBytes
     if (expired)
       return { status: 'timeout', reason: 'CHECK_TIMEOUT', processStopped: true, resource }
     if (exit !== 0 || overflow || !limitsValid || resource.oomKilled)

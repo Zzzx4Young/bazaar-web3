@@ -74,7 +74,7 @@ export function readPrivateFileConfig(
     checker.memoryBytes !== 4_000_000_000 ||
     checker.cpus !== 1 ||
     checker.pids !== 32 ||
-    checker.tmpBytes !== 64_000_000 ||
+    checker.tmpBytes !== 2_200_000_000 ||
     checker.wallSeconds !== 120 ||
     !/^(?:[a-z0-9./:_-]+@)?sha256:[0-9a-f]{64}$/.test(checker.image)
   )

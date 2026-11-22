@@ -26,7 +26,7 @@ export function validateBudget(p: PrivateFileBudget) {
     p.globalUploads > 100 ||
     !Number.isInteger(p.checkConcurrency) ||
     p.checkConcurrency < 1 ||
-    p.checkConcurrency > 4 ||
+    p.checkConcurrency > 2 ||
     !Number.isInteger(p.checkQueue) ||
     p.checkQueue < 1 ||
     p.checkQueue > 100

@@ -678,3 +678,43 @@ npm run test:recovery:services
 这批没有部署系统服务单元或修改 `start.sh`，没有完成生产接管、真实 RPC/钱包扩展、Garage 实际大文件或整机恢复演练。HTTP 使用 Node 钱包签名和 EOA 检查替身；脚本测试在 unknown 状态拒绝 RPC，因此不计为链上补扫通过。文件生命周期入口可创建实际私有账本待发布记录，但构造对象客户端不代表存储可用性已验证。T10 整体继续待验收、`targetsMet=false`；本批 RPO/RTO 均为 null。
 
 第五批最终检查：后端 289/289、服务组合 29/29、相关数据库回归 51/51；受限业务/钱包角色的 HTTP 又独立复跑 1/1。结果有重叠。验收报告见本地 `docs/superpowers/evidence/2026-11-15-t10-service-publication/acceptance.md`。
+
+### R06 second-round scanner resource envelope
+
+The private-file config now requires `checker.tmpBytes=2200000000` (decimal 2.2 GB),
+`memoryBytes=4000000000`, `cpus=1`, `pids=32`, and `wallSeconds=120`.
+The tmpfs is memory-backed **inside**, not in addition to, the 4 GB no-swap cgroup.
+It covers up to 2 GB of permitted expanded data plus bounded parser/engine overhead.
+It is a hard resource limit, not a guarantee that arbitrary files pass malware checks.
+`checkConcurrency` is restricted to 1–2; the conservative default remains 1.
+Two admitted tasks reserve at most 8 GB cgroup memory (including 4.4 GB aggregate
+tmpfs), 2 CPUs, 64 PIDs and 1 GB host staging input. Provision at least that capacity
+plus API/database/object-store/OS headroom. Queued tasks consume no scanner slot;
+the default queue cap is 4, maximum wait 300 seconds. All instances sharing one
+business schema use the existing transaction/advisory-lock admission counter.
+Do not run multiple independent environments against the same host without adding
+their resource envelopes. Input staging and transfer are included in the service's
+120-second processing deadline.
+
+Existing `64000000` configs are rejected at config load and must be explicitly
+updated. Changing the concurrency policy of a nonempty global row requires the
+existing controlled policy migration/maintenance flow; do not overwrite its hash
+to bypass accounting. Scanner containers use no network, read-only root, immutable
+image, fixed UID, no privilege/capabilities and a private `noexec,nosuid` tmpfs.
+Successful container removal and host scratch deletion are required before ready.
+On unconfirmed removal/cleanup the slot stays protected until the existing reaper
+proves termination and completes cleanup; no version or delivery permit is created.
+
+Capacity replay (explicit opt-in, no default skip accepted as evidence):
+
+```bash
+PRIVATE_FILE_CHECK_IMAGE=sha256:<pinned-image> bash scripts/run-file-capacity.sh /absolute/new-evidence
+PRIVATE_FILE_CAPACITY_SAMPLES=/absolute/new-evidence/samples \
+  node scripts/with-web3-test-db.mjs node --test tests/file-check-product-capacity.integration.mjs
+python3 file-checker/control/generate-expansion.py /absolute/new-expansion
+node scripts/sample-file-expansion.mjs /absolute/new-expansion
+```
+
+Use injected private Garage config for the service test. New helpers delete only
+the exact object keys they create; evidence samples remain for reviewer comparison.
+Raw capacity measurements and original failures remain outside Git in the handoff.

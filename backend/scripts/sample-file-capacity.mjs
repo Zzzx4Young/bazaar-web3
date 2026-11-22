@@ -17,7 +17,7 @@ export async function sampleFileCapacity(root, image) {
     memoryBytes: 4_000_000_000,
     cpus: 1,
     pids: 32,
-    tmpBytes: 64_000_000,
+    tmpBytes: 2_200_000_000,
     wallSeconds: 120,
     sudo: true
   }
@@ -82,7 +82,8 @@ export async function sampleFileCapacity(root, image) {
   }
   for (const sample of manifest) await scan(sample, 1)
   // Explicit bounded concurrency observation; not a service capacity promise.
-  const pair = manifest.filter((s) => s.delta === 0 && ['png', 'zip'].includes(s.kind))
+  const zip = manifest.find((s) => s.kind === 'zip' && s.delta === 0)
+  const pair = [zip, zip]
   await Promise.all(pair.map((s) => scan(s, 2)))
   const result = {
     started: new Date(started).toISOString(),
