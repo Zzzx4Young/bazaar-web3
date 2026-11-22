@@ -21,6 +21,7 @@ export async function sampleFileCapacity(root, image) {
     wallSeconds: 120,
     sudo: true
   }
+  const evidence = process.env.PRIVATE_FILE_EVIDENCE_DIR ?? join(root, '..')
   const rows = []
   const started = Date.now()
   async function scan(sample, concurrency) {
@@ -68,7 +69,7 @@ export async function sampleFileCapacity(root, image) {
       assert.equal(report.malware?.engine, 'ClamAV')
     }
     rows.push(row)
-    await writeFile(join(root, '..', `capacity-${id}.json`), JSON.stringify(row, null, 2) + '\n', {
+    await writeFile(join(evidence, `capacity-${id}.json`), JSON.stringify(row, null, 2) + '\n', {
       mode: 0o600
     })
     console.log(
@@ -94,11 +95,9 @@ export async function sampleFileCapacity(root, image) {
     runtime,
     rows
   }
-  await writeFile(
-    join(root, '..', 'capacity-summary.json'),
-    JSON.stringify(result, null, 2) + '\n',
-    { mode: 0o600 }
-  )
+  await writeFile(join(evidence, 'capacity-summary.json'), JSON.stringify(result, null, 2) + '\n', {
+    mode: 0o600
+  })
   return result
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
