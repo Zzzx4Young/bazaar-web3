@@ -1,3 +1,4 @@
+import { recoveryAuthorizationWindow } from './recovery-authorization-window.mjs'
 import { attachRequestLogChannel } from './request-log-channel.mjs'
 import { publishWitnessCheckpoint } from '../../dist/auth/checkpoint-publisher.js'
 import { Buffer } from 'node:buffer'
@@ -98,7 +99,18 @@ async function childResult(child, send) {
       }, 60000)
       child.once('error', no)
       child.once('message', (r) =>
-        r.ok ? yes(r) : no(new Error('Controlled owner stage: ' + r.stage + ' ' + r.errorCode))
+        r.ok
+          ? yes(r)
+          : no(
+              new Error(
+                'Controlled owner stage: ' +
+                  r.stage +
+                  ' ' +
+                  r.errorCode +
+                  ' ' +
+                  (r.diagnostic ?? 'UNCLASSIFIED')
+              )
+            )
       )
       child.once('exit', (code) => {
         if (code !== 0) no(new Error('Controlled child exited ' + code))
@@ -349,8 +361,7 @@ export async function createControlledBrowserRecovery({
         bundleHash: await encryptedPartHash(bundle, 'manifest'),
         targetDirectory: destination,
         nonce: randomUUID(),
-        issuedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 300000).toISOString()
+        ...recoveryAuthorizationWindow()
       })
       await chmod(authorizationFile, 0o600)
       const authorization = {

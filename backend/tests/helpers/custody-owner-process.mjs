@@ -18,6 +18,7 @@ import { DualChainObserver } from '../../dist/web3/chain-observer.js'
 const clients = []
 process.once('message', async ({ inputFile }) => {
   let report,
+    authorizationTtlMs = null,
     stage = 'start'
   try {
     const i = JSON.parse(await readFile(inputFile, 'utf8'))
@@ -33,6 +34,12 @@ process.once('message', async ({ inputFile }) => {
         ])
       )
     )
+    const authorizationDocument = JSON.parse(
+      await readFile(i.authorization.authorizationFile, 'utf8')
+    ).payload
+    const ttl =
+      Date.parse(authorizationDocument.expiresAt) - Date.parse(authorizationDocument.issuedAt)
+    authorizationTtlMs = Number.isFinite(ttl) ? ttl : null
     stage = 'authorized-decryption'
     const restored = await restoreAuthorizedCustody({ ...i.authorization, keys })
     await assert.rejects(restoreAuthorizedCustody({ ...i.authorization, keys }), /CONSUMED/)
@@ -215,6 +222,7 @@ process.once('message', async ({ inputFile }) => {
       finalizedHash: opened.hash,
       originalReadDenied: true,
       authorizationReplayDenied: true,
+      authorizationTtlMs,
       recoveryId: restored.recoveryId,
       configurationVersion: restored.configurationVersion,
       checkpointHash: restored.checkpointHash,
@@ -229,7 +237,31 @@ process.once('message', async ({ inputFile }) => {
       }
     }
   } catch (e) {
-    report = { ok: false, errorCode: e.code ?? e.name, stage }
+    const allowed = new Set([
+      'RECOVERY_CONSUMPTION_GUARD_REQUIRED',
+      'PINNED_RECOVERY_AUTHORITY_REQUIRED',
+      'RECOVERY_BUNDLE_CHANGED',
+      'INVALID_RECOVERY_DOCUMENT',
+      'INVALID_CHECKPOINT',
+      'UNSAFE_RECOVERY_DOCUMENT',
+      'INVALID_RECOVERY_SIGNATURE',
+      'CHECKPOINT_MISMATCH',
+      'CHECKPOINT_HISTORY_REQUIRED',
+      'CHECKPOINT_HISTORY_MISMATCH',
+      'INVALID_RECOVERY_AUTHORIZATION',
+      'RECOVERY_AUTHORIZATION_MISMATCH',
+      'RECOVERY_AUTHORIZATION_EXPIRED',
+      'UNSAFE_AUTHORIZATION_RECEIPTS',
+      'RECOVERY_AUTHORIZATION_CONSUMED',
+      'Role custody restore rejected'
+    ])
+    report = {
+      ok: false,
+      errorCode: e.code ?? e.name,
+      stage,
+      diagnostic: allowed.has(e.message) ? e.message : 'UNCLASSIFIED',
+      authorizationTtlMs
+    }
   } finally {
     for (const c of clients.reverse()) await c.onModuleDestroy().catch(() => {})
     process.send?.(report, () => process.disconnect())
