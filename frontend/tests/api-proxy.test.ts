@@ -3,6 +3,8 @@ import { afterEach, expect, test, vi } from 'vitest'
 import { createServer, type Server } from 'node:http'
 import { once } from 'node:events'
 import { proxyApiRequest } from '../src/lib/api-proxy'
+import { backendPost, BackendError } from '../src/lib/backend-api'
+import { apiErrorCopy } from '../src/lib/api-error-copy'
 
 const servers: Server[] = []
 afterEach(async () => {
@@ -51,7 +53,9 @@ test('API down yields attributable proxy 502 and safe ECONNREFUSED diagnostics',
   })
   expect(JSON.stringify(logs)).not.toContain('secret')
   expect(JSON.stringify(logs)).not.toContain('private')
-  expect(await res.json()).toMatchObject({ error: { code: 'UPSTREAM_UNAVAILABLE' } })
+  expect(await res.json()).toEqual({
+    code: 'UNAVAILABLE', retryable: true, requestId: res.headers.get('x-proxy-request-id')
+  })
 })
 
 test('application 500 stays application 500 with distinct IDs; redirects/cookies/body are preserved', async () => {
@@ -269,4 +273,38 @@ test('stalled response is aborted after 30 idle seconds and hides the upstream m
   await vi.advanceTimersByTimeAsync(30_001)
   expect(signal.aborted).toBe(true)
   expect((await failure).message).toBe('Upstream transfer interrupted')
+})
+
+
+test('real proxy failures and application errors preserve the parser contract and localized copy', async () => {
+  const stopped = createServer()
+  const unavailable = await listen(stopped)
+  await new Promise<void>((resolve) => stopped.close(() => resolve()))
+  const appId = '12345678-1234-4234-8234-123456789abc'
+  const available = await listen(createServer((_req, res) => {
+    res.writeHead(409, { 'content-type': 'application/json',
+      'x-application-request-id': appId })
+    res.end(JSON.stringify({ code: 'STATE_CONFLICT', retryable: false, requestId: appId }))
+  }))
+  const fetchReal = globalThis.fetch
+  const logs: unknown[] = []
+  let origin = unavailable
+  vi.stubGlobal('fetch', (input: string | URL | Request, init?: RequestInit) =>
+    typeof input === 'string' && input.startsWith('/api/')
+      ? proxyApiRequest(new Request('http://front' + input, init), origin, (e) => logs.push(e))
+      : fetchReal(input, init))
+  const unavailableError = await backendPost('/web3/orders').catch((error: unknown) => error)
+  expect(unavailableError).toBeInstanceOf(BackendError)
+  expect(unavailableError).toMatchObject({ code: 'UNAVAILABLE', status: 502, retryable: true })
+  expect((unavailableError as BackendError).requestId).toBe(
+    (logs[0] as { proxyRequestId: string }).proxyRequestId)
+  expect(apiErrorCopy(unavailableError, 'zh-CN')).toBe('当前资源暂不可用，请刷新后重试。')
+  expect(apiErrorCopy(unavailableError, 'en')).toBe(
+    'This resource is currently unavailable. Refresh and try again.')
+  origin = available
+  const appError = await backendPost('/web3/orders').catch((error: unknown) => error)
+  expect(appError).toMatchObject({ code: 'STATE_CONFLICT', status: 409,
+    retryable: false, requestId: appId })
+  expect(apiErrorCopy(appError, 'zh-CN')).not.toContain(appId)
+  expect(JSON.stringify(logs)).not.toContain('STATE_CONFLICT')
 })

@@ -174,7 +174,7 @@ export async function proxyApiRequest(
       ? { class: 'TimeoutError', codes: ['ETIMEDOUT'] }
       : safeTransportFailure(error)
     response = Response.json(
-      { error: { code: 'UPSTREAM_UNAVAILABLE', requestId: proxyRequestId } },
+      { code: 'UNAVAILABLE', retryable: true, requestId: proxyRequestId },
       { status: 502 }
     )
   }
