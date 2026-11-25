@@ -1,4 +1,6 @@
 import { attachRequestLogChannel } from '../../backend/tests/helpers/request-log-channel.mjs'
+import { forwardingGate } from './helpers/proxy-forwarding-gate.mjs'
+import { checkProxyRetry } from './helpers/web3-proxy-retry.mjs'
 import assert from 'node:assert/strict'
 import { spawn, execFileSync } from 'node:child_process'
 import { once } from 'node:events'
@@ -38,7 +40,7 @@ const result = {
   coldStart: { freshNextOutput: distDirectory, newAccountsAndOrders: true },
   requests: []
 }
-let f, frontend, browser
+let f, frontend, browser, proxyGate
 const diagnosticPages = []
 const step = (value) => console.log('T09 full: ' + value)
 const hash = (b) => createHash('sha256').update(b).digest('hex')
@@ -49,6 +51,11 @@ try {
   }
   f = await web3BrowserFixture(origin, { logRequest: (entry) => result.serverRequests.push(entry) })
   result.checkerImage = f.checkerImage
+  if (process.env.WEB3_PROXY_RETRY === '1') {
+    proxyGate = await forwardingGate(f.backendOrigin)
+    result.proxyGate = { origin: proxyGate.origin, backendOrigin: f.backendOrigin }
+    step('test-only proxy gate on exclusive loopback port ' + new URL(proxyGate.origin).port)
+  }
   await writeFile(
     resolve(frontendDirectory, tsConfigName),
     JSON.stringify({
@@ -64,7 +71,7 @@ try {
       cwd: frontendDirectory,
       env: {
         ...process.env,
-        BACKEND_ORIGIN: f.backendOrigin,
+        BACKEND_ORIGIN: proxyGate?.origin ?? f.backendOrigin,
         NEXT_DIST_DIR: distDirectory,
         NEXT_TS_CONFIG: tsConfigName,
         NEXT_TELEMETRY_DISABLED: '1'
@@ -419,9 +426,15 @@ try {
     await pace('purchase ' + index)
     await f.sync()
     await buyer.goto(origin + '/zh-CN/listing/' + f.listings[index])
-    await buyer.getByRole('button', { name: '使用 BZTEST 测试托管购买' }).click()
-    await buyer.waitForURL(/\/me\/orders\/[0-9a-f-]+$/)
-    const orderId = new URL(buyer.url()).pathname.split('/').at(-1)
+    let orderId
+    if (index === 0 && proxyGate) {
+      orderId = await checkProxyRetry({ buyer, fixture: f, gate: proxyGate, evidence, result })
+      step('real proxy failure/recovery and PostgreSQL idempotency complete')
+    } else {
+      await buyer.getByRole('button', { name: '使用 BZTEST 测试托管购买' }).click()
+      await buyer.waitForURL(/\/me\/orders\/[0-9a-f-]+$/)
+      orderId = new URL(buyer.url()).pathname.split('/').at(-1)
+    }
     await Promise.all([
       buyer.waitForResponse(
         (r) => r.url().includes('/payment-intents/') && r.url().endsWith('/read')
@@ -728,7 +741,10 @@ try {
     })
   )
 } catch (error) {
+  if (result.proxyRetry?.status === 'running') result.proxyRetry.status = 'failed'
   if (evidence) {
+    if (result.proxyRetry)
+      await writeFile(join(evidence, 'proxy-retry.json'), JSON.stringify(result.proxyRetry, null, 2))
     await mkdir(evidence, { recursive: true })
     await writeFile(
       join(evidence, 'failed-result.json'),
@@ -759,6 +775,7 @@ try {
     await done
   }
   try {
+    await proxyGate?.close()
     await f?.close()
   } finally {
     // These two paths are generated from this process's random browserRun only.
