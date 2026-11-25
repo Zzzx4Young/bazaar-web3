@@ -291,6 +291,8 @@ export async function checkProxyRetry({ buyer, fixture: f, gate, evidence, resul
       (row) => row.proxyRequestId === lost.proxyRequestId && row.status === 200
     )
   )
+  // Later full-browser purchases also cross the gate; freeze this supplement's four attempts.
+  proof.gateAttempts = gate.attempts.map((row) => ({ ...row }))
   proof.telemetryCorrelated = true
   proof.orderId = data.orderId
   proof.status = 'passed'

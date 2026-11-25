@@ -53,7 +53,7 @@ try {
   result.checkerImage = f.checkerImage
   if (process.env.WEB3_PROXY_RETRY === '1') {
     proxyGate = await forwardingGate(f.backendOrigin)
-    result.proxyGate = { origin: proxyGate.origin, backendOrigin: f.backendOrigin }
+    result.proxyGate = { origin: proxyGate.origin, backendOrigin: f.backendOrigin, frontendOrigin: origin }
     step('test-only proxy gate on exclusive loopback port ' + new URL(proxyGate.origin).port)
   }
   await writeFile(
