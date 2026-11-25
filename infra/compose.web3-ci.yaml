@@ -1,0 +1,26 @@
+# Dedicated restart-capable cluster; never reuse the Alpha disposable port or developer volumes.
+services:
+  postgres-web3:
+    image: postgres:17.11-bookworm
+    restart: 'no'
+    shm_size: 128mb
+    stop_grace_period: 60s
+    environment:
+      POSTGRES_USER: bazaar_test_admin
+      POSTGRES_DB: bazaar_test
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_test_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports: ['127.0.0.1:${WEB3_TEST_PORT:-56435}:5432']
+    volumes: [web3-test-data:/var/lib/postgresql/data]
+    secrets: [postgres_test_password]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+volumes:
+  web3-test-data:
+secrets:
+  postgres_test_password:
+    file: ./.secrets/postgres_test_password
