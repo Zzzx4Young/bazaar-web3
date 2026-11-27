@@ -1,4 +1,4 @@
-import { readFile as fsReadFile } from 'node:fs/promises'
+import { readFile as fsReadFile, readlink as fsReadlink } from 'node:fs/promises'
 import { availableParallelism as osParallelism } from 'node:os'
 import { posix } from 'node:path'
 
@@ -7,8 +7,21 @@ import { posix } from 'node:path'
 // A namespace/subtree mount can hide stricter ancestors: fail closed in that case.
 export async function readCapacityResources({
   readFile = fsReadFile,
+  readlink = fsReadlink,
   availableParallelism = osParallelism
 } = {}) {
+  // Linux proc_ns.h PROC_CGROUP_INIT_INO = 0xEFFFFFFB. A private namespace
+  // virtualizes '/' and can conceal stricter ancestors despite a root mount.
+  // Fail closed on other kernels/layouts; never accept a caller-provided waiver.
+  // https://github.com/torvalds/linux/blob/v6.12/include/linux/proc_ns.h
+  let namespace
+  try {
+    namespace = await readlink('/proc/self/ns/cgroup')
+  } catch (error) {
+    throw new Error(`Cannot detect cgroup namespace: ${error.code ?? error.message}`, { cause: error })
+  }
+  if (namespace !== 'cgroup:[4026531835]')
+    throw new Error('Capacity qualification requires the initial cgroup namespace; hidden ancestors cannot be certified')
   async function read(path, optional = false) {
     try {
       return (await readFile(path, 'utf8')).trim()
@@ -184,6 +197,7 @@ export async function readCapacityResources({
   }
   return {
     host,
+    namespace: { source: '/proc/self/ns/cgroup', identity: namespace, initial: true },
     discoverySources: ['/proc/self/cgroup', '/proc/self/mountinfo'],
     hierarchies: { memory: memoryHierarchy, cpu: cpuHierarchy },
     parallelism: { source: 'os.availableParallelism (sched_getaffinity)', cpus: parallelism },

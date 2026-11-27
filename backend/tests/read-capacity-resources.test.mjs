@@ -35,6 +35,7 @@ function fixture(version = 2, group = '/jobs/run', mountRoot = '/') {
         if (files[path] instanceof Error) throw files[path]
         return files[path]
       },
+      readlink: async () => 'cgroup:[4026531835]',
       availableParallelism: () => 8
     })
   return { files, detect }
@@ -184,4 +185,17 @@ test('oversized numeric kernel values are malformed, never unlimited', async () 
   const { files, detect } = fixture()
   files['/cg/jobs/run/memory.max'] = '9'.repeat(400)
   await assert.rejects(detect, /memory.max/)
+})
+
+for (const value of ['cgroup:[4026532999]', '', 'other:[4026531835]'])
+  test(`private or invalid cgroup namespace is not a host capacity certificate: ${value}`, async () => {
+    await assert.rejects(readCapacityResources({
+      readlink: async () => value,
+      readFile: async () => { throw new Error('must reject namespace before reading capacity') }
+    }), /initial cgroup namespace/)
+  })
+test('unreadable cgroup namespace cannot certify hidden ancestor limits', async () => {
+  await assert.rejects(readCapacityResources({
+    readlink: async () => { throw Object.assign(new Error('denied'), { code: 'EACCES' }) }
+  }), /cgroup namespace.*EACCES/)
 })
