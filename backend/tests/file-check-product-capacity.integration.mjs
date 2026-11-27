@@ -2,9 +2,13 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { createReadStream } from 'node:fs'
-import { mkdtemp, writeFile, rm, readdir, readFile } from 'node:fs/promises'
+import { mkdtemp, writeFile, rm, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import { tmpdir, availableParallelism } from 'node:os'
+import { tmpdir } from 'node:os'
+import {
+  readCapacityResources,
+  assertCapacityResources
+} from '../scripts/read-capacity-resources.mjs'
 import { execFileSync } from 'node:child_process'
 import { sandbox, fixture } from './helpers/database.mjs'
 import { PrivateFileService } from '../dist/delivery-files/upload.service.js'
@@ -135,25 +139,20 @@ test(
         upload('zip-500000000.zip', 500000000)
       ])
       // Both live cgroups must fit together, including a host/service reserve.
-      const meminfo = await readFile('/proc/meminfo', 'utf8')
-      const hostAvailable = Number(meminfo.match(/^MemAvailable:\s+(\d+)/m)?.[1]) * 1024
-      const max = (await readFile('/sys/fs/cgroup/memory.max', 'utf8')).trim()
-      const current = Number((await readFile('/sys/fs/cgroup/memory.current', 'utf8')).trim())
-      const cgroupAvailable = max === 'max' ? hostAvailable : Number(max) - current
-      const available = Math.min(hostAvailable, cgroupAvailable)
+      const resources = await readCapacityResources()
       memoryAdmission = {
-        hostAvailable,
-        cgroupAvailable,
-        available,
+        hostAvailable: resources.host.availableBytes,
+        cgroupAvailable: Math.min(
+          resources.host.availableBytes,
+          ...resources.memory.map((row) => row.availableBytes ?? resources.host.availableBytes)
+        ),
+        available: resources.availableBytes,
         scannerTotalBytes: base.memoryBytes * 2,
         requiredAvailableBytes: 12_000_000_000,
-        availableCpus: availableParallelism()
+        availableCpus: resources.availableCpus,
+        resources
       }
-      assert.ok(
-        available >= 12_000_000_000,
-        'Two scanner tasks require at least 12GB available memory'
-      )
-      assert.ok(availableParallelism() >= 2, 'At least two available CPUs required')
+      assertCapacityResources(resources)
       const tasks = [scan(), scan()]
       for (
         let n = 0;

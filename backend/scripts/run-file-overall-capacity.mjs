@@ -1,7 +1,7 @@
 import { assertCapacityManifest, assertExpansionManifest } from './file-capacity-manifest.mjs'
 // Explicit capacity invocation: missing fixtures/services/resources are errors, never skips.
 import assert from 'node:assert/strict'
-import { availableParallelism } from 'node:os'
+import { readCapacityResources, assertCapacityResources } from './read-capacity-resources.mjs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { spawn } from 'node:child_process'
@@ -24,18 +24,21 @@ for (const [root, name, count] of [
   [process.env.PRIVATE_FILE_EXPANSION_SAMPLES, 'expansion-manifest.json', 4]
 ])
   (count === 12 ? assertCapacityManifest : assertExpansionManifest)(
-    JSON.parse(await readFile(join(root, name), 'utf8')))
-const meminfo = await readFile('/proc/meminfo', 'utf8')
-const hostAvailable = Number(meminfo.match(/^MemAvailable:\s+(\d+)/m)?.[1]) * 1024
-const max = (await readFile('/sys/fs/cgroup/memory.max', 'utf8')).trim()
-const current = Number((await readFile('/sys/fs/cgroup/memory.current', 'utf8')).trim())
-const cgroupAvailable = max === 'max' ? hostAvailable : Number(max) - current
+    JSON.parse(await readFile(join(root, name), 'utf8'))
+  )
+const resources = await readCapacityResources()
+const hostAvailable = resources.host.availableBytes
+const cgroupAvailable = Math.min(
+  hostAvailable,
+  ...resources.memory.map((row) => row.availableBytes ?? hostAvailable)
+)
 const admission = {
   at: new Date().toISOString(),
   hostAvailable,
   cgroupAvailable,
-  availableBytes: Math.min(hostAvailable, cgroupAvailable),
-  availableCpus: availableParallelism(),
+  availableBytes: resources.availableBytes,
+  availableCpus: resources.availableCpus,
+  resources,
   requiredAvailableBytes: 12_000_000_000,
   scannerMemoryBytes: 4_000_000_000,
   maximumScannerConcurrency: 2,
@@ -45,8 +48,7 @@ await writeFile(
   join(process.env.PRIVATE_FILE_EVIDENCE_DIR, 'capacity-admission.json'),
   JSON.stringify(admission, null, 2) + '\n'
 )
-assert.ok(admission.availableBytes >= admission.requiredAvailableBytes, '12GB available required')
-assert.ok(admission.availableCpus >= 2, 'Two available CPUs required')
+assertCapacityResources(resources)
 const child = spawn(
   process.execPath,
   [
