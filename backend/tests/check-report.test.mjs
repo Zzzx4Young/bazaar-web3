@@ -8,6 +8,8 @@ test('new ZIP coverage is bounded and consistent without revoking legacy native 
   assert.equal(validZipCoverage(good), true)
   for (const value of [{ scope: good.scope }, { members: good.members },
     { ...good, scope: 'raw-archive-and-all-members' },
+    { ...good, members: { ...good.members, entries: 0, expandedBytes: 1 } },
+    { ...good, members: { ...good.members, entries: 1, expandedBytes: 500000001 } },
     { ...good, members: { ...good.members, expandedBytes: 2000000001 } },
     { ...good, members: { ...good.members, entries: 10001 } },
     { ...good, members: { ...good.members, sha256: 'not-a-digest' } }])

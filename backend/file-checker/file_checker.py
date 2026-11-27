@@ -295,7 +295,7 @@ def malware(path, zip_archive=False):
     # MaxScanSize includes compressed input plus recursively extracted bytes.
     # check_zip still independently rejects actual expansion above 2GB.
     scan_budget = 2500000000 if zip_archive else 2000000000
-    arguments = ['clamscan', '--no-summary', '--stdout', '--max-filesize=500000000',
+    arguments = ['clamscan', '--no-summary', '--stdout', '--disable-cache', '--max-filesize=500000000',
                           f'--max-scansize={scan_budget}', '--max-files=10000', '--max-recursion=10',
                           '--max-scantime=120000', '--alert-exceeds-max=yes', '--alert-encrypted=yes']
     code, scan = run_limited(arguments + [path])

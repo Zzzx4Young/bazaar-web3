@@ -53,6 +53,7 @@ def run(args):
 c.run_limited=run
 c.malware('/input/object',zip_archive=True)
 assert '--max-scansize=2500000000' in calls[-1]
+assert '--disable-cache' in calls[-1]
 assert '--max-filesize=500000000' in calls[-1]
 assert '--max-scantime=120000' in calls[-1]
 assert '--alert-exceeds-max=yes' in calls[-1]
