@@ -1,3 +1,4 @@
+import { composeProjectArgs } from './helpers/compose-project.mjs'
 import { spawn } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
@@ -22,7 +23,7 @@ let code = 1
 try {
   code = await run(
     'sudo',
-    ['-n', 'docker', 'compose', '-f', composeFile, '--profile', 'test', 'up', '-d', '--wait', '--wait-timeout', '120', 'postgres-test'],
+    ['-n', 'docker', 'compose', ...composeProjectArgs(process.env.COMPOSE_PROJECT_NAME), '-f', composeFile, '--profile', 'test', 'up', '-d', '--wait', '--wait-timeout', '120', 'postgres-test'],
     root
   )
   if (code === 0) {
@@ -34,6 +35,6 @@ try {
       })
   }
 } finally {
-  await run('sudo', ['-n', 'docker', 'compose', '-f', 'infra/compose.yaml', '--profile', 'test', 'stop', 'postgres-test'], root)
+  await run('sudo', ['-n', 'docker', 'compose', ...composeProjectArgs(process.env.COMPOSE_PROJECT_NAME), '-f', 'infra/compose.yaml', '--profile', 'test', 'stop', 'postgres-test'], root)
 }
 process.exitCode = code
