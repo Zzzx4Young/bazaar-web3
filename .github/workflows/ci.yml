@@ -106,6 +106,8 @@ jobs:
       - name: Browser dependencies
         working-directory: frontend
         run: npx playwright install --with-deps chromium
+      - name: Compose project identity regression
+        run: node --test frontend/scripts/helpers/compose-project.test.mjs
       - name: Alpha browser acceptance
         working-directory: frontend
         run: npm run test:e2e:alpha
@@ -128,6 +130,13 @@ jobs:
         run: |
           docker compose -f infra/compose.yaml --profile test down --volumes
           docker compose -f infra/compose.alpha.yaml down --volumes
+      - name: Exact checkout and locked tool provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provenance-alpha
+          path: .tmp/ci/*.json
+          retention-days: 14
   web3:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -181,14 +190,6 @@ jobs:
       - name: Owned test cluster cleanup
         if: always()
         run: docker compose -f infra/compose.web3-ci.yaml down --volumes
-      - name: Exact checkout and locked tool provenance
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: provenance-alpha
-          path: .tmp/ci/*.json
-          retention-days: 14
-
       - name: Exact checkout and locked tool provenance
         if: always()
         uses: actions/upload-artifact@v4
