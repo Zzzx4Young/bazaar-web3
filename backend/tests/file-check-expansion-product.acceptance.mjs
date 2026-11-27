@@ -1,3 +1,4 @@
+import { assertExpansionManifest } from '../scripts/file-capacity-manifest.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { randomBytes, randomUUID } from 'node:crypto'
@@ -81,6 +82,7 @@ test(
         data: { settlementMode: 'testnet_escrow' }
       })
       const manifest = JSON.parse(await readFile(join(root, 'expansion-manifest.json'), 'utf8'))
+    assertExpansionManifest(manifest)
       assert.equal(manifest.length, 4)
       for (const sample of manifest) {
         const input = {
@@ -140,7 +142,7 @@ test(
         assert.equal(observation?.removed, true)
         assert.equal(versions.length, sample.expected === 'clean' ? 1 : 0)
         if (sample.expected === 'clean') {
-          assert.equal(checks[0].report.malware.scope, 'raw-archive-and-all-members')
+          assert.equal(checks[0].report.malware.scope, 'whole-container-recursive')
           assert.equal(checks[0].report.malware.members.entries, 4)
           assert.equal(checks[0].report.malware.members.expandedBytes, sample.expandedBytes)
           assert.match(checks[0].report.malware.members.sha256, /^[a-f0-9]{64}$/)

@@ -1,3 +1,4 @@
+import { assertCapacityManifest } from './file-capacity-manifest.mjs'
 // Bounded local real-object scanner. No API, DB, signing, upload or download claims.
 import assert from 'node:assert/strict'
 import { createHash, randomUUID } from 'node:crypto'
@@ -11,7 +12,7 @@ import { observeFileCheck } from './observe-file-check.mjs'
 export async function sampleFileCapacity(root, image) {
   assert.match(image ?? '', /^sha256:[a-f0-9]{64}$/)
   const manifest = JSON.parse(await readFile(join(root, 'manifest.json'), 'utf8'))
-  assert.equal(manifest.length, 12)
+  assertCapacityManifest(manifest)
   const runtime = {
     image,
     memoryBytes: 4_000_000_000,

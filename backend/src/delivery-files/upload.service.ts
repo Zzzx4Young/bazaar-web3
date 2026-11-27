@@ -11,6 +11,7 @@ import { objectInput, positiveInteger } from '../common/input.js'
 import { requestHash } from '../orders/order-idempotency.js'
 import { web3Policy } from '../web3/web3-policy.js'
 import { PrivateFileQuotaService, type PrivateFileBudget } from './quota.service.js'
+import { validZipCoverage } from './check-report.js'
 import { processIdentity, processHasExited } from './process-identity.js'
 import { byteGuard, type PrivateObjectStore, type ObjectReceipt } from './object-store.js'
 
@@ -23,7 +24,8 @@ export interface FileCheckReport {
   sha256?: string
   contentType?: string
   structural?: boolean
-  malware?: { clean: boolean; engine: string; version: string; signatureDate: string }
+  malware?: { clean: boolean; engine: string; version: string; signatureDate: string;
+    scope?: string; members?: { entries: number; expandedBytes: number; sha256: string } }
   elapsedMs?: number
   resource?: Record<string, string | number | boolean>
 }
@@ -483,6 +485,7 @@ export class PrivateFileService {
           report.malware.engine !== 'ClamAV' ||
           !report.malware.version ||
           !report.malware.signatureDate ||
+          (row.contentType === 'application/zip' && !validZipCoverage(report.malware)) ||
           current.sha256 !== row.sha256
         )
           result = { status: 'rejected', reason: 'CHECK_MISMATCH', processStopped: true }

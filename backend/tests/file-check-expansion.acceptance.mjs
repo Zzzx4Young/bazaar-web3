@@ -1,3 +1,4 @@
+import { assertExpansionManifest } from '../scripts/file-capacity-manifest.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { randomUUID, createHash } from 'node:crypto'
@@ -28,6 +29,7 @@ test(
       'Explicit expansion samples, evidence and checker image required'
     )
     const manifest = JSON.parse(await readFile(join(root, 'expansion-manifest.json'), 'utf8'))
+    assertExpansionManifest(manifest)
     const rows = []
     for (const sample of manifest) {
       const path = join(root, sample.name)
@@ -55,7 +57,7 @@ test(
         assert.equal(report.sha256, sample.sha256)
         assert.equal(report.structural, true)
         assert.equal(report.malware.clean, true)
-        assert.equal(report.malware.scope, 'raw-archive-and-all-members')
+        assert.equal(report.malware.scope, 'whole-container-recursive')
         assert.equal(report.malware.members.entries, 4)
         assert.equal(report.malware.members.expandedBytes, sample.expandedBytes)
       } else {

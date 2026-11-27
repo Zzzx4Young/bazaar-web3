@@ -1,5 +1,4 @@
 """Untrusted bytes are data only. The container supplies the process/resource boundary."""
-import array
 import binascii
 import datetime
 import hashlib
@@ -8,7 +7,6 @@ import os
 import pathlib
 import re
 import signal
-import socket
 import stat
 import struct
 import subprocess
@@ -284,7 +282,7 @@ def check_image(path, expected):
             require(source.read(2) == b'\xff\xd9', 'JPEG_TRAILING')
 
 
-def malware(path, raw_archive=False):
+def malware(path, zip_archive=False):
     code, version = run_limited(['clamscan', '--version'])
     require(code == 0, 'MALWARE_ENGINE_UNAVAILABLE')
     text = version.decode('utf-8', 'replace').strip()
@@ -294,13 +292,12 @@ def malware(path, raw_archive=False):
     require(-86400 <= time.time()-date.timestamp() <= MAX_SIGNATURE_AGE_SECONDS, 'MALWARE_DATABASE_STALE')
     # ClamAV counts text/PDF normalization as recursion too. Nested archives are
     # rejected independently by check_zip; this is a bounded engine budget.
+    # MaxScanSize includes compressed input plus recursively extracted bytes.
+    # check_zip still independently rejects actual expansion above 2GB.
+    scan_budget = 2500000000 if zip_archive else 2000000000
     arguments = ['clamscan', '--no-summary', '--stdout', '--max-filesize=500000000',
-                          '--max-scansize=2000000000', '--max-files=10000', '--max-recursion=10',
+                          f'--max-scansize={scan_budget}', '--max-files=10000', '--max-recursion=10',
                           '--max-scantime=120000', '--alert-exceeds-max=yes', '--alert-encrypted=yes']
-    if raw_archive:
-        # Only the outer ZIP is raw-scanned. Every actual member is separately
-        # scanned with archive/document parsing enabled by MemberScanner.
-        arguments.append('--scan-archive=no')
     code, scan = run_limited(arguments + [path])
     if b'Heuristics.Limits.Exceeded' in scan:
         raise UnsafeFile('MALWARE_SCAN_LIMIT')
@@ -308,96 +305,11 @@ def malware(path, raw_archive=False):
     return {'clean': True, 'engine': 'ClamAV', 'version': text, 'signatureDate': date.isoformat()}
 
 
-class MemberScanner:
-    """One task-local engine; one complete member at a time, never split files."""
-    def __enter__(self):
-        self.root = tempfile.TemporaryDirectory(dir='/tmp')
-        self.process = None
-        try:
-            self.socket_path = self.root.name + '/clamd.sock'
-            config = self.root.name + '/clamd.conf'
-            with open(config, 'w') as target:
-                target.write(f"""Foreground yes
-LocalSocket {self.socket_path}
-LocalSocketMode 600
-DatabaseDirectory /var/lib/clamav
-TemporaryDirectory {self.root.name}
-MaxThreads 1
-MaxQueue 2
-MaxFileSize 500000000
-MaxScanSize 2000000000
-MaxFiles 10000
-MaxRecursion 10
-MaxScanTime 120000
-AlertExceedsMax yes
-AlertEncrypted yes
-ScanArchive yes
-DisableCache yes
-SelfCheck 0
-ConcurrentDatabaseReload no
-""")
-            self.process = subprocess.Popen(['clamd', '--config-file', config],
-                                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            started = time.monotonic()
-            while True:
-                require(self.process.poll() is None, 'MALWARE_ENGINE_UNAVAILABLE')
-                require(time.monotonic() - started < 30, 'MALWARE_ENGINE_UNAVAILABLE')
-                try:
-                    if self.request(b'zPING\0') == b'PONG\0':
-                        break
-                except (OSError, UnsafeFile):
-                    time.sleep(0.05)
-            return self
-        except BaseException:
-            self.__exit__(None, None, None)
-            raise
-
-    def request(self, command, fd=None):
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
-            connection.settimeout(120)
-            connection.connect(self.socket_path)
-            connection.sendall(command)
-            if fd is not None:
-                connection.sendmsg([b'\0'], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array('i', [fd]))])
-            data = bytearray()
-            while not data.endswith(b'\0'):
-                chunk = connection.recv(4096)
-                require(chunk, 'MALWARE_SCAN_INCOMPLETE')
-                data.extend(chunk)
-                require(len(data) <= 4096, 'MALWARE_SCAN_INCOMPLETE')
-            return bytes(data)
-
-    def scan(self, member, name, size):
-        require(0 <= size <= MAX_ENTRY, 'ZIP_SIZE')
-        try:
-            response = self.request(b'zFILDES\0', member.fileno())
-        except OSError as error:
-            raise UnsafeFile('MALWARE_SCAN_INCOMPLETE') from error
-        if b'Heuristics.Limits.Exceeded' in response:
-            raise UnsafeFile('MALWARE_SCAN_LIMIT')
-        if response.endswith(b' FOUND\0'):
-            raise UnsafeFile('MALWARE_DETECTED')
-        require(re.fullmatch(rb'fd\[\d+\]: OK\x00', response), 'MALWARE_SCAN_INCOMPLETE')
-
-    def __exit__(self, *_):
-        if self.process is not None:
-            self.process.terminate()
-            try:
-                self.process.wait(timeout=1)
-            except subprocess.TimeoutExpired:
-                self.process.kill()
-                self.process.wait()
-        self.root.cleanup()
-
-
 def malware_zip(path):
-    # The original bytes (including archive metadata) are scanned as raw data.
-    # ZIP parsing/CRC/budgets stay authoritative, and every actual member gets
-    # an independent full recursive scan on the same loaded native engine.
-    antivirus = malware(path, raw_archive=True)
-    with MemberScanner() as scanner:
-        coverage = check_zip(path, scanner.scan)
-    return {**antivirus, 'scope': 'raw-archive-and-all-members', 'members': coverage}
+    # Keep original native archive/context detection and recursive normalization.
+    coverage = check_zip(path)
+    antivirus = malware(path, zip_archive=True)
+    return {**antivirus, 'scope': 'whole-container-recursive', 'members': coverage}
 
 
 def main():

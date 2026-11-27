@@ -1,3 +1,4 @@
+import { assertCapacityManifest, assertExpansionManifest } from './file-capacity-manifest.mjs'
 // Explicit capacity invocation: missing fixtures/services/resources are errors, never skips.
 import assert from 'node:assert/strict'
 import { availableParallelism } from 'node:os'
@@ -22,7 +23,8 @@ for (const [root, name, count] of [
   [process.env.PRIVATE_FILE_CAPACITY_SAMPLES, 'manifest.json', 12],
   [process.env.PRIVATE_FILE_EXPANSION_SAMPLES, 'expansion-manifest.json', 4]
 ])
-  assert.equal(JSON.parse(await readFile(join(root, name), 'utf8')).length, count)
+  (count === 12 ? assertCapacityManifest : assertExpansionManifest)(
+    JSON.parse(await readFile(join(root, name), 'utf8')))
 const meminfo = await readFile('/proc/meminfo', 'utf8')
 const hostAvailable = Number(meminfo.match(/^MemAvailable:\s+(\d+)/m)?.[1]) * 1024
 const max = (await readFile('/sys/fs/cgroup/memory.max', 'utf8')).trim()

@@ -42,3 +42,23 @@ assert not any(arg in scan for arg in ('--scan-archive=no', '--normalize=no', '-
     assert.equal(result.status, 0, result.stderr)
   })
 }
+test('ZIP native aggregate covers compressed plus expanded bytes without disabling archive or alert checks', () => {
+  const program = `
+import sys,datetime
+sys.path.insert(0,sys.argv[1]);import file_checker as c
+calls=[]
+def run(args):
+    calls.append(args)
+    return (0,('ClamAV 1.4.6/28194/'+datetime.datetime.now(datetime.timezone.utc).strftime('%a %b %d %H:%M:%S %Y')).encode()) if '--version' in args else (0,b'OK')
+c.run_limited=run
+c.malware('/input/object',zip_archive=True)
+assert '--max-scansize=2500000000' in calls[-1]
+assert '--max-filesize=500000000' in calls[-1]
+assert '--max-scantime=120000' in calls[-1]
+assert '--alert-exceeds-max=yes' in calls[-1]
+assert not any(x in calls[-1] for x in ('--scan-archive=no','--normalize=no','--max-scansize=0'))
+assert c.MAX_TOTAL==2000000000
+`
+  const result = spawnSync('python3', ['-c', program, checker], { encoding: 'utf8' })
+  assert.equal(result.status, 0, result.stderr)
+})
