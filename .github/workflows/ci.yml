@@ -29,7 +29,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: provenance-verify
-          path: .tmp/ci/provenance.json
+          path: .tmp/ci/*.json
           retention-days: 14
 
   backend:
@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: provenance-backend
-          path: .tmp/ci/provenance.json
+          path: .tmp/ci/*.json
           retention-days: 14
 
   database:
@@ -80,7 +80,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: provenance-database-${{ matrix.group }}
-          path: .tmp/ci/provenance.json
+          path: .tmp/ci/*.json
           retention-days: 14
 
   alpha:
@@ -154,6 +154,8 @@ jobs:
         run: |
           docker build -t bazaar-private-check:ci backend/file-checker
           echo "PRIVATE_FILE_CHECK_IMAGE=$(docker image inspect -f '{{.Id}}' bazaar-private-check:ci)" >> "$GITHUB_ENV"
+      - name: Verify immutable scanner source and dependencies
+        run: node backend/scripts/verify-checker-image.mjs
       - name: Browser dependencies
         working-directory: frontend
         run: npx playwright install --with-deps chromium
@@ -184,7 +186,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: provenance-alpha
-          path: .tmp/ci/provenance.json
+          path: .tmp/ci/*.json
           retention-days: 14
 
       - name: Exact checkout and locked tool provenance
@@ -192,7 +194,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: provenance-web3
-          path: .tmp/ci/provenance.json
+          path: .tmp/ci/*.json
           retention-days: 14
 
   private-files:
@@ -217,15 +219,37 @@ jobs:
           docker build --build-arg BASE_IMAGE=bazaar-private-check:ci -t bazaar-private-control:ci backend/file-checker/control
           echo "PRIVATE_FILE_CHECK_IMAGE=$(docker image inspect -f '{{.Id}}' bazaar-private-check:ci)" >> "$GITHUB_ENV"
           echo "PRIVATE_FILE_CONTROL_IMAGE=$(docker image inspect -f '{{.Id}}' bazaar-private-control:ci)" >> "$GITHUB_ENV"
+      - name: Verify immutable scanner source and dependencies
+        run: node backend/scripts/verify-checker-image.mjs
+      - name: Native container metadata signature assertions
+        working-directory: backend
+        run: node --test tests/file-check-container.acceptance.mjs
       - name: Full decimal samples and mandatory scanner/Garage/resource/queue capacity
         working-directory: backend
         env:
           PRIVATE_FILE_CAPACITY_SAMPLES: ${{ runner.temp }}/private-capacity/samples
+          PRIVATE_FILE_EVIDENCE_DIR: ${{ runner.temp }}/private-capacity
         run: |
-          bash scripts/run-file-capacity.sh "$RUNNER_TEMP/private-capacity"
-          node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node scripts/run-ci-integration.mjs private-files
+          mkdir -p "$PRIVATE_FILE_CAPACITY_SAMPLES"
+          sudo -n docker run --pull=never --rm --network=none --read-only \
+            --memory=512000000 --cpus=1 --pids-limit=32 --user "$(id -u):$(id -g)" \
+            --mount "type=bind,source=$PWD/file-checker/control/generate-capacity.py,target=/generate.py,readonly" \
+            --mount "type=bind,source=$PRIVATE_FILE_CAPACITY_SAMPLES,target=/samples" \
+            --entrypoint python3 "$PRIVATE_FILE_CHECK_IMAGE" /generate.py /samples
           python3 file-checker/control/generate-expansion.py "$RUNNER_TEMP/private-expansion"
-          node scripts/sample-file-expansion.mjs "$RUNNER_TEMP/private-expansion"
+          python3 file-checker/control/generate-scan-tail.py "$RUNNER_TEMP/private-expansion"
+          node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node scripts/run-ci-integration.mjs private-files
+          PRIVATE_FILE_EXPANSION_SAMPLES="$RUNNER_TEMP/private-expansion" \
+            PRIVATE_FILE_EVIDENCE_DIR="$RUNNER_TEMP/private-capacity" \
+            node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs \
+            node --test tests/file-check-expansion-product.acceptance.mjs
+      - name: File capacity and fault diagnostics (no source objects or credentials)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-file-capacity-diagnostics
+          path: ${{ runner.temp }}/private-capacity/*.json
+          retention-days: 14
       - name: Owned test cluster cleanup
         if: always()
         run: docker compose -f infra/compose.web3-ci.yaml down --volumes
@@ -235,5 +259,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: provenance-private-files
-          path: .tmp/ci/provenance.json
+          path: .tmp/ci/*.json
           retention-days: 14
