@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { correlateOrderEvents } from './order-trace-correlation.mjs'
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
@@ -34,6 +35,7 @@ const runtimeRole = `ae_runtime_${suffix}`
 const observerRole = `ae_observer_${suffix}`
 const observeSchema = `ae_observe_${suffix}`
 const requestLogs = []
+const commandResponses = []
 const hotEndpoint = process.env.GARAGE_HOT_ENDPOINT ?? 'http://127.0.0.1:3900'
 const coldEndpoint = process.env.GARAGE_COLD_ENDPOINT ?? 'http://127.0.0.1:3903'
 const hotPublicEndpoint = process.env.GARAGE_HOT_PUBLIC_ENDPOINT ?? 'http://localhost:3900'
@@ -205,6 +207,13 @@ try {
   })
   buyerContext = await browser.newContext({
     recordVideo: { dir: resolve(resultsDirectory, 'video-buyer') }
+  })
+  for (const context of [sellerContext, buyerContext]) context.on('response', (response) => {
+    const request = response.request()
+    if (request.method() !== 'POST' || !new URL(response.url()).pathname.startsWith('/api/orders')) return
+    const commandKey = request.headers()['idempotency-key']
+    if (commandKey) commandResponses.push({ commandKey, status: response.status(),
+      applicationRequestId: response.headers()['x-application-request-id'] })
   })
   await sellerContext.tracing.start({ screenshots: true, snapshots: true, sources: true })
   await buyerContext.tracing.start({ screenshots: true, snapshots: true, sources: true })
@@ -443,15 +452,7 @@ try {
     events.map((event) => event.operation),
     ['create', 'pay', 'deliver', 'issue', 'request_refund', 'refund']
   )
-  for (const event of events) {
-    assert.match(event.request_id, /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/)
-    assert.ok(
-      requestLogs.some(
-        (entry) => entry.requestId === event.request_id && entry.route.includes('/api/orders')
-      ),
-      `No HTTP trace matched ${event.operation} request ${event.request_id}`
-    )
-  }
+  const correlatedRequests = correlateOrderEvents(events, commandResponses, requestLogs)
   await writeFile(
     resolve(resultsDirectory, 'acceptance-summary.json'),
     `${JSON.stringify(
@@ -464,7 +465,8 @@ try {
         slowReadRequestCount,
         finalStatus: orders[0].status,
         inventory: reservedInventory[0],
-        correlatedRequestIds: events.map((event) => event.request_id)
+        correlatedRequestIds: correlatedRequests.map((entry) => entry.applicationRequestId),
+        correlatedCommands: correlatedRequests
       },
       null,
       2
