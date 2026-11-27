@@ -11,7 +11,9 @@ for n in ['memory.current','memory.peak','memory.events','memory.max','memory.sw
 s=os.statvfs('/tmp');r['tmpUsedBytes']=(s.f_blocks-s.f_bfree)*s.f_frsize
 r['pid1Children']=pathlib.Path('/proc/1/task/1/children').read_text().strip()
 print(json.dumps(r))`
-export function observeFileCheck(id) {
+export function observeFileCheck(id, intervalMs = 200) {
+  if (!Number.isInteger(intervalMs) || intervalMs < 200 || intervalMs > 2000)
+    throw new Error('Observer interval must be 200–2000 milliseconds')
   const name = 'bazaar-private-check-' + id
   const samples = []
   let stop = false
@@ -27,7 +29,7 @@ export function observeFileCheck(id) {
       } catch {
         /* Startup/removal races are expected; no sample is invented. */
       }
-      if (!stop) await new Promise((r) => setTimeout(r, 200))
+      if (!stop) await new Promise((r) => setTimeout(r, intervalMs))
     }
   })()
   return async () => {
@@ -40,7 +42,7 @@ export function observeFileCheck(id) {
       removed = /No such (object|container)/i.test(error.stderr ?? '')
     }
     return {
-      intervalMs: 200,
+      intervalMs,
       method: 'docker exec python3, read-only cgroup v2 and statvfs; observer overhead included',
       samples,
       removed

@@ -1,4 +1,5 @@
 """Untrusted bytes are data only. The container supplies the process/resource boundary."""
+import array
 import binascii
 import datetime
 import hashlib
@@ -7,10 +8,12 @@ import os
 import pathlib
 import re
 import signal
+import socket
 import stat
 import struct
 import subprocess
 import sys
+import tempfile
 import time
 import unicodedata
 import warnings
@@ -89,10 +92,12 @@ def check_extra(extra, raw_name, name):
             raise UnsafeFile('ZIP_UNSUPPORTED_EXTRA')
 
 
-def check_zip(path):
+def check_zip(path, scan_member=None):
     """Use central metadata for bounds, but count actual input/output and verify CRC."""
     total = 0
     compressed_total = 0
+    member = None
+    coverage = hashlib.sha256()
     try:
         with zipfile.ZipFile(path) as archive, open(path, 'rb') as source:
             infos = archive.infolist()
@@ -134,6 +139,9 @@ def check_zip(path):
                 actual_output = 0
                 crc = 0
                 prefix = bytearray()
+                if scan_member:
+                    member = tempfile.TemporaryFile(dir='/tmp')
+                member_hash = hashlib.sha256()
                 # Every compressed byte is read; decompressed output is capped per step.
                 while left:
                     chunk = source.read(min(65536, left))
@@ -150,6 +158,7 @@ def check_zip(path):
                         actual_output += len(out)
                         total += len(out)
                         crc = binascii.crc32(out, crc)
+                        member_hash.update(out)
                         if len(prefix) < 512:
                             prefix.extend(out[:512-len(prefix)])
                         require(actual_output <= MAX_ENTRY and total <= MAX_TOTAL, 'ZIP_SIZE')
@@ -158,6 +167,8 @@ def check_zip(path):
                         consumed = actual_input - len(pending) - (len(decoder.unused_data) if decoder else 0)
                         require(actual_output == 0 or consumed > 0 and actual_output <= consumed * MAX_RATIO, 'ZIP_RATIO')
                         require(not archive_magic(prefix), 'ZIP_NESTED')
+                        if member is not None:
+                            member.write(out)
                 if decoder:
                     require(decoder.eof and not decoder.unused_data and not decoder.unconsumed_tail, 'ZIP_DEFLATE')
                 require(actual_input == info.compress_size and actual_output == info.file_size and crc & 0xffffffff == info.CRC, 'ZIP_INTEGRITY')
@@ -172,6 +183,13 @@ def check_zip(path):
                     else:
                         descriptor += source.read(8)
                     require(len(descriptor) == 12 and struct.unpack('<III', descriptor) == (info.CRC, actual_input, actual_output), 'ZIP_DESCRIPTOR')
+                if member is not None:
+                    member.seek(0)
+                    scan_member(member, name, actual_output)
+                    member.close()
+                    member = None
+                coverage.update(json.dumps([name, actual_output, member_hash.hexdigest()],
+                                           ensure_ascii=True, separators=(',', ':')).encode() + b'\n')
                 ranges.append((info.header_offset, source.tell()))
             ranges.sort()
             require(ranges[0][0] == 0, 'ZIP_PREFIX')
@@ -184,10 +202,14 @@ def check_zip(path):
             require(end >= 0 and end + 22 <= len(tail), 'ZIP_END')
             comment = struct.unpack_from('<H', tail, end+20)[0]
             require(end+22+comment == len(tail), 'ZIP_TRAILING')
+            return {'entries': len(infos), 'expandedBytes': total, 'sha256': coverage.hexdigest()}
     except UnsafeFile:
         raise
     except (zipfile.BadZipFile, UnicodeError, OSError, ValueError, zlib.error, struct.error) as error:
         raise UnsafeFile('ZIP_STRUCTURE') from error
+    finally:
+        if member is not None:
+            member.close()
 
 
 def run_limited(arguments, limit=1048576):
@@ -262,7 +284,7 @@ def check_image(path, expected):
             require(source.read(2) == b'\xff\xd9', 'JPEG_TRAILING')
 
 
-def malware(path):
+def malware(path, raw_archive=False):
     code, version = run_limited(['clamscan', '--version'])
     require(code == 0, 'MALWARE_ENGINE_UNAVAILABLE')
     text = version.decode('utf-8', 'replace').strip()
@@ -272,13 +294,110 @@ def malware(path):
     require(-86400 <= time.time()-date.timestamp() <= MAX_SIGNATURE_AGE_SECONDS, 'MALWARE_DATABASE_STALE')
     # ClamAV counts text/PDF normalization as recursion too. Nested archives are
     # rejected independently by check_zip; this is a bounded engine budget.
-    code, scan = run_limited(['clamscan', '--no-summary', '--stdout', '--max-filesize=500000000',
+    arguments = ['clamscan', '--no-summary', '--stdout', '--max-filesize=500000000',
                           '--max-scansize=2000000000', '--max-files=10000', '--max-recursion=10',
-                          '--max-scantime=120000', '--alert-exceeds-max=yes', '--alert-encrypted=yes', path])
-    if code == 1 and b'Heuristics.Limits.Exceeded' in scan:
+                          '--max-scantime=120000', '--alert-exceeds-max=yes', '--alert-encrypted=yes']
+    if raw_archive:
+        # Only the outer ZIP is raw-scanned. Every actual member is separately
+        # scanned with archive/document parsing enabled by MemberScanner.
+        arguments.append('--scan-archive=no')
+    code, scan = run_limited(arguments + [path])
+    if b'Heuristics.Limits.Exceeded' in scan:
         raise UnsafeFile('MALWARE_SCAN_LIMIT')
     require(code == 0, 'MALWARE_DETECTED' if code == 1 else 'MALWARE_SCAN_INCOMPLETE')
     return {'clean': True, 'engine': 'ClamAV', 'version': text, 'signatureDate': date.isoformat()}
+
+
+class MemberScanner:
+    """One task-local engine; one complete member at a time, never split files."""
+    def __enter__(self):
+        self.root = tempfile.TemporaryDirectory(dir='/tmp')
+        self.process = None
+        try:
+            self.socket_path = self.root.name + '/clamd.sock'
+            config = self.root.name + '/clamd.conf'
+            with open(config, 'w') as target:
+                target.write(f"""Foreground yes
+LocalSocket {self.socket_path}
+LocalSocketMode 600
+DatabaseDirectory /var/lib/clamav
+TemporaryDirectory {self.root.name}
+MaxThreads 1
+MaxQueue 2
+MaxFileSize 500000000
+MaxScanSize 2000000000
+MaxFiles 10000
+MaxRecursion 10
+MaxScanTime 120000
+AlertExceedsMax yes
+AlertEncrypted yes
+ScanArchive yes
+DisableCache yes
+SelfCheck 0
+ConcurrentDatabaseReload no
+""")
+            self.process = subprocess.Popen(['clamd', '--config-file', config],
+                                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            started = time.monotonic()
+            while True:
+                require(self.process.poll() is None, 'MALWARE_ENGINE_UNAVAILABLE')
+                require(time.monotonic() - started < 30, 'MALWARE_ENGINE_UNAVAILABLE')
+                try:
+                    if self.request(b'zPING\0') == b'PONG\0':
+                        break
+                except (OSError, UnsafeFile):
+                    time.sleep(0.05)
+            return self
+        except BaseException:
+            self.__exit__(None, None, None)
+            raise
+
+    def request(self, command, fd=None):
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
+            connection.settimeout(120)
+            connection.connect(self.socket_path)
+            connection.sendall(command)
+            if fd is not None:
+                connection.sendmsg([b'\0'], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array('i', [fd]))])
+            data = bytearray()
+            while not data.endswith(b'\0'):
+                chunk = connection.recv(4096)
+                require(chunk, 'MALWARE_SCAN_INCOMPLETE')
+                data.extend(chunk)
+                require(len(data) <= 4096, 'MALWARE_SCAN_INCOMPLETE')
+            return bytes(data)
+
+    def scan(self, member, name, size):
+        require(0 <= size <= MAX_ENTRY, 'ZIP_SIZE')
+        try:
+            response = self.request(b'zFILDES\0', member.fileno())
+        except OSError as error:
+            raise UnsafeFile('MALWARE_SCAN_INCOMPLETE') from error
+        if b'Heuristics.Limits.Exceeded' in response:
+            raise UnsafeFile('MALWARE_SCAN_LIMIT')
+        if response.endswith(b' FOUND\0'):
+            raise UnsafeFile('MALWARE_DETECTED')
+        require(re.fullmatch(rb'fd\[\d+\]: OK\x00', response), 'MALWARE_SCAN_INCOMPLETE')
+
+    def __exit__(self, *_):
+        if self.process is not None:
+            self.process.terminate()
+            try:
+                self.process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.process.wait()
+        self.root.cleanup()
+
+
+def malware_zip(path):
+    # The original bytes (including archive metadata) are scanned as raw data.
+    # ZIP parsing/CRC/budgets stay authoritative, and every actual member gets
+    # an independent full recursive scan on the same loaded native engine.
+    antivirus = malware(path, raw_archive=True)
+    with MemberScanner() as scanner:
+        coverage = check_zip(path, scanner.scan)
+    return {**antivirus, 'scope': 'raw-archive-and-all-members', 'members': coverage}
 
 
 def main():
@@ -290,12 +409,13 @@ def main():
         size = os.path.getsize(path)
         require(0 < size <= (500000000 if mime == 'application/zip' else 20000000), 'FILE_SIZE')
         if mime == 'application/zip':
-            check_zip(path)
+            antivirus = malware_zip(path)
         elif mime == 'application/pdf':
             check_pdf(path)
         else:
             check_image(path, 'PNG' if mime == 'image/png' else 'JPEG')
-        antivirus = malware(path)
+        if mime != 'application/zip':
+            antivirus = malware(path)
         digest = hashlib.sha256()
         with open(path, 'rb') as source:
             for chunk in iter(lambda: source.read(65536), b''):

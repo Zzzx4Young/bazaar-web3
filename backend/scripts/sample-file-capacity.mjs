@@ -34,7 +34,7 @@ export async function sampleFileCapacity(root, image) {
     assert.equal(hash.digest('hex'), sample.sha256)
     const id = randomUUID(),
       begin = Date.now(),
-      finish = observeFileCheck(id)
+      finish = observeFileCheck(id, 2000)
     let report, exception
     try {
       report = await new DockerFileChecker(runtime).check(path, sample.mime, id)

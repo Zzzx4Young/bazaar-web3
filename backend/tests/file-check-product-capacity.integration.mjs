@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { createReadStream } from 'node:fs'
-import { mkdtemp, writeFile, rm, readdir } from 'node:fs/promises'
+import { mkdtemp, writeFile, rm, readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { tmpdir } from 'node:os'
+import { tmpdir, availableParallelism } from 'node:os'
 import { execFileSync } from 'node:child_process'
 import { sandbox, fixture } from './helpers/database.mjs'
 import { PrivateFileService } from '../dist/delivery-files/upload.service.js'
@@ -40,6 +40,7 @@ test(
     const db = await sandbox(),
       f = await fixture(db, 'digital'),
       scratch = await mkdtemp(join(tmpdir(), 'bazaar-r06-product-'))
+    let memoryAdmission
     const objects = [],
       rows = [],
       configPath = join(scratch, 'config.json')
@@ -103,7 +104,7 @@ test(
       const finish = [],
         check = checker.check.bind(checker)
       checker.check = async (path, mime, id, options) => {
-        const observe = observeFileCheck(id)
+        const observe = observeFileCheck(id, 2000)
         finish.push(observe)
         if (hook) void hook(id)
         return check(path, mime, id, options)
@@ -133,6 +134,26 @@ test(
         upload('zip-500000000.zip', 500000000),
         upload('zip-500000000.zip', 500000000)
       ])
+      // Both live cgroups must fit together, including a host/service reserve.
+      const meminfo = await readFile('/proc/meminfo', 'utf8')
+      const hostAvailable = Number(meminfo.match(/^MemAvailable:\s+(\d+)/m)?.[1]) * 1024
+      const max = (await readFile('/sys/fs/cgroup/memory.max', 'utf8')).trim()
+      const current = Number((await readFile('/sys/fs/cgroup/memory.current', 'utf8')).trim())
+      const cgroupAvailable = max === 'max' ? hostAvailable : Number(max) - current
+      const available = Math.min(hostAvailable, cgroupAvailable)
+      memoryAdmission = {
+        hostAvailable,
+        cgroupAvailable,
+        available,
+        scannerTotalBytes: base.memoryBytes * 2,
+        requiredAvailableBytes: 12_000_000_000,
+        availableCpus: availableParallelism()
+      }
+      assert.ok(
+        available >= 12_000_000_000,
+        'Two scanner tasks require at least 12GB available memory'
+      )
+      assert.ok(availableParallelism() >= 2, 'At least two available CPUs required')
       const tasks = [scan(), scan()]
       for (
         let n = 0;
@@ -149,6 +170,16 @@ test(
       assert.deepEqual(
         pairResults.map((x) => x.result?.status),
         ['ready', 'ready']
+      )
+      const pairChecks = await db.client.privateFileCheck.findMany({
+        where: { uploadId: { in: pair.map((item) => item.id) } },
+        select: { report: true }
+      })
+      assert.equal(pairChecks.length, 2)
+      assert.equal(
+        pairChecks.reduce((sum, item) => sum + item.report.resource.memoryBytes, 0),
+        8_000_000_000,
+        'Actual two-task cgroup memory budgets must total 8GB'
       )
       assert.equal((await db.client.privateFileGlobal.findFirstOrThrow()).checking, 0)
       for (const item of pair)
@@ -241,6 +272,7 @@ test(
             {
               effective: { checker: effective.checker, budget: effective.budget },
               orderId,
+              memoryAdmission,
               rows,
               checks,
               cleanup,
