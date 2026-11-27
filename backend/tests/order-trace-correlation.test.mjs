@@ -19,3 +19,10 @@ test('Alpha correlation rejects missing or mismatched application trace, failed 
     { ...responses[0], commandKey: 'other' }])
     assert.throws(() => correlateOrderEvents(events, [response], logs), /No application HTTP trace/)
 })
+
+test('V2 admin refund commands correlate with their actual application trace', () => {
+  const adminLog = { ...logs[0], route: '/api/admin/disputes/:id/resolve' }
+  assert.equal(correlateOrderEvents(events, responses, [adminLog])[0].applicationRequestId, 'server-id')
+  for (const route of ['/api/listings', '/api/orders-unrelated', '/api/admin/disputes-unrelated'])
+    assert.throws(() => correlateOrderEvents(events, responses, [{ ...logs[0], route }]), /No application HTTP trace/)
+})
