@@ -14,13 +14,21 @@ import { mediaMaxItems } from '../media/media-policy.js'
 import { parseCommitment, canPurchaseCommitment, commitmentVersion } from './product-commitment.js'
 import { hasExcludedRightsClaim } from './prohibited-claims.js'
 import { lockMediaAssets } from '../media/lock-media-assets.js'
+import type { Web3Config } from '../web3/web3-types.js'
+import { testPriceView, versionTestnetPrice } from '../web3/testnet-price.js'
 
 const include = {
-  listingSeller: { select: { id: true, displayName: true } },
+  listingSeller: { select: { id: true, displayName: true,
+    walletIdentities: { select: { chainId: true, address: true, bindingVersion: true } },
+    payoutConfirmations: { where: { revokedAt: null }, select: {
+      chainId: true, wallet: true, escrow: true, bindingVersion: true
+    } }
+  } },
   inventoryListingRows: { select: { availability: true } },
   digitalInventoryRows: { select: { availability: true } },
   mediaRows: { select: { mediaId: true, position: true }, orderBy: { position: 'asc' } },
   _count: { select: { orderListingRows: true } }
+  , testnetPrices: { orderBy: { listingVersion: 'desc' }, take: 1 }
 } satisfies Prisma.ListingInclude
 type ListingRow = Prisma.ListingGetPayload<{ include: typeof include }>
 const homeFeaturedLimit = 10
@@ -30,13 +38,28 @@ export class ListingService {
   constructor(
     private readonly client: PrismaClient,
     private readonly rates: RatesService,
-    private readonly commitmentPolicy: 'compat' | 'enforce' = 'compat'
+    private readonly commitmentPolicy: 'compat' | 'enforce' = 'compat',
+    private readonly testnetConfig?: Web3Config | null
   ) {}
 
   private view(listing: ListingRow, priceUsd: string | null = null) {
+    const price = listing.testnetPrices[0]
+    const active = price && price.listingVersion === listing.version && this.testnetConfig &&
+      price.chainId === this.testnetConfig.chainId && price.token === this.testnetConfig.token && price.escrow === this.testnetConfig.escrow
+    // Public projection only. Order creation still checks the authoritative ledger
+    // inside its transaction, including concurrent changes and recovery uncertainty.
+    const identity = listing.listingSeller.walletIdentities.find(row => row.chainId === this.testnetConfig?.chainId)
+    const confirmed = identity?.address && listing.listingSeller.payoutConfirmations.some(row =>
+      row.chainId === this.testnetConfig?.chainId && row.escrow === this.testnetConfig?.escrow &&
+      row.wallet === identity.address && row.bindingVersion === identity.bindingVersion)
+    const testnetPurchaseBlockReason = !canPurchaseCommitment(listing) ? 'missing_commitment'
+      : !this.testnetConfig ? 'testnet_unavailable' : !active ? 'price_unavailable'
+        : !confirmed ? 'payout_unconfirmed' : null
     return {
       id: listing.id,
-      seller: listing.listingSeller,
+      seller: { id: listing.listingSeller.id, displayName: listing.listingSeller.displayName },
+      testnetPurchaseEligible: testnetPurchaseBlockReason === null,
+      testnetPurchaseBlockReason,
       type: listing.type,
       saleMode: listing.saleMode,
       canEdit: listing.saleMode !== 'one_off' || listing._count.orderListingRows === 0,
@@ -44,6 +67,8 @@ export class ListingService {
       description: listing.description,
       category: listing.category,
       price: { amount: listing.priceAmount.toFixed(), currency: listing.currency },
+      testnetPrice: active ? { amount: testPriceView(price.amountAtoms), amountAtoms: price.amountAtoms,
+        currency: 'BZTEST', decimals: 6, chainId: price.chainId, token: price.token, escrow: price.escrow } : null,
       priceUsd,
       publicationStatus: listing.publicationStatus,
       availability:
@@ -143,7 +168,7 @@ export class ListingService {
   async create(actorId: string, body: unknown) {
     const input = objectInput(
       body,
-      ['type', 'saleMode', 'title', 'description', 'category', 'price', 'licenseDescription', 'contentVersion', 'supplyMode', 'mediaIds', 'commitment', 'replacementOfListingId'],
+      ['type', 'saleMode', 'title', 'description', 'category', 'price', 'testnetPrice', 'licenseDescription', 'contentVersion', 'supplyMode', 'mediaIds', 'commitment', 'replacementOfListingId'],
       ['type', 'saleMode', 'title', 'description', 'category', 'price', 'mediaIds']
     )
     if (input.type !== 'physical' && input.type !== 'digital')
@@ -167,6 +192,9 @@ export class ListingService {
     const mediaIds = input.mediaIds.map((id) => idInput(id))
     if (new Set(mediaIds).size !== mediaIds.length) throw new DomainError('INVALID_INPUT')
     const price = objectInput(input.price, ['amount', 'currency'])
+    const testnetPriceAmount = input.testnetPrice === undefined ? undefined
+      : objectInput(input.testnetPrice, ['amount'], ['amount']).amount
+    if (testnetPriceAmount !== undefined && typeof testnetPriceAmount !== 'string') throw new DomainError('INVALID_INPUT')
     const currency = currencyInput(price.currency)
     if (hasExcludedRightsClaim(String(input.title), String(input.description),
       type === 'digital' ? String(input.licenseDescription ?? '') : null))
@@ -237,6 +265,8 @@ export class ListingService {
           reviewUpdatedAt: new Date()
         } : {})
       } })
+      if (typeof testnetPriceAmount === 'string')
+        await versionTestnetPrice(tx, listing, listing.version, testnetPriceAmount, this.testnetConfig)
       if (listing.reviewStatus === 'paused')
         await tx.listingReviewEvent.create({ data: {
           listingId: listing.id, actorId, action: 'replacement_submitted',
@@ -259,7 +289,7 @@ export class ListingService {
     idInput(id)
     const input = objectInput(
       body,
-      ['version', 'title', 'description', 'category', 'priceAmount',
+      ['version', 'title', 'description', 'category', 'priceAmount', 'testnetPriceAmount',
         'licenseDescription', 'contentVersion', 'mediaIds', 'publicationStatus', 'commitment'],
       ['version']
     )
@@ -273,6 +303,7 @@ export class ListingService {
       description?: string
       category?: string
       priceAmount?: string
+      testnetPriceAmount?: string
       licenseDescription?: string
       contentVersion?: string
       mediaIds?: string[]
@@ -285,6 +316,10 @@ export class ListingService {
     if ('category' in input) patch.category = categoryInput(input.category, listing.type as 'physical' | 'digital')
     if ('priceAmount' in input)
       patch.priceAmount = priceInput(input.priceAmount, currencyInput(listing.currency)).toFixed()
+    if ('testnetPriceAmount' in input) {
+      if (typeof input.testnetPriceAmount !== 'string') throw new DomainError('INVALID_INPUT')
+      patch.testnetPriceAmount = input.testnetPriceAmount
+    }
     if ('licenseDescription' in input || 'contentVersion' in input) {
       if (listing.type !== 'digital') throw new DomainError('INVALID_INPUT')
       if ('licenseDescription' in input)
@@ -319,7 +354,7 @@ export class ListingService {
         throw new DomainError('INVALID_INPUT')
       patch.publicationStatus = input.publicationStatus
     }
-    await new ListingCommands(this.client).edit(actorId, id, version, patch)
+    await new ListingCommands(this.client, this.testnetConfig).edit(actorId, id, version, patch)
     return this.view(await this.client.listing.findUniqueOrThrow({ where: { id }, include }))
   }
 
@@ -397,6 +432,22 @@ export class ListingService {
         : sort === 'price_asc'
           ? Prisma.sql`${sortPrice} ASC, l.id ASC`
           : Prisma.sql`${sortPrice} DESC, l.id DESC`
+    const testnetBlockReason = Prisma.sql`CASE
+      WHEN l."reviewStatus" <> 'clear' OR l."commitmentVersion" IS DISTINCT FROM 1 OR l.commitment IS NULL
+        THEN 'missing_commitment'
+      WHEN ${!this.testnetConfig} THEN 'testnet_unavailable'
+      WHEN NOT EXISTS (SELECT 1 FROM "ListingTestnetPrice" tp
+        WHERE tp."listingId" = l.id AND tp."listingVersion" = l.version
+          AND tp."chainId" = ${this.testnetConfig?.chainId ?? 0}
+          AND tp.token = ${this.testnetConfig?.token ?? ''} AND tp.escrow = ${this.testnetConfig?.escrow ?? ''})
+        THEN 'price_unavailable'
+      WHEN NOT EXISTS (SELECT 1 FROM "WalletIdentity" wi
+        JOIN "SellerPayoutConfirmation" pc ON pc."accountId" = wi."accountId"
+          AND pc."chainId" = wi."chainId" AND pc.wallet = wi.address
+          AND pc."bindingVersion" = wi."bindingVersion" AND pc."revokedAt" IS NULL
+        WHERE wi."accountId" = l."sellerId" AND wi."chainId" = ${this.testnetConfig?.chainId ?? 0}
+          AND pc.escrow = ${this.testnetConfig?.escrow ?? ''}) THEN 'payout_unconfirmed'
+      ELSE NULL END`
     type JsonItem = Omit<ReturnType<typeof this.view>, 'createdAt' | 'updatedAt'> & {
       createdAt: string
       updatedAt: string
@@ -422,6 +473,16 @@ export class ListingService {
           'title', l.title, 'description', l.description,
           'category', l.category,
           'price', jsonb_build_object('amount', l."priceAmount"::text, 'currency', l.currency),
+          'testnetPurchaseEligible', (${testnetBlockReason}) IS NULL,
+          'testnetPurchaseBlockReason', ${testnetBlockReason},
+          'testnetPrice', (SELECT jsonb_build_object(
+            'amount', (tp."amountAtoms"::numeric * 0.000001)::text,
+            'amountAtoms', tp."amountAtoms", 'currency', 'BZTEST', 'decimals', 6,
+            'chainId', tp."chainId", 'token', tp.token, 'escrow', tp.escrow
+          ) FROM "ListingTestnetPrice" tp WHERE ${Boolean(this.testnetConfig)}
+            AND tp."listingId" = l.id AND tp."listingVersion" = l.version
+            AND tp."chainId" = ${this.testnetConfig?.chainId ?? 0}
+            AND tp.token = ${this.testnetConfig?.token ?? ''} AND tp.escrow = ${this.testnetConfig?.escrow ?? ''}),
           'priceUsd', l.usd, 'publicationStatus', l."publicationStatus",
           'availability', CASE WHEN l.type = 'digital' THEN coalesce(di.availability, 'unlimited')
             ELSE coalesce(pi.availability, 'unavailable') END,
@@ -448,6 +509,9 @@ export class ListingService {
       items: result.items.slice(0, limit).map(item => ({
         ...item,
         price: { ...item.price, amount: new Prisma.Decimal(item.price.amount).toFixed() },
+        testnetPrice: item.testnetPrice ? {
+          ...item.testnetPrice, amount: testPriceView(item.testnetPrice.amountAtoms)
+        } : null,
         createdAt: new Date(item.createdAt),
         updatedAt: new Date(item.updatedAt)
       })),

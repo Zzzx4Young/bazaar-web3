@@ -22,7 +22,10 @@
     "test:e2e:demo": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "screenshot": "node scripts/screenshot.mjs",
-    "format": "prettier --write \"src/**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,md}\"",
+    "test:e2e:web3": "node scripts/check-web3-escrow-browser.mjs",
+    "test:e2e:web3:local-chain": "node scripts/check-web3-escrow-browser.mjs --local-chain",
+    "test:e2e:web3:full": "npm --prefix ../backend run test:e2e:web3:full"
   },
   "packageManager": "npm@10.9.8",
   "dependencies": {
@@ -50,6 +53,7 @@
     "remark-gfm": "^4.0.0",
     "sonner": "^1.4.0",
     "tailwind-merge": "^2.6.1",
+    "viem": "2.57.16",
     "zod": "^3.25.76",
     "zustand": "^4.5.0"
   },

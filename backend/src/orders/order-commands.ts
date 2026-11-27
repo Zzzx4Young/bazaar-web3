@@ -8,12 +8,14 @@ import { canPurchaseCommitment } from '../listings/product-commitment.js'
 import { requireActiveAccount } from '../accounts/require-active-account.js'
 import { idInput } from '../common/input.js'
 import { maxOrderExpiryBatchSize, orderExpiryBatchSize } from './order-expiry-policy.js'
+import type { SellerPayoutService } from '../web3/seller-payout.service.js'
 
 export type OrderExpiryCursor = string
 
 export interface CreateOrderInput {
   listingId: string
   version: number
+  settlementMode?: 'simulated' | 'testnet_escrow'
   shipping?: { recipient: string; contact: string; address: string }
 }
 export type OrderAction =
@@ -38,7 +40,8 @@ export interface ActionInput {
 // User actions receive actorId from the authenticated HTTP boundary.
 // Expiry uses a separate system path so its event has no user actor.
 export class OrderCommands {
-  constructor(private readonly client: PrismaClient) {}
+  constructor(private readonly client: PrismaClient, private readonly testnet?: SellerPayoutService | null,
+    private readonly reservePayment?: (tx: Transaction, order: Order) => Promise<void>) {}
 
   private async createOne(
     tx: Transaction,
@@ -49,6 +52,11 @@ export class OrderCommands {
     attempt: number,
     checkoutId?: string
   ) {
+    const testnet = input.settlementMode === 'testnet_escrow'
+    if (testnet) {
+      if (!this.testnet || checkoutId) throw new DomainError('WALLET_UNAVAILABLE')
+      await this.testnet.lockOrderAccounts(tx, actorId, input.listingId)
+    }
     const listing = await lockListing(tx, input.listingId)
     if (listing.type === 'digital' && input.shipping) throw new DomainError('INVALID_INPUT')
     await options.checkpoint?.('locked', tx, attempt)
@@ -56,9 +64,12 @@ export class OrderCommands {
     if (listing.publicationStatus !== 'published' || listing.version !== input.version ||
       !canPurchaseCommitment(listing))
       throw new DomainError('LISTING_CONFLICT')
+    const testnetTerms = testnet ? await this.testnet!.assertNewOrderEligibility(tx, listing) : null
+    if (testnet) await options.checkpoint?.('eligibility', tx, attempt)
     const inventory = listing.type === 'physical'
       ? await tx.physicalInventory.findUnique({ where: { listingId: listing.id } })
       : await tx.digitalInventory.findUnique({ where: { listingId: listing.id } })
+    if (testnet && !inventory) throw new DomainError('UNAVAILABLE')
     if (listing.type === 'physical' && (!inventory || inventory.availability !== 'available'))
       throw new DomainError('UNAVAILABLE')
     if (listing.type === 'digital' && inventory && inventory.availability !== 'available')
@@ -70,6 +81,7 @@ export class OrderCommands {
         listingId: listing.id,
         buyerId: actorId,
         sellerId: listing.sellerId,
+        settlementMode: testnet ? 'testnet_escrow' : 'simulated',
         ...(checkoutId ? { checkoutId } : {})
       }
     })
@@ -102,6 +114,8 @@ export class OrderCommands {
         commitmentVersion: listing.commitmentVersion
       }
     })
+    if (testnetTerms) await tx.testnetOrderSnapshot.create({ data: { orderId: order.id, ...testnetTerms } })
+    if (testnet && this.reservePayment) await this.reservePayment(tx, order)
     const currentMedia = await tx.listingMedia.findMany({
       where: { listingId: listing.id },
       orderBy: { position: 'asc' },
@@ -147,6 +161,7 @@ export class OrderCommands {
           key,
           {
             listingId: input.listingId,
+            ...(input.settlementMode === 'testnet_escrow' ? { settlementMode: 'testnet_escrow' } : {}),
             version: input.version,
             shipping: input.shipping
               ? [input.shipping.recipient, input.shipping.contact, input.shipping.address]
@@ -166,6 +181,7 @@ export class OrderCommands {
     options: TransactionOptions = {}
   ) {
     if (items.length < cartMinItems || items.length > cartMaxItems ||
+      items.some(item => item.settlementMode === 'testnet_escrow') ||
       new Set(items.map((item) => item.listingId)).size !== items.length)
       throw new DomainError('INVALID_INPUT')
     return transact(this.client, async (tx, attempt) => {
@@ -273,6 +289,7 @@ export class OrderCommands {
             const sellerAction = ['deliver', 'counteroffer', 'refund', 'restore'].includes(action)
             if (actorId !== (sellerAction ? order.sellerId : order.buyerId))
               throw new DomainError('FORBIDDEN')
+            if (order.settlementMode !== 'simulated') throw new DomainError('STATE_CONFLICT')
             const physical = listing.type === 'physical'
             const inventory = physical
               ? await tx.physicalInventory.findUnique({ where: { listingId: listing.id } })
@@ -493,6 +510,7 @@ export class OrderCommands {
         const listing = await lockListing(tx, hint.listingId)
         await tx.$queryRaw`SELECT "id" FROM "Order" WHERE "id" = ${orderId}::uuid FOR UPDATE`
         const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } })
+        if (order.settlementMode !== 'simulated') throw new DomainError('STATE_CONFLICT')
         await options.checkpoint?.('locked', tx, attempt)
         if (order.transactionPausedAt || order.status !== 'issue')
           throw new DomainError('STATE_CONFLICT')
@@ -591,7 +609,7 @@ export class OrderCommands {
       throw new DomainError('INVALID_INPUT')
     if (after !== undefined) idInput(after)
     const candidates = await this.client.order.findMany({
-      where: { status: 'pending_payment', createdAt: { lt: before } },
+      where: { settlementMode: 'simulated', status: 'pending_payment', createdAt: { lt: before } },
       select: { id: true },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       ...(after ? { cursor: { id: after }, skip: 1 } : {}),
@@ -608,7 +626,7 @@ export class OrderCommands {
           const listing = await lockListing(tx, hint.listingId)
           await tx.$queryRaw`SELECT "id" FROM "Order" WHERE "id" = ${candidate.id}::uuid FOR UPDATE`
           const order = await tx.order.findUniqueOrThrow({ where: { id: candidate.id } })
-          if (order.status !== 'pending_payment' || order.createdAt >= before) return false
+          if (order.settlementMode !== 'simulated' || order.status !== 'pending_payment' || order.createdAt >= before) return false
           if (listing.type === 'physical') {
             const inventory = await tx.physicalInventory.findUnique({
               where: { listingId: listing.id }

@@ -88,6 +88,7 @@ test('HTTP cart enforces ownership, atomic validation, and published response co
     assert.equal(order.statusCode, 200)
     validate('OrderDetail', order.json())
     assert.equal(order.json().checkoutId, id)
+    assert.equal(order.json().settlementMode, 'simulated')
   }
   const unavailable = await post('outsider', '/orders', {
     listingId: physical.id, version: 1, shipping

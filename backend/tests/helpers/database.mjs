@@ -108,7 +108,9 @@ export const shipping = {
 export async function fixture(
   db,
   type = 'physical',
-  price = '12345678901234567890.123456789012345678'
+  price = '12345678901234567890.123456789012345678',
+  currency = 'TEST',
+  category = 'test'
 ) {
   const accounts = []
   for (let i = 0; i < 3; i++)
@@ -124,9 +126,9 @@ export async function fixture(
       type,
       title: 'Version one',
       description: 'Virtual fixture',
-      category: 'test',
+      category,
       priceAmount: price,
-      currency: 'TEST',
+      currency,
       licenseDescription: type === 'digital' ? 'Test license' : null,
       contentVersion: type === 'digital' ? 'v1' : null,
       commitmentVersion: 1,

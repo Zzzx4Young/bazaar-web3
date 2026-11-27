@@ -39,7 +39,11 @@
     "test:http-ingress:business": "npm run build && node scripts/with-test-db.mjs node scripts/check-http-ingress-business.mjs",
     "test:capacity:ha": "npm run build && node scripts/check-postgres-ha-auto.mjs --capacity",
     "test:capacity:writes": "npm run build && CAPACITY_WRITES=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
-    "test:capacity:writes:failover": "npm run build && CAPACITY_WRITES=1 CAPACITY_FAULT=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs"
+    "test:capacity:writes:failover": "npm run build && CAPACITY_WRITES=1 CAPACITY_FAULT=1 node scripts/with-test-db.mjs node scripts/check-capacity.mjs",
+    "test:e2e:web3:full": "npm run build && node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node ../frontend/scripts/check-web3-full-browser.mjs",
+    "test:e2e:web3:profile": "npm run build && node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node --test tests/web3-browser.profile.mjs",
+    "test:recovery:publication": "npm run build && node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/publication-outbox.integration.mjs tests/publication-pipeline.integration.mjs tests/checkpoint-publication.test.mjs tests/publication-worker.test.mjs tests/recovery-authorization-publication.test.mjs tests/recovery-consumption-checkpoint.test.mjs",
+    "test:recovery:services": "npm run build && node scripts/with-web3-test-db.mjs node --test --test-concurrency=1 tests/publication-enrollment.integration.mjs tests/publication-daemon.integration.mjs tests/publication-api.integration.mjs tests/publication-service-entrypoints.integration.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1152.0",
@@ -52,7 +56,8 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "reflect-metadata": "0.2.2",
-    "rxjs": "7.8.2"
+    "rxjs": "7.8.2",
+    "viem": "2.57.16"
   },
   "devDependencies": {
     "@bytebase/dbhub": "1.2.0",

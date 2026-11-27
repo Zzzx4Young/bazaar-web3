@@ -8,6 +8,8 @@ export const domainErrorCodes = [
   'EMAIL_ACCOUNT_EXISTS',
   'EMAIL_ACCOUNT_NOT_FOUND',
   'FORBIDDEN',
+  'FILE_LIMIT_REACHED',
+  'FILE_UNAVAILABLE',
   'FX_SNAPSHOT_EXPIRED',
   'FX_UNAVAILABLE',
   'GOOGLE_INVALID',
@@ -31,7 +33,8 @@ export const domainErrorCodes = [
   'SHIPPING_REQUIRED',
   'STATE_CONFLICT',
   'UNAUTHENTICATED',
-  'UNAVAILABLE'
+  'UNAVAILABLE',
+  'WALLET_UNAVAILABLE'
 ] as const
 
 export const publicErrorCodes = [

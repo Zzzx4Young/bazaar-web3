@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { correlateOrderEvents } from './order-trace-correlation.mjs'
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -26,6 +27,7 @@ const runtimeRole = `v2_runtime_${suffix}`
 const observerRole = `v2_observer_${suffix}`
 const observeSchema = `v2_observe_${suffix}`
 const requestLogs = []
+const commandResponses = []
 let observeSchemaCreated = false
 let runtimeRoleCreated = false
 let observerRoleCreated = false
@@ -135,6 +137,14 @@ try {
   sellerContext = await browser.newContext({ recordVideo: { dir: resolve(resultsDirectory, 'video-seller') } })
   buyerContext = await browser.newContext({ recordVideo: { dir: resolve(resultsDirectory, 'video-buyer') } })
   adminContext = await browser.newContext({ recordVideo: { dir: resolve(resultsDirectory, 'video-admin') } })
+  for (const context of [sellerContext, buyerContext, adminContext]) context.on('response', (response) => {
+    const request = response.request()
+    if (request.method() !== 'POST' ||
+      !/^\/api\/(orders|admin\/disputes)(?:\/|$)/.test(new URL(response.url()).pathname)) return
+    const commandKey = request.headers()['idempotency-key']
+    if (commandKey) commandResponses.push({ commandKey, status: response.status(),
+      applicationRequestId: response.headers()['x-application-request-id'] })
+  })
   await sellerContext.tracing.start({ screenshots: true, snapshots: true, sources: true })
   await buyerContext.tracing.start({ screenshots: true, snapshots: true, sources: true })
   await adminContext.tracing.start({ screenshots: true, snapshots: true, sources: true })
@@ -334,11 +344,7 @@ try {
   assert.equal('access_code' in deliveryViewRows[0], false)
   const newEvents = await observerRows(`SELECT operation, request_id FROM order_events WHERE order_id = '${target.id}'::uuid ORDER BY created_at, id OFFSET ${baselineEvents}`)
   assert.deepEqual(newEvents.map((event) => event.operation), ['issue', 'request_refund', 'counteroffer', 'resolve_refund'])
-  for (const event of newEvents) {
-    assert.match(event.request_id, /^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/)
-    assert.ok(requestLogs.some((entry) => entry.requestId === event.request_id &&
-      (entry.route.includes('/api/orders') || entry.route.includes('/api/admin/disputes'))))
-  }
+  const correlatedCommands = correlateOrderEvents(newEvents, commandResponses, requestLogs)
   stage = 'multi-item cart browser checkout and observer audit'
   const cartListings = await Promise.all(plan.listings.slice(62, 64).map((spec) =>
     db.client.listing.findFirstOrThrow({ where: { title: spec.title } })))
@@ -428,7 +434,7 @@ try {
   await adminPage.screenshot({ path: resolve(resultsDirectory, 'admin-review-resolved.png'),
     fullPage: true })
   assert.deepEqual(browserErrors, [], 'Browser emitted runtime or hydration errors')
-  await writeFile(resolve(resultsDirectory, 'acceptance-summary.json'), `${JSON.stringify({ result: 'passed', listings: counts[0].listings, seededOrders: counts[0].orders, ordersAfterCart: afterCart[0].orders, seededCheckouts, checkoutId, checkoutRows, statusCounts, reputation, partialDeliveries, inventory, digitalInventory, targetOrderId: target.id, targetInventory, targetReservation, targetRefund, targetSettlements, newEvents, reviewListingId: reviewListing.id, reviewOrderId: reviewOrder.id, reviewActions, reviewOrderEvents, reviewRequests: requestLogs.filter((entry) => entry.route.startsWith('/api/listings/') && /report|review|source-response/.test(entry.route)) }, null, 2)}\n`)
+  await writeFile(resolve(resultsDirectory, 'acceptance-summary.json'), `${JSON.stringify({ result: 'passed', listings: counts[0].listings, seededOrders: counts[0].orders, ordersAfterCart: afterCart[0].orders, seededCheckouts, checkoutId, checkoutRows, statusCounts, reputation, partialDeliveries, inventory, digitalInventory, targetOrderId: target.id, targetInventory, targetReservation, targetRefund, targetSettlements, newEvents, correlatedCommands, reviewListingId: reviewListing.id, reviewOrderId: reviewOrder.id, reviewActions, reviewOrderEvents, reviewRequests: requestLogs.filter((entry) => entry.route.startsWith('/api/listings/') && /report|review|source-response/.test(entry.route)) }, null, 2)}\n`)
   console.log(`PASS: V2 business data and edge-case journey; artifacts: ${resultsDirectory}`)
 } catch (error) {
   console.error(`V2 E2E failed at ${stage}`)

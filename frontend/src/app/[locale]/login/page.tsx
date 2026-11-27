@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/use-auth-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {WalletSignIn} from '@/components/web3/wallet-sign-in'
 import { IdentityOptions } from '@/components/auth/identity-options'
 import { LoginMethodPicker, type LoginMethod } from '@/components/auth/login-method-picker'
 import { resolveSafeReturnTo } from '@/lib/safe-return-to'
@@ -100,6 +101,7 @@ export default function LoginPage() {
         showEmail={method === 'email'}
         emailFirst={method === 'email'}
       />
+      <WalletSignIn returnTo={returnTo} />
       <p className="text-sm text-muted-foreground">
         {t('newAccount')}{' '}
         <Link href={registerHref} className="font-medium text-primary hover:underline">

@@ -80,3 +80,29 @@ it('rejects excess decimal places using the server-provided currency scale', asy
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('JPY 最多支持 0 位小数'))
   expect(requests).toEqual(['/api/currencies'])
 })
+
+it('shows BZTEST separately for enabled one-off files and rejects excess precision before publishing', async () => {
+  const requests: string[] = []
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      requests.push(url)
+      return new Response(
+        JSON.stringify(
+          url === '/api/web3/config' ? { enabled: true } : [{ code: 'CNY', scale: 2 }]
+        ),
+        { status: 200 }
+      )
+    })
+  )
+  render(<PublishForm />)
+  fireEvent.keyDown(screen.getByRole('tab', { name: '数字资产' }), { key: 'Enter' })
+  fireEvent.change(await screen.findByLabelText('销售方式'), { target: { value: 'one_off' } })
+  const price = await screen.findByLabelText('BZTEST 测试网价格（可选）')
+  expect(screen.getByText(/测试资产，无真实资金交易/)).toBeInTheDocument()
+  expect(screen.getByText(/不与上方报价换算/)).toBeInTheDocument()
+  fireEvent.change(price, { target: { value: '1.0000001' } })
+  fireEvent.click(screen.getByRole('button', { name: '立即发布' }))
+  await screen.findByText('请输入大于零、最多 6 位小数的有效 BZTEST 价格')
+  expect(requests).not.toContain('/api/listings')
+})

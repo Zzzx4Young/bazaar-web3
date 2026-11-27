@@ -1,3 +1,4 @@
+import { composeProjectArgs } from './helpers/compose-project.mjs'
 import { spawn } from 'node:child_process'
 import { resolve } from 'node:path'
 
@@ -25,6 +26,7 @@ try {
       '-n',
       'docker',
       'compose',
+      ...composeProjectArgs(process.env.COMPOSE_PROJECT_NAME),
       '-f',
       'infra/compose.yaml',
       '--profile',
@@ -56,6 +58,7 @@ try {
         '-n',
         'docker',
         'compose',
+        ...composeProjectArgs(process.env.COMPOSE_PROJECT_NAME),
         '-f',
         'infra/compose.yaml',
         '--profile',

@@ -2,10 +2,11 @@
 
 This repository implements an **internal Alpha** marketplace. The frontend is
 Next.js; the separate NestJS/Fastify API persists accounts, listings, orders,
-and reviews in PostgreSQL. Payment and balances are simulated. Public signup,
-real payment, and production high availability are outside the current accepted
-scope. Start with the [project overview](README.md), the
-[API contract](backend/openapi/alpha.json), and the relevant package README.
+and reviews in PostgreSQL. Payment and balances are simulated. Local Gmail
+signup uses a development inbox; production email delivery, real payment, and
+production high availability remain outside the accepted scope. Start with the
+[project overview](README.md), the [API contract](backend/openapi/alpha.json),
+and the relevant package README.
 
 ## Set up and run
 

@@ -13,6 +13,10 @@ export interface BackendListing {
   description: string
   category: string
   price: { amount: string; currency: Currency }
+  testnetPurchaseEligible?: boolean
+  testnetPurchaseBlockReason?: string | null
+  testnetPrice?: { amount: string; amountAtoms: string; currency: 'BZTEST'; decimals: 6;
+    chainId: number; token: string; escrow: string } | null
   priceUsd: string | null
   publicationStatus: 'published' | 'withdrawn' | 'draft' | 'archived'
   availability: string
@@ -136,6 +140,10 @@ export function createListing(csrfToken: string, body: unknown) {
     body: JSON.stringify(body)
   })
 }
+
+export function getTestnetConfig(signal?: AbortSignal) {
+  return backendRequest<{ enabled: boolean }>('/web3/config', { signal })
+}
 export async function uploadListingImage(csrfToken: string, file: File) {
   const intent = await backendRequest<{ assetId: string; uploadUrl: string; expiresIn: number }>(
     '/media/upload-intents', {
@@ -168,6 +176,9 @@ export function toItem(listing: BackendListing): Item {
   return {
     id: listing.id,
     backendVersion: listing.version,
+    testnetPrice: listing.testnetPrice ?? null,
+    testnetPurchaseEligible: listing.testnetPurchaseEligible === true,
+    testnetPurchaseBlockReason: listing.testnetPurchaseBlockReason,
     sellerId: listing.seller.id,
     sellerDisplayName: listing.seller.displayName,
     title: listing.title,

@@ -59,6 +59,52 @@ test('C1: migration owner and restricted runtime support transactions without DD
     const commands = new OrderCommands(app.client)
     const listings = new ListingCommands(app.client)
     const f = await fixture({ client: app.client })
+    for (const table of [
+      'RefundInventoryTransition',
+      'DeliveryMapping',
+      'DeliverySignature',
+      'SupplementChallenge',
+      'SupplementPublication',
+      'DownloadGrant',
+      'FileAccessAudit',
+      'EvidenceRecord',
+      'ReviewEvent'
+    ]) {
+      const [grants] = await app.client
+        .$queryRaw`SELECT has_table_privilege(current_user, ${schema + '."'} || ${table} || '"', 'SELECT') AS readable,
+        has_table_privilege(current_user, ${schema + '."'} || ${table} || '"', 'INSERT') AS appendable,
+        has_table_privilege(current_user, ${schema + '."'} || ${table} || '"', 'UPDATE') AS editable,
+        has_table_privilege(current_user, ${schema + '."'} || ${table} || '"', 'DELETE') AS deletable`
+      assert.equal(grants.readable, true, table + ' must be readable')
+      assert.equal(grants.appendable, true, table + ' must be appendable')
+      assert.equal(grants.editable, false, table + ' immutable')
+      assert.equal(grants.deletable, false, table + ' retained')
+    }
+    await assert.rejects(
+      app.client.reviewAuthorization.create({
+        data: {
+          orderId: randomUUID(),
+          accountId: f.buyer,
+          expiresAt: new Date(Date.now() + 300000)
+        }
+      }),
+      permissionDenied
+    )
+    for (const column of ['generation','previousOrderId']) {
+      const [grant]=await app.client.$queryRaw`SELECT has_column_privilege(current_user, ${schema+'."TestnetStock"'}, ${column}, 'UPDATE') AS allowed`
+      assert.equal(grant.allowed,true,'refund successor column '+column)
+    }
+    const walletAddress = '0x' + '1'.repeat(40)
+    await app.client.walletClaim.create({ data: {
+      chainId: 11155111, address: walletAddress, accountId: f.buyer
+    } })
+    await assert.rejects(app.client.walletClaim.update({
+      where: { chainId_address: { chainId: 11155111, address: walletAddress } },
+      data: { accountId: f.other }
+    }), permissionDenied)
+    await assert.rejects(app.client.walletClaim.delete({
+      where: { chainId_address: { chainId: 11155111, address: walletAddress } }
+    }), permissionDenied)
     await app.client.gmailClaim.create({ data: {
       key: 'runtimebuyer@gmail.com', accountId: f.buyer
     } })

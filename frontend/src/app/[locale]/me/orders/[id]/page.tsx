@@ -30,6 +30,7 @@ import {
 } from '@/lib/transaction-copy'
 import { useAuthStore } from '@/stores/use-auth-store'
 import { authenticatedPost } from '@/lib/authenticated-api'
+import { EscrowOrder } from '@/components/web3/escrow-order'
 import { toast } from 'sonner'
 
 export default function OrderDetailPage() {
@@ -76,6 +77,7 @@ export default function OrderDetailPage() {
       </p>
     )
   const order = resource.data
+  if (order.settlementMode === 'testnet_escrow') return <EscrowOrder key={order.id} orderId={order.id} buyerId={order.buyerId} sellerId={order.sellerId} />
   const actions = orderActions(order, auth.view?.account.id ?? '')
   const act = async (action: string) => {
     const body =

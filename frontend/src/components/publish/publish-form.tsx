@@ -24,13 +24,23 @@ import {
 import { marketplaceCategories } from '@/lib/categories'
 import { publishSchema } from '@/lib/publish-schema'
 import { useAuthStore } from '@/stores/use-auth-store'
-import { BackendError, createListing, uploadListingImage } from '@/lib/backend-api'
+import {
+  BackendError,
+  createListing,
+  uploadListingImage,
+  getTestnetConfig
+} from '@/lib/backend-api'
 import { apiErrorCopy } from '@/lib/api-error-copy'
 import { useCurrencies } from '@/hooks/use-currencies'
 import type { ItemCategory, Currency } from '@/types'
 import { CommitmentEditor } from '@/components/listing/commitment-editor'
 import { CommitmentView } from '@/components/listing/commitment-view'
-import { initialDigitalCommitment, initialPhysicalCommitment, commitmentReady, type ProductCommitment } from '@/lib/commitment'
+import {
+  initialDigitalCommitment,
+  initialPhysicalCommitment,
+  commitmentReady,
+  type ProductCommitment
+} from '@/lib/commitment'
 
 type FormValues = z.infer<typeof publishSchema>
 
@@ -46,6 +56,8 @@ export function PublishForm() {
   const [photos, setPhotos] = useState<File[]>([])
   const [commitment, setCommitment] = useState<ProductCommitment>(initialPhysicalCommitment)
   const [replacementOfListingId, setReplacementOfListingId] = useState('')
+  const [testnetEnabled, setTestnetEnabled] = useState(false)
+  const [testnetUnavailable, setTestnetUnavailable] = useState(false)
   const { currencies, loading: currenciesLoading, error: currenciesError, retry } = useCurrencies()
 
   const {
@@ -61,13 +73,38 @@ export function PublishForm() {
       category: 'physical',
       saleMode: 'one_off',
       primaryCategory: 'electronics',
+      testnetPriceAmount: '',
       priceCurrency: 'CNY'
     }
   })
 
   const category = watch('category')
+  const saleMode = watch('saleMode')
+  const testnetEligible =
+    category === 'digital' &&
+    saleMode === 'one_off' &&
+    'resourceMode' in commitment &&
+    commitment.resourceMode === 'file'
   const priceCurrency = watch('priceCurrency')
   const selectedPriceCurrency = currencies.find(({ code }) => code === priceCurrency)
+
+  useEffect(() => {
+    setTestnetEnabled(false)
+    setTestnetUnavailable(false)
+    if (!testnetEligible) {
+      setValue('testnetPriceAmount', '')
+      return
+    }
+    const controller = new AbortController()
+    getTestnetConfig(controller.signal)
+      .then((view) => {
+        if (!controller.signal.aborted) setTestnetEnabled(view.enabled === true)
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setTestnetUnavailable(true)
+      })
+    return () => controller.abort()
+  }, [testnetEligible, setValue])
 
   useEffect(() => {
     const fallbackCurrency = currencies[0]
@@ -103,6 +140,10 @@ export function PublishForm() {
         setSaveError(tCommitment('commitmentInvalid'))
         return
       }
+      if (data.testnetPriceAmount && (!testnetEligible || !testnetEnabled)) {
+        setSaveError(tUi('testnetUnavailable'))
+        return
+      }
       if (
         photos.length < 1 ||
         photos.length > 8 ||
@@ -126,10 +167,12 @@ export function PublishForm() {
         description: data.description,
         category: data.primaryCategory,
         price: { amount: data.priceAmount, currency: data.priceCurrency },
+        ...(data.testnetPriceAmount ? { testnetPrice: { amount: data.testnetPriceAmount } } : {}),
         mediaIds,
         commitment,
         ...(data.saleMode === 'one_off' && replacementOfListingId.trim()
-          ? { replacementOfListingId: replacementOfListingId.trim() } : {}),
+          ? { replacementOfListingId: replacementOfListingId.trim() }
+          : {}),
         ...(data.category === 'digital'
           ? {
               supplyMode: data.saleMode === 'one_off' ? 'single' : 'unlimited',
@@ -138,8 +181,9 @@ export function PublishForm() {
             }
           : {})
       })
-      toast.success(listing.reviewStatus === 'paused'
-        ? tCommitment('replacementReview') : tUi('success'))
+      toast.success(
+        listing.reviewStatus === 'paused' ? tCommitment('replacementReview') : tUi('success')
+      )
       router.push(listing.reviewStatus === 'paused' ? '/me' : `/listing/${listing.id}`)
     } catch (error) {
       const message =
@@ -310,6 +354,30 @@ export function PublishForm() {
         </CardContent>
       </Card>
 
+      {testnetEnabled && testnetEligible && (
+        <Card>
+          <CardContent className="space-y-2 p-4">
+            <Label htmlFor="testnetPriceAmount">{tUi('testnetPrice')}</Label>
+            <Input
+              id="testnetPriceAmount"
+              inputMode="decimal"
+              {...register('testnetPriceAmount')}
+            />
+            <p className="text-xs text-muted-foreground">{tUi('testnetPriceHint')}</p>
+            {errors.testnetPriceAmount && (
+              <p role="alert" className="text-sm text-destructive">
+                {tUi('testnetPriceInvalid')}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+      {testnetUnavailable && testnetEligible && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {tUi('testnetUnavailable')}
+        </p>
+      )}
+
       {/* 数字字段 */}
       {category === 'digital' && (
         <Card>
@@ -345,13 +413,19 @@ export function PublishForm() {
         </Card>
       )}
 
-      {watch('saleMode') === 'one_off' && <label className="block text-sm">
-        {tCommitment('replacementOfListingId')}
-        <Input value={replacementOfListingId}
-          onChange={(event) => setReplacementOfListingId(event.target.value)} />
-      </label>}
+      {watch('saleMode') === 'one_off' && (
+        <label className="block text-sm">
+          {tCommitment('replacementOfListingId')}
+          <Input
+            value={replacementOfListingId}
+            onChange={(event) => setReplacementOfListingId(event.target.value)}
+          />
+        </label>
+      )}
       <CommitmentEditor type={category} value={commitment} onChange={setCommitment} />
-      <div className="rounded-lg border p-4"><CommitmentView commitment={commitment} /></div>
+      <div className="rounded-lg border p-4">
+        <CommitmentView commitment={commitment} />
+      </div>
 
       {saveError && (
         <p role="alert" className="text-destructive">

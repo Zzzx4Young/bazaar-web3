@@ -76,3 +76,33 @@ describe('backend request correlation', () => {
     expect(sentRequestId).toMatch(/^[0-9a-f-]{36}$/)
   })
 })
+
+it('maps current testnet eligibility conservatively without changing Alpha purchase eligibility', () => {
+  const listing = {
+    id: 'listing', seller: { id: 'seller', displayName: 'Seller' }, type: 'digital',
+    saleMode: 'one_off', title: 'File', description: 'File', category: 'digital_assets',
+    price: { amount: '1', currency: 'USD' }, priceUsd: null, publicationStatus: 'published',
+    availability: 'available', version: 2, media: [], createdAt: '', updatedAt: '',
+    purchaseEligible: true, testnetPurchaseEligible: true, testnetPurchaseBlockReason: null
+  } as BackendListing
+  expect(toItem(listing).testnetPurchaseEligible).toBe(true)
+  expect(toItem({ ...listing, testnetPurchaseEligible: undefined }).testnetPurchaseEligible).toBe(false)
+  const paused = toItem({ ...listing, testnetPurchaseEligible: false,
+    testnetPurchaseBlockReason: 'payout_unconfirmed' })
+  expect(paused.testnetPurchaseBlockReason).toBe('payout_unconfirmed')
+  expect(paused.purchaseEligible).toBe(true)
+})
+
+it('maps missing and null testnet prices consistently and preserves integer-priced values', () => {
+  const listing = {
+    id: 'listing', seller: { id: 'seller', displayName: 'Seller' }, type: 'digital',
+    title: 'File', description: 'File', category: 'digital_assets',
+    price: { amount: '1', currency: 'USD' }, priceUsd: null, publicationStatus: 'published',
+    availability: 'available', version: 1, media: [], createdAt: '', updatedAt: ''
+  } as BackendListing
+  expect(toItem(listing).testnetPrice).toBeNull()
+  expect(toItem({ ...listing, testnetPrice: null }).testnetPrice).toBeNull()
+  const price = { amount: '0.000001', amountAtoms: '1', currency: 'BZTEST' as const,
+    decimals: 6 as const, chainId: 11155111, token: '0x' + '1'.repeat(40), escrow: '0x' + '2'.repeat(40) }
+  expect(toItem({ ...listing, testnetPrice: price }).testnetPrice).toEqual(price)
+})

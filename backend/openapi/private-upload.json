@@ -1,0 +1,107 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Bazaar isolated private upload gateway",
+    "version": "T05-local"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:3998",
+      "description": "Example independent file origin; replace with the configured origin. No website cookies."
+    }
+  ],
+  "paths": {
+    "/uploads/{id}": {
+      "put": {
+        "operationId": "streamPrivateFile",
+        "summary": "One-use bounded streaming upload; body bypasses the website JSON API. No download route.",
+        "security": [
+          {
+            "uploadBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "application/zip": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Quarantined; no download authorization"
+          },
+          "400": {
+            "description": "Invalid bytes or size"
+          },
+          "403": {
+            "description": "Invalid origin, cookie or bearer"
+          },
+          "405": {
+            "description": "No route or method"
+          },
+          "409": {
+            "description": "Consumed, expired or cancelled upload"
+          },
+          "429": {
+            "description": "Gateway admission limit"
+          },
+          "503": {
+            "description": "Private storage unavailable; capacity remains protected until confirmed cleanup"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "uploadBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The uploadToken from the authenticated API, not a session token. Never put it in a URL. Cookie headers are rejected."
+      }
+    }
+  }
+}

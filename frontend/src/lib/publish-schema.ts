@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { marketplaceCategories } from './categories'
 import { listingTextPolicy } from './listing-policy'
+import { validTestnetPrice } from './testnet-price'
 
 export const publishSchema = z
   .object({
@@ -33,6 +34,7 @@ export const publishSchema = z
       .regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/, '请输入不使用指数格式的正数')
       .refine((value) => /[1-9]/.test(value), '价格必须大于 0'),
     priceCurrency: z.string().regex(/^[A-Z]{2,5}$/, '请选择有效币种'),
+    testnetPriceAmount: z.string().optional(),
     // 数字字段
     licenseDescription: z.string().optional(),
     contentVersion: z.string().optional()
@@ -40,6 +42,13 @@ export const publishSchema = z
   .superRefine((data, ctx) => {
     const issue = (path: string, message: string) =>
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message })
+    if (
+      data.testnetPriceAmount &&
+      (!validTestnetPrice(data.testnetPriceAmount) ||
+        data.category !== 'digital' ||
+        data.saleMode !== 'one_off')
+    )
+      issue('testnetPriceAmount', 'testnetPriceInvalid')
     if (
       marketplaceCategories.find((category) => category.id === data.primaryCategory)
         ?.itemCategory !== data.category

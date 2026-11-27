@@ -9,10 +9,6 @@ const nextConfig = {
   typescript: process.env.NEXT_TS_CONFIG
     ? { tsconfigPath: process.env.NEXT_TS_CONFIG }
     : undefined,
-  async rewrites() {
-    const backendOrigin = process.env.BACKEND_ORIGIN ?? 'http://127.0.0.1:3001'
-    return [{ source: '/api/:path*', destination: `${backendOrigin}/api/:path*` }]
-  },
   images: {
     // Dev mode: skip Next.js image optimizer so the browser fetches the
     // origin URL directly. The dev optimizer (Node fetch) hits TLS

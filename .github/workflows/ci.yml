@@ -1,118 +1,264 @@
 name: ci
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
-
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
-
+env:
+  PRISMA_HIDE_UPDATE_MESSAGE: '1'
+  NEXT_TELEMETRY_DISABLED: '1'
 jobs:
   verify:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: ./.github/actions/setup-bazaar
+        with: {frontend: 'true'}
+      - name: Frontend full checks
+        working-directory: frontend
+        run: npm run check:frontend
+        env: {NEXT_TELEMETRY_DISABLED: '1'}
+      - name: Exact checkout and locked tool provenance
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      - name: Install
-        run: npm ci
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Lint
-        run: npm run lint
-      - name: Unit tests (Vitest)
-        run: npm run test
-      - name: Build
-        run: npm run build
-        env:
-          NEXT_TELEMETRY_DISABLED: '1'
+          name: provenance-verify
+          path: .tmp/ci/*.json
+          retention-days: 14
 
   backend:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: backend
-    env:
-      PRISMA_HIDE_UPDATE_MESSAGE: '1'
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: ./.github/actions/setup-bazaar
+      - name: Backend full checks
+        working-directory: backend
+        run: npm run check:backend
+      - name: Exact checkout and locked tool provenance
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          node-version: '22.23.1'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-      - name: Pin npm
-        run: npm install --global npm@10.9.8
-      - name: Install locked dependencies
-        run: npm ci
-      - name: Generate and build
-        run: npm run build
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Lint
-        run: npm run lint
-      - name: Unit tests
-        run: node --test tests/*.test.mjs
-      - name: Build deployment images
-        working-directory: .
-        run: |
-          docker build --target runtime --build-arg VCS_REF="$GITHUB_SHA" -t bazaar-api:ci backend
-          docker build --target migrate --build-arg VCS_REF="$GITHUB_SHA" -t bazaar-api-migrate:ci backend
-      - name: Start isolated PostgreSQL
-        working-directory: .
+          name: provenance-backend
+          path: .tmp/ci/*.json
+          retention-days: 14
+
+  database:
+    # Separate runners mean no shared DB, port, bucket or .next. Files within each shard are serial.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix: {group: [database-a, database-b]}
+    env:
+      WEB3_TEST_PORT: '56435'
+      COMPOSE_PROJECT_NAME: bazaar-web3-ci-db
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-bazaar
+        with: {contracts: 'true'}
+      - name: Start dedicated restart-capable PostgreSQL
         run: |
           bash infra/scripts/init-secrets.sh
-          docker compose -f infra/compose.yaml --profile test up -d --wait --wait-timeout 120 postgres-test
-      - name: Database integration tests
-        run: node scripts/with-test-db.mjs
-      - name: Deployment image acceptance
-        run: node scripts/with-test-db.mjs node scripts/check-deployment-images.mjs
-      - name: Install frontend browser dependencies
-        working-directory: frontend
+          docker compose -f infra/compose.web3-ci.yaml up -d --wait --wait-timeout 120
+      - name: Build contracts and actual service vectors in dependency order
+        working-directory: backend
+        run: node scripts/with-web3-test-db.mjs bash ../contracts/scripts/prepare-integration.sh
+      - name: Database integration shard (no skipped acceptance)
+        working-directory: backend
+        run: node scripts/with-web3-test-db.mjs node scripts/run-ci-integration.mjs ${{ matrix.group }}
+      - name: Owned test cluster cleanup
+        if: always()
+        run: docker compose -f infra/compose.web3-ci.yaml down --volumes
+      - name: Exact checkout and locked tool provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provenance-database-${{ matrix.group }}
+          path: .tmp/ci/*.json
+          retention-days: 14
+
+  alpha:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COMPOSE_PROJECT_NAME: bazaar-ci-alpha
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-bazaar
+        with: {frontend: 'true'}
+      - name: Prepare backend and deployment images
         run: |
-          npm ci
-          npx playwright install --with-deps chromium
+          npm --prefix backend run build
+          docker build --target runtime --build-arg VCS_REF="$GITHUB_SHA" -t bazaar-api:ci backend
+          docker build --target migrate --build-arg VCS_REF="$GITHUB_SHA" -t bazaar-api-migrate:ci backend
+          bash infra/scripts/init-secrets.sh
+          docker compose -f infra/compose.yaml --profile test up -d --wait --wait-timeout 120 postgres-test
+      - name: Deployment image acceptance
+        working-directory: backend
+        run: node scripts/with-test-db.mjs node scripts/check-deployment-images.mjs
+      - name: Browser dependencies
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Compose project identity regression
+        run: node --test frontend/scripts/helpers/compose-project.test.mjs
       - name: Alpha browser acceptance
         working-directory: frontend
         run: npm run test:e2e:alpha
-        env:
-          ALPHA_E2E_PORT: '3939'
-      - name: Upload Alpha browser artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: alpha-e2e-results
-          path: frontend/e2e-results
-          if-no-files-found: warn
-          retention-days: 14
-      - name: V2 business data acceptance
+        env: {ALPHA_E2E_PORT: '3939'}
+      - name: V2 browser acceptance
         working-directory: frontend
         run: npm run test:e2e:v2
-        env:
-          V2_E2E_PORT: '3941'
-      - name: Upload V2 browser artifacts
+        env: {V2_E2E_PORT: '3941'}
+      - name: Browser diagnostics (not a substitute for successful assertions)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v2-e2e-results
-          path: frontend/e2e-results-v2
-          if-no-files-found: warn
+          name: alpha-v2-browser
+          path: |
+            frontend/e2e-results
+            frontend/e2e-results-v2
           retention-days: 14
-      - name: Database service status on failure
-        if: failure()
-        working-directory: .
-        run: docker compose -f infra/compose.yaml --profile test ps -a
-      - name: Stop test database
+      - name: Owned Alpha resources cleanup
         if: always()
-        working-directory: .
-        run: docker compose -f infra/compose.yaml --profile test stop postgres-test
+        run: |
+          docker compose -f infra/compose.yaml --profile test down --volumes
+          docker compose -f infra/compose.alpha.yaml down --volumes
+      - name: Exact checkout and locked tool provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provenance-alpha
+          path: .tmp/ci/*.json
+          retention-days: 14
+  web3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      WEB3_TEST_PORT: '56435'
+      PRIVATE_GARAGE_TEST_PORT: '56436'
+      COMPOSE_PROJECT_NAME: bazaar-ci-web3
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-bazaar
+        with: {frontend: 'true', contracts: 'true'}
+      - name: Prepare actual contract dependencies
+        run: |
+          bash infra/scripts/init-secrets.sh
+          docker compose -f infra/compose.web3-ci.yaml up -d --wait --wait-timeout 120
+          cd backend
+          node scripts/with-web3-test-db.mjs bash ../contracts/scripts/prepare-integration.sh
+      - name: Contract assertions and mutation controls
+        run: |
+          npm --prefix contracts test
+          npm --prefix contracts run test:mutations
+      - name: Build private scanner (must succeed)
+        run: |
+          docker build -t bazaar-private-check:ci backend/file-checker
+          echo "PRIVATE_FILE_CHECK_IMAGE=$(docker image inspect -f '{{.Id}}' bazaar-private-check:ci)" >> "$GITHUB_ENV"
+      - name: Verify immutable scanner source and dependencies
+        run: node backend/scripts/verify-checker-image.mjs
+      - name: Browser dependencies
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Loopback fault-gate assertions
+        run: node --test frontend/scripts/helpers/proxy-forwarding-gate.test.mjs
+      - name: Web3 full browser and controlled recovery
+        working-directory: backend
+        run: |
+          npm run test:e2e:web3:full
+          node scripts/public-browser-summary.mjs "$T09_FULL_EVIDENCE_DIR"
+        env:
+          WEB3_PROXY_RETRY: '1'
+          T10_RECOVERY: '1'
+          T10_CUSTODY: '1'
+          T09_FULL_EVIDENCE_DIR: ${{ runner.temp }}/web3-browser
+      - name: Web3 public diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web3-browser-diagnostics
+          path: ${{ runner.temp }}/web3-browser/public
+          retention-days: 14
+      - name: Owned test cluster cleanup
+        if: always()
+        run: docker compose -f infra/compose.web3-ci.yaml down --volumes
+      - name: Exact checkout and locked tool provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provenance-web3
+          path: .tmp/ci/*.json
+          retention-days: 14
+
+  private-files:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      WEB3_TEST_PORT: '56435'
+      PRIVATE_GARAGE_TEST_PORT: '56436'
+      COMPOSE_PROJECT_NAME: bazaar-ci-files
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-bazaar
+      - name: Admit full dual-task resource budget
+        working-directory: backend
+        run: node scripts/assert-ci-capacity.mjs
+      - name: Prepare actual private-file dependencies
+        run: |
+          bash infra/scripts/init-secrets.sh
+          docker compose -f infra/compose.web3-ci.yaml up -d --wait --wait-timeout 120
+          npm --prefix backend run build
+          docker build -t bazaar-private-check:ci backend/file-checker
+          docker build --build-arg BASE_IMAGE=bazaar-private-check:ci -t bazaar-private-control:ci backend/file-checker/control
+          echo "PRIVATE_FILE_CHECK_IMAGE=$(docker image inspect -f '{{.Id}}' bazaar-private-check:ci)" >> "$GITHUB_ENV"
+          echo "PRIVATE_FILE_CONTROL_IMAGE=$(docker image inspect -f '{{.Id}}' bazaar-private-control:ci)" >> "$GITHUB_ENV"
+      - name: Verify immutable scanner source and dependencies
+        run: node backend/scripts/verify-checker-image.mjs
+      - name: Native container metadata signature assertions
+        working-directory: backend
+        run: node --test tests/file-check-container.acceptance.mjs
+      - name: Full decimal samples and mandatory scanner/Garage/resource/queue capacity
+        working-directory: backend
+        env:
+          PRIVATE_FILE_CAPACITY_SAMPLES: ${{ runner.temp }}/private-capacity/samples
+          PRIVATE_FILE_EVIDENCE_DIR: ${{ runner.temp }}/private-capacity
+        run: |
+          mkdir -p "$PRIVATE_FILE_CAPACITY_SAMPLES"
+          sudo -n docker run --pull=never --rm --network=none --read-only \
+            --memory=512000000 --cpus=1 --pids-limit=32 --user "$(id -u):$(id -g)" \
+            --mount "type=bind,source=$PWD/file-checker/control/generate-capacity.py,target=/generate.py,readonly" \
+            --mount "type=bind,source=$PRIVATE_FILE_CAPACITY_SAMPLES,target=/samples" \
+            --entrypoint python3 "$PRIVATE_FILE_CHECK_IMAGE" /generate.py /samples
+          python3 file-checker/control/generate-expansion.py "$RUNNER_TEMP/private-expansion"
+          python3 file-checker/control/generate-scan-tail.py "$RUNNER_TEMP/private-expansion"
+          node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs node scripts/run-ci-integration.mjs private-files
+          PRIVATE_FILE_EXPANSION_SAMPLES="$RUNNER_TEMP/private-expansion" \
+            PRIVATE_FILE_EVIDENCE_DIR="$RUNNER_TEMP/private-capacity" \
+            node scripts/with-web3-test-db.mjs node scripts/with-private-file-test.mjs \
+            node --test tests/file-check-expansion-product.acceptance.mjs
+      - name: File capacity and fault diagnostics (no source objects or credentials)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-file-capacity-diagnostics
+          path: ${{ runner.temp }}/private-capacity/*.json
+          retention-days: 14
+      - name: Owned test cluster cleanup
+        if: always()
+        run: docker compose -f infra/compose.web3-ci.yaml down --volumes
+
+      - name: Exact checkout and locked tool provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provenance-private-files
+          path: .tmp/ci/*.json
+          retention-days: 14

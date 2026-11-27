@@ -32,6 +32,12 @@ model Account {
   identityEvents        AccountIdentityEvent[]
   gmailClaims          GmailClaim[]
   googleAttempts       GoogleOAuthAttempt[]
+  walletIdentities     WalletIdentity[]
+  walletClaims         WalletClaim[]
+  walletChallenges     WalletChallenge[]
+  walletOperations     WalletSecurityOperation[]
+  walletEvents         WalletIdentityEvent[]
+  payoutConfirmations  SellerPayoutConfirmation[]
 }
 
 model AccountIdentity {
@@ -116,6 +122,10 @@ model Session {
   tokenHash String    @id @db.Char(64)
   accountId String    @db.Uuid
   authMethod String?   @db.VarChar(24)
+  walletChainId Int?
+  walletAddress String? @db.VarChar(42)
+  walletBindingVersion Int?
+  recoveryEpoch String? @db.Uuid
   authenticatedAt DateTime? @db.Timestamptz(6)
   createdAt DateTime  @default(now()) @db.Timestamptz(6)
   expiresAt DateTime  @db.Timestamptz(6)
@@ -166,6 +176,7 @@ model Listing {
   reviewReason         String?
   reviewKind           String?
   reviewUpdatedAt      DateTime?           @db.Timestamptz(6)
+  testnetPrices        ListingTestnetPrice[]
   reviewRows           ListingReviewEvent[]
   replacesListing      Listing?            @relation("listingReplacement", fields: [replacementOfListingId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   replacementRows      Listing[]           @relation("listingReplacement")
@@ -222,6 +233,8 @@ model Order {
   buyerId                   String                 @db.Uuid
   sellerId                  String                 @db.Uuid
   checkoutId                String?                @db.Uuid
+  testnetSnapshot           TestnetOrderSnapshot?
+  settlementMode            String                 @default("simulated")
   status                    String                 @default("pending_payment")
   version                   Int                    @default(1)
   createdAt                 DateTime               @default(now()) @db.Timestamptz(6)
@@ -250,6 +263,7 @@ model Order {
   @@unique([id, buyerId])
   @@unique([id, sellerId])
   @@unique([id, listingId])
+  @@unique([id, listingId, sellerId], map: "Order_testnet_listing_seller_key")
   @@index([buyerId, createdAt, id])
   @@index([sellerId, createdAt, id])
   @@index([listingId])
@@ -287,6 +301,7 @@ model Checkout {
 }
 
 model OrderSnapshot {
+  testnetSnapshot         TestnetOrderSnapshot?
   orderId                String             @id @db.Uuid
   listingVersion         Int
   title                  String
@@ -303,6 +318,7 @@ model OrderSnapshot {
   settlementSnapshotRows SettlementRecord[] @relation("settlementSnapshot")
 
   @@unique([orderId, priceAmount, currency])
+  @@unique([orderId, listingVersion])
 }
 
 model OrderShipping {
@@ -463,4 +479,508 @@ model ListingReviewEvent {
   actor     Account? @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([listingId, createdAt, id])
+}
+
+
+// Business projections only. The authoritative wallet security ledger is migrated
+// separately and must not be restored with this schema.
+model WalletIdentity {
+  id String @id @default(uuid()) @db.Uuid
+  accountId String @db.Uuid
+  chainId Int
+  address String? @db.VarChar(42)
+  bindingVersion Int @default(0)
+  securityRevision BigInt @default(0)
+  lastOperationId String? @db.Uuid
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([accountId, chainId])
+  @@unique([chainId, address])
+}
+
+model WalletClaim {
+  chainId Int
+  address String @db.VarChar(42)
+  accountId String @db.Uuid
+  claimedAt DateTime @default(now()) @db.Timestamptz(6)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([chainId, address])
+  @@index([accountId])
+}
+
+model WalletSecurityOperation {
+  id String @id @db.Uuid
+  accountId String @db.Uuid
+  chainId Int
+  operation String @db.VarChar(32)
+  revision BigInt
+  requestHash String @db.Char(64)
+  result Json
+  appliedAt DateTime @default(now()) @db.Timestamptz(6)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([accountId, chainId, revision])
+}
+
+model WalletIdentityEvent {
+  id String @id @default(uuid()) @db.Uuid
+  accountId String @db.Uuid
+  chainId Int
+  operationId String @unique @db.Uuid
+  operation String @db.VarChar(32)
+  previousAddress String? @db.VarChar(42)
+  currentAddress String? @db.VarChar(42)
+  bindingVersion Int
+  revision BigInt
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([accountId, createdAt])
+}
+
+model WalletChallenge {
+  id String @id @default(uuid()) @db.Uuid
+  accountId String @db.Uuid
+  chainId Int
+  kind String @db.VarChar(24)
+  purpose String @db.VarChar(32)
+  wallet String? @db.VarChar(42)
+  bindingVersion Int
+  recoveryEpoch String @db.Uuid
+  sessionHash String @db.Char(64)
+  requestHash String @unique @db.Char(64)
+  payload Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  expiresAt DateTime @db.Timestamptz(6)
+  consumedAt DateTime? @db.Timestamptz(6)
+  invalidatedAt DateTime? @db.Timestamptz(6)
+  result Json?
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([accountId, purpose, expiresAt])
+}
+
+model SellerPayoutConfirmation {
+  testnetOrders TestnetOrderSnapshot[]
+  id String @id @default(uuid()) @db.Uuid
+  accountId String @db.Uuid
+  chainId Int
+  wallet String @db.VarChar(42)
+  escrow String @db.VarChar(42)
+  bindingVersion Int
+  challengeId String @unique @db.Uuid
+  statement Json
+  signature String @db.VarChar(132)
+  confirmedAt DateTime @default(now()) @db.Timestamptz(6)
+  revokedAt DateTime? @db.Timestamptz(6)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@index([accountId, chainId, revokedAt])
+  @@unique([id, accountId, chainId, wallet, escrow, bindingVersion], map: "SellerPayoutConfirmation_terms_key")
+}
+
+model ListingTestnetPrice {
+  id String @id @default(uuid()) @db.Uuid
+  listingId String @db.Uuid
+  listingVersion Int
+  chainId Int
+  token String @db.VarChar(42)
+  escrow String @db.VarChar(42)
+  amountAtoms String @db.VarChar(78)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  orders TestnetOrderSnapshot[]
+
+  @@unique([listingId, listingVersion])
+  @@unique([id, listingId, listingVersion, chainId, token, escrow, amountAtoms], map: "ListingTestnetPrice_terms_key")
+}
+
+model TestnetOrderSnapshot {
+  orderId String @id @db.Uuid
+  listingId String @db.Uuid
+  sellerId String @db.Uuid
+  listingVersion Int
+  priceId String @db.Uuid
+  chainId Int
+  token String @db.VarChar(42)
+  escrow String @db.VarChar(42)
+  amountAtoms String @db.VarChar(78)
+  sellerWallet String @db.VarChar(42)
+  sellerBindingVersion Int
+  payoutConfirmationId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  order Order @relation(fields: [orderId, listingId, sellerId], references: [id, listingId, sellerId], onDelete: Restrict, onUpdate: Restrict)
+  snapshot OrderSnapshot @relation(fields: [orderId, listingVersion], references: [orderId, listingVersion], onDelete: Restrict, onUpdate: Restrict)
+  price ListingTestnetPrice @relation(fields: [priceId, listingId, listingVersion, chainId, token, escrow, amountAtoms], references: [id, listingId, listingVersion, chainId, token, escrow, amountAtoms], onDelete: Restrict, onUpdate: Restrict, map: "TestnetOrderSnapshot_price_terms_fkey")
+  payout SellerPayoutConfirmation @relation(fields: [payoutConfirmationId, sellerId, chainId, sellerWallet, escrow, sellerBindingVersion], references: [id, accountId, chainId, wallet, escrow, bindingVersion], onDelete: Restrict, onUpdate: Restrict, map: "TestnetOrderSnapshot_payout_terms_fkey")
+
+  @@unique([orderId, listingVersion])
+  @@unique([orderId, listingId, sellerId], map: "TestnetOrderSnapshot_order_terms_key")
+  @@index([sellerId, createdAt])
+}
+
+// Payment evidence is append-only; mutable lifecycle is kept separately.
+model TestnetStock {
+  listingId String @id @db.Uuid
+  stockId String @unique @db.Char(66)
+  generation String @default("0") @db.VarChar(78)
+  previousOrderId String @db.Char(66)
+  activeOrderId String? @unique @db.Uuid
+  lastOrderId String? @db.Uuid
+  state String @default("reserved")
+}
+model PaymentOrderTerms {
+  orderId String @id @db.Uuid
+  listingId String @db.Uuid
+  stockId String @db.Char(66)
+  terms Json
+  termsHash String @db.Char(66)
+  recoveryEpoch String @db.Uuid
+  initialIntentId String @db.Uuid
+}
+model PaymentIntent {
+  id String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  previousIntentId String? @db.Uuid
+  permit Json
+  digest String @db.Char(66)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([orderId, createdAt])
+}
+model PaymentIntentState {
+  intentId String @id @db.Uuid
+  orderId String @db.Uuid
+  status String @default("issued")
+  verification Json?
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  @@index([orderId, status])
+}
+model PaymentSignature {
+  intentId String @id @db.Uuid
+  signature String @db.VarChar(132)
+}
+
+model PaymentIntentRequest {
+  actorId String @db.Uuid
+  operation String
+  key String
+  requestHash String @db.Char(64)
+  intentId String @db.Uuid
+  @@id([actorId, operation, key])
+}
+
+model PrivateFileQuota {
+  accountId String @id @db.Uuid
+  reservedBytes BigInt @default(0)
+  usedBytes BigInt @default(0)
+  activeUploads Int @default(0)
+}
+model PrivateFileGlobal {
+  singleton Boolean @id @default(true)
+  policyHash String @db.Char(64)
+  reservedBytes BigInt @default(0)
+  usedBytes BigInt @default(0)
+  activeUploads Int @default(0)
+  queued Int @default(0)
+  checking Int @default(0)
+  maintenance Boolean @default(false)
+}
+model PrivateUpload {
+  id String @id @default(uuid()) @db.Uuid
+  accountId String @db.Uuid
+  orderId String @db.Uuid
+  purpose String
+  key String
+  requestHash String @db.Char(64)
+  tokenHash String @db.Char(64)
+  filename String
+  contentType String
+  declaredBytes Int
+  objectKey String @unique
+  createdAt DateTime @db.Timestamptz(6)
+  expiresAt DateTime @db.Timestamptz(6)
+  status String @default("uploading")
+  actualBytes Int?
+  sha256 String? @db.Char(64)
+  queuedAt DateTime? @db.Timestamptz(6)
+  checkStartedAt DateTime? @db.Timestamptz(6)
+  checkId String? @unique @db.Uuid
+  receiveOwnerScope String? @db.Char(64)
+  receiveOwnerPid Int?
+  receiveOwnerStart String?
+  receiveStopped Boolean @default(true)
+  checkOwnerScope String? @db.Char(64)
+  checkOwnerPid Int?
+  checkOwnerStart String?
+  checkOwnerStopped Boolean @default(false)
+  checkCancelRequested Boolean @default(false)
+  checkDeadlineAt DateTime? @db.Timestamptz(6)
+  failureReason String?
+  cleanedAt DateTime? @db.Timestamptz(6)
+  @@unique([accountId, key])
+  @@index([accountId, createdAt])
+  @@index([status, createdAt])
+}
+model PrivateFileVersion {
+  id String @id @default(uuid()) @db.Uuid
+  uploadId String @unique @db.Uuid
+  orderId String @db.Uuid
+  ownerId String @db.Uuid
+  purpose String
+  objectKey String @unique
+  objectVersion String @db.Uuid
+  sha256 String @db.Char(64)
+  byteSize Int
+  contentType String
+  filename String
+  checkId String @unique @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([orderId, purpose])
+}
+model PrivateFileCheck {
+  id String @id @db.Uuid
+  uploadId String @db.Uuid
+  report Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([uploadId])
+}
+model PrivateFileAudit {
+  id String @id @default(uuid()) @db.Uuid
+  uploadId String @db.Uuid
+  action String
+  details Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([uploadId, createdAt])
+}
+
+// T07 finalized facts are separated from unfinalized transaction hints.
+model ScanCheckpoint {
+  scope String @id @db.VarChar(100)
+  configHash String @db.Char(64)
+  deploymentBlock BigInt
+  height BigInt
+  hash String @db.Char(66)
+  status String @default("recovering")
+  globals Json?
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+}
+model ChainBlock {
+  scope String @db.VarChar(100)
+  hash String @db.Char(66)
+  height BigInt
+  parentHash String @db.Char(66)
+  timestamp BigInt
+  @@id([scope, hash])
+  @@unique([scope, height])
+}
+model ChainEvent {
+  scope String @db.VarChar(100)
+  blockHash String @db.Char(66)
+  txHash String @db.Char(66)
+  logIndex BigInt
+  height BigInt
+  txIndex BigInt
+  name String
+  args Json
+  @@id([scope, blockHash, txHash, logIndex])
+  @@unique([scope, txHash, logIndex])
+  @@index([scope, height, txIndex, logIndex])
+}
+model EscrowProjection {
+  scope String @db.VarChar(100)
+  chainOrderId String @db.Char(66)
+  businessOrderId String? @db.Uuid
+  state String
+  stockId String @db.Char(66)
+  amountAtoms String @db.VarChar(78)
+  data Json
+  height BigInt
+  blockHash String @db.Char(66)
+  holdReason String?
+  downloadEnabled Boolean @default(false)
+  @@id([scope, chainOrderId])
+}
+model ChainStockProjection {
+  scope String @db.VarChar(100)
+  stockId String @db.Char(66)
+  occupant String @db.Char(66)
+  generation String @db.VarChar(78)
+  status String
+  height BigInt
+  blockHash String @db.Char(66)
+  @@id([scope, stockId])
+}
+model ReconciliationIncident {
+  id String @id @default(uuid()) @db.Uuid
+  scope String @db.VarChar(100)
+  kind String
+  reason String
+  evidence Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([scope, createdAt])
+}
+model TransactionAttempt {
+  id String @id @default(uuid()) @db.Uuid
+  scope String @db.VarChar(100)
+  actorId String @db.Uuid
+  orderId String @db.Uuid
+  key String @db.VarChar(100)
+  txHash String @db.Char(66)
+  requestHash String @db.Char(64)
+  status String @default("submitted")
+  observation Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@unique([actorId, key])
+  @@index([scope, txHash])
+  @@index([orderId, createdAt])
+}
+model ChainObservation {
+  id String @id @default(uuid()) @db.Uuid
+  scope String @db.VarChar(100)
+  txHash String @db.Char(66)
+  blockHash String @db.Char(66)
+  status String
+  evidence Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([scope, txHash])
+}
+
+model ChainSnapshot {
+  scope String @db.VarChar(100)
+  height BigInt
+  hash String @db.Char(66)
+  ordersHash String @db.Char(64)
+  stocksHash String @db.Char(64)
+  globals Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@id([scope,height])
+}
+
+// T08 immutable authorization basis; presence never overrides the current full funds projection.
+model DeliveryMapping {
+  id String @id @db.Uuid
+  orderId String @db.Uuid
+  actorId String @db.Uuid
+  key String
+  versionId String @db.Uuid
+  chainId Int
+  escrow String @db.VarChar(42)
+  chainOrderId String @db.Char(66)
+  credentialId String @unique @db.Char(66)
+  deliveryVersion String @db.Char(66)
+  manifestCommitment String @db.Char(66)
+  salt String @db.Char(64)
+  manifest Json
+  permit Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@unique([actorId,key])
+  @@index([orderId,versionId])
+}
+model DeliverySignature {
+  signerAddress String @db.VarChar(42)
+  mappingId String @id @db.Uuid
+  signature String @db.VarChar(132)
+}
+model SupplementChallenge {
+  id String @id @db.Uuid
+  orderId String @db.Uuid
+  actorId String @db.Uuid
+  key String
+  mappingId String @db.Uuid
+  message Json
+  expiresAt DateTime @db.Timestamptz(6)
+  @@unique([actorId,key])
+}
+model SupplementPublication {
+  authorizationId String @id @db.Uuid
+  orderId String @db.Uuid
+  mappingId String @db.Uuid
+  actorId String @db.Uuid
+  signature String @db.VarChar(132)
+  evidence Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+}
+model DownloadGrant {
+  id String @id @db.Uuid
+  orderId String @db.Uuid
+  versionId String @db.Uuid
+  actorId String @db.Uuid
+  purpose String
+  tokenHash String @db.Char(64)
+  issuedAt DateTime @db.Timestamptz(6)
+  expiresAt DateTime @db.Timestamptz(6)
+  basis Json
+}
+model FileAccessAudit {
+  id String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  actorId String @db.Uuid
+  action String
+  details Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+}
+model EvidenceRecord {
+  id String @id @db.Uuid
+  orderId String @db.Uuid
+  submitterId String @db.Uuid
+  key String
+  parentId String? @db.Uuid
+  text String
+  versionId String? @db.Uuid
+  deliveryReferenceId String? @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@unique([submitterId,key])
+  @@index([orderId,createdAt])
+}
+model ReviewAuthorization {
+  id String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  accountId String @db.Uuid
+  expiresAt DateTime @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@index([orderId,accountId])
+}
+model ReviewEvent {
+  id String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  actorId String @db.Uuid
+  action String
+  key String
+  details Json
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@unique([actorId,key])
+}
+
+// Business receipt is a projection only; independent refund exit is authoritative recovery evidence.
+model RefundInventoryTransition {
+  scope String @db.VarChar(100)
+  chainOrderId String @db.Char(66)
+  orderId String @db.Uuid
+  stockId String @db.Char(66)
+  generation String @db.VarChar(78)
+  nextGeneration String @db.VarChar(78)
+  basisHash String @db.Char(64)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  @@id([scope,chainOrderId])
+  @@unique([scope,stockId,generation])
+}
+
+// Rebuildable fences; deletion authority remains in the independent private ledger.
+model PrivateFileDisposition {
+  versionId String @id @db.Uuid
+  claimId String @unique @db.Uuid
+  state String
+  deadline DateTime @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+}
+model PrivateRecoveryState {
+  singleton Boolean @id @default(true)
+  runId String @db.Uuid
+  backupId String @db.Uuid
+  downloadEpoch String @db.Uuid
+  status String @default("isolated")
+  checks Json
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
 }
